@@ -146,6 +146,7 @@ typedef struct ao_stdata_t {
 	hashtab_t *st_type_names;	/* Type name -> DIE. */
 	Dwarf_Debug st_dw_dbg;		/* Handle for libdwarf calls */
 	bool st_dw_scanned;		/* Dwarf symbols scanned? */
+	taddr_t st_dw_base_address;	/* Addr shlib mapped rel to Dwarf sym addrs */
 #endif
 
 #if WANT_ELF

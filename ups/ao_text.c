@@ -255,6 +255,7 @@ const char **p_mainfunc_name;
 	ast->st_type_names = NULL;
 	ast->st_dw_dbg = 0;
 	ast->st_dw_scanned = FALSE;
+	ast->st_dw_base_address = ei->text_mem_addr;
 	if (st_is == ST_DWARF) {
 	    ast->st_dw_dbg = dw_dbg;
 	    st = make_symtab(ap, textpath, (fil_t *)NULL, (func_t *)NULL,

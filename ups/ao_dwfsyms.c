@@ -1323,7 +1323,7 @@ Dwarf_Debug dbg;
 	/*
 	 * Start a new 'stf'.
 	 */
-	stf = make_stf(ap, cu_name, st, 0, lang, ast->st_base_address);
+	stf = make_stf(ap, cu_name, st, 0, lang, ast->st_dw_base_address);
 	stf->stf_symlim = -1;
 	stf->stf_fnum = -1;
 	stf->stf_dw_dbg = dbg;

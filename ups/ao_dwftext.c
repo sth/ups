@@ -398,7 +398,7 @@ taddr_t *sp;
 taddr_t *pc;
 {
     ao_stdata_t *ast = AO_STDATA(st);
-    taddr_t adjusted_pc = *pc - ast->st_base_address;
+    taddr_t adjusted_pc = *pc - ast->st_dw_base_address;
     
     if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc)) {
 	*pc = adjusted_pc;
