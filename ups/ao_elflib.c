@@ -33,6 +33,9 @@ char ups_ao_elflib_c_rcsid[] = "$Id$";
 #include <sys/stat.h>
 #include <sys/param.h>                /* for MAXPATHLEN */
 #include <elf.h>
+#define FREEBSD_ELF 1
+#include <link.h>
+#undef FREEBSD_ELF
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -752,12 +755,12 @@ elf_note_shlib_addr(alloc_pool_t *ap, iproc_t *ip, dev_t dev, ino_t ino,
 bool
 elf_get_core_shlib_info(alloc_pool_t *ap, iproc_t *ip)
 {
-	struct r_debug *debug;
+	struct elf_r_debug *debug;
 	Solib *so;
 	const char *path;
 	taddr_t lmaddr;
 	Coredesc *co;
-	struct link_map *lmap;
+	struct elf_link_map *lmap;
 	
 	so = ip->ip_solibs;
 	co = ip->ip_core;
@@ -847,11 +850,11 @@ elf_get_dynamic_shlib_info(alloc_pool_t *ap, Libdep *ld, const char *textpath,
 			   taddr_t debug_vaddr,
 			   Libdep **last_child)
 {
-	struct r_debug *debug;
+	struct elf_r_debug *debug;
 	const char *path = "DT_DEBUG";
 	const char *libpath_copy;
 	taddr_t lmaddr;
-	struct link_map *lmap;
+	struct elf_link_map *lmap;
 	target_t *xp;
 	iproc_t *ip;
 	breakpoint_t *bp;

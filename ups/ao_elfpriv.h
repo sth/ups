@@ -138,17 +138,17 @@ typedef struct Elfops {
 					 taddr_t strtab_vaddr,
 					 int rel_type, taddr_t off, char *name));
 
-	struct r_debug *(*read_r_debug)PROTO((taddr_t addr,
-					      Elfread read_callback,
-					      void *read_handle));
-	taddr_t (*r_debug_map)PROTO((struct r_debug *debug));
-	taddr_t (*r_debug_brk)PROTO((struct r_debug *debug));
+	struct elf_r_debug *(*read_r_debug)PROTO((taddr_t addr,
+						  Elfread read_callback,
+						  void *read_handle));
+	taddr_t (*r_debug_map)PROTO((struct elf_r_debug *debug));
+	taddr_t (*r_debug_brk)PROTO((struct elf_r_debug *debug));
 
-	struct link_map *(*read_link_map)PROTO((taddr_t addr,
-						Elfread read_callback,
-						void *read_handle));
-	taddr_t (*link_map_addr)PROTO((struct link_map *lmap));
-	taddr_t (*link_map_name)PROTO((struct link_map *lmap));
-	taddr_t (*link_map_next)PROTO((struct link_map *lmap));
-	taddr_t (*link_map_prev)PROTO((struct link_map *lmap));
+	struct elf_link_map *(*read_link_map)PROTO((taddr_t addr,
+						    Elfread read_callback,
+						    void *read_handle));
+	taddr_t (*link_map_addr)PROTO((struct elf_link_map *lmap));
+	taddr_t (*link_map_name)PROTO((struct elf_link_map *lmap));
+	taddr_t (*link_map_next)PROTO((struct elf_link_map *lmap));
+	taddr_t (*link_map_prev)PROTO((struct elf_link_map *lmap));
 } Elfops;

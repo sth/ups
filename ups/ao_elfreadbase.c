@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #if HAVE_ELF_H
 #include <elf.h>
+#define FREEBSD_ELF 1
+#include <link.h>
+#undef FREEBSD_ELF
 #elif HAVE_LINUX_ELF_H
 #include <linux/elf.h>
 #endif
@@ -47,9 +50,7 @@
 #include "ao_elflib.h"
 #include "elfstab.h"
 
-#ifdef OS_LINUX
-
-struct r_debug {
+struct elf_r_debug {
 	int r_version;
 	Elf_Addr r_map;
 	Elf_Addr r_brk;
@@ -57,14 +58,12 @@ struct r_debug {
 	Elf_Addr r_ldbase;
 };
 
-struct link_map {
+struct elf_link_map {
 	Elf_Addr l_addr;
 	Elf_Addr l_name;
 	Elf_Addr l_ld;
 	Elf_Addr l_next, l_prev;
 };
-
-#endif
 
 static int
 ELF(address_size)(void)
@@ -365,16 +364,16 @@ ELF(resolve_relocation)(target_t *xp, taddr_t st_base_address,
         return TRUE;
 }
 
-static struct r_debug *
+static struct elf_r_debug *
 ELF(read_r_debug)(taddr_t addr, Elfread read_callback, void *read_handle)
 {
 	Elf_Addr dbaddr;
-	struct r_debug *debug;
+	struct elf_r_debug *debug;
 
-	debug = e_malloc(sizeof(struct r_debug));
+	debug = e_malloc(sizeof(struct elf_r_debug));
    
 	if (read_callback(read_handle, addr, &dbaddr, sizeof(dbaddr)) < 0 ||
-	    read_callback(read_handle, dbaddr, debug, sizeof(struct r_debug)) < 0) {
+	    read_callback(read_handle, dbaddr, debug, sizeof(struct elf_r_debug)) < 0) {
 		free(debug);
 		return NULL;
 	}
@@ -383,25 +382,25 @@ ELF(read_r_debug)(taddr_t addr, Elfread read_callback, void *read_handle)
 }
 
 static taddr_t
-ELF(r_debug_map)(struct r_debug *debug)
+ELF(r_debug_map)(struct elf_r_debug *debug)
 {
 	return debug->r_map;
 }
 
 static taddr_t
-ELF(r_debug_brk)(struct r_debug *debug)
+ELF(r_debug_brk)(struct elf_r_debug *debug)
 {
 	return debug->r_brk;
 }
 
-static struct link_map *
+static struct elf_link_map *
 ELF(read_link_map)(taddr_t addr, Elfread read_callback, void *read_handle)
 {
-	struct link_map *lmap;
+	struct elf_link_map *lmap;
 
-	lmap = e_malloc(sizeof(struct link_map));
+	lmap = e_malloc(sizeof(struct elf_link_map));
    
-	if (read_callback(read_handle, addr, lmap, sizeof(struct link_map)) < 0) {
+	if (read_callback(read_handle, addr, lmap, sizeof(struct elf_link_map)) < 0) {
 		free(lmap);
 		return NULL;
 	}
@@ -410,25 +409,25 @@ ELF(read_link_map)(taddr_t addr, Elfread read_callback, void *read_handle)
 }
 
 static taddr_t
-ELF(link_map_addr)(struct link_map *lmap)
+ELF(link_map_addr)(struct elf_link_map *lmap)
 {
 	return lmap->l_addr;
 }
 
 static taddr_t
-ELF(link_map_name)(struct link_map *lmap)
+ELF(link_map_name)(struct elf_link_map *lmap)
 {
 	return lmap->l_name;
 }
 
 static taddr_t
-ELF(link_map_next)(struct link_map *lmap)
+ELF(link_map_next)(struct elf_link_map *lmap)
 {
 	return lmap->l_next;
 }
 
 static taddr_t
-ELF(link_map_prev)(struct link_map *lmap)
+ELF(link_map_prev)(struct elf_link_map *lmap)
 {
 	return lmap->l_prev;
 }
