@@ -208,6 +208,7 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 	mainfunc_name = NULL;
 	seen_sosym_but_no_optsym = FALSE;
 	opt_with_no_optsym = 0;
+	lang = LANG_UNKNOWN;
 	
 	for (symno = 0; symno < nsyms; ++symno) {
 		nlist_t nm;
@@ -998,14 +999,19 @@ bool reattach_with_rescan;
   
 	if (st_is == ST_DWARF) {
 		/*
-		 * dwarfTODO: probably need equivalent of the routines below
-		 * but not sure what they are trying to do
+		 * dwarfTODO: want to add in functions from the symbol table
+		 * which do not have DWARF symbols.  set_function_addresses()
+		 * needs fixing under DWARF because :
+		 * 1) resolve_func_addr() doesn't check 'hv' if function is
+		 *    static.
+		 * 2) it sets function addresses even if already set from
+		 *    the DWARF info.
 		 */
+		set_function_addresses(el, st, &flist);
 	} else {
 		scan_stab_index(st, el, &st->st_sfiles, &flist, p_mainfunc_name);
+		set_function_addresses(el, st, &flist);
 	}
-
-	set_function_addresses(el, st, &flist);
 
 	if (el->pltsh) {
 		add_function_to_symtab(st, &flist, "[_plt_]", NULL, NULL, 
