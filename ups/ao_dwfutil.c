@@ -34,6 +34,7 @@ char ups_ao_dwfutil_c_rcsid[] = "$Id$";
 
 #include "ups.h"
 #include "symtab.h"
+#include "target.h"
 #include "ci.h"
 #include "st.h"
 #include "data.h"
@@ -546,18 +547,6 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     return head;
 }
 
-#if defined(ARCH_386_64)
-#define CFA_COL DW_FRAME_CFA_COL
-#define FP_COL 6
-#define SP_COL 7
-#define RA_COL 16
-#elif defined(ARCH_386)
-#define CFA_COL DW_FRAME_CFA_COL
-#define FP_COL 5
-#define SP_COL 4
-#define RA_COL 8
-#endif
-
 #if defined(ARCH_386)
 
 /*
@@ -572,19 +561,35 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
     Dwarf_Signed offset_relevant;
     Dwarf_Signed register_num;
     Dwarf_Signed offset;
+    int fp_col;
+    int sp_col;
+
+    switch (xp_get_addrsize(xp))
+    {
+    case 32:
+	fp_col = 5;
+	sp_col = 4;
+	break;
+    case 64:
+	fp_col = 6;
+	sp_col = 7;
+	break;
+    default:
+	panic("Unsupported address size");
+    }
 
     if ((rv = dwarf_get_fde_info_for_reg(fde, regnum, pc, &offset_relevant,
 					 &register_num, &offset, NULL,
 					 &err)) == DW_DLV_OK) {
-	if (register_num == CFA_COL)
+	if (register_num == DW_FRAME_CFA_COL)
 	    *regval = cfa;
-	else if (register_num == FP_COL)
+	else if (register_num == fp_col)
 	    *regval = fp;
-	else if (register_num == SP_COL)
+	else if (register_num == sp_col)
 	    *regval = sp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == FP_COL)
+	else if (register_num == DW_FRAME_SAME_VAL && regnum == fp_col)
 	    *regval = fp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == SP_COL)
+	else if (register_num == DW_FRAME_SAME_VAL && regnum == sp_col)
 	    *regval = cfa;
 	else
 	    rv = DW_DLV_ERROR;
@@ -592,7 +597,7 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
 	if (rv == DW_DLV_OK && offset_relevant)
 	    *regval += offset;
 
-	if (rv == DW_DLV_OK && register_num == CFA_COL)
+	if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL)
 	    dread_addrval(xp, *regval, regval);
     }
 
@@ -611,6 +616,25 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
     Dwarf_Signed cie_count;
     Dwarf_Fde *fde_data;
     Dwarf_Signed fde_count;
+    int fp_col;
+    int sp_col;
+    int ra_col;
+
+    switch (xp_get_addrsize(xp))
+    {
+    case 32:
+	fp_col = 5;
+	sp_col = 4;
+	ra_col = 8;
+	break;
+    case 64:
+	fp_col = 6;
+	sp_col = 7;
+	ra_col = 16;
+	break;
+    default:
+	panic("Unsupported address size");
+    }
     
     if ((rv = dwarf_get_fde_list(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK) {
 	Dwarf_Cie *ciep;
@@ -623,12 +647,12 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
 	    taddr_t new_sp;
 	    taddr_t new_pc;
 	    
-	    if (dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, CFA_COL, &cfa) &&
-		dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, RA_COL, &new_pc)) {
-                if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, FP_COL, &new_fp))
+	    if (dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, &cfa) &&
+		dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, ra_col, &new_pc)) {
+                if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, fp_col, &new_fp))
 		    new_fp = 0;
                    
-		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, SP_COL, &new_sp))
+		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, sp_col, &new_sp))
 		    new_sp = cfa;
 
 		*fp = new_fp;
