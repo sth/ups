@@ -1274,7 +1274,7 @@ unsigned long flags;
 	 *       error in the stack size calculation for the single function
 	 *       case.  TODO: find out what's wrong and fix it.
 	 */
-	tx->tx_sp = max_sp + 4;
+	tx->tx_sp = max_sp + sizeof(stackword_t);
 
 	ci_Catching_panics = FALSE;
 

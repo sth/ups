@@ -44,7 +44,7 @@ char ups_ci_opcodes_c_rcsid[] = "$Id$";
 #include "ci_opcodes.h"
 #include "ci_types.h"
 
-typedef enum { OS_ZERO, OS_BYTE, OS_WORD, OS_LONG, OS_OTHER } operand_size_t;
+typedef enum { OS_ZERO, OS_BYTE, OS_WORD, OS_LONG, OS_QUAD, OS_OTHER } operand_size_t;
 
 typedef struct {
 	const char *oi_name;
@@ -125,6 +125,15 @@ long l;
 }
 
 void
+ci_code_quad(tx, q)
+text_t *tx;
+long q;
+{
+	ci_code_long(tx, q & 0xffffffff);
+	ci_code_long(tx, (q >> 32) & 0xffffffff);
+}
+
+void
 ci_code_opcode(tx, opcode)
 text_t *tx;
 opcode_t opcode;
@@ -139,6 +148,7 @@ opcode_t opcode;
 		case OC_CHECK_SP_B:
 		case OC_CHECK_SP_W:
 		case OC_CHECK_SP_L:
+		case OC_CHECK_SP_Q:
 			break;
 		
 		/*  We put a trap at location zero, and we don't want the
@@ -163,6 +173,7 @@ opcode_t opcode;
 		case OC_LINK_B:
 		case OC_LINK_W:
 		case OC_LINK_L:
+		case OC_LINK_Q:
 			break;
 		
 		default:
@@ -174,6 +185,7 @@ opcode_t opcode;
 	case OC_CALL_B:
 	case OC_CALL_W:
 	case OC_CALL_L:
+	case OC_CALL_Q:
 		tmpspace = sizeof(stackword_t);
 		break;
 	default:
@@ -211,6 +223,10 @@ textword_t *pc;
 	case OS_LONG:
 		val = GETLONG(pc);
 		typec = 'l';
+		break;
+	case OS_QUAD:
+		val = GETQUAD(pc);
+		typec = 'q';
 		break;
 	default:
 		ci_panic("opcode botch in sg");
@@ -625,6 +641,7 @@ size_t textsize, entry_point;
 		case OS_BYTE:
 		case OS_WORD:
 		case OS_LONG:
+		case OS_QUAD:
 			fputc(' ', fp);
 			show_generic(fp, li, oi->oi_os, pc);
 			break;
@@ -677,6 +694,10 @@ int switchval;
 			val = GETLONG(pc);
 			pc += 4;
 			break;
+		case OC_SWITCH_ON_CHAIN_Q:
+			val = GETQUAD(pc);
+			pc += 8;
+			break;
 		default:
 			ci_panic("bad opcode");
 			val = 0;	/* to satisfy gcc */
@@ -725,6 +746,7 @@ textword_t **p_pc;
 	case OC_SWITCH_ON_CHAIN_B:
 	case OC_SWITCH_ON_CHAIN_W:
 	case OC_SWITCH_ON_CHAIN_L:
+	case OC_SWITCH_ON_CHAIN_Q:
 		pc = get_pc_after_switch_on_chain(pc, (int)(ma->ma_sp[0]));
 		break;
 
@@ -736,16 +758,16 @@ textword_t **p_pc;
 		break;
 
 	case OC_CALL_B:
-		res = get_pc_after_call(ma, cf, *pc, sizeof(char),
-								&cf, &pc);
+		res = get_pc_after_call(ma, cf, *pc, 1, &cf, &pc);
 		break;
 	case OC_CALL_W:
-		res = get_pc_after_call(ma, cf, (int)GETWORD(pc), sizeof(short),
-								&cf, &pc);
+		res = get_pc_after_call(ma, cf, (int)GETWORD(pc), 2, &cf, &pc);
 		break;
 	case OC_CALL_L:
-		res = get_pc_after_call(ma, cf, (int)GETLONG(pc), sizeof(long),
-								&cf, &pc);
+		res = get_pc_after_call(ma, cf, (int)GETLONG(pc), 4, &cf, &pc);
+		break;
+	case OC_CALL_Q:
+		res = get_pc_after_call(ma, cf, (int)GETQUAD(pc), 8, &cf, &pc);
 		break;
 	case OC_CALL_INDIRECT:
 		addr = *ma->ma_sp;
@@ -851,38 +873,46 @@ textword_t *text;
 	case OS_ZERO:
 		return 0;
 	case OS_BYTE:
-		return sizeof(char);
+		return 1;
 	case OS_WORD:
-		return sizeof(short);
+		return 2;
 	case OS_LONG:
-		return sizeof(long);
+		return 4;
+	case OS_QUAD:
+		return 8;
 	case OS_OTHER:
 		switch (opcode) {
 		case OC_CALL_B:
-			return sizeof(char) + 1 + WANT_TYPE_PUSHED;
+			return 1 + 1 + WANT_TYPE_PUSHED;
 		case OC_CALL_W:
-			return sizeof(short) + 1 + WANT_TYPE_PUSHED;
+			return 2 + 1 + WANT_TYPE_PUSHED;
 		case OC_CALL_L:
-			return sizeof(long) + 1 + WANT_TYPE_PUSHED;
+			return 4 + 1 + WANT_TYPE_PUSHED;
+		case OC_CALL_Q:
+			return 8 + 1 + WANT_TYPE_PUSHED;
 #if WANT_TYPE_PUSHED
 		case OC_CALL_INDIRECT:
-			return sizeof(char) + WANT_TYPE_PUSHED;
+			return 1 + WANT_TYPE_PUSHED;
 #endif
 #if WANT_OLD_LINK
 		case OC_LINK_B:
-			return sizeof(char) + 1;
+			return 1 + 1;
 		case OC_LINK_W:
-			return sizeof(short) + 1;
+			return 2 + 1;
 		case OC_LINK_L:
-			return sizeof(long) + 1;
+			return 4 + 1;
+		case OC_LINK_8:
+			return 8 + 1;
 #else
 		/* Fix LINK ARG (CHAR -> LONG) : Dibyendu */
 		case OC_LINK_B:
-			return sizeof(char) + 4;
+			return 1 + 4;
 		case OC_LINK_W:
-			return sizeof(short) + 4;
+			return 2 + 4;
 		case OC_LINK_L:
-			return sizeof(long) + 4;
+			return 4 + 4;
+		case OC_LINK_Q:
+			return 8 + 4;
 #endif
 		case OC_PUSH_FLOAT_CONST:
 			return FLOAT_NBYTES;
@@ -896,7 +926,7 @@ textword_t *text;
 		case OC_JUMP:
 		case OC_JUMP_IF_ZERO:
 		case OC_JUMP_IF_NON_ZERO:
-			return sizeof(short);
+			return 2;
 		case OC_SWITCH_ON_TABLE:
 			return 2 + 4 + GETWORD(text) * 2 + 2;
 			break;
@@ -906,6 +936,8 @@ textword_t *text;
 			return 2 + 4 + GETWORD(text) * (2 + 2) + 2;
 		case OC_SWITCH_ON_CHAIN_L:
 			return 2 + 4 + GETWORD(text) * (4 + 2) + 2;
+		case OC_SWITCH_ON_CHAIN_Q:
+			return 2 + 4 + GETWORD(text) * (8 + 2) + 2;
 			break;
 
 		default:
@@ -949,6 +981,7 @@ opcode_t opcode;
 	case OC_SWITCH_ON_CHAIN_B:
 	case OC_SWITCH_ON_CHAIN_W:
 	case OC_SWITCH_ON_CHAIN_L:
+	case OC_SWITCH_ON_CHAIN_Q:
 		opcode = (opcode_t)pc[-1];
 		ncase = GETWORD(pc);
 		pc += 2;
@@ -969,6 +1002,10 @@ opcode_t opcode;
 			case OC_SWITCH_ON_CHAIN_L:
 				val = GETLONG(pc);
 				pc += 4;
+				break;
+			case OC_SWITCH_ON_CHAIN_Q:
+				val = GETQUAD(pc);
+				pc += 8;
 				break;
 			default:
 				panic("bad opcode");
@@ -1001,6 +1038,9 @@ opcode_t opcode;
 	case OC_CALL_L:
 		show_call(fp, li, (int)GETLONG(pc), pc[4], pc[5], 'l');
 		break;
+	case OC_CALL_Q:
+		show_call(fp, li, (int)GETQUAD(pc), pc[8], pc[9], 'q');
+		break;
 #else
 	case OC_CALL_B:
 		show_call(fp, li, *pc, pc[1], 0, 'b');
@@ -1010,6 +1050,9 @@ opcode_t opcode;
 		break;
 	case OC_CALL_L:
 		show_call(fp, li, (int)GETLONG(pc), pc[4], 0, 'l');
+		break;
+	case OC_CALL_Q:
+		show_call(fp, li, (int)GETQUAD(pc), pc[8], 0, 'q');
 		break;
 #endif
 #if WANT_TYPE_PUSHED
@@ -1028,6 +1071,9 @@ opcode_t opcode;
 	case OC_LINK_L:
 		fprintf(fp, "%d.l,%d", GETLONG(pc), pc[4]);
 		break;
+	case OC_LINK_Q:
+		fprintf(fp, "%d.q,%d", GETQUAD(pc), pc[8]);
+		break;
 #else
 	case OC_LINK_B:
 		ival = *pc++;
@@ -1042,6 +1088,11 @@ opcode_t opcode;
 		ival = GETLONG(pc);
 		pc += 4;
 		fprintf(fp, "%d.l,%ld", ival, GETLONG(pc));
+		break;
+	case OC_LINK_Q:
+		ival = GETQUAD(pc);
+		pc += 8;
+		fprintf(fp, "%d.q,%ld", ival, GETQUAD(pc));
 		break;
 #endif
 
@@ -1109,12 +1160,16 @@ stackword_t arg;
 		ci_code_opcode(tx, BYTE_FORM(byte_opcode));
 		ci_code_byte(tx, (long)arg);
 	}
-	else if (arg < MAX_WORD) {
+	else if (arg <= MAX_WORD) {
 		ci_code_opcode(tx, SHORT_FORM(byte_opcode));
 		ci_code_word(tx, (long)arg);
 	}
-	else {
+	else if (arg <= MAX_LONG) {
 		ci_code_opcode(tx, LONG_FORM(byte_opcode));
 		ci_code_long(tx, (long)arg);
+	}
+	else {
+		ci_code_opcode(tx, QUAD_FORM(byte_opcode));
+		ci_code_quad(tx, (long)arg);
 	}
 }

@@ -206,6 +206,10 @@ typedef struct machine_s machine_t;
 #define GETWORD(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8))
 #define GETLONG(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8) | \
 			 UBYTE((pc)[2] << 16) | UBYTE((pc)[3] << 24))
+#define GETQUAD(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8) | \
+			 UBYTE((pc)[2] << 16) | UBYTE((pc)[3] << 24) | \
+			 UBYTE((pc)[4] << 32) | UBYTE((pc)[5] << 40) | \
+			 UBYTE((pc)[6] << 48) | UBYTE((pc)[7] << 56))
 
 typedef struct {
 	textword_t *su_text;

@@ -1249,6 +1249,7 @@ taddr_t *p_addr;
 	case OC_LINK_B:
 	case OC_LINK_W:
 	case OC_LINK_L:
+	case OC_LINK_Q:
 		break;
 	default:
 		panic("missing link in gbo");
@@ -1619,6 +1620,7 @@ bool want_calls;
 		case OC_SWITCH_ON_CHAIN_B:
 		case OC_SWITCH_ON_CHAIN_W:
 		case OC_SWITCH_ON_CHAIN_L:
+		case OC_SWITCH_ON_CHAIN_Q:
 			jbuf.ju_type = JT_BRANCH;
 			jbuf.ju_addr = pack_textloc(ma, cf, text - 1);
 			jbuf.ju_dstaddr = 0;
@@ -1628,6 +1630,7 @@ bool want_calls;
 		case OC_CALL_B:
 		case OC_CALL_W:
 		case OC_CALL_L:
+		case OC_CALL_Q:
 		case OC_CALL_INDIRECT:
 			if (want_calls) {
 				jbuf.ju_type = JT_CALL;

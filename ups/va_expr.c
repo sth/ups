@@ -1103,8 +1103,6 @@ ci_exec_result_t res;
 		break;
 	case TY_INT:
 	case TY_UINT:
-	case TY_LONG:
-	case TY_ULONG:
 		if (is_signed_format(de->de_format)) {
 		    int_to_string(buf, sizeof(buf),
 				  (vlong)vl.vl_int,
@@ -1112,7 +1110,20 @@ ci_exec_result_t res;
 		}
 		else {
 		    int_to_string(buf, sizeof(buf),
-				  (vlong)(vl.vl_int & (unsigned)~0),
+				  (vlong)(vl.vl_int & (unsigned int)~0),
+				  de->de_format);
+		}
+		break;
+	case TY_LONG:
+	case TY_ULONG:
+		if (is_signed_format(de->de_format)) {
+		    int_to_string(buf, sizeof(buf),
+				  (vlong)vl.vl_long,
+				  de->de_format);
+		}
+		else {
+		    int_to_string(buf, sizeof(buf),
+				  (vlong)(vl.vl_long & (unsigned long)~0),
 				  de->de_format);
 		}
 		break;
@@ -1200,12 +1211,15 @@ typecode_t restype;
 		break;
 	case TY_INT:
 	case TY_UINT:
-	case TY_LONG:
-	case TY_ULONG:
 	case TY_ENUM:
 	case TY_U_ENUM:
 		argslots = 1;
 		Expr_value.vl_int = args[0];
+		break;
+	case TY_LONG:
+	case TY_ULONG:
+		argslots = 1;
+		Expr_value.vl_long = args[0];
 		break;
 	case TY_STRUCT:
 	case TY_UNION:

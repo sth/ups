@@ -119,6 +119,7 @@ typedef struct textst {
 void ci_code_byte PROTO((text_t *tx, long byte));
 void ci_code_word PROTO((text_t *tx, long word));
 void ci_code_long PROTO((text_t *tx, long l));
+void ci_code_quad PROTO((text_t *tx, long q));
 void ci_code_opcode PROTO((text_t *tx, opcode_t opcode));
 void ci_code_generic_opcode PROTO((text_t *tx, opcode_t byte_opcode,
 				   stackword_t arg));

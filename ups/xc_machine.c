@@ -1172,6 +1172,12 @@ unlink:			sp = fp;
 			pc += 4;
 			goto func_call;
 
+		CASE OC_CALL_Q:
+			fcf = cf;
+			func_index = GETQUAD(pc);
+			pc += 8;
+			goto func_call;
+
 		CASE OC_CALL_B: {
 			extref_t *er;
 			libfunc_addr_t lf;
@@ -1379,6 +1385,23 @@ func_call:
 				BREAK;
 			}
 #endif
+			goto stack_overflow;
+
+		CASE OC_LINK_Q:
+			PUSH((stackword_t)fp, sp);
+			fp = sp;
+			sp = (stackword_t *)((char *)sp - GETQUAD(pc));
+			pc += 8;
+#if WANT_OLD_LINK
+			if ((char *)sp - *pc++ >= (char *)minsp)
+				BREAK;
+#else
+			/* Fix LINK ARG (CHAR -> LONG) : Dibyendu */
+			if (((char *)sp - GETLONG(pc)) >= (char *)minsp) {
+				pc += 4;
+				BREAK;
+			}
+#endif
 
 stack_overflow:		res = CI_ER_STACK_OVERFLOW;
 #if WANT_OLD_LINK
@@ -1397,6 +1420,10 @@ stack_overflow:		res = CI_ER_STACK_OVERFLOW;
 			sp = (stackword_t *)((char *)sp + GETLONG(pc));
 			pc += 4;
 			BREAK;
+		CASE OC_POPMANY_Q:
+			sp = (stackword_t *)((char *)sp + GETQUAD(pc));
+			pc += 8;
+			BREAK;
 
 		{
 			size_t nbytes;
@@ -1411,6 +1438,10 @@ stack_overflow:		res = CI_ER_STACK_OVERFLOW;
 		CASE OC_PROC_MEMCPY_L:
 			nbytes = GETLONG(pc);
 			pc += 4;
+			goto proc_memcpy;
+		CASE OC_PROC_MEMCPY_Q:
+			nbytes = GETQUAD(pc);
+			pc += 8;
 proc_memcpy:
 			if (IS_CI_ADDR(sp[1])) {
 				if (IS_CI_ADDR(*sp))
@@ -1464,6 +1495,11 @@ proc_memcpy:
 		CASE OC_MEMCPY_L:
 			memcpy((char *)sp[1], (char *)*sp, (size_t)GETLONG(pc));
 			pc += 4;
+			sp += 2;
+			BREAK;
+		CASE OC_MEMCPY_Q:
+			memcpy((char *)sp[1], (char *)*sp, (size_t)GETQUAD(pc));
+			pc += 8;
 			sp += 2;
 			BREAK;
 		
@@ -2096,6 +2132,10 @@ proc_memcpy:
 			PUSH(-GETLONG(pc), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_NEG_CONSTPUSH_Q:
+			PUSH(-GETQUAD(pc), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_CONSTPUSH_B:
 			PUSH(*pc++, sp);
@@ -2107,6 +2147,10 @@ proc_memcpy:
 		CASE OC_CONSTPUSH_L:
 			PUSH(GETLONG(pc), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_CONSTPUSH_Q:
+			PUSH(GETQUAD(pc), sp);
+			pc += 8;
 			BREAK;
 		
 		CASE OC_PUSH_FLOAT_CONST:
@@ -2146,6 +2190,15 @@ proc_memcpy:
 					       (pc - cf->cf_text_and_data) - 1);
 			pc += 4;
 			BREAK; }
+		CASE OC_CHECK_SP_Q: {
+			int checkval;
+
+			checkval = GETQUAD(pc);
+			if ((char *)fp - (char *)sp != checkval)
+				spfailed(checkval, (char *)fp - (char *)sp,
+					       (pc - cf->cf_text_and_data) - 1);
+			pc += 8;
+			BREAK; }
 
 		CASE OC_PROC_PUSH_FP_ADDR_B:
 			PUSH((stackword_t)(procfp + *pc++), sp);
@@ -2157,6 +2210,10 @@ proc_memcpy:
 		CASE OC_PROC_PUSH_FP_ADDR_L:
 			PUSH((stackword_t)(procfp + GETLONG(pc)), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PROC_PUSH_FP_ADDR_Q:
+			PUSH((stackword_t)(procfp + GETQUAD(pc)), sp);
+			pc += 8;
 			BREAK;
 
 		CASE OC_PROC_PUSH_AP_ADDR_B:
@@ -2170,6 +2227,10 @@ proc_memcpy:
 			PUSH((stackword_t)(procap + GETLONG(pc)), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PROC_PUSH_AP_ADDR_Q:
+			PUSH((stackword_t)(procap + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_STACKADDR_B:
 			PUSH((stackword_t)((char *)fp + *pc++), sp);
@@ -2181,6 +2242,10 @@ proc_memcpy:
 		CASE OC_PUSH_STACKADDR_L:
 			PUSH((stackword_t)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PUSH_STACKADDR_Q:
+			PUSH((stackword_t)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
 			BREAK;
 
 #if WANT_LL
@@ -2207,6 +2272,14 @@ proc_memcpy:
 			GET_LONGLONG(d0, (stackword_t *)addr);
 			PUSH_LONGLONG(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_UNSIGNED_LONG_LONG_AT_ADDR_Q: {
+			stackword_t addr;
+
+			addr = GETQUAD(pc);
+			pc += 8;
+			GET_LONGLONG(d0, (stackword_t *)addr);
+			PUSH_LONGLONG(d0, sp);
+			BREAK; }
 #endif
 		
 		CASE OC_PUSH_UNSIGNED_BYTE_AT_ADDR_B: {
@@ -2223,6 +2296,10 @@ proc_memcpy:
 			PUSH(*(unsigned char *)GETLONG(pc), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_UNSIGNED_BYTE_AT_ADDR_Q:
+			PUSH(*(unsigned char *)GETQUAD(pc), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_UNSIGNED_SHORT_AT_ADDR_B: {
 			stackword_t addr;
@@ -2238,6 +2315,10 @@ proc_memcpy:
 			PUSH(*(unsigned short *)GETLONG(pc), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_UNSIGNED_SHORT_AT_ADDR_Q:
+			PUSH(*(unsigned short *)GETQUAD(pc), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_UNSIGNED_LONG_AT_ADDR_B: {
 			stackword_t addr;
@@ -2252,6 +2333,10 @@ proc_memcpy:
 		CASE OC_PUSH_UNSIGNED_LONG_AT_ADDR_L:
 			PUSH(*(unsigned long *)GETLONG(pc), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PUSH_UNSIGNED_LONG_AT_ADDR_Q:
+			PUSH(*(unsigned long *)GETQUAD(pc), sp);
+			pc += 8;
 			BREAK;
 
 #if WANT_LL
@@ -2278,6 +2363,14 @@ proc_memcpy:
 			GET_LONGLONG(d0, (stackword_t *)addr);
 			PUSH_LONGLONG(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_UNSIGNED_LONG_LONG_AT_STACKADDR_Q: {
+			stackword_t addr;
+
+			addr = (stackword_t)((char *)fp + GETQUAD(pc));
+			pc += 8;
+			GET_LONGLONG(d0, (stackword_t *)addr);
+			PUSH_LONGLONG(d0, sp);
+			BREAK; }
 #endif
 		
 		CASE OC_PUSH_UNSIGNED_BYTE_AT_STACKADDR_B:
@@ -2291,6 +2384,10 @@ proc_memcpy:
 			PUSH(*(unsigned char *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_UNSIGNED_BYTE_AT_STACKADDR_Q:
+			PUSH(*(unsigned char *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_UNSIGNED_SHORT_AT_STACKADDR_B:
 			PUSH(*(unsigned short *)((char *)fp + *pc++), sp);
@@ -2303,6 +2400,10 @@ proc_memcpy:
 			PUSH(*(unsigned short *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_UNSIGNED_SHORT_AT_STACKADDR_Q:
+			PUSH(*(unsigned short *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_UNSIGNED_LONG_AT_STACKADDR_B:
 			PUSH(*(unsigned long *)((char *)fp + *pc++), sp);
@@ -2314,6 +2415,10 @@ proc_memcpy:
 		CASE OC_PUSH_UNSIGNED_LONG_AT_STACKADDR_L:
 			PUSH(*(unsigned long *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PUSH_UNSIGNED_LONG_AT_STACKADDR_Q:
+			PUSH(*(unsigned long *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
 			BREAK;
 
 #if WANT_LL
@@ -2340,6 +2445,14 @@ proc_memcpy:
 			GET_LONGLONG(d0, (stackword_t *)addr);
 			PUSH_LONGLONG(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_SIGNED_LONG_LONG_AT_ADDR_Q: {
+			stackword_t addr;
+
+			addr = GETQUAD(pc);
+			pc += 8;
+			GET_LONGLONG(d0, (stackword_t *)addr);
+			PUSH_LONGLONG(d0, sp);
+			BREAK; }
 #endif
 		
 		CASE OC_PUSH_SIGNED_BYTE_AT_ADDR_B: {
@@ -2356,6 +2469,10 @@ proc_memcpy:
 			PUSH(*(char *)GETLONG(pc), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_SIGNED_BYTE_AT_ADDR_Q:
+			PUSH(*(char *)GETQUAD(pc), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_SIGNED_SHORT_AT_ADDR_B: {
 			stackword_t addr;
@@ -2371,6 +2488,10 @@ proc_memcpy:
 			PUSH(*(short *)GETLONG(pc), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_SIGNED_SHORT_AT_ADDR_Q:
+			PUSH(*(short *)GETQUAD(pc), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_SIGNED_LONG_AT_ADDR_B: {
 			stackword_t addr;
@@ -2385,6 +2506,10 @@ proc_memcpy:
 		CASE OC_PUSH_SIGNED_LONG_AT_ADDR_L:
 			PUSH(*(long *)GETLONG(pc), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PUSH_SIGNED_LONG_AT_ADDR_Q:
+			PUSH(*(long *)GETQUAD(pc), sp);
+			pc += 8;
 			BREAK;
 		
 		CASE OC_PUSH_FLOAT_AT_ADDR_B: {
@@ -2407,6 +2532,14 @@ proc_memcpy:
 
 			addr = GETLONG(pc);
 			pc += 4;
+			GET_FLOAT(d0, (stackword_t *)addr);
+			PUSH_FLOAT(d0, sp);
+			BREAK; }
+		CASE OC_PUSH_FLOAT_AT_ADDR_Q: {
+			stackword_t addr;
+
+			addr = GETQUAD(pc);
+			pc += 8;
 			GET_FLOAT(d0, (stackword_t *)addr);
 			PUSH_FLOAT(d0, sp);
 			BREAK; }
@@ -2434,6 +2567,14 @@ proc_memcpy:
 			GET_DOUBLE(d0, (stackword_t *)addr);
 			PUSH_DOUBLE(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_DOUBLE_AT_ADDR_Q: {
+			stackword_t addr;
+
+			addr = GETQUAD(pc);
+			pc += 8;
+			GET_DOUBLE(d0, (stackword_t *)addr);
+			PUSH_DOUBLE(d0, sp);
+			BREAK; }
 
 #if WANT_LDBL
 		CASE OC_PUSH_LONG_DOUBLE_AT_ADDR_B: {
@@ -2456,6 +2597,14 @@ proc_memcpy:
 
 			addr = GETLONG(pc);
 			pc += 4;
+			GET_LDOUBLE(d0, (stackword_t *)addr);
+			PUSH_LDOUBLE(d0, sp);
+			BREAK; }
+		CASE OC_PUSH_LONG_DOUBLE_AT_ADDR_Q: {
+			stackword_t addr;
+
+			addr = GETQUAD(pc);
+			pc += 8;
 			GET_LDOUBLE(d0, (stackword_t *)addr);
 			PUSH_LDOUBLE(d0, sp);
 			BREAK; }
@@ -2485,6 +2634,14 @@ proc_memcpy:
 			GET_LONGLONG(d0, (stackword_t *)addr);
 			PUSH_LONGLONG(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_SIGNED_LONG_LONG_AT_STACKADDR_Q: {
+			stackword_t addr;
+
+			addr = (stackword_t)((char *)fp + GETQUAD(pc));
+			pc += 8;
+			GET_LONGLONG(d0, (stackword_t *)addr);
+			PUSH_LONGLONG(d0, sp);
+			BREAK; }
 #endif
 		
 		CASE OC_PUSH_SIGNED_BYTE_AT_STACKADDR_B:
@@ -2498,6 +2655,10 @@ proc_memcpy:
 			PUSH(*(char *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_SIGNED_BYTE_AT_STACKADDR_Q:
+			PUSH(*(char *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_SIGNED_SHORT_AT_STACKADDR_B:
 			PUSH(*(short *)((char *)fp + *pc++), sp);
@@ -2510,6 +2671,10 @@ proc_memcpy:
 			PUSH(*(short *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
 			BREAK;
+		CASE OC_PUSH_SIGNED_SHORT_AT_STACKADDR_Q:
+			PUSH(*(short *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
 
 		CASE OC_PUSH_SIGNED_LONG_AT_STACKADDR_B:
 			PUSH(*(long *)((char *)fp + *pc++), sp);
@@ -2521,6 +2686,10 @@ proc_memcpy:
 		CASE OC_PUSH_SIGNED_LONG_AT_STACKADDR_L:
 			PUSH(*(long *)((char *)fp + GETLONG(pc)), sp);
 			pc += 4;
+			BREAK;
+		CASE OC_PUSH_SIGNED_LONG_AT_STACKADDR_Q:
+			PUSH(*(long *)((char *)fp + GETQUAD(pc)), sp);
+			pc += 8;
 			BREAK;
 
 		CASE OC_PUSH_FLOAT_AT_STACKADDR_B: {
@@ -2543,6 +2712,14 @@ proc_memcpy:
 
 			addr = (stackword_t)((char *)fp + GETLONG(pc));
 			pc += 4;
+			GET_FLOAT(d0, (stackword_t *)addr);
+			PUSH_FLOAT(d0, sp);
+			BREAK; }
+		CASE OC_PUSH_FLOAT_AT_STACKADDR_Q: {
+			stackword_t addr;
+
+			addr = (stackword_t)((char *)fp + GETQUAD(pc));
+			pc += 8;
 			GET_FLOAT(d0, (stackword_t *)addr);
 			PUSH_FLOAT(d0, sp);
 			BREAK; }
@@ -2570,6 +2747,14 @@ proc_memcpy:
 			GET_DOUBLE(d0, (stackword_t *)addr);
 			PUSH_DOUBLE(d0, sp);
 			BREAK; }
+		CASE OC_PUSH_DOUBLE_AT_STACKADDR_Q: {
+			stackword_t addr;
+
+			addr = (stackword_t)((char *)fp + GETQUAD(pc));
+			pc += 8;
+			GET_DOUBLE(d0, (stackword_t *)addr);
+			PUSH_DOUBLE(d0, sp);
+			BREAK; }
 
 #if WANT_LDBL
 		CASE OC_PUSH_LONG_DOUBLE_AT_STACKADDR_B: {
@@ -2592,6 +2777,14 @@ proc_memcpy:
 
 			addr = (stackword_t)((char *)fp + GETLONG(pc));
 			pc += 4;
+			GET_LDOUBLE(d0, (stackword_t *)addr);
+			PUSH_LDOUBLE(d0, sp);
+			BREAK; }
+		CASE OC_PUSH_LONG_DOUBLE_AT_STACKADDR_Q: {
+			stackword_t addr;
+
+			addr = (stackword_t)((char *)fp + GETQUAD(pc));
+			pc += 8;
 			GET_LDOUBLE(d0, (stackword_t *)addr);
 			PUSH_LDOUBLE(d0, sp);
 			BREAK; }
@@ -2668,6 +2861,29 @@ proc_memcpy:
 
 				caseval = GETLONG(pc);
 				pc += 4;
+				if (caseval == switchval) {
+					pc += (short)GETWORD(pc);
+					break;
+				}
+				pc += 2;
+			}
+			if (i == ncase)
+				pc += (short)GETWORD(pc);
+			BREAK; }
+
+		CASE OC_SWITCH_ON_CHAIN_Q: {
+			int ncase, minval, switchval, i;
+
+			ncase = GETWORD(pc);
+			pc += 2;
+			minval = GETLONG(pc);
+			pc += 4;
+			switchval = POP(sp) - minval;
+			for (i = 0; i < ncase; ++i) {
+				int caseval;
+
+				caseval = GETQUAD(pc);
+				pc += 8;
 				if (caseval == switchval) {
 					pc += (short)GETWORD(pc);
 					break;
