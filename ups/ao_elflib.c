@@ -1646,11 +1646,12 @@ taddr_t addr;
   if (i == 0)
     return 0;
   nroot = n = malloc(sizeof(addr_t)*(i+1));
-  for (sa = ip->ip_solib_addrs; sa != NULL; sa = sa->next, n++)
+  for (sa = ip->ip_solib_addrs; sa != NULL; sa = sa->next)
     if (sa->vaddr)
     {
       n->addr = sa->vaddr;
       n->path = sa->path;
+      n++;
     }
   n->addr = 0;
   n->path = 0;
