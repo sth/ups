@@ -37,6 +37,7 @@ struct Text_bufdata {
 	char *text;
 	size_t len;
 	size_t maxsize;
+	Text_buffer *buffer;
 };
 	
 static void simplebuf_destroy PROTO((Text_bufdata *b));
@@ -112,6 +113,7 @@ text_create_simple_buffer()
 	b->maxsize = INITIAL_MAXSIZE;
 
 	tb = (Text_buffer *)e_malloc(sizeof(Text_buffer));
+	b->buffer = tb;
 	tb->bufdata = b;
 	tb->ops = &simplebuf_ops;
 
@@ -142,6 +144,7 @@ size_t len;
 	b->maxsize = 0;
 
 	tb = (Text_buffer *)e_malloc(sizeof(Text_buffer));
+	b->buffer = tb;
 	tb->bufdata = b;
 	tb->ops = &readonly_ops;
 
@@ -161,6 +164,7 @@ Text_bufdata *b;
 {
 	if (b->maxsize != 0)
 		free(b->text);
+	free((char *)b->buffer);
 	free((char *)b);
 }
 
