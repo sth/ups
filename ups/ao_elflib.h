@@ -72,7 +72,7 @@ bool scan_main_elf_symtab PROTO((alloc_pool_t *target_ap, const char *path,
 				 taddr_t *p_entryaddr,
 				 struct func_s **p_mainfunc,
 				 struct func_s **p_initfunc,
-				 bool target_updated));
+				 bool target_updated, int pid));
 
 bool add_solib_entry PROTO((alloc_pool_t *ap, symtab_t *st, func_t *flist,
                             Elfinfo *el, Solib **p_solibs));

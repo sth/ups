@@ -133,6 +133,11 @@ elf_get_dynamic_shlib_info PROTO((alloc_pool_t *ap, Libdep *ld, const char *text
 			   Libdep **last_child));
 
 #ifdef AO_USE_PTRACE /* interp */
+#ifdef OS_LINUX
+static bool
+get_shlib_list PROTO((alloc_pool_t *ap, int pid,
+			Solib **p_solibs, Solib_addr **p_solib_addrs));
+#endif
 static bool
 get_preload_shlib_list PROTO((alloc_pool_t *ap, const char *textpath,
 			Solib **p_solibs, Solib_addr **p_solib_addrs));
@@ -950,7 +955,7 @@ bool
 scan_main_elf_symtab(alloc_pool_t *target_ap, const char *path, int fd,
 		     long modtime, Solib **p_solibs, Solib_addr **p_solib_addrs,
 		     taddr_t *p_entryaddr, struct func_s **p_mainfunc,
-		     struct func_s **p_initfunc, bool target_updated)
+		     struct func_s **p_initfunc, bool target_updated, int pid)
 {
 	Libdep *ld;
 	bool ok;
@@ -976,8 +981,18 @@ scan_main_elf_symtab(alloc_pool_t *target_ap, const char *path, int fd,
 	{
 	  ld->so->symtab->st_modtime = modtime;
 #ifdef AO_USE_PTRACE /* interp */
-	  if (!get_preload_shlib_list (target_ap, path, p_solibs, p_solib_addrs))
-	    return FALSE;
+#ifdef OS_LINUX
+          if (pid)
+          {
+            if (!get_shlib_list (target_ap, pid, p_solibs, p_solib_addrs))
+              return FALSE;
+	  }
+          else
+#endif
+          {
+            if (!get_preload_shlib_list (target_ap, path, p_solibs, p_solib_addrs))
+              return FALSE;
+          }
 #endif
 	  Main_debug_vaddr = ld->so->debug_vaddr;
 	}
@@ -1368,6 +1383,66 @@ bool check_only;
 }
 
 #ifdef AO_USE_PTRACE /* interp */
+
+#ifdef OS_LINUX
+
+static bool
+get_shlib_list(ap, pid, p_solibs, p_solib_addrs)
+alloc_pool_t *ap;
+int pid;
+Solib **p_solibs;
+Solib_addr **p_solib_addrs;
+{
+    char buf[MAXPATHLEN+256], name[MAXPATHLEN], lastname[MAXPATHLEN];
+    FILE *fp;
+    taddr_t addr;
+    struct stat stbuf;
+    Solib_addr *sa;
+
+    sprintf( name, "/proc/%d/maps", pid );
+
+    if ((fp = fopen(name, "r")) == NULL) {
+	    errf("Fopen failed: %s", get_errno_str());
+	    return FALSE;
+    }
+
+    strcpy(lastname, "");
+
+    while (fgets(buf, sizeof(buf), fp) != NULL)
+    {
+	if (sscanf(buf, "%lx-%*x %*s %*x %*d:%*d %*d %s", &addr, name) == 2)
+	{
+	    if (strcmp(name, lastname) == 0) continue;
+	   
+	    if (stat(name, &stbuf) != 0)
+	    {
+		errf("Can't stat shared library %s: %s (ignored)",
+		     name, get_errno_str());
+		continue;
+	    }
+	    
+	    sa = e_malloc(sizeof(Solib_addr));
+	    sa->dev = stbuf.st_dev;
+	    sa->ino = stbuf.st_ino;
+	    sa->size = stbuf.st_size;
+	    sa->offset = 0;
+	    sa->vaddr = addr;
+	    sa->pagesize = 0;
+	    sa->path = NULL;
+	    sa->next = *p_solib_addrs;
+	    *p_solib_addrs = sa;
+
+	    strcpy(lastname, name);
+	}
+    }
+    
+    fclose(fp);
+
+    return TRUE;
+}
+
+#endif
+
 /*  Get the list of shared libraries that the textpath will load
  *  when it is run.  We do this in the same way as ldd(1), by
  *  running the target with LD_TRACE_LOADED_OBJECTS set in its
@@ -1505,6 +1580,7 @@ const char *s;
 	*dst = NULL;
 	return envp;
 }
+
 #endif
 
 

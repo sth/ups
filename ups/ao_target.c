@@ -285,6 +285,7 @@ const char **p_cmdline;
 	int lastsig, ret;
 	iproc_t *ip;
 	Coredesc *co;
+	int pid;
 
 	if (!open_textfile(textfd, xp->xp_textpath, &data_addr))
 		return -1;
@@ -292,6 +293,13 @@ const char **p_cmdline;
 	if (!open_corefile(xp->xp_apool, corepath, xp->xp_textpath,
 			   user_gave_core, data_addr, &co, &lastsig))
 		return -1;
+
+	if (user_gave_core && is_number(corepath)) {
+		pid = atoi(corepath);
+	}
+	else {
+        	pid = 0;
+	}
 
 	ip = (iproc_t *)alloc(xp->xp_apool, sizeof(iproc_t));
 	ip->ip_pid = 0;
@@ -318,7 +326,7 @@ const char **p_cmdline;
 				   xp->xp_modtime, &ip->ip_solibs,
 				   &ip->ip_solib_addrs, &xp->xp_entryaddr,
 				   &xp->xp_mainfunc, &xp->xp_initfunc,
-				   xp->xp_target_updated);
+				   xp->xp_target_updated, pid);
 	xp->xp_target_updated = FALSE;
 	if (!ret)
 	  return -1;
