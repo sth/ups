@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+char ups_ao_dwarf_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
@@ -52,8 +53,8 @@ dwf_error_msg (char *msg, int dwarf_code, Dwarf_Die die, Dwarf_Error err)
 	die_txt = strf("(DIE %s <%ld><%ld>)", die_name, (long)offset, (long)rel_offset);
     if (dwarf_code == DW_DLV_ERROR) {
 	char * errmsg = dwarf_errmsg(err);
-	long long myerr = dwarf_errno(err);
-	return strf("\bDWARF error : %s - %s %s (%lld)", msg, die_txt, errmsg, myerr);
+	Dwarf_Unsigned myerr = dwarf_errno(err);
+	return strf("\bDWARF error : %s - %s %s (%ld)", msg, die_txt, errmsg, (long)myerr);
     }
 
     if (dwarf_code == DW_DLV_NO_ENTRY)
