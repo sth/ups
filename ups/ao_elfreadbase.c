@@ -333,6 +333,17 @@ ELF(dynamic_ptr_address)(Elf_Shdr *dynsh, Elf_Dyn *dyntab, Elf_Dyn *dyn)
 	return dynsh->sh_addr + ((char *)&dyn->d_un.d_ptr - (char *)dyntab);
 }
 
+static size_t
+ELF(relocation_size)(int rel_type)
+{
+	if (rel_type == DT_REL)
+		return sizeof(Elf_Rel);
+	else if (rel_type == DT_RELA)
+		return sizeof(Elf_Rela);
+	else
+		return 0;
+}
+
 static bool
 ELF(resolve_relocation)(target_t *xp, taddr_t st_base_address,
 			taddr_t symtab_vaddr, taddr_t strtab_vaddr,
@@ -471,6 +482,7 @@ const Elfops ELF(ops) = {
         ELF(dynamic_val),
         ELF(dynamic_ptr),
         ELF(dynamic_ptr_address),
+	ELF(relocation_size),
 	ELF(resolve_relocation),
 	ELF(read_r_debug),
 	ELF(r_debug_map),

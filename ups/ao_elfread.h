@@ -131,6 +131,8 @@ bool ar_get_member_offset PROTO((const char *path, int fd, const char *member,
 #define elf_dynamic_ptr_address(el, dynsh, dyntab, dyn) \
 	(el)->ops->dynamic_ptr_address(dynsh, dyntab, dyn)
 
+#define elf_relocation_size(elops, rel) \
+	(elops)->relocation_size(rel)
 #define elf_resolve_relocation(elops, xp, ast, symtab, strtab, rel, off, name) \
 	(elops)->resolve_relocation(xp, ast, symtab, strtab, rel, off, name)
 

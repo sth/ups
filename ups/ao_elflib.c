@@ -1820,12 +1820,16 @@ taddr_t pc;
       if (push[0] != 0x68) /* push NNN */
          panic("Unexpected opcode in procedure linkage table");
 
-      off = *((int *)(push + 1)) + solib->plt_rel_vaddr;
+      off = *((int *)(push + 1));
+   
+      if (xp_get_addrsize(xp) == 64)
+         off = off * elf_relocation_size(solib->elops, solib->plt_rel_type);
 
       if (!elf_resolve_relocation(solib->elops, xp, ast->st_base_address,
 				  solib->dyn_symtab_vaddr,
 				  solib->dyn_strtab_vaddr,
-				  solib->plt_rel_type, off, func_name)) {
+				  solib->plt_rel_type,
+				  solib->plt_rel_vaddr + off, func_name)) {
 	 panic("Unexpected relocation type in procedure linkage table");
       }
 

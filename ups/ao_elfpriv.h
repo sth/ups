@@ -133,6 +133,7 @@ typedef struct Elfops {
 	taddr_t (*dynamic_ptr_address)PROTO((Elf_Shdr *dynsh, Elf_Dyn *dyntab,
 					     Elf_Dyn *dyn));
 
+	size_t (*relocation_size)PROTO((int rel_type));
 	bool (*resolve_relocation)PROTO((target_t *xp, taddr_t st_base_address,
 					 taddr_t symtab_vaddr,
 					 taddr_t strtab_vaddr,
