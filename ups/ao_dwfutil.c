@@ -110,7 +110,8 @@ char *path;
  * Get the source file language.
  *
  * 'cu_die' is the compilation unit DIE
- * See .../lib/libdwarf/dwarf.h
+ * See .../lib/libdwarf/dwarf.h for list of languages.
+ * dwarfTODO: environment variable UPS_LANGUAGE ?
  */
 language_t
 dwf_get_src_language(dbg, cu_die)
@@ -142,6 +143,7 @@ Dwarf_Die cu_die;
  * Get the compiler type.
  *
  * 'cu_die' is the compilation unit DIE
+ * dwarfTODO: environment variable UPS_LANGUAGE ?
  */
 Compiler_type
 dwf_get_compiler_type(dbg, cu_die)
@@ -155,6 +157,7 @@ Dwarf_Die cu_die;
 
     /*
      * dwarfTODO: find out other values of 'producer'
+     * dwarfTODO: if used C++ on a C file may want to change language
      */
     if (strncmp (producer, "GNU C ", 6) == 0)
 	ct = CT_GNU_CC;

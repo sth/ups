@@ -36,7 +36,7 @@ typedef unsigned int dwload_t;
 #define DWL_BASE_TYPES		0x000100	/* Base types. */
 #define DWL_GLOBAL_TYPES	0x000200	/* File scope types. */
 #define DWL_LOCAL_TYPES		0x000400	/* Local types. */
-#define DWL_SKIM_CLASSES	0x000800	/* Just save names. */
+#define DWL_SKIM_TYPES		0x000800	/* Just save names. */
 #define DWL_LEXICAL_BLOCKS	0x001000	/* Lexical blocks. */
 #define DWL_SUBRANGES		0x002000	/* Subranges, e.g. array dimensions. */
 #define DWL_ENUM_MEMBERS	0x010000	/* Enumerated type members. */

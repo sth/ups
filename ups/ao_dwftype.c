@@ -43,6 +43,7 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 #include "st.h"
 #include "ao_dwarf.h"
 #include "ao_syms.h"
+#include "ao_dwfname.h"
 #include "ao_dwftype.h"
 #include "ao_dwfutil.h"
 
@@ -659,7 +660,23 @@ typecode_t typecode;
 }
 
 /*
- * Make a 'type_t' for an aggregate type (struct/union/enum).
+ * Make a 'type_t' for a class/struct type.
+ * Also creates the corresponding 'dtype_t'.
+ */
+dtype_t *
+dwf_make_struct_type(dbg, die, ap, stf, typecode, bl)
+Dwarf_Debug dbg;
+Dwarf_Die die;
+stf_t *stf;
+alloc_pool_t *ap;
+typecode_t typecode;
+block_t *bl;
+{
+    return dwf_make_ae_type(dbg, die, ap, stf, typecode, bl);
+}
+
+/*
+ * Make a 'type_t' for an aggregate type (class/struct/union/enum).
  * Also creates the corresponding 'dtype_t'.
  */
 dtype_t *
@@ -700,6 +717,19 @@ block_t *bl;
     type->ty_lexinfo = dwf_make_lexinfo(dbg, die, ap, stf);
     ae->ae_lexinfo = type->ty_lexinfo;
 
+    /*
+     * Finish off undefined enum/struct/union here as will not be calling
+     * dwf_finish_aggregate().
+     */
+    if ((typecode == TY_U_STRUCT) || (typecode == TY_U_UNION) || (typecode == TY_U_ENUM)) {
+	ae->ae_size = type->ty_size;
+	ae->ae_alignment = -1;
+	ae->ae_is_complete = AE_COMPLETE;
+    }
+
+    /*
+     * Link it in.
+     */
     ae->ae_next = bl->bl_aggr_or_enum_defs;
     bl->bl_aggr_or_enum_defs = ae;
 
@@ -866,6 +896,7 @@ aggr_or_enum_def_t *ae;
  * on in the list, never earlier.
  *
  * Also sort out any dummy types we created.
+ * Also fix base class names in inherited classes.
  */
 int
 dwf_fixup_types(dt, recursed)
@@ -901,6 +932,7 @@ int recursed;
 		if (recursed == 0)
 		    errf("\bDWARF type incomplete, offset <%ld>", (long)dt->dt_base_offset);
 #if WANT_DEBUG
+if (recursed == 0)
 fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
 #endif
 	    }
@@ -984,15 +1016,29 @@ fprintf(stderr, "level %d bad type, offset <%ld>\n", recursed, (long)dt->dt_base
 
 	/*
 	 * Look for struct/union to fix.
+	 * Also does base class names.
 	 */
 	if ((dt->dt_base_offset == (off_t)0) && (dt->dt_is == DT_IS_TYPE)) {
 	    dest = dt->dt_type;
 	    if ((dest->ty_code == TY_STRUCT) || (dest->ty_code == TY_UNION)) {
 		if (recursed == 0) {
 		    aggr_or_enum_def_t *ae = dest->ty_aggr_or_enum;
+		    var_t *v;
+		    /*
+		     * Should be able to work out struct alignment.
+		     */
 		    ae->ae_alignment = dwf_guess_ae_alignment(ae);
 		    if (ae->ae_alignment <= 0)
 			errf("No alignment on %s", ae->ae_tag ? ae->ae_tag : "NULL");
+		    /*
+		     * Should now have base class name.
+		     */
+		    v = ae->ae_aggr_members;
+		    while (v != NULL) {
+			if ((v->va_flags & VA_BASECLASS) && (v->va_type != NULL))
+			    ci_make_baseclass_name(v);
+			v = v->va_next;
+		    }
 		}
 	    }
 	}
@@ -1000,13 +1046,15 @@ fprintf(stderr, "level %d bad type, offset <%ld>\n", recursed, (long)dt->dt_base
 	dt = dt->dt_next;
     }
 
+#if WANT_DEBUG
+if (recursed == 0)
+fprintf(stderr, "recursed %d - %d incomplete type, %d bad type\n", recursed, incomplete, bad_dummy);
+#endif
     return incomplete + bad_dummy;
 }
 
 /*
  * Finish up an aggregate type we have just got the members of.
- *
- * dwarfTODO: should 'undefined' structure be marked AE_COMPLETE ?
  */
 void
 dwf_finish_aggregate(dt)
@@ -1074,11 +1122,11 @@ dtype_t *dt;
 
     /*
      * Fix class members.
-     * Should now have base class name.
+     * If possible set base class name.
      */
     v = ae->ae_aggr_members;
     while (v != NULL) {
-	if (v->va_flags & VA_BASECLASS)
+	if ((v->va_flags & VA_BASECLASS) && (v->va_type != NULL))
 	    ci_make_baseclass_name(v);
 	v = v->va_next;
     }

@@ -38,6 +38,7 @@ char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 #include "ao_dwarf.h"
 #include "ao_syms.h"
 #include "ao_symscan.h"
+#include "ao_dwfname.h"
 #include "ao_dwfsyms.h"
 #include "ao_dwftype.h"
 #include "ao_dwfutil.h"
@@ -444,6 +445,8 @@ int recursed;		/* Recursion level, 0 = top. */
     aggr_or_enum_def_t *ae;
     alloc_pool_t *ap;
     dtype_t *dt;
+    type_t *type;
+    typename_t *tn;
     bool is_static;
     char *name;
     int count = 0;
@@ -470,7 +473,6 @@ int recursed;		/* Recursion level, 0 = top. */
 	    if (!stop_pressed(0, 0) && user_wants_stop(TRUE))
 		stop_pressed(1, 0);	/* set */
 	}
-
 
 	/* Offset in CU is very useful when debugging. */
 	rel_offset = (long)dwf_cu_offset_of_die(dbg, die);
@@ -561,7 +563,6 @@ int recursed;		/* Recursion level, 0 = top. */
 
 	case DW_TAG_base_type:
 	    if (dw_what & DWL_BASE_TYPES) {
-		type_t *type;
 		typecode_t typecode;
 		int nbytes;
 		int encoding;
@@ -699,6 +700,13 @@ int recursed;		/* Recursion level, 0 = top. */
 		    hint = CL_MOS;
 		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
 				      dw_level, hint);
+		if (dwf_has_attribute(dbg, die, DW_AT_artificial)) {
+		    /*
+		     * GCC virtual function table ?
+		     */
+		    if (v->va_name && (strncmp (v->va_name, "_vptr$", 6) == 0))
+			v->va_flags = VA_VTBLPTR;
+		}
 	    }
 	    break;
 
@@ -707,12 +715,12 @@ int recursed;		/* Recursion level, 0 = top. */
 		var_t *v;
 		/*
 		 * A base class the current class inherits from.
+		 * Base class name set in dwf_finish_class().
 		 */
 		ae = parent_dt->dt_type->ty_aggr_or_enum;
 		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
 				      dw_level, CL_MOS);
 		v->va_flags = VA_BASECLASS;
-		ci_make_baseclass_name(v);
 	    }
 	    break;
 
@@ -731,52 +739,93 @@ int recursed;		/* Recursion level, 0 = top. */
 	    /*
 	     * GCC seems to use DW_TAG_structure_type :-(
 	     */
-	    if (dw_what & DWL_ANY_TYPES) {
-		typecode_t typecode;
+	    /* DROPTHROUGH */
 
-		typecode = TY_STRUCT;
-		dw_what_next = DWL_STRUCT_MEMBERS | DWL_CLASS_MEMBERS;
+	case DW_TAG_structure_type:
+	    if (dw_what & DWL_SKIM_TYPES) {
+		/*
+		 * If it looks like a definition, save it.
+		 */
+		if (! dwf_has_attribute(dbg, die, DW_AT_declaration))
+		    dwf_save_typename(dbg, die, st, stf);
+
+	    } else if (dw_what & DWL_ANY_TYPES) {
+		/*
+		 * Structure type (class/struct)
+		 * Is it a definition or just a declaration ?
+		 */
+		if (dwf_has_attribute(dbg, die, DW_AT_declaration)) {
+		    /*
+		     * Just a declaration - check to see if we have seen a
+		     * definition elsewhere.
+		     */
+		    if ((type = dwf_find_alt_type_defn(dbg, die, stf)) == NULL) {
+			/*
+			 * No definition - make an 'undefined struct'
+			 */
+			dt = dwf_make_struct_type(dbg, die, ap, stf, TY_U_STRUCT, parent_bl);
+		    } else {
+			/*
+			 * Have a definition - use it.
+			 */
+			dt = dwf_make_dtype(dbg, die, ap, stf, DT_IS_TYPE, NULL, type);
+		    }
+
+		    /*
+		     * Determine which child DIEs we need to process.
+		     * For C++ the "struct" may really be a class,
+		     * and contain type definitions, which can get referenced
+		     * from a higher level, so we have to descend :-(
+		     */
+		    if (stf->stf_language == LANG_CC) {
+			dw_what_next = DWL_ANY_TYPES;
+			descend = TRUE;
+		    }
+
+		} else {
+		    /*
+		     * A definition - dwf_finish_aggregate() will change
+		     * the typecode if it turns out to have no members.
+		     */
+
+		    /*
+		     * Determine which child DIEs we need to process.
+		     * For C++ the "struct" may really be a "class",
+		     * and contain type definitions.
+		     */
+		    dw_what_next = DWL_STRUCT_MEMBERS;
+		    if (stf->stf_language == LANG_CC)
+			dw_what_next |= DWL_CLASS_MEMBERS | DWL_ANY_TYPES;
+		    descend = TRUE;
+
+		    dt = dwf_make_struct_type(dbg, die, ap, stf, TY_STRUCT, parent_bl);
+		}
+	    }
+	    break;
+
+	case DW_TAG_union_type:
+	    if (dw_what & DWL_ANY_TYPES) {
+		/*
+		 * Union type.
+		 * Determine which child DIEs we need to process.
+		 */
+		dw_what_next = DWL_STRUCT_MEMBERS;
 		descend = TRUE;
-		dt = dwf_make_ae_type(dbg, die, ap, stf, typecode, parent_bl);
+
+		dt = dwf_make_ae_type(dbg, die, ap, stf, TY_UNION, parent_bl);
 	    }
 	    break;
 
 	case DW_TAG_enumeration_type:
-	case DW_TAG_structure_type:
-	case DW_TAG_union_type:
 	    if (dw_what & DWL_ANY_TYPES) {
-		typecode_t typecode;
-
 		/*
-		 * Aggregate type (class/enum/struct/union)
-		 *
-		 * Assume we have a definition; dwf_finish_aggregate()
-		 * will change the typecode if it turns out to have been
-		 * just a declaration.
-		 */
-		if (tag == DW_TAG_enumeration_type)
-		    typecode = TY_ENUM;
-		else if (tag == DW_TAG_structure_type)
-		    typecode = TY_STRUCT;
-		else if (tag == DW_TAG_union_type)
-		    typecode = TY_UNION;
-
-		/*
+		 * Enumerated type.
 		 * Determine which child DIEs we need to process.
-		 * For C++ the "struct" may really be a "class",
-		 * and also contain nested types.
 		 */
-		if (tag == DW_TAG_enumeration_type)
-		    dw_what_next = DWL_ENUM_MEMBERS;
-		else if (tag == DW_TAG_union_type)
-		    dw_what_next = DWL_STRUCT_MEMBERS;
-		else if (stf->stf_language == LANG_CC)
-		    dw_what_next = DWL_STRUCT_MEMBERS | DWL_CLASS_MEMBERS | DWL_ANY_TYPES;
-		else
-		    dw_what_next = DWL_STRUCT_MEMBERS;
+		dw_what_next = DWL_ENUM_MEMBERS;
 		descend = TRUE;
 
-		dt = dwf_make_ae_type(dbg, die, ap, stf, typecode, parent_bl);
+		dt = dwf_make_ae_type(dbg, die, ap, stf, TY_ENUM, parent_bl);
 	    }
 	    break;
 
@@ -854,10 +903,13 @@ stf_t *stf;
     dwload_t dw_what;
 
     /*
-     * Done ?
+     * Already done or being done ?
      */
     if (stf->stf_fil->fi_flags & FI_DONE_TYPES)
 	return;
+    if (stf->stf_fil->fi_flags & FI_DOING_TYPES)
+	return;
+    stf->stf_fil->fi_flags |= FI_DOING_TYPES;
 
     /*
      * Initalise
@@ -873,6 +925,7 @@ stf_t *stf;
 		      (block_t **)NULL, stf->stf_fil->fi_block,
 		      (dtype_t *)NULL, cu_die, dw_what, dw_level, 0);
 
+    stf->stf_fil->fi_flags &= ~FI_DOING_TYPES;
     stf->stf_fil->fi_flags |= FI_DONE_TYPES;
 #if WANT_DEBUG
 dump_header(stf->stf_fil->fi_name);
@@ -993,7 +1046,14 @@ Dwarf_Die cu_die;
      * Initalise
      */
     dw_level = 1;	/* Follow 'dwarfdump' comvention. */
+
+    /*
+     * Gather functions, global and file-scope variable names,
+     * and, for C++, class names.
+     */
     dw_what = DWL_TOP_FUNCS | DWL_SKIM_VARS;
+    if ((stf->stf_language == LANG_CC) && find_types_by_name())
+	dw_what |= DWL_SKIM_TYPES;
 
     dwf_load_from_die(st, stf, p_flist, (func_t *)NULL,
 		      (block_t **)NULL, (block_t *)NULL,
@@ -1176,6 +1236,8 @@ Dwarf_Debug dbg;
 	stf->stf_compiler_type = ct;
 	stf->stf_objpath_hint = comp_dir;
 	st->st_sfiles = ao_make_fil(stf, rootblock, comp_dir, st->st_sfiles);
+	if ((*cu_name != '\0') && (ast->st_type_names == NULL))
+	    ast->st_type_names = hash_create_tab(ap, 1000);
 	stf->stf_fil = st->st_sfiles;
 
 	/*

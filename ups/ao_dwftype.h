@@ -45,6 +45,9 @@ dtype_t *	dwf_make_dtype PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 dtype_t *	dwf_make_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 				     alloc_pool_t *ap, stf_t *stf,
 				     typecode_t typecode));
+dtype_t *	dwf_make_struct_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
+					    alloc_pool_t *ap, stf_t *stf,
+					    typecode_t typecode, block_t *bl));
 dtype_t *	dwf_make_ae_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 				        alloc_pool_t *ap, stf_t *stf,
 				        typecode_t typecode, block_t *bl));

@@ -123,14 +123,14 @@ AOOBJS = ao_target.o ao_procfs.o ao_core.o \
          ao_symscan.o ao_symcb.o ao_aout.o ao_elfcore.o \
 	 ao_elfread.o ao_elfsym.o ao_elflib.o ao_aflist.o \
 	 ao_dwarf.o ao_dwfsyms.o ao_dwftext.o ao_dwftype.o ao_dwfutil.o \
-	 ao_te.o ao_text.o ao_stack.o ${ASOBJS}
+	 ao_dwfname.o ao_te.o ao_text.o ao_stack.o ${ASOBJS}
 AOSRCS = ao_target.c ao_procfs.c ao_core.c \
 	 ao_ptrace.c ao_pt_regs.c ao_pt_uarea.c \
 	 ao_symread.c ao_shlib.c ao_symload.c ao_symparse.c  \
          ao_symscan.c ao_symcb.c ao_aout.c ao_elfcore.c \
 	 ao_elfread.c ao_elfsym.c ao_elflib.c ao_aflist.c \
 	 ao_dwarf.c ao_dwfsyms.c ao_dwftext.c ao_dwftype.c ao_dwfutil.c \
-	 ao_te.c ao_text.c ao_stack.c ${ASSRCS}
+	 ao_dwfname.c ao_te.c ao_text.c ao_stack.c ${ASSRCS}
 
 GDB_OBJS = gd_gdb.o gd_ups.o tops-native.o gd_main.o
 GDB_SRCS = gd_gdb.c gd_ups.c tops-native.c
@@ -199,8 +199,8 @@ MENUS = bphmen.c bptmen.c cbhmen.c cblockmen.c cmdmen.c coremen.c nolibmen.c \
 
 CURSORS = cu_dead cu_dead_mask cu_display cu_display_mask cu_drag_box cu_drag_box_mask cu_menu cu_menu_mask cu_sbar cu_sbar_mask cu_sc_pressed cu_sc_pressed_mask cu_scroll_down cu_scroll_down_mask cu_scroll_up cu_scroll_up_mask cu_wait cu_wait_mask cu_line cu_line_mask cu_dragbox cu_dragbox_mask
 
-HDRS = ao.h ao_aflist.h ao_aout.h ao_asm.h ao_core.h                          \
-       ao_dwarf.h ao_dwfsyms.h ao_dwftext.h ao_dwftype.h ao_dwfutil.h         \
+HDRS = ao.h ao_aflist.h ao_aout.h ao_asm.h ao_core.h ao_dwarf.h               \
+       ao_dwfname.h ao_dwfsyms.h ao_dwftext.h ao_dwftype.h ao_dwfutil.h       \
        ao_elfcore.h ao_elflib.h ao_elfpriv.h ao_elfread.h ao_elfsym.h         \
        ao_execinfo.h ao_ifdefs.h ao_procfs.h ao_ptrace.h ao_shlib.h	      \
        ao_stack.h ao_symcb.h ao_symload.h ao_symparse.h ao_symread.h	      \
@@ -550,15 +550,19 @@ ao_aflist.o: develhdrs/mtrprog/ifdefs.h ao_aflist.c ao_ifdefs.h ups.h symtab.h c
 ao_dwarf.o: develhdrs/mtrprog/ifdefs.h ao_dwarf.c ao_dwarf.h 
 	${CCLINE}ao_dwarf.c
 ao_dwfsyms.o: develhdrs/mtrprog/ifdefs.h ao_dwfsyms.c \
-  ao_dwarf.h ao_dwfsyms.h ao_dwftype.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
+  ao_dwarf.h ao_dwfsyms.h ao_dwfname.h ao_dwftype.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
   ao_syms.h ao_symscan.h 
 	${CCLINE}ao_dwfsyms.c
 ao_dwftext.o: develhdrs/mtrprog/ifdefs.h ao_dwftext.c \
   ao_dwarf.h ao_dwfsyms.h ao_dwftext.h ups.h symtab.h ci.h st.h \
   ao_syms.h ao_symscan.h 
 	${CCLINE}ao_dwftext.c
+ao_dwfname.o: develhdrs/mtrprog/ifdefs.h ao_dwfname.c \
+  ao_dwarf.h ao_dwfname.h ao_dwftype.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
+  ao_syms.h
+	${CCLINE}ao_dwfname.c
 ao_dwftype.o: develhdrs/mtrprog/ifdefs.h ao_dwftype.c \
-  ao_dwarf.h ao_dwftype.h ups.h symtab.h ci.h st.h \
+  ao_dwarf.h ao_dwfname.h ao_dwftype.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
   ao_syms.h
 	${CCLINE}ao_dwftype.c
 ao_dwfutil.o: develhdrs/mtrprog/ifdefs.h ao_dwfutil.c \
