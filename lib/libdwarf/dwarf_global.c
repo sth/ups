@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000, 2002 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -45,6 +45,17 @@ dwarf_get_globals(Dwarf_Debug dbg,
 		  Dwarf_Global ** globals,
 		  Dwarf_Signed * return_count, Dwarf_Error * error)
 {
+    int res;
+
+    res =
+       _dwarf_load_section(dbg, 
+			   dbg->de_debug_pubnames_index,
+			   &dbg->de_debug_pubnames,
+			   error);
+    if (res != DW_DLV_OK) {
+        return res;
+    }
+
 
 
     return _dwarf_internal_get_pubnames_like_data(dbg,
@@ -115,6 +126,13 @@ _dwarf_internal_get_pubnames_like_data(Dwarf_Debug dbg,
     if (dbg == NULL) {
 	_dwarf_error(NULL, error, DW_DLE_DBG_NULL);
 	return (DW_DLV_ERROR);
+    }
+    /* We will eventually need the .debug_info data. Load it now. */
+    if(!dbg->de_debug_info) {
+        int res = _dwarf_load_debug_info(dbg,error);
+        if(res != DW_DLV_OK) {
+              return res;
+        }
     }
 
     if (section_data_ptr == NULL) {
@@ -378,6 +396,10 @@ dwarf_global_name_offsets(Dwarf_Global global,
     }
 
     if (cu_die_offset != NULL) {
+ 	int res = _dwarf_load_debug_info(dbg,error);
+	if(res != DW_DLV_OK) {
+	   return res;
+	}
 	*cu_die_offset = off + _dwarf_length_of_cu_header(dbg, off);
     }
 

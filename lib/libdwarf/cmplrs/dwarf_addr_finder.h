@@ -49,7 +49,7 @@ typedef int (*Dwarf_addr_callback_func)   (int /*section*/,
 	so there were no addresses to be modified (and none
 	called back).
 */
-int _dwarf_addr_finder(Elf * elf_file_ptr,
+int _dwarf_addr_finder(dwarf_elf_handle elf_file_ptr,
                 Dwarf_addr_callback_func cb_func,
                 int *dwerr);
 
