@@ -288,7 +288,7 @@ machine_t *
 ci_make_machine_from_linkinfo(li, entry_name, stack_size, getaddr,
 			      get_regaddr_proc, get_regaddr_proc_arg, errfunc)
 linkinfo_t *li;
-const char *entry_name;
+const char *entry_name;		/* Executable entry point, e.g. "main", or NULL */
 unsigned stack_size;
 ci_getaddrproc_t getaddr;
 ci_get_regaddr_proc_t get_regaddr_proc;
@@ -364,7 +364,8 @@ ci_report_error_func_t errfunc;
 	ma->ma_get_regaddr_proc = get_regaddr_proc;
 	ma->ma_get_regaddr_proc_arg = get_regaddr_proc_arg;
 
-	if (entry_name != NULL && strcmp(entry_name, "main") == 0) {
+	/* Entry point needs argc, argv and envp. */
+	if (entry_name != NULL /* && strcmp(entry_name, "main") == 0 */) {
 		ma->ma_envp_pos = (textword_t *)--ma->ma_initial_sp;
 		ma->ma_argv_pos = (textword_t *)--ma->ma_initial_sp;
 		ma->ma_argc_pos = (textword_t *)--ma->ma_initial_sp;
