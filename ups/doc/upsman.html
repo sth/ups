@@ -310,11 +310,48 @@ command line.
 </table>
 
 <p>
-You can see all the symbol table names that are loaded and not loaded by doing a
+You can see all the symbol table names that are loaded and not loaded by setting
+<tt>VERBOSE</tt> to <tt>1</tt>, <i>e.g.</i> if you use <i>csh(1)</i> by doing
 <tt>setenv&nbsp;VERBOSE&nbsp;1</tt> before calling <i>ups</i>.
-Setting <tt>VERBOSE</tt> to <tt>NOLOAD</tt> causes
+Setting <tt>VERBOSE</tt> to <tt>NOLOAD</tt> causes <i>ups</i>
 to list just the libraries that are not loaded.
 
+<p>
+The variable <tt>EDITOR</tt> is used, if set, as the editor for source files.
+If not set the default is <i>vi(1)</i>. 
+Unless the editor is <i>emacs(1)</i>, or the name starts with an "x", it will be started
+in a new <i>xterm(1)</i> window.
+
+<p>
+You can change the source code language and compiler type that <i>ups</i>
+assumes have been used by setting <tt>UPS_LANGUAGE</tt> or <tt>UPS_COMPILER</tt> as appropriate.
+Note that these settings will be used for all files.
+These might be useful if you use non-standard file extensions, or have
+compiled C with a C++ compiler.
+<tt>UPS_LANGUAGE</tt> can be <tt>C</tt>, <tt>C++</tt>, <tt>F77</tt> or <tt>F90</tt>.
+<br>
+<tt>UPS_COMPILER</tt> can be
+<blockquote>
+<tt>cc&nbsp;&nbsp;</tt> Sun C/C++ compiler
+<br>
+<tt>gcc&nbsp;</tt> GNU gcc/g++/g77
+<br>
+<tt>clcc</tt> Centerline C++
+<br>
+<tt>f77&nbsp;</tt> Sun Fortran
+<br>
+<tt>f90&nbsp;</tt> EPCF90
+</blockquote>
+
+On Sun SPARC systems <tt>UPS_SUNOS_STEP</tt> controls whether
+<b>Step</b>
+will take you into a routine if it is in a shared library.
+If not set, or set to <tt>1</tt>, you can step into shared libraries.
+If set to <tt>0</tt> then
+<b>Step</b>
+will continue to the next statement in the current routine.
+
+<h3>Default formats for displaying variables</h3>
 <p>
 Most software projects of any size develop formal or informal naming conventions
 that make it possible to specify the desired format for a variable based on the
@@ -421,6 +458,7 @@ If the pattern is
 omitted the default pattern is <tt>*</tt> so that all variables of the specified type
 are selected.
 
+<h3>Pre-defined strings on function keys</h3>
 <p>
 It is possible to insert pre-defined strings when editing text.
 This applies to all editing : in the typing line, in the display area, in
@@ -467,7 +505,7 @@ The F6 string pastes in the X-windows
 selection and the F7 string sets a breakpoint in <i>purified</i> code.
 
 <p>
-To do this, put the following in your environment :
+To do this, if you use <i>csh(1)</i>, put the following in your environment :
 <blockquote>
 <pre>
 setenv UPS_F1_STR &acute;$printf("\\n");&acute;
@@ -478,6 +516,12 @@ setenv UPS_F5_STR &acute;ostream::operator&lt;&lt;(&cout, "");&acute;
 setenv UPS_F6_STR "^e^u^y\n"
 setenv UPS_F7_STR "%b purify_stop_here\n"
 </pre>
+</blockquote>
+If your shell is <i>sh(1)</i> or <i>bash(1)</i> then use :
+<blockquote>
+<tt>export UPS_F1_STR=&acute;$printf("\\n");&acute;</tt>
+<br>
+<i>etc</i>.
 </blockquote>
 </p>
 

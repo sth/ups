@@ -799,9 +799,36 @@ argument is specified, this default behaviour is suppressed and the \fItarget\fP
 filename is passed directly from the ups command line to the process
 command line.
 .SH "ENVIRONMENT VARIABLES AFFECTING UPS"
-You can see all the symbol table names that are loaded and not loaded by doing a
-"setenv VERBOSE 1" before calling \fIups\fP. Setting VERBOSE to "NOLOAD" causes
-to list just the libraries that are not loaded.
+You can see all the symbol table names that are loaded and not loaded by
+setting VERBOSE to 1, e.g. if you use \fIcsh(1)\fP by doing
+"setenv VERBOSE 1"
+before calling \fIups\fP. Setting VERBOSE to "NOLOAD" causes
+\fIups\fP to list just the libraries that are not loaded.
+.LP
+The variable EDITOR is used, if set, as the editor for source files.
+If not set the default is \fIvi(1)\fP. 
+Unless the editor is \fIemacs(1)\fP, or the name starts with an "x", it will be started
+in a new \fIxterm(1)\fP window.
+
+.LP
+You can change the source code language and compiler type that \fIups\fP
+assumes have been used by setting UPS_LANGUAGE or UPS_COMPILER as appropriate.
+Note that these settings will be used for all files.
+These might be useful if you use non-standard file extensions, or have
+compiled C with a C++ compiler.
+UPS_LANGUAGE can be "C", "C++", "F77" or "F90".
+UPS_COMPILER can be "cc" (Sun C/C++ compiler), "gcc" (GNU
+gcc/g++/g77), "clcc" (Centerline C++), "f77" (Sun Fortran) or "f90" (EPCF90).
+
+.LP
+On Sun SPARC systems UPS_SUNOS_STEP controls whether
+.Cm Step
+will take you into a routine if it is in a shared library.
+If not set, or set to 1, you can step into shared libraries.
+If set to 0 then
+.Cm Step
+will continue to the next statement in the current routine.
+
 .LP
 Most software projects of any size develop formal or informal naming conventions
 that make it possible to specify the desired format for a variable based on the
@@ -905,22 +932,32 @@ linked lists for the typing line, or a string for setting breakpoints
 on `cout' statements in C++ code. Yet another string can be used to
 call strcmp for a conditional breakpoint. The F6 string pastes in the X-windows 
 selection and the F7 string sets a breakpoint in purified code.
-
-To do this, put the following in your environment:
-.IP
+.LP
+To do this, if you use \fIcsh(1)\fP, put the following in your environment:
+.Vs
+.ps -2
+.vs -2
 setenv UPS_F1_STR '$printf("\\\\n");'
-.IP
 setenv UPS_F2_STR 'if (strcmp(, ""))'
-.IP
 setenv UPS_F3_STR '@name .next'
-.IP
 setenv UPS_F4_STR "ostream::operator<<"
-.IP
 setenv UPS_F5_STR 'ostream::operator<<(&cout, "");'
-.IP
 setenv UPS_F6_STR "^e^u^y\\n"
-.IP
 setenv UPS_F7_STR "%b purify_stop_here\\n"
+.ps +2
+.vs +2
+.Ve
+.LP
+If your shell is \fIsh(1)\fP or \fIbash(1)\fP then use:
+.Vs
+.ps -2
+.vs -2
+export UPS_F1_STR='$printf("\\\\n");'
+\fIetc\fP
+.ps +2
+.vs +2
+.Ve
+
 .SH "INTERACTIVELY ADDING SEARCH PATHS"
 Search paths can be given to \fIups\fP at any time during debug by 
 selecting the `Source Files' header in the display window and
