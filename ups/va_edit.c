@@ -946,7 +946,7 @@ type_t *type;
 		break;
 #endif
 #if SIZEOF_LONG_LONG > SIZEOF_LONG
-	case SIZEOF_LONGLONG:
+	case SIZEOF_LONG_LONG:
 		vl.vl_longlong = val;
 		res = DWRITE_VAR(xp, addr, vl.vl_longlong);
 		break;

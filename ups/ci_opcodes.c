@@ -124,13 +124,18 @@ long l;
 	ci_code_word(tx, (l >> 16) & 0xffff);
 }
 
+
 void
 ci_code_quad(tx, q)
 text_t *tx;
 long q;
 {
+#if SIZEOF_LONG > 8
 	ci_code_long(tx, q & 0xffffffff);
 	ci_code_long(tx, (q >> 32) & 0xffffffff);
+#else
+        ci_panic("quad words not supported on this platform");
+#endif
 }
 
 void
