@@ -279,8 +279,8 @@ int sig;
  /*	return sig == SIGILL || sig == SIGSEGV || sig == SIGBUS;*/
 
 	return (sig == SIGILL) ||
-	  !(get_sig_attrs(sig) & SGH_ACCEPT) &&
-	    (sig == SIGSEGV || sig == SIGBUS);
+	  ( !(get_sig_attrs(sig) & SGH_ACCEPT) &&
+	    (sig == SIGSEGV || sig == SIGBUS) );
 #endif
 }
 
