@@ -268,7 +268,7 @@ int sig;
 #ifdef SIGSEGV
 		|| (!(get_sig_attrs(sig) & SGH_ACCEPT) && sig == SIGSEGV)
 #endif
-#ifdef SIGBUG
+#ifdef SIGBUS
 		|| (!(get_sig_attrs(sig) & SGH_ACCEPT) && sig == SIGBUS)
 #endif
 			;

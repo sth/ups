@@ -198,7 +198,7 @@ int signo;
 #ifdef SIGSEGV
 		case SIGSEGV:	sigstr = "segmentation fault";		break;
 #endif
-#ifdef SIGBUG
+#ifdef SIGBUS
 		case SIGBUS:	sigstr = "bus error";			break;
 #endif
 #ifdef SIGILL
@@ -424,7 +424,7 @@ char **argv;
 #ifdef SIGSYS
 		SIGSYS,
 #endif
-#ifdef SIGBUG
+#ifdef SIGBUS
 		SIGBUS,
 #endif
 	};
