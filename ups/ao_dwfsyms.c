@@ -648,7 +648,19 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * Array dimensions.
 		 */
 		dim = dwf_make_subrange(dbg, die, ap, stf);
-		parent_dt->dt_type->ty_dim = dim;
+
+		if (parent_dt->dt_type->ty_dim) {
+		    type = ci_make_type(ap, DT_ARRAY_OF);
+
+		    type->ty_base = parent_dt->dt_type;
+		    type->ty_dim = type->ty_base->ty_dim;
+		    type->ty_base->ty_dim = dim;
+
+		    parent_dt->dt_type = type;
+		}
+		else {
+		    parent_dt->dt_type->ty_dim = dim;
+		}
 	    }
 	    break;
 
