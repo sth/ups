@@ -324,6 +324,21 @@ typedef struct var_s {
 #define VA_VTBLPTR		0x0100	/* Is virtual table pointer (RCB) */
 #define VA_VTBLBASED		0x0200  /* Offset to object is in the vtbl (RCB) */
 
+/*  Macro information.
+ */
+typedef struct macro_value_s {
+	int mav_start_lnum;		/* first line # */
+	int mav_end_lnum;		/* last line # */
+	const char *mav_value;		/* value */
+	struct macro_value_s *mav_next;	/* next value */
+} macro_value_t;
+
+typedef struct macro_s {
+	const char *ma_name;		/* macro name */
+	macro_value_t *ma_values;	/* macro value list */
+	struct macro_s *ma_next;	/* next macro */
+} macro_t;
+
 /*  Element in the list of functions attached to a source file.
  */
 typedef struct funclist_s {
@@ -345,6 +360,7 @@ typedef struct fil_s {
 	struct Srcbuf *fi_srcbuf;	/* handle on source text */
 	struct block_s *fi_block;	/* vars and defs with file scope */
 	funclist_t *fi_funclist;	/* list of functions in this file */
+	macro_t *fi_macros;		/* macro definitions */
 	struct fil_s *fi_next;		/* next file */
 } fil_t;
 
@@ -352,16 +368,21 @@ typedef struct fil_s {
 #define FI_DONE_TYPES		(1<<1)
 #define FI_DOING_TYPES		(1<<2)
 #define FI_HIDE_ENTRY		(1<<3)
-#define FI_FOUND_COMPILER	(1<<4) /* RGA */
-#define FI_DUPLICATE		(1<<5) /* RGA used for duplicate files */
-#define FI_DONE_MATCH		(1<<6) /* RGA already matched source */
-#define FI_NEEDS_RESCAN		(1<<7) /* RGA rescan after reload/rematch */
-#define FI_RENAMED_OTHER	(1<<8) /* RGA file renamed to unknown lang */
-#define FI_HEADER		(1<<9) /* RGA from  N_SOL symbol */
+#define FI_FOUND_COMPILER	(1<<4)	/* RGA */
+#define FI_DUPLICATE		(1<<5)	/* RGA used for duplicate files */
+#define FI_DONE_MATCH		(1<<6)	/* RGA already matched source */
+#define FI_NEEDS_RESCAN		(1<<7)	/* RGA rescan after reload/rematch */
+#define FI_RENAMED_OTHER	(1<<8)	/* RGA file renamed to unknown lang */
+#define FI_HEADER		(1<<9)	/* RGA from  N_SOL symbol */
+#define FI_DONE_MACROS		(1<<10)	/* macro information loaded */
 
 #define FI_VARS(fil)	(((fil)->fi_flags & FI_DONE_VARS) \
 						? (fil)->fi_block->bl_vars \
 					        : st_get_fi_vars(fil))
+
+#define FI_MACROS(fil)  (((fil)->fi_flags & FI_DONE_MACROS) \
+						? (fil)->fi_macros \
+					        : st_get_fi_macros(fil))
 
 /* line number structure.
  */

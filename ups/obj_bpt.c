@@ -918,6 +918,7 @@ size_t *p_error_pos;
 	const char *start_text, *end_text;
 	int nlines;
 	lexinfo_t lxbuf;
+	char *expansion;
 			      
 	bd = (bpdesc_t *)srcbuf_get_editblock_data(eb);
 	
@@ -965,13 +966,20 @@ size_t *p_error_pos;
 		bd->machine = NULL;
 	}
 
-	lines = ssplit(text, "\0\n");
+	if ((expansion = macro_expand_string(bd->fil, bd->lnum, text)) != NULL)
+		lines = ssplit(expansion, "\0\n");
+	else
+		lines = ssplit(text, "\0\n");
+
 	for (nlines = 0; lines[nlines] != NULL; ++nlines)
 		;
 	
 	cr = compile_code((const char **)lines, nlines, block, (char *)NULL,
 					&lxbuf, start_text, end_text,
 					Stop_keyword, Stop_funcname);
+
+	if (expansion)
+		free(expansion);
 
 	bd->parse_id = cr->cr_parse_id;
 	bd->machine = cr->cr_machine;

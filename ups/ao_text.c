@@ -195,6 +195,7 @@ const char **p_mainfunc_name;
 		ao_get_fu_lnos,
 		ao_get_fu_blocks,
 		ao_get_fi_vars,
+		ao_get_fi_macros,
 
 		ao_disassemble_instruction,
 		ao_get_jumps,
@@ -220,6 +221,7 @@ const char **p_mainfunc_name;
 		dw_get_fu_lnos,
 		dw_get_fu_blocks,
 		dw_get_fi_vars,
+		dw_get_fi_macros,
 
 		ao_disassemble_instruction,
 		ao_get_jumps,

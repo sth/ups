@@ -269,6 +269,7 @@ fil_t *next;
 	fil->fi_srcbuf = NULL;
 	fil->fi_block = block;
 	fil->fi_funclist = NULL;
+	fil->fi_macros = NULL;
 	fil->fi_next = next;
 
 	return fil;
@@ -359,6 +360,77 @@ taddr_t addr;
 	v->va_next = NULL;
 	v->va_lexinfo = NULL;
 	return v;
+}
+
+macro_t *
+ci_define_macro(ap, macrolist, lnum, name, value)
+alloc_pool_t *ap;
+macro_t *macrolist;
+int lnum;
+const char *name;
+const char *value;
+{
+	macro_t *ma;
+	macro_value_t *mav;
+
+	for (ma = macrolist; ma; ma = ma->ma_next) {
+		if (strcmp(ma->ma_name, name) == 0) break;
+	}
+
+	if (ma == NULL) {
+		ma = (macro_t *)alloc(ap, sizeof(macro_t));
+		
+		ma->ma_name = name;
+		ma->ma_values = NULL;
+		ma->ma_next = macrolist;
+
+		macrolist = ma;
+	}
+
+	for (mav = ma->ma_values; mav && mav->mav_next; mav = mav->mav_next);
+	  
+	if (mav) {
+		if (mav->mav_end_lnum == 0)
+			mav->mav_end_lnum = lnum;
+
+		mav->mav_next = (macro_value_t *)alloc(ap, sizeof(macro_value_t));
+		mav = mav->mav_next;
+	} else {
+		ma->ma_values = (macro_value_t *)alloc(ap, sizeof(macro_value_t));
+
+		mav = ma->ma_values;
+	}
+
+	mav->mav_start_lnum = lnum;
+	mav->mav_end_lnum = 0;
+	mav->mav_value = value;
+	mav->mav_next = NULL;
+
+	return macrolist;
+}
+
+void
+ci_undef_macro(ap, macrolist, lnum, name)
+alloc_pool_t *ap;
+macro_t *macrolist;
+int lnum;
+const char *name;
+{
+	macro_t *ma;
+	macro_value_t *mav;
+
+	for (ma = macrolist; ma; ma = ma->ma_next) {
+		if (strcmp(ma->ma_name, name) == 0) break;
+	}
+
+	if (ma == NULL) return;
+
+	for (mav = ma->ma_values; mav && mav->mav_next; mav = mav->mav_next);
+	  
+	if (mav &&mav->mav_end_lnum == 0)
+		mav->mav_end_lnum = lnum;
+
+	return;
 }
 
 initlist_t *

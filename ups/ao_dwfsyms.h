@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* $Id$ */
 
 #if WANT_DWARF
 
@@ -35,11 +36,12 @@ typedef unsigned int dwload_t;
 #define DWL_BASE_TYPES		0x000100	/* Base types. */
 #define DWL_GLOBAL_TYPES	0x000200	/* File scope types. */
 #define DWL_LOCAL_TYPES		0x000400	/* Local types. */
+#define DWL_SKIM_CLASSES	0x000800	/* Just save names. */
 #define DWL_LEXICAL_BLOCKS	0x001000	/* Lexical blocks. */
 #define DWL_SUBRANGES		0x002000	/* Subranges, e.g. array dimensions. */
-#define DWL_ENUM_MEMBERS	0x004000	/* Enumerated type members. */
-#define DWL_STRUCT_MEMBERS	0x008000	/* Structure/union members. */
-#define DWL_CLASS_MEMBERS	0x010000	/* Class members. */
+#define DWL_ENUM_MEMBERS	0x010000	/* Enumerated type members. */
+#define DWL_STRUCT_MEMBERS	0x020000	/* Structure/union members. */
+#define DWL_CLASS_MEMBERS	0x040000	/* Class members. */
 
 #define DWL_TOP_FUNCS	(DWL_GLOBAL_FUNCS | DWL_STATIC_FUNCS)
 #define DWL_ANY_FUNCS	(DWL_GLOBAL_FUNCS | DWL_STATIC_FUNCS | DWL_NESTED_FUNCS)
@@ -63,6 +65,8 @@ func_t * dwf_add_function_to_symtab PROTO((symtab_t *st, stf_t *stf,
 
 void dwf_load_syms_from_cu PROTO((symtab_t *st, stf_t *stf,
 	func_t **p_flist, Dwarf_Die cu_die));
+
+void dwf_do_cu_macros PROTO((symtab_t *st, stf_t *stf));
 
 bool dwf_scan_symtab PROTO((symtab_t *st, const char *path, stf_t *stf,
 	func_t **p_flist, const char **p_mainfunc_name, Dwarf_Debug dbg));

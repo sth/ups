@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+char ups_ao_dwfutil_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
@@ -371,42 +372,6 @@ stf_t *stf;
 
     stf->stf_fmap = list;
     stf->stf_mapsize = count;
-}
-
-/*
- * Get the pre-processor macros.
- *
- * dwarfTODO: GCC does not seem to generate anything so cannot test this,
- * so not currently used.
- */
-void
-dwf_get_cu_macros(dbg, cu_die, ap, stf)
-Dwarf_Debug dbg;
-Dwarf_Die cu_die;
-alloc_pool_t *ap;
-stf_t *stf;
-{
-    int rv;
-    Dwarf_Off offset;
-    Dwarf_Error err;
-    Dwarf_Signed count;
-    Dwarf_Macro_Details *macros;
-    int i;
-
-    /*
-     *
-     */
-    offset = 0;
-    while ((rv = dwarf_get_macro_details(dbg, offset, (Dwarf_Unsigned)0,
-					 &count, &macros, &err)) == DW_DLV_OK) {
-
-	for (i = 0; i < count; i++) {
-
-	}
-	offset = macros[count-1].dmd_offset + 1;
-	dwarf_dealloc(dbg, macros, DW_DLA_STRING);
-    }
-
 }
 
 /*

@@ -28,6 +28,7 @@ void push_typedefs_and_aggrs PROTO((alloc_pool_t *ap, block_t *hdrbl,
 bool ao_fil_may_have_matching_globals PROTO((fil_t *fil, const char *pat, 
                                              matchfunc_t matchf));
 var_t *ao_get_fi_vars PROTO((fil_t *fil));
+macro_t *ao_get_fi_macros PROTO((fil_t *fil));
 block_t *ao_get_fu_blocks PROTO((func_t *f));
 lno_t *ao_get_fu_lnos PROTO((func_t *f));
 Compiler_type ao_compiler PROTO((fil_t *fil, bool compiler_found,

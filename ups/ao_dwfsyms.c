@@ -1000,6 +1000,85 @@ Dwarf_Die cu_die;
 }
 
 /*
+ * Load macro information for the CU of this 'stf'.
+ */
+void
+dwf_do_cu_macros(st, stf)
+symtab_t *st;
+stf_t *stf;
+{
+    alloc_pool_t *ap;
+    fil_t *fil;
+    Dwarf_Debug dbg;
+    Dwarf_Die cu_die;
+
+    /*
+     * Done ?
+     */
+    if (stf->stf_fil->fi_flags & FI_DONE_MACROS)
+	return;
+
+    /*
+     * Initalise
+     */
+    ap = st->st_apool;
+    fil = stf->stf_fil;
+    dbg = stf->stf_dw_dbg;
+    cu_die = dwf_stf_cu_die(stf);
+
+    if (dwf_has_attribute(dbg, cu_die, DW_AT_macro_info)) {
+	Dwarf_Off offset = dwf_get_number(dbg, cu_die, DW_AT_macro_info);
+	Dwarf_Signed count;
+	Dwarf_Macro_Details *macinfo;
+	Dwarf_Error err;
+	int rv;
+	int i;
+
+	if ((rv = dwarf_get_macro_details(dbg, offset, 0, &count, &macinfo, &err)) != DW_DLV_OK)
+	    dwf_fatal_error("dwarf_get_macro_details", rv, cu_die, err);
+
+	for (i = 0; i < count; i++) {
+	    int depth = 0;
+	    int baselnum;
+	    char *name;
+	    char *value;
+	    int lnum;
+	    int namelen;
+
+	    switch (macinfo[i].dmd_type) {
+	    case DW_MACINFO_define:
+		value = dwarf_find_macro_value_start(macinfo[i].dmd_macro);
+		namelen = value - macinfo[i].dmd_macro - 1;
+		name = allocstr(ap, namelen + 1);
+		memcpy(name, macinfo[i].dmd_macro, namelen);
+		name[namelen] = 0;
+		value = alloc_strdup(ap, value);
+		lnum = (depth > 0) ? baselnum : macinfo[i].dmd_lineno;
+		fil->fi_macros = ci_define_macro(ap, fil->fi_macros,
+						 lnum, name, value);
+		break;
+	    case DW_MACINFO_undef:
+		lnum = (depth > 0) ? baselnum : macinfo[i].dmd_lineno;
+		ci_undef_macro(ap, fil->fi_macros, lnum, macinfo[i].dmd_macro);
+		break;
+	    case DW_MACINFO_start_file:
+		if (depth == 0)
+		    baselnum = macinfo[i].dmd_lineno;
+		depth++;
+		break;
+	    case DW_MACINFO_end_file:
+		depth--;
+		break;
+	    }
+	}
+
+	dwarf_dealloc(dbg, macinfo, DW_DLA_STRING);
+    }
+
+    stf->stf_fil->fi_flags |= FI_DONE_MACROS;
+}
+
+/*
  * DWARF version of scan_symtab (see ao_symscan.c)
  */
 bool

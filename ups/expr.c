@@ -94,6 +94,8 @@ static bool search_stack PROTO((
 static int show_single_member PROTO((const char *name, type_t **btype,
 				     bool double_click));
 static block_t *lnum_to_block PROTO((block_t *par, int lnum));
+static void show_macro PROTO((const char *name, fil_t *fil, int lnum,
+			      bool double_click));
 
 /*  Versions of isalpha() and isalnum() which count '_' and '$' as letters.
  */
@@ -317,6 +319,11 @@ bool double_click;
 		return;
 	}
 #endif
+
+	if (macro_expand_word(fil, lnum, wholename, strlen(wholename)) != NULL) {
+		show_macro(wholename, fil, lnum, double_click);
+		return 1;
+	}
 
         sepc = IS_FORTRAN(fil->fi_language) ? '%' : '.';
         seps[0] = sepc;
@@ -1383,4 +1390,48 @@ var_t* v;
       , FALSE 			/* undef_check */
       , FALSE                   /* double_click */
     );
+}
+
+static void
+show_macro(name, fil, lnum, double_click)
+const char *name;
+fil_t *fil;
+int lnum;
+bool double_click;
+{
+   find_func_args_t ffargs;
+   block_t *bl;
+   int oldstate;
+   objid_t obj;
+
+   oldstate = td_set_obj_updating(OBJ_UPDATING_OFF);
+
+   ffargs.ffa_func = lnum_to_func(fil, lnum);
+   ffargs.ffa_stack_obj = NULL;
+
+   bl = FU_BLOCKS(ffargs.ffa_func);
+
+   if (lnum >= bl->bl_start_lnum &&
+       lnum <= bl->bl_end_lnum &&
+       search_stack(find_func, (char *)&ffargs)) {
+      obj = add_expr_object(ffargs.ffa_stack_obj, bl, name,
+			    ffargs.ffa_func->fu_language, OBJ_LAST_CHILD);
+   }
+   else {
+      add_source_file_object_if_required(fil, FALSE, FALSE, FALSE);
+      obj = add_expr_object((objid_t)fil, fil->fi_block, name,
+			    fil->fi_language, OBJ_LAST_CHILD);
+   }
+
+   clear_selection();
+
+   if (double_click)
+      do_var_or_expr(obj, get_double_click_action(obj), NULL);
+   
+   select_object(obj, TRUE, OBJ_SELF);
+   ensure_visible(obj);
+   
+   td_set_obj_updating(oldstate);
+
+   return;
 }

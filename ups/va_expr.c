@@ -396,13 +396,32 @@ dexpr_t *de;
 const char *estr;
 int *p_cnum;
 {
+	objid_t par;
+	taddr_t fp, ap;
+	fil_t *fil;
+	int lnum;
+	char *expansion;
 	compile_res_t *cr;
 	lexinfo_t lxbuf;
+
+        par = get_code((objid_t)de, OBJ_PARENT);
+        if (ups_get_object_type(par) == OT_SFILE)
+           fil = (fil_t *)par;
+        else
+           fil = get_stack_func(par, &fp, &ap)->fu_fil;
+
+	lnum = de->de_block->bl_start_lnum;
+        
+	if ((expansion = macro_expand_string(fil, lnum, estr)) != NULL)
+		estr = expansion;
 
 	cr = compile_code(&estr, 1, de->de_block, (char *)de, &lxbuf,
 			  "void $start(void) { $set_expr_value((", ")); }",
 			  (const char *)NULL, (const char *)NULL);
 
+	if (expansion)
+		free(expansion);
+	
 	if (cr->cr_machine == NULL || cr->cr_parse_id == NULL) {
 		free_parse_id_and_machine(cr->cr_parse_id, cr->cr_machine);
 		*p_cnum = lxbuf.lx_cnum;
@@ -819,6 +838,15 @@ int poscode;
 		return NULL;
 	}
 
+	if (*text != '\0') {
+	   for (obj = get_code(par, OBJ_CHILD); obj; obj = get_code(obj, OBJ_NEXT)) {
+	      if (get_object_type(obj) == OT_EXPR &&
+		  strcmp(text, get_field_value(obj, FN_EXPR_STR)) == 0) {
+		 return obj;
+	      }
+	   }
+	}
+
 	de = make_dexpr(bl);
 	obj = (objid_t)de;
 
@@ -845,7 +873,7 @@ int poscode;
 		edit_field_obj(obj, FN_EXPR_STR);
 	}
 	else {
-		update_expr(obj, de->de_format, FALSE);
+		update_expr(obj, de->de_format, TRUE);
 		select_object(obj, TRUE, OBJ_SELF);
 	}
 
@@ -1255,9 +1283,14 @@ static taddr_t
 get_expr_address(de)
 dexpr_t *de;
 {
+	objid_t par;
+	taddr_t fp, ap;
+	fil_t *fil;
+	int lnum;
 	compile_res_t *cr;
 	lexinfo_t lxbuf;
 	const char *estr;
+	char *expansion;
 	taddr_t retval;
 
 	if (de->de_type->ty_code == DT_PTR_TO ||
@@ -1265,7 +1298,18 @@ dexpr_t *de;
 		return de->de_value.vl_ulong;
 	}
 
+	par = get_code((objid_t)de, OBJ_PARENT);
+	if (ups_get_object_type(par) == OT_SFILE)
+		fil = (fil_t *)par;
+        else
+		fil = get_stack_func(par, &fp, &ap)->fu_fil;
+
+	lnum = de->de_block->bl_start_lnum;
+
 	estr = get_field_value((objid_t)de, FN_EXPR_STR);
+
+	if ((expansion = macro_expand_string(fil, lnum, estr)) != NULL)
+		estr = expansion;
 
 	cr = compile_code(&estr, 1, de->de_block, (char *)de, &lxbuf,
 			  "void $start(void) { $set_expr_value(( &(", ") )); }",
@@ -1306,6 +1350,9 @@ dexpr_t *de;
 		retval = Expr_value.vl_ulong;
 	}
 
+	if (expansion)
+		free(expansion);
+
 	free_parse_id_and_machine(cr->cr_parse_id, cr->cr_machine);
 
         return retval;
@@ -1317,12 +1364,28 @@ static size_t
 get_expr_size(de)
 dexpr_t *de;
 {
+	objid_t par;
+	taddr_t fp, ap;
+	fil_t *fil;
+	int lnum;
 	compile_res_t *cr;
 	lexinfo_t lxbuf;
 	const char *estr;
+	char *expansion;
 	taddr_t retval;
 
+	par = get_code((objid_t)de, OBJ_PARENT);
+	if (ups_get_object_type(par) == OT_SFILE)
+		fil = (fil_t *)par;
+        else
+		fil = get_stack_func(par, &fp, &ap)->fu_fil;
+
+	lnum = de->de_block->bl_start_lnum;
+
 	estr = get_field_value((objid_t)de, FN_EXPR_STR);
+
+	if ((expansion = macro_expand_string(fil, lnum, estr)) != NULL)
+		estr = expansion;
 
 	if (de->de_type->ty_code == DT_PTR_TO) {
 		cr = compile_code(&estr, 1, de->de_block, (char *)de, &lxbuf,
@@ -1369,6 +1432,9 @@ dexpr_t *de;
 		
 		retval = Expr_value.vl_ulong;
 	}
+
+	if (expansion)
+		free(expansion);
 
 	free_parse_id_and_machine(cr->cr_parse_id, cr->cr_machine);
 

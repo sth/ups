@@ -1444,3 +1444,69 @@ find_and_show_matching_globals(fil, fi_name, fi_name_len, name)
     free_global_list_list(glhead);
   return found;
 }
+
+const char *
+macro_expand_word(fil, lnum, w, wl)
+fil_t *fil;
+int lnum;
+const char *w;
+int wl;
+{
+   const macro_t *ma;
+   const macro_value_t *mav;
+   
+   for (ma = FI_MACROS(fil); ma != NULL; ma = ma->ma_next)
+      if (strlen(ma->ma_name) == wl && memcmp(ma->ma_name, w, wl) == 0)
+	 for (mav = ma->ma_values; mav != NULL; mav = mav->mav_next)
+ 	    if (lnum == 0 ||
+		(lnum >= mav->mav_start_lnum &&
+	         (mav->mav_end_lnum == 0 || lnum <= mav->mav_end_lnum)))
+	       return mav->mav_value;
+   
+   return NULL;
+}
+
+char *
+macro_expand_string(fil, lnum, s)
+fil_t *fil;
+int lnum;
+const char *s;
+{
+   bool expanded = TRUE;
+   char *result = NULL;
+   
+   if (FI_MACROS(fil) == NULL) return NULL;
+
+   while (expanded) {
+      const char *start = result ? result : s;
+      const char *ptr = start;
+
+      expanded = FALSE;
+      
+      while (*ptr && !expanded) {
+	 while (*ptr && !isalpha(*ptr) && *ptr != '_') ptr++;
+	 
+	 if (*ptr) {
+	    const char *word = ptr++;
+            const char *expansion;
+
+	    while (isalnum(*ptr) || *ptr == '_') ptr++;
+	    
+	    if ((expansion = macro_expand_word(fil, lnum, word, ptr - word)) != NULL) {
+	       char *new = e_malloc(strlen(start) + strlen(expansion) - (ptr-word) + 1);
+	       
+	       memcpy(new, start, word - start);
+	       strcpy(new + (word - start), expansion);
+	       strcat(new, ptr);
+
+	       if (result) free(result);
+
+	       result = new;
+	       expanded = TRUE;
+	    }
+	 }
+      }
+   }
+
+   return result;
+}

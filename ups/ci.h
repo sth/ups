@@ -82,6 +82,10 @@ fil_t *ci_make_fil PROTO((alloc_pool_t *ap, const char *name, char *data,
 			  block_t *block, fil_t *next));
 var_t *ci_make_var PROTO((alloc_pool_t *ap, const char *name, class_t class,
 						type_t *type, taddr_t addr));
+macro_t *ci_define_macro PROTO((alloc_pool_t *ap, macro_t *macrolist,
+				int lnum, const char *name, const char *value));
+void ci_undef_macro PROTO((alloc_pool_t *ap, macro_t *macrolist,
+			   int lnum, const char *name));
 var_t *ci_push_vars PROTO((var_t *v, var_t *list));
 type_t *ci_make_undef_type PROTO((alloc_pool_t *ap, const char *tag,
 					typecode_t typecode, type_t *type));

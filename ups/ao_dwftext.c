@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+char ups_ao_dwftext_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
@@ -287,6 +288,56 @@ dump_var_t(fil->fi_block->bl_vars, 0, TRUE);
 dump_trailer();
 #endif
     return fil->fi_block->bl_vars;
+}
+
+/*
+ * Load debugging information about macros.
+ */
+macro_t *
+dw_get_fi_macros(fil)
+fil_t *fil;
+{
+    symtab_t *st;
+    stf_t *stf;
+    errf_ofunc_t oldf;
+    cursor_t old_cursor;
+
+    /*
+     * Already done ?
+     */
+    if (fil->fi_flags & FI_DONE_MACROS)
+	return fil->fi_macros;
+
+    oldf = errf_set_ofunc(display_message);
+    errf("\bReading macros of `%s'... ", fil->fi_name_only);
+    old_cursor = wn_get_window_cursor(WN_STDWIN);
+    set_bm_cursor(WN_STDWIN, CU_WAIT);
+    indicate_target_menu_search(1);
+
+    st = fil->fi_symtab;
+    stf = AO_FIDATA(fil);
+
+    /*
+     * Get the information about macros.
+     */
+    dwf_do_cu_macros(st, stf);
+
+    /*
+     * Finish up.
+     */
+    fil->fi_flags |= FI_DONE_MACROS;
+
+    errf("\bReading macros of `%s'... done", fil->fi_name_only);
+    errf_set_ofunc(oldf);
+    if (target_menu_search_disabled(0, 0) == FALSE) {
+	bool stop = stop_pressed(0, 0);
+	indicate_target_menu_search(0);
+	if (stop)
+	    stop_pressed(1, 0);
+    }
+    wn_define_cursor(WN_STDWIN, old_cursor);
+
+    return fil->fi_macros;
 }
 
 

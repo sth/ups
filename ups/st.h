@@ -68,6 +68,7 @@ typedef struct st_ops_s {
 	lno_t *(*so_get_fu_lnos)PROTO((func_t *f));
 	block_t *(*so_get_fu_blocks)PROTO((func_t *f));
 	var_t *(*so_get_fi_vars)PROTO((fil_t *fil));
+	macro_t *(*so_get_fi_macros)PROTO((fil_t *fil));
 
 	const char *(*so_disassemble_instruction)PROTO((func_t *f, taddr_t addr,
 						        const char *text,
@@ -112,6 +113,8 @@ typedef struct st_ops_s {
 	(f->fu_symtab->st_ops->so_get_fu_blocks)(f)
 #define st_get_fi_vars(fil) \
 	(fil->fi_symtab->st_ops->so_get_fi_vars)(fil)
+#define st_get_fi_macros(fil) \
+	(fil->fi_symtab->st_ops->so_get_fi_macros)(fil)
 
 #define st_disassemble_instruction(f, addr, text, len) \
 	(f->fu_symtab->st_ops->so_disassemble_instruction)(f, addr, text, len)
@@ -210,6 +213,9 @@ void demangle_name PROTO((char *name, int len, alloc_pool_t *alloc_id,
 void demangle_name_2 PROTO((char *name, int len, alloc_pool_t *alloc_id,
 			  char **ptr, int func, fil_t *fil));
 char* demangle_name_3 PROTO((char* name));
+const char *macro_expand_word PROTO((fil_t *fil, int lnum,
+				     const char *w, int wl));
+char *macro_expand_string PROTO((fil_t *fil, int lnum, const char *s));
 
 /*  From st_fmap.c
  */

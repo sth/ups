@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* $Id$ */
 
 #if WANT_DWARF
 
@@ -36,5 +37,6 @@ var_t * dw_get_cblock_vars PROTO((symtab_t *st, char *data, taddr_t addr));
 lno_t * dw_get_fu_lnos PROTO((func_t *f));
 block_t * dw_get_fu_blocks PROTO((func_t *f));
 var_t * dw_get_fi_vars PROTO((fil_t *fil));
+macro_t * dw_get_fi_macros PROTO((fil_t *fil));
 
 #endif /* WANT_DWARF */

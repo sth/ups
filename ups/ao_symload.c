@@ -796,6 +796,15 @@ dump_trailer();
 	return fil->fi_block->bl_vars;
 }
 
+macro_t *
+ao_get_fi_macros(fil)
+fil_t *fil;
+{
+	fil->fi_flags |= FI_DONE_MACROS;
+
+	return fil->fi_macros;
+}
+
 /*  Many compilers give you two seperate symbol table entries for a
  *  register parameter - one for the stack copy of the parameter, one
  *  for the register.  Go through the vars of f zapping the stack

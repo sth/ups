@@ -104,6 +104,7 @@ static int xc_read_text PROTO((symtab_t *st, taddr_t addr, char *buf,
 static taddr_t xc_get_addr_lim PROTO((func_t *f));
 static void xc_close_symtab_data PROTO((symtab_t *st));
 static var_t *xc_get_fi_vars PROTO((fil_t *fil));
+static macro_t *xc_get_fi_macros PROTO((fil_t *fil));
 static block_t *xc_get_fu_blocks PROTO((func_t *f));
 static lno_t *xc_get_fu_lnos PROTO((func_t *f));
 static const char *xc_disassemble_instruction PROTO((func_t *f, taddr_t addr,
@@ -1086,6 +1087,7 @@ func_t *funcs;
 		xc_get_fu_lnos,
 		xc_get_fu_blocks,
 		xc_get_fi_vars,
+		xc_get_fi_macros,
 
 		xc_disassemble_instruction,
 		xc_get_jumps,
@@ -1308,6 +1310,15 @@ fil_t *fil;
 		load_symtab(fil);
 
 	return fil->fi_block->bl_vars;
+}
+
+static macro_t *
+xc_get_fi_macros(fil)
+fil_t *fil;
+{
+	fil->fi_flags |= FI_DONE_MACROS;
+
+	return fil->fi_macros;
 }
 
 static block_t *

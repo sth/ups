@@ -714,7 +714,7 @@ bool double_click;
 		    clear_selection();
 	      if (found != 2)	/* 2 = may be message about virtual or */
 		/* inherited match */
-		errf("No function or variable `%s'", text);
+		errf("No function, variable or macro `%s'", text);
 	    }
 
 	    free(text);
