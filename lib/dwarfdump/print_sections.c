@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2003 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -1217,7 +1217,7 @@ extern void
 print_macinfo (Dwarf_Debug dbg)
 {
 	Dwarf_Off offset = 0;
-	Dwarf_Unsigned max = 100000;
+	Dwarf_Unsigned max = 0;
 	Dwarf_Signed count;
 	Dwarf_Macro_Details *maclist;
 	int lres;
@@ -1231,10 +1231,14 @@ print_macinfo (Dwarf_Debug dbg)
 		for (i = 0; i < count; i++) {
 			switch (maclist[i].dmd_type) {
 			case DW_MACINFO_define:
-			    printf("[%lld] #define %s\n", maclist[i].dmd_lineno, maclist[i].dmd_macro);
+			    printf("[%lld] #define %s\n", 
+			       maclist[i].dmd_lineno, 
+			       maclist[i].dmd_macro);
 			    break;
 			case DW_MACINFO_undef:
-			    printf("[%lld] #undef %s\n", maclist[i].dmd_lineno, maclist[i].dmd_macro);
+			    printf("[%lld] #undef %s\n", 
+			       maclist[i].dmd_lineno, 
+			       maclist[i].dmd_macro);
 			    break;
 			}
 		}
@@ -1399,13 +1403,7 @@ print_strings (Dwarf_Debug dbg)
 		offset += length + 1;
 	}
 	if(sres == DW_DLV_ERROR) {
-		Dwarf_Unsigned myerr = dwarf_errno(err);
-	        string errmsg = dwarf_errmsg(err);
-		if (myerr == DW_DLE_DEBUG_STR_OFFSET_BAD)
-		    fprintf(stderr, "ERROR:  %s:  %s (%lld) ... will continue\n", 
-			    "get_str failure", errmsg, myerr);
-		else
-		    print_error(dbg,"get_str failure",sres,err);
+		print_error(dbg,"get_str failure",sres,err);
 	}
 }
 
@@ -1853,7 +1851,7 @@ print_weaknames(Dwarf_Debug dbg)
 
 	    dwarf_dealloc (dbg, name, DW_DLA_STRING);
 	    /* print associated die too? */
-	    dwarf_dealloc (dbg, weaknamebuf[i], DW_DLA_TYPENAME);
+	    dwarf_dealloc (dbg, weaknamebuf[i], DW_DLA_WEAK);
 	}
 	dwarf_dealloc (dbg, weaknamebuf, DW_DLA_LIST);
     }

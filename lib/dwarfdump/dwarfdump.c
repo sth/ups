@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000, 2002 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2 of the GNU General Public License as
@@ -130,7 +130,11 @@ main (int argc, char *argv[])
 	}
 
 	file_name = process_args (argc, argv);
+#ifdef __CYGWIN__
+        f = open(file_name, O_RDONLY|O_BINARY);
+#else
 	f = open(file_name, O_RDONLY);
+#endif
 	if (f == -1) {
 		fprintf(stderr, "%s ERROR:  can't open %s\n", program_name, 
 			file_name);
@@ -552,8 +556,6 @@ print_infos (Dwarf_Debug dbg)
 		program_name, "attempting to print .debug_info" , 
 		errmsg,myerr);
 	  fprintf(stderr,"attempting to continue.\n");
-	  /*dwarf_dealloc (dbg, errmsg, DW_DLA_STRING);
-		*/
 	}
 }
 
