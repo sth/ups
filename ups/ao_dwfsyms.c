@@ -246,6 +246,8 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fil_t *fil = NULL;
     func_t *f;
     taddr_t addr;
+    off_t type_offset;
+    dtype_t *dt;
 
     dbg = stf->stf_dw_dbg;
 
@@ -284,6 +286,19 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     if (is_static)
 	f->fu_flags |= FU_STATIC;
 
+    /*
+     * If can find the type then use it, else save its offset
+     * for dwf_fixup_types() to sort out.
+     */
+    if (dwf_has_attribute(dbg, spec_die, DW_AT_type)) {
+        type_offset = dwf_get_cu_ref(dbg, spec_die, DW_AT_type);
+        if ((f->fu_type = dwf_find_type(stf, type_offset)) == NULL) {
+            dt = dwf_make_dtype(dbg, die, st->st_apool, stf, DT_IS_VAR, NULL, NULL);
+            dt->dt_base_offset = type_offset;
+            dt->dt_p_type = &f->fu_type;
+        }
+    }
+    
     /*
      * Add to the list of functions defined in the file.
      */
