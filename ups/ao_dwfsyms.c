@@ -473,7 +473,6 @@ int recursed;		/* Recursion level, 0 = top. */
      */
     ap = st->st_apool;
     dbg = stf->stf_dw_dbg;
-    dw_what_next = dw_what; /* in most cases */
 
     /*
      * Work through the child DIEs
@@ -496,6 +495,7 @@ int recursed;		/* Recursion level, 0 = top. */
 	 */
 	ok = FALSE;
 	descend = FALSE;
+        dw_what_next = dw_what; /* in most cases */
 	dt = NULL;
 	tag = dwf_get_tag(dbg, die);
 	switch (tag) {
