@@ -4174,7 +4174,7 @@ do_arg (work, mangled, result)
      do not want to add additional types to the back-referenceable
      type vector when processing a repeated type.  */
   if (work->previous_argument)
-    string_clear (work->previous_argument);
+    string_delete (work->previous_argument);
   else
     {
       work->previous_argument = (string*) xmalloc (sizeof (string));
