@@ -913,17 +913,15 @@ dwf_fixup_types(dt, recursed)
 dtype_t *dt;
 int recursed;
 {
-    dtype_t *start;
+    dtype_t *start = dt;
     type_t *dest;
     int incomplete = 0;
     int bad_dummy = 0;
 
-    start = dt;
-
     /*
-     * First resolve base types and fixup dummy types.
+     * First resolve base types.
      */
-    while (dt != NULL) {
+    for (dt = start; dt; dt = dt->dt_next) {
 	dwf_fixup_type(dt);
 	if (dt->dt_base_offset != (off_t)0) {
 	    incomplete++;
@@ -934,15 +932,81 @@ int recursed;
 #endif
 	    }
 	}
-	dt = dt->dt_next;
+    }
+
+    for (dt = start; dt; dt = dt->dt_next) {
+	if (dt->dt_base_offset == (off_t)0) {
+	    type_t *base;
+	    qualifiers_t qual;
+	    typedef_t *tdef;
+	    lexinfo_t *lx;
+	   
+	    /*
+	     * If this is a dummy type (ty_code == TY_NOTYPE) then fix it.
+	     */
+	    switch (dt->dt_is) {
+	    case DT_IS_TYPE:
+		dest = dt->dt_type;
+		if (dest->ty_code != TY_NOTYPE)
+		    break;
+		/*
+		 * Only qualified types should have got a dummy type.
+		 */
+		if (dt->dt_type->ty_qualifiers == 0) {
+		    errf("\bUnqualified dummy DWARF type");
+		    break;
+		}
+		/*
+		 * Copy the base type, preserving the qualifiers and lexinfo.
+		 */
+		base = dt->dt_type->ty_base;
+		qual = dest->ty_qualifiers;
+		lx = dest->ty_lexinfo;
+		dwf_copy_type(dest, base);
+		dest->ty_qualifiers = qual;
+		if (lx)
+		    dest->ty_lexinfo = lx;
+		break;
+		
+	    case DT_IS_TYPEDEF:
+		dest = dt->dt_type;
+		if (dest->ty_code != TY_NOTYPE)
+		    break;
+		/*
+		 * Copy the base type, preserving the 'typedef' pointer
+		 * and lexinfo
+		 */
+		base = *(dt->dt_p_type);
+		tdef = dest->ty_typedef;
+		lx = dest->ty_lexinfo;
+		dwf_copy_type(dest, base);
+		dest->ty_typedef = tdef;
+		if (lx)
+		    dest->ty_lexinfo = lx;
+		/*
+		 * If the base type does not already contain a reference to
+		 * a typedef then set it.  This is so that variables are
+		 * shown with the typedef name even if the symbol table
+		 * used the underlying type.
+		 */
+		if ((base->ty_typedef == NULL) && (base->ty_lexinfo != NULL))
+		    base->ty_typedef = tdef;
+		break;
+	   
+	    case DT_IS_VAR:
+	    case DT_IS_RANGE:
+	    case DT_IS_BITFIELD:
+	       break;
+	       
+	    }
+	}
     }
 
     /*
      * Look for struct/union to fix.
      * Also does base class names.
      */
-    dt = start;
-    while (dt != NULL) {
+    for (dt = start; dt; dt = dt->dt_next) {
 	if ((dt->dt_base_offset == (off_t)0) && (dt->dt_is == DT_IS_TYPE)) {
 	    dest = dt->dt_type;
 	    if ((dest->ty_code == TY_STRUCT) || (dest->ty_code == TY_UNION)) {
@@ -967,8 +1031,6 @@ int recursed;
 		}
 	    }
 	}
-
-	dt = dt->dt_next;
     }
 
 #if WANT_DEBUG
@@ -988,10 +1050,6 @@ dtype_t *dt;
 {
     dtype_t *dbase;
     type_t *base;
-    type_t *dest;
-    qualifiers_t qual;
-    typedef_t *tdef;
-    lexinfo_t *lx;
 
     /*
      * Base type missing ?
@@ -1011,67 +1069,6 @@ dtype_t *dt;
 	}
     }
 
-    if (dt->dt_base_offset == (off_t)0) {
-	/*
-	 * If this is a dummy type (ty_code == TY_NOTYPE) then fix it.
-	 */
-	switch (dt->dt_is) {
-	case DT_IS_TYPE:
-	    dest = dt->dt_type;
-	    if (dest->ty_code != TY_NOTYPE)
-		break;
-	    /*
-	     * Only qualified types should have got a dummy type.
-	     */
-	    if (dt->dt_type->ty_qualifiers == 0) {
-		errf("\bUnqualified dummy DWARF type");
-		break;
-	    }
-	    /*
-	     * Copy the base type, preserving the qualifiers and lexinfo.
-	     */
-	    base = dt->dt_type->ty_base;
-	    qual = dest->ty_qualifiers;
-	    lx = dest->ty_lexinfo;
-	    dwf_copy_type(dest, base);
-	    dest->ty_qualifiers = qual;
-	    if (lx)
-		dest->ty_lexinfo = lx;
-	    break;
-		
-	case DT_IS_TYPEDEF:
-	   dest = dt->dt_type;
-	   if (dest->ty_code != TY_NOTYPE)
-		break;
-	   /*
-	    * Copy the base type, preserving the 'typedef' pointer
-	    * and lexinfo
-	    */
-	   base = *(dt->dt_p_type);
-	   tdef = dest->ty_typedef;
-	   lx = dest->ty_lexinfo;
-	   dwf_copy_type(dest, base);
-	   dest->ty_typedef = tdef;
-	   if (lx)
-		dest->ty_lexinfo = lx;
-	   /*
-	    * If the base type does not already contain a reference to
-	    * a typedef then set it.  This is so that variables are
-	    * shown with the typedef name even if the symbol table
-	    * used the underlying type.
-	    */
-	   if ((base->ty_typedef == NULL) && (base->ty_lexinfo != NULL))
-		base->ty_typedef = tdef;
-	   break;
-	   
-	case DT_IS_VAR:
-	case DT_IS_RANGE:
-	case DT_IS_BITFIELD:
-	   break;
-	   
-	}
-    }
-    
     return (dt && dt->dt_base_offset == (off_t)0) ? dt->dt_type : NULL;
 }
 
