@@ -511,7 +511,8 @@ int recursed;		/* Recursion level, 0 = top. */
 	 */
 	ok = FALSE;
 	descend = FALSE;
-        dw_what_next = dw_what; /* in most cases */
+	dw_what_next = dw_what; /* in most cases */
+	dw_what_next &= (~DWL_AE_MEMBERS); /* only at current level */
 	dt = NULL;
 	tag = dwf_get_tag(dbg, die);
 	switch (tag) {
