@@ -192,7 +192,6 @@ static Libdep *
 make_libdep(alloc_pool_t *ap, const char *name, Libdep *par, long mtime)
 {
 	Libdep *ld;
-	const char *c;
 
 	ld = (Libdep *)alloc(ap, sizeof(Libdep));
 	ld->name = name;
