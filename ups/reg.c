@@ -128,7 +128,7 @@ static void close_window PROTO((int wn));
 /*  BUG: these should be packaged up with the root of a region tree in
  *       a regtree_t structure
  */
-static bool Quit_event_loop;
+static bool Quit_event_loop = FALSE;
 static Region  *Root_regions[MAXROOTS];
 static bool    IsLeadRegion[MAXROOTS];
 static int numRegions = 0;
@@ -888,7 +888,7 @@ re_event_loop()
 
 	last_cursor = -1;
 	
-	for (Quit_event_loop = FALSE; !Quit_event_loop; ) {
+	while (!Quit_event_loop) {
 		bool resized = FALSE;
 		int cursor;
 		Region *re;

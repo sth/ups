@@ -513,7 +513,8 @@ Usage: ups -V\n\
 	       [-replay path] [-record path]\n\
                [-nowindow] [-replayidstr str]\n\
 	       [-replaymode [lnum:]{%s}]\n\
-               [-go] [-nostartupmesg] [-use_srcpath_only] [-fullpath]\n\
+               [-go] [-quitonexit]\n\
+               [-nostartupmesg] [-use_srcpath_only] [-fullpath]\n\
                [-dbflags flags]\n\
                %s\n",
 		       td_get_replay_mode_list(), driver_flags);
@@ -693,6 +694,9 @@ Usage: ups -V\n\
 		}
 		else if (strcmp(*argv, "-go") == 0) {
 			want_auto_start = TRUE;
+		}
+		else if (strcmp(*argv, "-quitonexit") == 0) {
+			set_quit_on_exit(TRUE);
 		}
 		else if (strcmp(*argv, "-fullpath") == 0) {
 			use_full_path = TRUE;

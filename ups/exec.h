@@ -61,3 +61,4 @@ void check_for_dynamic_libs_sstep PROTO((target_t *xp, stopres_t *p_stopres));
 #endif
 int check_target_name PROTO((const char *textpath, int *p_index, int *p_fd,
 			     long *p_mtime, bool check_textfile));
+void set_quit_on_exit PROTO((bool quit_on_exit));

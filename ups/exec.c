@@ -68,6 +68,7 @@ char ups_exec_c_rcsid[] = "$Id$";
 #include "trun.h"
 #include "printf.h"
 #include "ui.h"
+#include "reg.h"
 #include "menudata.h"
 #include "tdr.h"
 #include "state.h"
@@ -96,6 +97,8 @@ static stopres_t run_target PROTO((target_t *xp, rtype_t rtype));
 #define ps_continue			ptrace_continue
 #define ps_setreg			ptrace_setreg
 #endif
+
+static bool Quit_on_exit = FALSE;
 
 void
 do_menu_target_command(command)
@@ -310,6 +313,7 @@ int command;
 #endif
 	}
 	refresh_target_display(xp, stopres, command == MR_TGT_START ||
+                               command == MR_TGT_RESTART ||
 			       command == MR_TGT_ATTACH);
 
 	/* suggest raise window if started anything */
@@ -594,6 +598,9 @@ bool just_started;
 	old = td_set_obj_updating(OBJ_UPDATING_OFF);
 
 	if (stopres == SR_DIED) {
+		if (Quit_on_exit && just_started)
+			re_set_exit_event_loop_flag();
+
 		close_target_display();
 		obj_to_make_visible = NULL;
 	}
@@ -895,4 +902,13 @@ bool check_textfile;
     }
   }
   return res;
+}
+
+void
+set_quit_on_exit(quit_on_exit)
+bool quit_on_exit;
+{
+  Quit_on_exit = quit_on_exit;
+
+  return;
 }
