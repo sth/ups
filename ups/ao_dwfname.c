@@ -96,8 +96,21 @@ stf_t *stf;
     /*
      * Load the types of the other CU.
      */
-    if (stf != tn->tn_stf)
-	dwf_do_cu_types(st, tn->tn_stf);
+    if (stf != tn->tn_stf) {
+	char *lib;
+	bool load = TRUE;
+
+	if (*(tn->tn_stf->stf_name) != '/') {
+	    lib = normalise_path(strf("%s/%s", tn->tn_stf->stf_objpath_hint, tn->tn_stf->stf_name));
+	    if (lib)
+		load = user_wants_library_loaded(lib);
+	    free(lib);
+	}
+	else
+	    load = user_wants_library_loaded((char *)tn->tn_stf->stf_name);
+	if (load)
+	    dwf_do_cu_types(st, tn->tn_stf);
+    }
 
     /*
      * Look for the type in the other CU.
