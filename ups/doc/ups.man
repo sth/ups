@@ -125,7 +125,7 @@ The URL for the
 .I ups
 web site is:
 .LP
-.fX "      http://www.concerto.demon.co.uk/UPS/"
+.fX "      http://ups.sourceforge.net/"
 .LP
 It is maintained by Ian Edwards (ian@concerto.demon.co.uk).
 It includes a FAQ, html man pages, site listings where ups
