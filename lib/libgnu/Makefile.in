@@ -128,5 +128,5 @@ dyn-string.o: dyn-string.c libiberty.h dyn-string.h
 	${CCLINE}dyn-string.c
 safe-ctype.o: safe-ctype.c ansidecl.h safe-ctype.h
 	${CCLINE}safe-ctype.c
-ups-if.o: demangle.h
+ups-if.o: ups-if.c demangle.h
 	${CCLINE}ups-if.c

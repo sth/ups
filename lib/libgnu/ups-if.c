@@ -84,3 +84,10 @@ size_t size;
 {
     return realloc (ptr, size);
 }
+
+char *
+xstrdup (ptr)
+const char *ptr;
+{
+    return strdup (ptr);
+}
