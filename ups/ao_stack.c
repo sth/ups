@@ -444,10 +444,11 @@ target_t *xp;
 #endif
 
 	for (stk = last = NULL; fp != (taddr_t)0; last = stk) {
+		taddr_t prevpc = (last == NULL) ? pc : (pc - 1);
 		fil_t *fil;
 		int lnum;
 
-		if ((f = addr_to_func(pc)) == NULL) {
+		if ((f = addr_to_func(prevpc)) == NULL) {
 			f = make_badfunc();
 		}
 #if defined(ARCH_BSDI386)
@@ -465,8 +466,7 @@ target_t *xp;
 		}
 #endif
 
-		addr_to_fil_and_lnum(f, (last == NULL) ? pc : (pc - 1),
-				     &fil, &lnum, FALSE);
+		addr_to_fil_and_lnum(f, prevpc, &fil, &lnum, FALSE);
 
 #ifdef DEBUG_STACK
 		if (Debug_flags & DBFLAG_STACK)
@@ -485,7 +485,8 @@ target_t *xp;
 		/*  Get the next stack frame
 		 */
 
-		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &pc)) {
+		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &prevpc)) {
+			pc = prevpc;
 		}
 		else if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {
 			ao_preamble_t *pr;
