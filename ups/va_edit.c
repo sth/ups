@@ -931,16 +931,22 @@ type_t *type;
 		vl.vl_char = val;
 		res = DWRITE_VAR(xp, addr, vl.vl_char);
 		break;
-	case 2:
+	case SIZEOF_SHORT:
 		vl.vl_short = val;
 		res = DWRITE_VAR(xp, addr, vl.vl_short);
 		break;
-	case 4:
+	case SIZEOF_INT:
+		vl.vl_int = val;
+		res = DWRITE_VAR(xp, addr, vl.vl_int);
+		break;
+#if SIZEOF_LONG > SIZEOF_INT
+	case SIZEOF_LONG:
 		vl.vl_long = val;
 		res = DWRITE_VAR(xp, addr, vl.vl_long);
 		break;
-#if HAVE_LONG_LONG
-	case 8:
+#endif
+#if SIZEOF_LONG_LONG > SIZEOF_LONG
+	case SIZEOF_LONGLONG:
 		vl.vl_longlong = val;
 		res = DWRITE_VAR(xp, addr, vl.vl_longlong);
 		break;
