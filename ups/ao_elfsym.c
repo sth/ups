@@ -20,7 +20,6 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 /* @(#)ao_elfsym.c	1.3 20 Jun 1995 (UKC) [Patched] */
 char ups_ao_elfsym_c_rcsid[] = "$Id$";
 
@@ -195,6 +194,7 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 	alloc_pool_t *ap;
 	bool seen_sosym_but_no_optsym;
 	Symrec symrec;
+	language_t lang;
 	
 	file_offset = next_file_offset = 0;
 	objdir = path_hint = NULL;
@@ -255,7 +255,7 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 			else {
 
 				stf = make_stf(ap, alloc_strdup(ap, path),
-					       st, 0, srctype(path), 0);
+					       st, 0, LANG_UNKNOWN, 0);
 				
 				new_sfiles = ao_make_fil(stf, rootblock,
 						      alloc_strdup(ap,
@@ -267,12 +267,17 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 			}
 
 			path_hint = NULL;
+			lang = srctype(path);
 
 			prefix = stf->stf_global_prefix;
 			pflen = (prefix != NULL) ? strlen(prefix) : 0;
 
 			seen_sosym_but_no_optsym = TRUE;
 
+			break;
+		case N_SOL:
+			/* Emitted from SC5.3 (Forte 6)
+			 * Along with  N_SO which apparently suffice  FMA */
 			break;
 
 		case N_OPT:
@@ -297,6 +302,10 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 					     symstring(symio, symno),
 					     (time_t)nm.n_value,
 					     &has_debug_syms);
+			if (stf->stf_language == LANG_UNKNOWN)
+			    stf->stf_language = lang; /* set from extension */
+			if (stf->stf_fil->fi_language == LANG_UNKNOWN)
+			    stf->stf_fil->fi_language = stf->stf_language;
 
 			/*  There's no point loading symbols from object
 			 *  files that weren't compiled with -g.  Also,

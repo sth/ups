@@ -20,7 +20,6 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 /* @(#)ao_symscan.c	1.3 20 Jun 1995 (UKC) */
 char ups_ao_symscan_c_rcsid[] = "$Id$";
 
@@ -867,6 +866,7 @@ const char **p_mainfunc_name;
 #endif
     Compiler_type next_compiler = CT_UNKNOWN;
     bool          set_compiler = FALSE;
+    fil_t        *last_fil = NULL;
 
     hf_t **fmap, **istack;
     ao_stdata_t *ast;
@@ -1060,7 +1060,7 @@ const char **p_mainfunc_name;
 #ifdef AO_ELF
 	    stf->stf_symio = symio;
 #endif
-	    st->st_sfiles = ao_make_fil(stf, rootblock, path_hint, st->st_sfiles);
+	    last_fil = st->st_sfiles = ao_make_fil(stf, rootblock, path_hint, st->st_sfiles);
 #ifndef OS_LINUX
 	    if (!path_hint && lang == LANG_CC)
 		    /* RGA g++ puts out empty names so hide such files  */
@@ -1069,6 +1069,7 @@ const char **p_mainfunc_name;
 
 	    set_compiler = next_compiler != CT_UNKNOWN;
 
+	    /* Assumes: N_OPT before N_SO */
 	    if ( set_compiler )
 	    {
 		    stf->stf_compiler_type = next_compiler;
@@ -1212,18 +1213,29 @@ const char **p_mainfunc_name;
 	    if (cptr== NULL)
 		break;
 
-	    elf_handle_optsym(ap, cptr,
-			      stf ? &stf->stf_language : NULL,
+	    lang = LANG_UNKNOWN;
+	    elf_handle_optsym(ap, cptr, &lang,
 			      &next_global_prefix,
 			      &next_compiler,
 			      &has_debug_syms);
 	    if (stf && !set_compiler)
 	    {
+		/* Case for N_SO before N_OPT ? */
 		stf->stf_compiler_type = next_compiler;
 		stf->stf_global_prefix = next_global_prefix;
 		stf->stf_obj_mtime = nm.n_value;
 		next_compiler = CT_UNKNOWN;
 		next_global_prefix = NULL;
+		if (lang != LANG_UNKNOWN)
+		{
+		    /* This should be a better bet than the file extension */
+		    stf->stf_language = lang;
+		    if (last_fil != NULL)
+		    {
+			last_fil->fi_language = lang;
+			last_fil = NULL;
+		    }
+		}
 	    }
 	    break;
 #endif
