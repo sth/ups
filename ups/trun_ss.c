@@ -155,7 +155,7 @@ rtype_t rtype;
 			if (rtype != RT_CONT)
 				panic("bad rtype in dx_run_target");
 			stopres = dx_start(xp);
-			if (!target_process_exists(xp) || stopres == SR_WPT)
+			if (!target_process_exists(xp) || stopres == SR_WPT || stopres == SR_BPT)
 				break;
 			sig = 0;
 			if (rtype == RT_CONT &&
