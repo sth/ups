@@ -1192,6 +1192,7 @@ if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
     xtraCPPFLAGS="-Idevelhdrs"
 elif test -d ../libelf/lib; then
     xtraCPPFLAGS="-Idevelhdrs"
+    ac_cv_header_libelf_libelf_h=yes
 else
     if test "x$prefix" != "xNONE"; then
        eval xtraCPPFLAGS="-I${includedir}"
