@@ -4,12 +4,58 @@ See the file README for build instructions.
 
 The URL for the ups web site is:
 
-           http://www.concerto.demon.co.uk/UPS/
+           http://ups.sourceforge.net/
 
 It is maintained by Ian Edwards <ian@concerto.demon.co.uk>.
 It includes a FAQ, html man pages, site listings where ups
 can be found, supported architectures, a history of changes
 between versions, and other information.
+
+
+Changes after 3.38beta1
+-----------------------
+
+Fixes from Flemming Madsen <fma@ccieurope.com>:
+
+o  With SUN Forte 6.0 C++ structure member names had spurious characters
+   at the start as the STABS emitted for them had changed.
+
+o  Automatic variables in files with '.c' extension put through a C++
+   compiler not displayed properly.
+
+Enhancements from Tom Hughes <thh@cyberscience.com>:
+
+o  Support for wheel-mice and mice with more than 3 buttons.
+
+Changes from Ian Edwards <ian@concerto.demon.co.uk>:
+
+o  Initial support for C++ with DWARF 2.
+
+o  Command line option -[no]findtypes controls whether UPS tries to find
+   class definitions using their names if the debugging information is
+   not sufficient.  DWARF only.  Default is enabled.
+
+From Tom Hughes <thh@cyberscience.com>:
+
+  I noticed that you had put in a stub for macro support, with a comment
+  that gcc doesn't generate macro data. The latest versions do generate
+  it actually, or at least the gcc 3.2 with RH 8 does. You have to use
+  -g3 to ask for level 3 debugging information though.
+
+  I did do some work last weekend to get macros working - it's based on
+  code we already had that added macro support with stabs using a little
+  program we wrote to insert an extra stab for each macro. I've removed
+  the stabs specific bit (which is a horrible hack) and added code to
+  read the DWARF2 .macinfo section instead. I had to fix a few bugs in
+  the macro code in libdwarf first though, which is included along with
+  code for dwarfdump to dump macros.
+
+  Macro support isn't perfect - the main problem is the fact that macros
+  aren't scoped, so you need to evaluate an expression containing macros
+  at a specific line in order to decide what value each macro has.
+  Currently it uses the first line of the function if you evaluate an
+  expression that includes a macro in a function context. It also doesn't
+  support function type macros at all.
 
 
 Changes between 3.38beta1 and 3.37
