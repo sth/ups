@@ -640,7 +640,8 @@ ao_get_retaddr_after_jsr(xp, rlink_reg)
 target_t *xp;
 int rlink_reg;
 {
-#if defined(ARCH_SUN3) || defined(ARCH_CLIPPER) || defined(ARCH_BSDI386)  || defined(ARCH_LINUX386)
+#if defined(ARCH_SUN3) || defined(ARCH_CLIPPER) || \
+   defined(ARCH_BSDI386) || defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
 	taddr_t sp, retaddr;
 
 	sp = xp_getreg(xp, UPSREG_SP);
@@ -1282,7 +1283,7 @@ const char **p_mesg;
 	}
 #endif /* ARCH_VAX */
 #if defined(ARCH_SUN3) || defined(ARCH_CLIPPER) || \
-    defined(ARCH_BSDI386) || defined(ARCH_LINUX386)
+    defined(ARCH_BSDI386) || defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
 	sp -= 4;
 	if (ps_write_data(ip, sp, (char *)&retpc, sizeof(retpc)) != 0) {
 		*p_mesg = "Can't push return address";
@@ -1316,7 +1317,7 @@ const char **p_mesg;
 	ps_setreg(ip, UPSREG_SP, sp);
 #endif /* ARCH_VAX */
 #if defined(ARCH_SUN3) || defined(ARCH_BSDI386) || \
-    defined(ARCH_LINUX386)
+    defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
 	ps_setreg(ip, UPSREG_SP, sp);
 #endif
 #ifdef ARCH_MIPS

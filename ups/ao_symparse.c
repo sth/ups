@@ -832,7 +832,11 @@ class_t *p_class;
 	 *  Modern compilers support passing struct/union by value.
 	 *  Still works on Solaris 2 so keep for OS_SUNOS.
 	 */
-#ifdef OS_SUNOS
+#if defined(OS_SUNOS) && !defined(ARCH_386)
+	/*  7Nov3: on x86, this fix is needed for neither cc nor gcc.
+	 *         on SPARC, it is needed for cc (gcc seems to use
+	 *         CL_AUTO for CL_ARG as well.)
+	 */
 	if ((class == CL_ARG) && (rtype->ty_code == TY_STRUCT || rtype->ty_code == TY_UNION))
 		class = CL_REF; 
 #endif

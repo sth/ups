@@ -149,6 +149,12 @@ int   PUTC_HELPER();
 #endif
 #endif /* OS_SUNOS_4 */
 
+#if OS_SUNOS
+#if HAVE_DOPRNT
+int _doprnt(void);
+#endif
+#endif /* OS_SUNOS */
+
 #endif /* WANT_DECLS */
 
 

@@ -65,7 +65,7 @@ char ups_ao_elfcore_c_rcsid[] = "$Id$";
 #include "ao_elfread.h"
 #include "ao_elfcore.h"
 
-#if (defined ARCH_LINUX386)
+#if (defined ARCH_LINUX386) || (defined ARCH_SOLARIS386)
 #if HAVE_SYS_REG_H
 #include <sys/reg.h>
 #endif

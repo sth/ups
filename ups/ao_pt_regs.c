@@ -58,6 +58,7 @@ char ups_ao_pt_regs_c_rcsid[] = "$Id$";
 #include "dx.h"
 #include "as.h"
 #include "ao.h"
+#include "ao_regs.h"
 #include "ao_syms.h"
 #include "ao_asm.h"
 #include "ao_text.h"
@@ -440,45 +441,6 @@ ptrace_regs_t *pr;
 
 
 #endif /* AO_HAS_PTRACE_REGS */
-
-
-/*
- *  This maps 'regno' (the register number GCC puts in the symbol table)
- *  to the actual register.
- *  Originally copied from 'do_register_translation()' in ao_pt_uarea.c.
- *  FIX: where does this come from ?  Must be some way to get it out
- *  of the header files.
- */
-int
-x86_gcc_register(regno)
-int regno;
-{
-#if (defined ARCH_LINUX386)
-  static int regmap[] = {
-	  EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI,
-	  EIP, EFL, CS, SS, DS, ES, FS, GS, ORIG_EAX
-	};
-  return regmap[regno];
-#elif (defined ARCH_FREEBSD386) && defined(z__FreeBSD__) && __FreeBSD__ > 3
-  static int regmap[] = {
-	/*  9     8     7     6     5    4      3     2 */
-	  tECX, tEDX, tEBX, tISP, tEBP, tESI, tEDI, tDS,
-	/*  12    14  13   16   1    0 */
-	  tERR, tCS, tEIP, tESP, tES, tFS
-	};
-  return regmap[regno];
-#elif (defined ARCH_FREEBSD386)
-  static int regmap[] = {
-	/*  9     8     7     6     5    4      3     2 */
-	  tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI,
-	/*  12    14      13   16   1    0 */
-	  tEIP, tEFLAGS, tCS, tSS, tDS, tES
-	};
-  return regmap[regno];
-#else
-  return regno;
-#endif
-}
 
 
 /*

@@ -133,20 +133,6 @@ struct Ptrace_info {
 
 
 /*
- *
- */
-#ifdef ARCH_SUN3
-#define BPT_PC_OFFSET			2
-#else
-#ifdef ARCH_386
-#define BPT_PC_OFFSET			1
-#else
-#define BPT_PC_OFFSET			0
-#endif
-#endif
-
-
-/*
  *  Routine declarations.
  */
 int ptrace_setreg PROTO((iproc_t *ip, int regno, taddr_t value));
@@ -185,7 +171,6 @@ void ptrace_wait_for_target PROTO((target_t *xp));
 int ptrace_update_regs PROTO((target_t *xp));
 int ptrace_update_dregs PROTO((target_t *xp));
 int e_ptrace PROTO((ptracereq_t req, int pid, char *addr, int data));
-int x86_gcc_register PROTO((int regno));
 
 
 #if defined(OS_SUNOS)

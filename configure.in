@@ -768,7 +768,7 @@ case "$host" in
     i386-sun-sunos4.0.2)ups_arch=ARCH_SUN386 ;; # Obsolete Sun386i
     m68k-*-sunos*)	ups_arch=ARCH_SUN3 ;;
     sparc-*-*)		ups_arch=ARCH_SUN4 ;;
-    i?86-*-solaris*)	ups_arch=ARCH_386 ;; # Not yet supported
+    i?86-*-solaris*)	ups_arch=ARCH_SOLARIS386 ;;
     i?86-*-freebsd1*)	ups_arch=ARCH_BSDI386 ;;
     i?86-*-freebsd*)	ups_arch=ARCH_FREEBSD386 ;;
     i?86-*-openbsd*)	ups_arch=ARCH_OPENBSD386 ;;

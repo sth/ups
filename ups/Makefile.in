@@ -122,14 +122,14 @@ UI2SRCS = state.c reg.c cursors.c menudata.c tdr.c util.c
 ASOBJS = as_vax.o as_68020.o as_mips.o as_clipper.o as_sparc.o
 ASSRCS = as_vax.c as_68020.c as_mips.c as_clipper.c as_sparc.c
 
-AOOBJS = ao_target.o ao_procfs.o ao_core.o \
+AOOBJS = ao_target.o ao_regs.o ao_procfs.o ao_core.o \
 	 ao_ptrace.o ao_pt_regs.o ao_pt_uarea.o \
 	 ao_symread.o ao_shlib.o ao_symload.o ao_symparse.o \
          ao_symscan.o ao_symcb.o ao_aout.o ao_elfcore.o \
 	 ao_elfread.o ao_elfsym.o ao_elflib.o ao_aflist.o \
 	 ao_dwarf.o ao_dwfsyms.o ao_dwftext.o ao_dwftype.o ao_dwfutil.o \
 	 ao_dwfname.o ao_te.o ao_text.o ao_stack.o ${ASOBJS}
-AOSRCS = ao_target.c ao_procfs.c ao_core.c \
+AOSRCS = ao_target.c ao_regs.c ao_procfs.c ao_core.c \
 	 ao_ptrace.c ao_pt_regs.c ao_pt_uarea.c \
 	 ao_symread.c ao_shlib.c ao_symload.c ao_symparse.c  \
          ao_symscan.c ao_symcb.c ao_aout.c ao_elfcore.c \
@@ -207,7 +207,7 @@ CURSORS = cu_dead cu_dead_mask cu_display cu_display_mask cu_drag_box cu_drag_bo
 HDRS = ao.h ao_aflist.h ao_aout.h ao_asm.h ao_core.h ao_dwarf.h               \
        ao_dwfname.h ao_dwfsyms.h ao_dwftext.h ao_dwftype.h ao_dwfutil.h       \
        ao_elfcore.h ao_elflib.h ao_elfpriv.h ao_elfread.h ao_elfsym.h         \
-       ao_execinfo.h ao_ifdefs.h ao_procfs.h ao_ptrace.h ao_shlib.h	      \
+       ao_execinfo.h ao_ifdefs.h ao_procfs.h ao_ptrace.h ao_regs.h ao_shlib.h \
        ao_stack.h ao_symcb.h ao_symload.h ao_symparse.h ao_symread.h	      \
        ao_syms.h ao_symscan.h ao_target.h ao_te.h ao_text.h as.h breakpoint.h \
        cc.h ci.h ci_compile.h ci_compile_expr.h ci_constexpr.h ci_decl.h      \
@@ -504,13 +504,13 @@ ao_target.o: develhdrs/mtrprog/ifdefs.h ao_target.c ao_ifdefs.h ups.h ci.h targe
   ao_aout.h ao_procfs.h ao_elflib.h 
 	${CCLINE}ao_target.c
 ao_procfs.o: develhdrs/mtrprog/ifdefs.h ao_procfs.c ao_ifdefs.h ups.h target.h ao_core.h ao_target.h ao_procfs.h \
-  ao_elflib.h ao_elfcore.h breakpoint.h obj_bpt.h debug.h ui.h 
+  ao_elflib.h ao_elfcore.h ao_regs.h breakpoint.h obj_bpt.h debug.h ui.h 
 	${CCLINE}ao_procfs.c
 ao_ptrace.o: develhdrs/mtrprog/ifdefs.h ao_ptrace.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
   ao_ptrace.h debug.h 
 	${CCLINE}ao_ptrace.c
 ao_pt_regs.o: develhdrs/mtrprog/ifdefs.h ao_pt_regs.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
-  ao_ptrace.h debug.h 
+  ao_ptrace.h ao_regs.h debug.h 
 	${CCLINE}ao_pt_regs.c
 ao_pt_uarea.o: develhdrs/mtrprog/ifdefs.h ao_pt_uarea.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
   ao_ptrace.h debug.h 
@@ -584,8 +584,10 @@ ao_text.o: develhdrs/mtrprog/ifdefs.h ao_text.c ao_ifdefs.h \
   ao_symcb.h ao_shlib.h ao_elfread.h ao_elfsym.h ao_aout.h ao_dwfsyms.h 
 	${CCLINE}ao_text.c
 ao_stack.o: develhdrs/mtrprog/ifdefs.h ao_stack.c ao_ifdefs.h ups.h symtab.h target.h data.h st.h ao_syms.h \
-  ao_stack.h ao_text.h 
+  ao_stack.h ao_regs.h ao_text.h 
 	${CCLINE}ao_stack.c
+ao_regs.o: develhdrs/mtrprog/ifdefs.h ao_regs.c ao_ifdefs.h ao_regs.h
+	${CCLINE}ao_regs.c
 as_vax.o: develhdrs/mtrprog/ifdefs.h as_vax.c 
 	${CCLINE}as_vax.c
 as_68020.o: develhdrs/mtrprog/ifdefs.h as_68020.c 

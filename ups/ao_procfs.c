@@ -52,6 +52,7 @@ char ups_ao_procfs_c_rcsid[] = "$Id$";
 #include "ups.h"
 #include "symtab.h"
 #include "target.h"
+#include "ao_regs.h"
 #include "ao_core.h"
 #include "ao_target.h"
 #include "ao_procfs.h"
@@ -429,6 +430,7 @@ wait_for_target_to_stop(target_t *xp)
 			  stopres = SR_USER; /* out of a bad jump to here */
 			else
 			  stopres = SR_BPT;
+			status.pr_reg[R_PC] = status.pr_reg[R_PC] - BPT_PC_OFFSET;
 			pi->clear_fault_on_resume = TRUE;
 			break;
 		case FLTTRACE:
@@ -871,10 +873,16 @@ resume_execution(target_t *xp, taddr_t restart_pc, int sig, long flags)
 	/*  We used to always set PRSVADDR here and using ip_restart_pc,
 	 *  but it breaks (steps incorrectly) on some lines of code.
 	 *  Maybe we should use nPC?  For now, only set PRSVADDR when
-	 *  we are passed an explicit starting address.
+	 *  we are passed an explicit starting address or when we are
+	 *  restarting after a breakpoint was hit, as we may have rolled
+	 *  back the PC in that case.
 	 */
 	if (restart_pc != 0) {
 		prrun.pr_vaddr = (caddr_t)restart_pc;
+		flags |= PRSVADDR;
+	}
+	else if (ip->ip_stopres == SR_BPT) {
+		prrun.pr_vaddr = (caddr_t)ip->ip_restart_pc;
 		flags |= PRSVADDR;
 	}
 	
@@ -992,7 +1000,11 @@ get_machine_regno(int upsreg)
 	default:
 		if (upsreg < 0 || upsreg >= NPRGREG)
 			panic("bad reg in pr");
-		return upsreg;
+#ifdef ARCH_386
+                return x86_gcc_register(upsreg);
+#else
+                return upsreg;
+#endif
 	}
 }
 

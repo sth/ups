@@ -85,6 +85,7 @@ The current list of supported configurations is:
 	------------		----------		
 	SPARC			Solaris 2.X, Solaris 7, Solaris 8
 	SPARC			SunOS 4.X
+	Intel x86		Solaris 2.X
 	Intel x86		FreeBSD 3.x, 4.x (ELF)
 	Intel x86		Linux 2.2.x (ELF)
 

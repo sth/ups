@@ -90,6 +90,18 @@ typedef union {
 
 #define REG_MIN_REGNO			(-6)
 
+/*  Offset of PC from breakpoint instruction when we stop.
+ */
+#ifdef ARCH_SUN3
+#define BPT_PC_OFFSET			2
+#else
+#ifdef ARCH_386
+#define BPT_PC_OFFSET			1
+#else
+#define BPT_PC_OFFSET			0
+#endif
+#endif
+
 typedef struct {
 	int si_signo;
 	taddr_t si_fp;

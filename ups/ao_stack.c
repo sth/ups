@@ -78,6 +78,7 @@ char ups_ao_stack_c_rcsid[] = "$Id$";
 #include "data.h"
 #include "st.h"
 #include "mreg.h"
+#include "ao_regs.h"
 #include "ao_syms.h"
 #include "ao_target.h"
 #include "ao_ptrace.h"
@@ -438,7 +439,7 @@ target_t *xp;
 			break;
 		}
 #endif
-#ifdef ARCH_LINUX386
+#if defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
 		if ((strcmp(f->fu_demangled_name, "_entry") == 0) ||
 		    (strcmp(f->fu_demangled_name, "_start") == 0) ||
 		    (strcmp(f->fu_demangled_name, "__libc_start_main") == 0)) {

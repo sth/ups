@@ -975,7 +975,7 @@ xbrac_addr(f, val)
 func_t *f;
 unsigned long val;
 {
-#if defined(ARCH_386) && defined(OS_SUNOS)
+#if defined(ARCH_SOLARIS386)
 	return val;
 #else
 #ifdef AO_ELF
@@ -983,7 +983,7 @@ unsigned long val;
 #else
 	return AO_FIDATA(f->fu_fil)->stf_addr + val;
 #endif /* !AO_ELF */
-#endif /* !(ARCH_386 && OS_SUNOS) */
+#endif /* !(ARCH_SOLARIS386) */
 }
 
 #ifdef AO_ELF

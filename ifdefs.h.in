@@ -46,6 +46,7 @@
  *  ARCH_LINUX386	- Linux (x86)
  *  ARCH_BSDI386	- should be BSD/OS (x86), actually any BSD (x86)
  *  ARCH_FREEBSD386	- FreeBSD (x86)
+ *  ARCH_SOLARIS386	- Solaris (x86)
  *
  *  ARCH_MIPS		- any MIPS
  *  ARCH_MIPS_MIPS	- MIPS MIPS
@@ -79,6 +80,7 @@
 #undef ARCH_SUN3
 #undef ARCH_SUN4
 #undef ARCH_386
+#undef ARCH_SOLARIS386
 #undef ARCH_FREEBSD386
 #undef ARCH_OPENBSD386
 #undef ARCH_NETBSD386
@@ -119,7 +121,7 @@
  *  Any 386 ?
  * ---------------------------------------------------------------------------
  */
-#if (ARCH_BSDI386) || (ARCH_LINUX386)
+#if (ARCH_BSDI386) || (ARCH_LINUX386) || (ARCH_SOLARIS386)
 #define ARCH_386		1
 #endif
 
