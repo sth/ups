@@ -89,7 +89,7 @@ static int Select_pending = FALSE;
 
 static obj_pre_edit_func_t Pre_edit_func = NULL;
 
-ALLOC_NEW_FREELIST(static,struct iselst,isel,is_next)
+ALLOC_NEW_FREE_FREELIST(static,struct iselst,isel,is_next)
 
 ALLOC_NEW_FREELIST(static,struct selst,sel,se_next)
 
@@ -886,6 +886,7 @@ struct objst *obj;
 				Head_isel = isel->is_next;
 			isel->is_obj->ob_flags &= ~(OB_HIGHLIGHTED |
 					OB_USERSEL_PENDING | OB_IN_SEL_LIST);
+			free_isel(isel);
 			return;
 		}
 		prev_isel = isel;
