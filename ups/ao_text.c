@@ -519,8 +519,10 @@ bool want_calls;
 #define JMP_FAR		0xe9	/* + 4 byte operand */
 #define JMP_SHORT	0xeb
 
-#define SUBL_IMM_ESP		0xec81	/* four byte operand */
-#define SUBL_IMM_ESP_SHORT	0xec83	/* one byte operand */
+#define SUBL_IMM_ESP		0xec81		/* four byte operand */
+#define SUBL_IMM_ESP_SHORT	0xec83		/* one byte operand */
+#define SUBQ_IMM_ESP		0xec8148	/* four byte operand */
+#define SUBQ_IMM_ESP_SHORT	0xec8348	/* one byte operand */
 
 /*  No, I don't have the faintest idea why opcodes should be different
  *  across operating systems using the same chip ...
@@ -602,14 +604,17 @@ ao_preamble_t *pr;
 		text = textbuf;
 	}
 
-	if ((*(unsigned *)text & 0xffffff) == (PUSHL_EBP | (MOVL_ESP_EBP << 8))) {
+	if ((*(unsigned int *)text & 0xffffff) == (PUSHL_EBP | (MOVL_ESP_EBP << 8))) {
 		text += 3;
 	}
-	else if ((*(unsigned *)text & 0xffffffff) == (PUSHQ_RBP | (MOVQ_RSP_RBP << 8))) {
+#if defined(ARCH_386_64)
+	else if ((*(unsigned int *)text & 0xffffffff) == (PUSHQ_RBP | (MOVQ_RSP_RBP << 8))) {
 		text += 4;
 	}
+#else
 	else
 		f->fu_flags |= FU_NO_FP;
+#endif
 
 	if (*(unsigned short *)text == SUBL_IMM_ESP) {
 		pr->pr_rsave_offset = -*(int *)&text[2];
@@ -619,6 +624,16 @@ ao_preamble_t *pr;
 		pr->pr_rsave_offset = -*(unsigned char *)&text[2];
 		text += 3;
 	}
+#if defined(ARCH_386_64)
+	else if ((*(unsigned int *)text & 0xffffff) == SUBQ_IMM_ESP) {
+		pr->pr_rsave_offset = -*(int *)&text[3];
+		text += 7;
+	}
+	else if ((*(unsigned int *)text & 0xffffff) == SUBQ_IMM_ESP_SHORT) {
+		pr->pr_rsave_offset = -*(unsigned char *)&text[3];
+		text += 4;
+	}
+#endif
 	else
 		pr->pr_rsave_offset = 0;
 	
@@ -626,10 +641,9 @@ ao_preamble_t *pr;
 	pr->pr_rsave_mask = 0;
 	while ((text[0] & 0x7) == 0x50 ||
 	       (text[0] == 0x41 && (text[1] & 0x7) == 0x50)) {
-#ifdef OS_SUNOS
+#if defined(OS_SUNOS)
 		static int regs[] = { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
-#endif
-#if defined(ARCH_LINUX386_64)
+#elif defined(ARCH_LINUX386_64)
 		static int regs[] = { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 };
 #elif defined(ARCH_LINUX386)
 		static int regs[] = { EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI };
@@ -639,15 +653,16 @@ ao_preamble_t *pr;
 		if (text >= textbuf + sizeof(textbuf))
 			panic("pushl botch in gsf");
 
+#if defined(ARCH_386_64)
 		if (text[0] == 0x41) {
 			reg += 8;
 			text++;
 		}
+#endif
 
 #if defined(OS_SUNOS) || defined(OS_LINUX)
 		reg += regs[text[0] & 7];
-#endif
-#ifdef OS_BSD44
+#elif defined(OS_BSD44)
 		reg += text[0] & 7;
 #endif
 
