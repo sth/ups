@@ -602,9 +602,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,	/* Make list of frame
 		    return DW_DLV_ERROR;
 		}
 
-		reg[DW_FRAME_CFA_COL].ru_is_off = 0;
 		reg[DW_FRAME_CFA_COL].ru_register = reg_no;
-		reg[DW_FRAME_CFA_COL].ru_offset = 0;
 		fp_register = reg_no;
 		break;
 	    }
