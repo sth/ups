@@ -17,7 +17,7 @@ DOCS	=
 
 OTHERS	= \
 	COPYING.LIB ChangeLog INSTALL README VERSION \
-	po/libelf.pot po/*.po po/*.msg po/*.cat
+	po/libelf.pot po/*.po po/*.msg
 
 EDITED	= *.elflib lib/*.elflib po/*.elflib
 
