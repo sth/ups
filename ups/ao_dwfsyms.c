@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
@@ -686,12 +687,17 @@ int recursed;		/* Recursion level, 0 = top. */
 	case DW_TAG_member:
 	    if (dw_what & DWL_STRUCT_MEMBERS) {
 		var_t *v;
+		class_t hint;
 		/*
 		 * Member of structure or union
 		 */
 		ae = parent_dt->dt_type->ty_aggr_or_enum;
+		if (parent_dt->dt_type->ty_code == TY_UNION)
+		    hint = CL_MOU;
+		else
+		    hint = CL_MOS;
 		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
-				      dw_level, CL_MOS);
+				      dw_level, hint);
 	    }
 	    break;
 
@@ -713,13 +719,9 @@ int recursed;		/* Recursion level, 0 = top. */
 	    if (dw_what & DWL_ANY_TYPES) {
 		typecode_t typecode;
 
-		if (dwf_get_opt_flag(dbg, die, DW_AT_declaration)) {
-		    typecode = TY_U_STRUCT;
-		} else {
-		    typecode = TY_STRUCT;
-		    dw_what_next = DWL_STRUCT_MEMBERS | DWL_CLASS_MEMBERS;
-		    descend = TRUE;
-		}
+		typecode = TY_STRUCT;
+		dw_what_next = DWL_STRUCT_MEMBERS | DWL_CLASS_MEMBERS;
+		descend = TRUE;
 		dt = dwf_make_ae_type(dbg, die, ap, stf, typecode, parent_bl);
 	    }
 	    break;
@@ -731,28 +733,18 @@ int recursed;		/* Recursion level, 0 = top. */
 		typecode_t typecode;
 
 		/*
-		 * Aggregate type (enum/struct/union)
+		 * Aggregate type (class/enum/struct/union)
+		 *
+		 * Assume we have a definition; dwf_finish_aggregate()
+		 * will change the typecode if it turns out to have been
+		 * just a declaration.
 		 */
-		if (dwf_get_opt_flag(dbg, die, DW_AT_declaration)) {
-		    /*
-		     * dwarfTODO: this is not right - C++ can set the flag
-		     * then goes on to define members (is this for template
-		     * classes ?)
-		     */
-		    if (tag == DW_TAG_enumeration_type)
-			typecode = TY_U_ENUM;
-		    else if (tag == DW_TAG_structure_type)
-			typecode = TY_U_STRUCT;
-		    else if (tag == DW_TAG_union_type)
-			typecode = TY_U_UNION;
-		} else {
-		    if (tag == DW_TAG_enumeration_type)
-			typecode = TY_ENUM;
-		    else if (tag == DW_TAG_structure_type)
-			typecode = TY_STRUCT;
-		    else if (tag == DW_TAG_union_type)
-			typecode = TY_UNION;
-		}
+		if (tag == DW_TAG_enumeration_type)
+		    typecode = TY_ENUM;
+		else if (tag == DW_TAG_structure_type)
+		    typecode = TY_STRUCT;
+		else if (tag == DW_TAG_union_type)
+		    typecode = TY_UNION;
 
 		/*
 		 * Determine which child DIEs we need to process.

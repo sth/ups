@@ -20,12 +20,13 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 /*
  * Notes
  * -----
  * "base" means the underlying type, e.g. for "char **" it is "char *".
  */
+
+char ups_ao_dwftype_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
@@ -333,8 +334,8 @@ aggr_or_enum_def_t *ae;
 
 /*
  * Make a 'var_t' to hold details of a variable (hint = CL_AUTO).
- * Also used for struct/union members (hit = CL_MOS) and procedure
- * parameters (hint = CL_ARG)
+ * Also used for struct members (CL_MOS), union members (CL_MOU)
+ * and procedure (CL_ARG)
  */
 var_t *
 dwf_make_variable(dbg, die, ap, stf, p_vars, dw_level, class_hint)
@@ -344,7 +345,7 @@ stf_t *stf;
 alloc_pool_t *ap;
 var_t **p_vars;
 int dw_level;
-class_t class_hint;	/* CL_AUTO, CL_MOS or CL_ARG */
+class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
 {
     Dwarf_Die spec_die;
     var_t *v;
@@ -354,17 +355,18 @@ class_t class_hint;	/* CL_AUTO, CL_MOS or CL_ARG */
     off_t type_offset;
     char *name;
     class_t class = CL_NOCLASS;
-    vaddr_t *vaddr;
+    vaddr_t *vaddr = NULL;
     taddr_t addr = 0;
 
     /*
      * If there is an address it is a definition.
+     * Union members don't have addresses.
      */
     if (dwf_has_attribute(dbg, die, DW_AT_location)) {
 	vaddr = dwf_get_location(dbg, ap, die, DW_AT_location);
     } else if (dwf_has_attribute(dbg, die, DW_AT_data_member_location)) {
 	vaddr = dwf_get_location(dbg, ap, die, DW_AT_data_member_location);
-    } else
+    } else if (class_hint != CL_MOU)
 	return (var_t *)NULL;
 
     /*
@@ -436,7 +438,12 @@ class_t class_hint;	/* CL_AUTO, CL_MOS or CL_ARG */
      * Determine the class and address.
      * dwarfTODO: finish this
      */
-    if (vaddr->v_op == OP_FRAME_BASE) {
+    if (vaddr == NULL) {
+
+	class = class_hint;
+	addr = 0;
+
+    } else if (vaddr->v_op == OP_FRAME_BASE) {
 
 	if (class_hint == CL_ARG)
 	    class = CL_ARG;
@@ -879,7 +886,7 @@ int recursed;
 	    } else {
 		incomplete++;
 		if (recursed == 0)
-		    errf("Incomplete DWARF type, offset <%ld>\n", (long)dt->dt_base_offset);
+		    errf("\bDWARF type incomplete, offset <%ld>", (long)dt->dt_base_offset);
 #if WANT_DEBUG
 fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
 #endif
@@ -954,7 +961,7 @@ fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->
 	     */
 	    if (dest && !IS_BASIC_TYPE(dest) && (dest->ty_base == NULL)) {
 		if (recursed == 0)
-		    errf("Bad DWARF type, offset <%ld>\n", (long)dt->dt_base_offset);
+		    errf("\\bBad DWARF type, offset <%ld>", (long)dt->dt_base_offset);
 #if WANT_DEBUG
 fprintf(stderr, "level %d bad type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
 #endif
@@ -968,12 +975,12 @@ fprintf(stderr, "level %d bad type, offset <%ld>\n", recursed, (long)dt->dt_base
 	if ((dt->dt_base_offset == (off_t)0) && (dt->dt_is == DT_IS_TYPE)) {
 	    dest = dt->dt_type;
 	    if ((dest->ty_code == TY_STRUCT) || (dest->ty_code == TY_UNION)) {
-		aggr_or_enum_def_t *ae = dest->ty_aggr_or_enum;
-		ae->ae_alignment = dwf_guess_ae_alignment(ae);
-#if WANT_DEBUG
-if (recursed == 0)
-fprintf(stderr, "level %d no alignment on %s\n", recursed, ae->ae_tag ? ae->ae_tag : "NULL");
-#endif
+		if (recursed == 0) {
+		    aggr_or_enum_def_t *ae = dest->ty_aggr_or_enum;
+		    ae->ae_alignment = dwf_guess_ae_alignment(ae);
+		    if (ae->ae_alignment <= 0)
+			errf("No alignment on %s", ae->ae_tag ? ae->ae_tag : "NULL");
+		}
 	    }
 	}
 
@@ -998,17 +1005,32 @@ dtype_t *dt;
 
     ae = dt->dt_type->ty_aggr_or_enum;
     switch (dt->dt_type->ty_code) {
+    case TY_ENUM:	break;
     case TY_STRUCT:	class = CL_MOS; break;
     case TY_UNION:	class = CL_MOU; break;
-    case TY_ENUM:	class = CL_MOE; break; /* but not used */
-    case TY_U_STRUCT:	return;
-    case TY_U_UNION:	return;
-    case TY_U_ENUM:	return;
-    default: panic("botch in dwf_finish_aggregate()");
+    default:		panic("botch in dwf_finish_aggregate()");
     }
 
-    if (dt->dt_type->ty_code == TY_ENUM) {
-    } else {
+    /*
+     *  If there are no members demote to "undefined".
+     */
+    switch (dt->dt_type->ty_code) {
+    case TY_ENUM:
+	if (ae->ae_enum_members == NULL)
+	    dt->dt_type->ty_code = TY_U_ENUM;
+	break;
+    case TY_STRUCT:
+	if (ae->ae_aggr_members == NULL)
+	    dt->dt_type->ty_code = TY_U_STRUCT;
+	break;
+    case TY_UNION:
+	if (ae->ae_aggr_members == NULL)
+	    dt->dt_type->ty_code = TY_U_UNION;
+	break;
+    }
+
+    if ((dt->dt_type->ty_code == TY_STRUCT)
+	    || (dt->dt_type->ty_code == TY_UNION)) {
 	/*
 	 * Fix struct/union members.
 	 */
