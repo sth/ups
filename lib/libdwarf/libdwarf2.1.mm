@@ -435,7 +435,7 @@ a single entry in the .debug.macinfo section.
   Dwarf_Signed dmd_fileindex;
   char *       dmd_macro;
 };
-typedef struct Dwarf_Macro_Details_s Dwarf_Macro_Details;
+typedef struct Dwarf_Macro_Details_s Dwarf_Macro_Details;\fP
 .DE
 .P
 \f(CWdmd_offset\fP is the byte offset, within the .debug_macinfo
