@@ -527,7 +527,7 @@ target_t *xp;
 				}
 			}
 
-			for (; offset < offsetlim; offset += sizeof(taddr_t)) {
+			for (; offset < offsetlim; offset += 4) {
 				func_t *cfunc;
 
 				if (dread_addrval(xp, sp + offset, &pc) == 0 &&
