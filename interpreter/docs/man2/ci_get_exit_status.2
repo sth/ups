@@ -1,0 +1,36 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_get_exit_status - Get exit status from the startup function.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBint
+.br 
+ci_get_exit_status(\fIma\fB)
+.br
+machine_t *\fIma\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function gets the return code from the startup function in the 
+interpreted code. This is usually the return code of 
+.BR exit() .
+.PP
+.SH SEE ALSO
+.BR ci_execute_machine (2)

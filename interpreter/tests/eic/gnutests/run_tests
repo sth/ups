@@ -1,0 +1,34 @@
+cg gnu1.c
+cg gnu11.c
+cg gnu12.c
+cg gnu14.c
+cg gnu15.c
+cg gnu16.c
+cg gnu17.c
+cg gnu18.c
+cg gnu21.c
+cg gnu23.c
+cg gnu24.c
+cg gnu26.c
+cg gnu28.c
+cg gnu29.c
+cg gnu3.c
+cg gnu30.c
+cx -c gnu4.c
+cg gnu4.c
+cg gnu6.c
+cg gnu7.c
+cg gnu8.c
+cg -I../../../include t1.c
+cg -I../../../include t2.c
+cg -I../../../include t3.c
+cg -I../../../include t4.c
+cg -I../../../include t5.c
+cg testcbrt.c
+cg testconvert.c
+cg testdiv1.c
+cg testgofast.c
+cg tststruct-big.c
+cg tststruct-layout.c
+cg tststruct-ret-1.c
+cg tststructret.c

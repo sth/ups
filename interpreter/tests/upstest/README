@@ -1,0 +1,83 @@
+README for upstest directory
+============================
+
+This directory contains test files for the stand-alone C interpreter
+which is included in the UPS source.
+
+Running the tests
+-----------------
+run_tests	- Run tests using the headers in '../../include' 
+
+
+Test programs
+-------------
+Following test programs are from the book C Programming Language. Most are
+single source applications.  The name tells you which section to look for.
+
+test_1.2a.c
+test_1.2b.c
+test_1.3.c
+test_1.4.c
+test_1.5.1a.c
+test_1.5.1b.c
+test_1.5.2a.c
+test_1.5.2b.c
+test_1.5.2c.c
+test_1.5.2d.c
+test_1.5.3.c
+test_1.5.4.c
+test_1.6.c
+test_1.7.c
+test_2.10.c
+test_2.9.c
+
+Following three sources have to linked to build the executable.
+
+test_4.3a.c
+test_4.3b.c
+test_4.3c.c
+
+(Sorry - the above tests are not included in the distribution as there may
+ have been copyright problems).
+
+Folowing test various aspects of the C language - some of them won't work
+with UPS because of limitations in UPS (see notes elsewhere).
+
+test_align.c
+test_atof.c
+test_atof2.c
+test_double.c
+test_enum.c
+test_enum2.c
+test_float_inc.c
+test_hello.c
+test_init.c
+test_stdout.c
+test_strlen.c
+test_strlen2.c
+test_struct.c
+test_struct_assign.c
+test_switch.c
+test_time.c
+
+Following programs need to be linked to form an executable.  This is a
+sophisticated AVL Tree Manager - and UPS is able to run it !
+
+alloc.c
+alloc.h
+avl3.h
+avl3a.c
+avl3b.c
+avl3int.h
+tavl3.c
+(wordlist	- data for above application.)
+
+
+test_decl.c	demonstrates some erroneous constructs that are caught.
+test_decl2.c	should be successfully parsed/interpreted.
+
+_______________________________________________________________________________
+
+Dibyendu Majumdar <dibyendu@mazumdar.demon.co.uk>
+Ian Edwards <ian@concerto.demon.co.uk>
+14th January 1998

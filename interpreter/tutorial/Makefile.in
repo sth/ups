@@ -1,0 +1,51 @@
+# Makefile for building all the tutorial examples
+
+UPS_SRC    = ../../ups
+UKC_SRC    = $(UPS_SRC)/../lib/libukcprog
+MTR_SRC    = $(UPS_SRC)/../lib/libmtrprog
+UPS_LIBS   = -L$(UPS_SRC) -lci -L$(MTR_SRC) -lmtrprog -L$(UKC_SRC) -lukcprog
+X11_LIBS   = -L/usr/X11R6/lib -lSM -lICE -lX11  
+MATH_LIBS  = -lm
+LIBS       = $(MATH_LIBS) $(UPS_LIBS) $(X11_LIBS)
+INC_PATH   = -I$(UPS_SRC)/develhdrs -I$(UPS_SRC)
+CCFLAGS    = -g $(INC_PATH)
+
+all: example1 example2 example3 example4 example5 example6
+
+example1: example1.o
+	gcc -g -o example1 example1.o $(LIBS)
+
+example2: example2.o Cinterpreter.o
+	gcc -g -o example2 example2.o Cinterpreter.o $(LIBS)
+
+example3: example3.o Cinterpreter.o
+	gcc -g -o example3 example3.o Cinterpreter.o $(LIBS)
+
+example4: example4.o Cinterpreter.o
+	gcc -g -o example4 example4.o Cinterpreter.o $(LIBS)
+
+example5: example5.o Cinterpreter.o
+	gcc -g -o example5 example5.o Cinterpreter.o $(LIBS)
+
+example6: example6.o Cinterpreter.o
+	gcc -g -o example6 example6.o Cinterpreter.o $(LIBS) 
+
+Cinterpreter.o: Cinterpreter.h Cinterpreter.c
+
+example1.o: example1.c Cinterpreter.h
+
+example2.o: example2.c Cinterpreter.h
+
+example3.o: example3.c Cinterpreter.h
+
+example4.o: example4.c Cinterpreter.h
+
+example5.o: example5.c Cinterpreter.h
+
+example6.o: example6.c Cinterpreter.h
+
+.c.o:
+	gcc -c $(CCFLAGS) $<
+
+clean:
+	rm -f example? *.o

@@ -1,0 +1,116 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_compile - Compile a parse tree into byte-code.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBlinkinfo_t *
+.br
+ci_compile(\fIsrcpath\fB, \fIparse_id\fB, \fIreport_error\fB, \fIcheckarg_proc\fB,
+\fIregno_to_addr_proc\fB, \fIflags\fB)
+.br
+const char *\fIsrcpath\fB; 
+.br
+parse_id_t \fIparse_id\fB;
+.br
+ci_report_error_func_t \fIreport_error\fB;
+.br
+ci_checkarg_proc_t \fIcheckarg_proc\fB;
+.br
+ci_regno_to_addr_proc_t \fIregno_to_addr_proc\fB;
+.br
+unsigned \fIflags\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function converts the supplied parse tree to byte-code. 
+.PP
+.I srcpath 
+should point to a filename if compiling a source file; otherwise set 
+it to any suitable name. 
+.PP
+.I parse_id 
+must be a valid parse tree returned by 
+.BR ci_parse_file() . 
+.PP
+.I report_error 
+should point to an error reporting function such as 
+.BR cc_report_error() . 
+.PP
+.I checkarg_proc 
+is optional; set it to 
+.B NULL 
+if not required. The UPS debugger uses this callback (see
+.B checkarg()
+in
+.B ups/ui_misc.c
+) to push argument types when calling indirect functions. This allows
+a function such as 
+.B $printf() 
+to determine the types of arguments supplied to it.
+.PP
+I do not know the purpose of 
+.I regno_to_addr_proc 
+; set it to 
+.BR NULL . 
+.PP
+.I flags 
+is used to alter the compiler's behaviour. Multiple flags can be or'd if 
+required. Following flags are allowed.
+.PP
+.TP
+.B CI_CP_CHECKSP	      
+This flag enables run-time checking of the Stack Pointer.
+.br
+.TP
+.B CI_CP_DONT_PANIC      
+If this flag is set, the Interpreter generates an error message rather than 
+aborting on errors. Always set this flag when using the Interpreter in foreign 
+applications.
+.br
+.TP
+.B CI_CP_CHECK_DIV	      
+This enables divide by zero checking at run-time.
+.br
+.TP
+.B CI_CP_ONEFILE         
+Set this flag when compiling a single source file. This flag must be set
+when using the Interpreter within an application. 
+.br
+.TP
+.B CI_CP_WANT_REG_RELOCS
+I do not know the purpose of this flag.
+.br
+.TP
+.B CI_CP_WANT_SYMINFO    
+Compile with this flag if you want symbol table information. This is
+equivalent to supplying the -g flag to the compiler.
+.PP
+.SH RETURN VALUE
+On success, a pointer to structure of type 
+.B linkinfo_t
+is returned. On failure, this function returns
+.BR NULL .
+.PP
+.SH SEE ALSO
+.BR ci_parse_file (2), 
+.br
+.BR ci_free_linkinfo (2), 
+.br
+.BR ci_make_machine_from_linkinfo (2)

@@ -1,0 +1,3 @@
+EiC tests modified for UPS C Interpreter by Dibyendu Majumdar.
+Several tests were removed because they were EiC specific.
+The file todo contains a list of sources that UPS can't cope with.

@@ -1,0 +1,41 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_free_machine - Release memory allocated to a Virtual Machine.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBvoid 
+.br
+ci_free_machine(\fImachine\fB)
+.br
+machine_t *\fImachine\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function frees up all memory allocated to a 
+.IR machine . 
+.PP
+.SH SEE ALSO
+.BR ci_make_machine_from_linkinfo (2),
+.br 
+.BR ci_execute_machine (2),
+.br 
+.BR ci_reset_machine (2),
+.br
+.BR ci_initialise_machine (2)

@@ -1,0 +1,501 @@
+Introduction
+------------
+The UPS C Debugger includes a reasonably complete ISO C Interpreter.
+The C Interpreter is completely independent of the debugger, and can be built
+and used on its own right.  The standard UPS distribution does not document the
+interpreter - however it does describe the mechanism used to "link" interpreter
+object files into interpreter "executables".  This information is in the
+ups-3.33/ups/doc/linking.ms document.
+
+Information about UPS is available from http://www.concerto.demon.co.uk/UPS/
+
+Building/installing the Interpreter
+-----------------------------------
+The Interpreter executables can be built along with the UPS debugger, the
+instructions are in the README file in the top directory.  Basically :
+
+	./configure
+	make  interpreter
+
+If the build is successful, you should end up with four executables:
+
+ups	- This is the UPS X-Windows debugger
+cg	- A standalone C interpreter for interpreting single C source file
+cx	- A C interpreter compiler/linker for compiling/linking multiple
+          C source files
+xc	- A C interpreter executor for executing executables created by cx
+
+The UPS debugger is not described further in this document - please see the
+man page supplied with the distribution for details on how to use it.
+
+Optional features
+-----------------
+The following are not enabled by default :
+
+  'configure' option      does
+  ------------------      ----
+  --with-math             include math routines in the C interpreter
+  --with-longlong         allow 'long long' in the C interpreter
+  --with-longdouble       allow 'long double' in the C interpreter
+
+Look at the INSTALL file for details of running 'configure' with parameters.
+Enabling support for math routines should work.  Enabling the datatypes
+will allow the interpreter to parse files containing them but not much more.
+
+On FreeBSD --with-longlong will allow you to use the standard header files
+rather tham the spllied set.
+
+Interpreter usage
+-----------------
+The C interpreter comes in two flavours.
+
+1. To compile and interpret a single .c file, you can use 'cg'.  'cg' is used
+   as follows:
+
+   cg [-I<dir>] [-oldc] [-D<sym>[=<value>]] [-U<sym] <source file>
+	<arg1> <arg2> ...
+
+   The -I, -D and -U flags have the same meaning as in most C compilers.
+   The -oldc flag is to suppress a few warning messages related to the use
+   of pre-ANSI C features.
+
+   Note that the C compiler must be in the PATH when executing 'cg'.  This
+   is because 'cg' calls the compiler with the -E flag to preprocess the
+   source file.  The -I, -D, and -U flags are passed to the compiler and
+   ignored by 'cg' itself.
+
+   By default the C compiler used as a preprocessor is the one that was used
+   to build UPS.  See the build instructions if you want to change this.
+
+2. The UPS C interpreter can also interpret applications built from multiple
+   source files.  This is achieved as follows:
+
+   First, each source is compiled into bytecode using 'cx'.  'cx' produces
+   .ocx files - which are similar in purpose to the .o files produced by 'gcc'.
+
+   After all sources have been compiled, the .ocx files are linked to create
+   the executable.  The executable does not contain the .ocx files - rather it
+   contains references to them.  This allows it to be very compact.
+
+   Most of the real code continues to reside in the .ocx files, and is loaded
+   at run-time on demand.
+
+   Once the executable has been built it can be executed by the 'xc'
+   command.  Alternatively, if 'xc' is placed in the appropriate directory,
+   the executable can be run directly from the UNIX prompt using the shell
+   '#!' facility.
+
+   The syntax for 'cx' is as follows:
+
+   cx [-o executable] [-c] [-g] [-asm] [-S] [-oldc] [-D<sym>[=<value>]]
+	[-U<sym>] [-I<dir>] <source files ...>
+
+   The various options are sumarized below:
+
+	-o	The argument names the executable.  Default is cx.out.
+	-c	Means compile only.
+	-g	Include debugging information.  Allows interpreter executables
+		to be debugged using UPS.
+	-S	Produce assembler source (with original source indicated).
+		Requires -g.
+	-asm	Produce assembler source only.
+	-oldc	Suppress warnings related to use of pre-ANSI features.
+	-I	Look for header files included with <> in <dir>.
+		More than one of this option may be supplied.
+	-D	Define preprocessor symbol.
+	-U	Undefine preprocessor symbol.
+
+   Note that the GNU C compiler must be in the PATH when executing 'cg'.  This
+   is because 'cg' calls 'gcc' with the -E flag to preprocess the source file.
+   The -I, -D, and -U flags are passed to 'gcc' and ignored by 'cg' itself.
+
+   Note that the assembler source shows the assembly language used by the
+   interpreter - it cannot be processed further in any way - and is useful
+   only for understanding/debugging the interpreter.
+
+
+Both cg and cx recognise the following environment variables:
+
+	LEX_DEBUG	- if set causes the lexical analyzer to dump
+			  debugging messages.
+
+3. To execute an interpreter binary (created by 'cx'), use 'xc' as
+   follows:
+
+   xc [-s<n>] <binary> [<args ...>]
+
+   The -s option allows you to specify a stack size in bytes.  The default
+   stack size is 40000 bytes.
+
+The Language
+------------
+The UPS C Interpreter implements a good subset of the ISO C 90 language.
+It gets some things wrong (see PROBLEMS for a list of these), and does not
+implement some features of ISO C, such as:
+
+	* Multi-byte characters/strings
+	* Wide characters/strings
+	* Trigraphs
+	* Initialization of local aggregates
+
+Support for ISO C library
+-------------------------
+The Interpreter has in-built support for many ISO C library functions.
+The following headers are not supported:
+
+	wchar.h
+	setjmp.h
+	locale.h
+	wctype.h
+	iso646.h
+
+Apart from above, the following C library functions/macros/typedefs are not
+supported:
+
+	gets()
+	tmpfile()
+ 	strcoll()
+	strxfrm()
+	atexit()
+	div()
+	ldiv()
+	mblen()
+	mbtowc()
+	mbstowcs()
+	wcstombs()
+	MB_CUR_MAX
+	wchar_t
+
+The header files provided can be used to obtain a subset of ISO C environment
+on Linux.  The headers may need customization on other platforms.
+
+Note that the support for header files and functions is operating system
+dependent.
+
+PROBLEMS
+--------
+The UPS C Interpreter has a number of problems but none of these are
+show-stoppers (in my opinion).  As far as I know, the interpreter is
+ISO C compliant in other respects (please let me know if you discover
+otherwise).
+
+1. Non-enum values cannot be assigned to enum variables without a
+   cast.
+
+   enum bool { false, true };
+   typedef enum bool bool;
+
+   int main(void)
+   {
+       bool boolean = 5;		/* fails */
+       bool boolean = (bool)5;		/* ok */
+       return 0;
+   }
+
+2. The increment (++) or decrement (--) operators do not work with
+   floating point values.
+
+3. Automatic arrays and structures cannot be initialised in functions.  For
+   example, this doesn't work:
+
+   int func(void)
+   {
+      int array[] = { 1, 2 };
+   }
+
+   However following works fine:
+   int func(void)
+   {
+      static int array[] = { 1, 2 };
+   }
+
+4. ISO C rules for identifier scopes are:
+
+   1. Structure, union, and enumeration tags have scope that begins just after
+   the appearance of the tag in a type specifier that declares the tag.
+   2. Each enumeration constant has scope that begins just after the
+   appearance of its defining enumerator in an enumerator list.
+   3. Any other identifier has scope that begins just after the
+   completion of its declarator.
+
+   The UPS C Interpreter follows somewhat different rules.
+
+   1. Structure and union tags have scope that begins just after the
+   appearance of the tag in a type specifier that declares the
+   tag.  Enumeration tags come into scope at the end of the declaration
+   or at the first reference.
+   2. Enumeration constants come into scope after the complete declaration of
+   the enumeration type.
+   3. Variables come into scope after their declaration terminates (when the
+   ';' that ends the declaration is encountered).
+
+   Following valid ISO C constructs fail in UPS.
+
+   char * words[] = {
+	/* whatever */
+   }, **wordlist = words;		/* words undefined */
+   int intsize = sizeof(intsize)	/* intsize undefined */
+   int a = 0, b = a;			/* a undefined */
+   enum { false, true=false+1 };	/* false undefined */
+
+5. Constant expressions do not allow the following constructs:
+
+   * address of (&)
+   * variable reference
+   * floating point constants in conditional expressions
+
+   Example:
+   int x[][5] = { {1, 2, 3, 4, 0}, { 5, 6 }, { 7 } };
+   int *y[] = { x[0], x[1], x[2], 0 };			/* fails */
+   extern void func(void);
+   void (*fptr)(void) = &func;				/* fails */
+   int i = 0.25 ? 1 : 0;				/* = 0 */
+
+6. A function declared/defined without a parameter list and not
+   specified void, causes CX to complain about missing prototype.
+   This can be suppressed with the -oldc option.
+
+7. All floating point constants are of type 'double'.  The suffixes 'F' or
+   'L' are ignored.
+
+8. The interpreter assumes that 'int', 'long', 'unsigned', 'unsigned long'
+   and 'void *' are the same size (4 bytes, 32 bits).
+   It also assumes that 'unsigned long' and 'void *' can be assigned to
+   each other without loss of information.
+
+9. 'long double' is a synonym for 'double' and not a distinct type.
+
+10. 'signed char' is a synonym for 'char' and not a distinct type.
+
+11. Casts are NOOPs under following situations:
+
+    a) In constant expressions.
+
+    b) Also in non-constant expressions where a 32 bits integer is being cast
+       to a narrower (16 or 8 bits) type.
+
+12. Non-interpreted functions (such as built-ins) which return aggregate
+    types (or true long doubles) cannot be called from interpreted code.
+    Thus the Standard C functons div() and ldiv() cannot be called from
+    interpreted code.
+
+13. When strings are assigned to arrays - the length of the string (including
+    the '\0' byte) must not exceed the array size.  This is
+    different from ISO C where extra characters are discarded and
+    the array is not null terminated if the string literal is longer
+    than will fit.
+
+14. A structure declared in the parameter list of a function creates the
+    structure type in translation unit scope - unlike ANSI C where the
+    scope of the structure is restricted to the function.
+
+15. Structures resulting from expressions are not l-values.  You cannot code:
+
+    if (func().member == value) /**/ ;
+
+    where func() returns a structure by value, and member is a member of the
+    structure returned.
+
+    Causes fatal error (sp botch in ce).
+
+C Interpreter Bugs (in UPS 3.33 release) fixed so far
+-----------------------------------------------------
+1. The C interpreter executables could not be built as delivered
+   because of missing references to demangle_name_2().
+
+2. CX and CG failed because of libvar botch.  This was caused by cc.c not
+   including the same headers (particularly <mtrprog/ifdefs.h>) as
+   xc_builtins.c.
+
+3. Unnamed bitfields caused memory fault in the interpreter.
+
+4. Bitfield manipulation caused CX to fail.
+
+5. Variables were initialized in reverse order of declaration.
+   Interdependent initializations caused memory fault.
+
+   Example:
+   AVLNode        *
+   AVL_DoubleRotateLeft(AVLNode * self)
+   {
+	AVLNode        *rt = self->right;
+	AVLNode        *lf = rt->left;
+
+   * While fixing this I introduced another bug - if multiple variables
+     were initialized in the same declaration, only the first one would
+     get initialized.  This is now fixed.
+
+6. 'lLuU' suffixes were not recognised for integer constants.
+   'fFlL' suffixes were not recognised for floating point constants.
+   These are now recognised however
+   the floating point suffixes are ignored with warning messages.
+
+7. Built-in calloc() caused memory over-run.
+
+8. Failed to complain about invalid declarations such as:
+
+   typedef enum boolean bool;
+   typedef int bool;		/* invalid */
+   typedef int;			/* invalid */
+   struct { int a, b; };	/* invalid */
+   extern;			/* invalid */
+   static struct S { int a; };	/* invalid */
+
+9. A number of changes to ci_lex.c and ci_parse.y to allow better resolution
+   of TYPEDEF_NAME / IDENTIFIER ambiguity.  This fixes many typedef
+   related problems.
+
+10. Fixed problem in typedef lookup (ci_lookup_typedef()).  This fixes
+    scoping problems.
+
+11. Function parameters of type 'Function returning' now decay
+    into pointers to functions.
+
+12. Enum values are now promoted to 'int' in expressions.  However, non-enum
+    values cannot be assigned to enum variables without a cast.
+
+    The original behaviour didnot allow enum values in integer expressions
+    without a cast (which I found annoying - and is not as per ANSI C rules).
+
+13. The original interpreter could not call native functions which returned
+    types such as 'double' or 'struct'.  I made changes to support
+    native functions which return 'double' so that the C library math
+    functions could be added to the built-ins.
+
+    Ian Edwards implemented a better solution for above - in preference
+    to my table driven approach, his solution added the return type
+    of the function as operands of the OC_CALL_[BWL] and OC_CALL_INDIRECT
+    opcodes.  However, his changes were incomplete in some respects - I have
+    made alterations to make the changes complete.
+
+14. Enums are now promoted to 'int' in CASE LABELs.  This was missed in the
+    enum -> int promotion fix.
+
+15. Structure tags are now processed immediately after they are seen.
+    This fixes problems related to scoping of structure tags.
+
+16. The limit of 255 stack words (each word is an unsigned long) imposed on
+    the stack size of a function (for locals ?) has been removed.  This
+    limitation was caused by the use of 'unsigned char' to hold
+    the size.  Now size is held in a 'long'.  This allows declaration of large
+    local variables in functions.
+
+17. A parameter name could not be the same as the function name because the
+    function name lookup started from its own block.  Now the name lookup
+    starts from the parent block.
+
+    e.g: int ss(int ss) { /**/ }
+
+18. The lexer could not deal with floating point constants if the value
+    before the dot exceeded ULONG_MAX.
+
+19. An incomplete array[] when used as a typedef, caused execution
+    to fail.
+    e.g.:
+
+    typedef int A[];
+    A a; 			/* failed */
+    A *ap3[3];			/* failed */
+
+20. Usual arithmetic conversions are now ISO C compliant.
+
+21. Integer constants bigger than INT_MAX are now of type 'unsigned
+    long' as specified by ISO C.  (Actually 'unsigned' because UPS
+    assumes 'unsigned' and 'unsigned long' are interchangeable).
+
+22. Character constants are now treated slightly differently.  The integer
+    value is computed as if it had been converted from an object of type
+    char.  Therefore the constant '\377' evaluates to -1 and not 255.
+    See Harbison and Steele, 4th edition, section 2.7.3 for more
+    information.
+
+Other changes to C Interpreter
+------------------------------
+1. Following new warning messages added:
+
+   Floating point suffix ignored in <constant>
+   Cast ignored in inialization of <variable>
+   Conversion to 'type' ignored
+
+2. Following messages are now warning messages instead of error messages:
+
+   call via old style function expression
+   No prototype in scope
+   Implicit declaration of
+
+   These can still be suppressed using the -oldc option.
+
+3. Added following new error messages:
+
+   Typedef without a declarator
+   Declaration does not have a declarator
+   Unnamed aggregate type cannot be accessed
+   Aggregate type declaration has incorrect storage class
+   Assigning non-enum value to enum
+
+Standard C Library support
+--------------------------
+1. stderr, stdout, stderr, errno were inaccessible from interpreted
+   code.  Now they can be accessed by defining following macros:
+
+   #define stderr _stderr_()
+   #define stdout _stdout_()
+   #define stdin  _stdin_()
+   #define errno (*_errno_())
+
+   NOTE that errno is writable.
+
+   On FreeBSD these macros are not required as the implementation in
+   <stdio.h> works in interpreted code.
+
+2. Names of supported library functions/variables are dumped if the variable
+   CX_DUMP_LIBFUNC_NAMES is defined.  This is a temporary feature
+   for debugging only.
+
+UPS Debugger Bugs Fixed
+-----------------------
+NOTE: All bugs described below are related to debugging CX executables.
+
+1. The debugger aborted with segmentation fault because
+   demangle_name_2() did not recognise CX executables.
+
+2. The debugger complained that there was no line number information
+   despite compiling with -g flag.
+
+3. The debugger aborted with segmentation fault in open_source_file()
+   in st_util.c.  It did not startup.
+
+4. When debugging an executable linked from several sources, the
+   debugger was unable to step into code that was in a different
+   source.
+
+5. The debugger failed with segmentation fault when attempting to step
+   through a switch statement.
+
+6. The debugger could not step through code generated from some switch
+   statements (SWITCH_ON_CHAIN category).  The program behaved
+   incorrectly when attempting to do so.  This was uncovered after I fixed
+   the previous problem.
+
+7. Debugger failed to start when attempting to debug a program
+   containing unnamed bitfields.
+
+8. Debugger aborted with segmentation fault when displaying unnamed
+   bitfields.
+
+9. Breakpoint code couldnot access local variables other than in main().
+
+Outstanding problems in UPS Debugger
+------------------------------------
+NOTE: All bugs described below are related to debugging CX executables.
+
+I still cannot debug a C source file directly.  The same problem as in
+(3) above.  Haven't figured out how to fix it.
+
+NEXT doesnot work when stepping over a function.
+It causes UPS to panic (graj NYI).
+
+
+Dibyendu Majumdar <dibyendu@mazumdar.demon.co.uk>
+5th April 1999
+

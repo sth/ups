@@ -1,0 +1,81 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_execute_machine - Execute a Virtual Machine.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBci_exec_result_t
+.br
+ci_execute_machine(\fIma\fB, \fIprocfp\fB, \fIprocap\fB, \fIreadproc\fB, 
+\fIwriteproc\fB, 
+\fIindirect_call_proc\fB)
+.br
+machine_t *\fIma\fB;
+.br
+textaddr_t \fIprocfp\fB, \fIprocap\fB;
+.br
+ci_readproc_t \fIreadproc\fB;
+.br
+ci_writeproc_t \fIwriteproc\fB;
+.br
+ci_indirect_call_proc_t \fIindirect_call_proc\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function executes the virtual machine. 
+.PP
+.I ma 
+should point to a machine that has been initialised. 
+.PP
+.I procfp 
+should be set to the value of the register 
+.IR FP , 
+and 
+.I procap 
+to the value of register 
+.IR AP . 
+Both are optional and can be set to 0 if not required. 
+.PP
+.I readproc 
+and 
+.I writeproc 
+must be supplied; if not required, dummy versions can be supplied. 
+.I readproc 
+is used to read data from outside interpreted code, 
+.I writeproc 
+is used for the opposite purpose. I think both are used by UPS to 
+read/write variables in the target environment from interpreted 
+breakpoints - I am not sure. 
+.PP
+.I indirect_call_proc 
+can be set to 
+.B NULL 
+if not required. If supplied it is used to execute functions not defined  
+in the interpreter library or interpreted code.
+.PP
+.SH SEE ALSO
+.BR ci_make_machine_from_linkinfo (2), 
+.br
+.BR ci_initialise_machine (2), 
+.br
+.BR ci_reset_machine (2),
+.br
+.BR ci_free_machine (2), 
+.br
+.BR ci_exec_result_to_string (2)

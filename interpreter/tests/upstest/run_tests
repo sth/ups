@@ -1,0 +1,64 @@
+# A crude script to test UPS C interpreter
+# 
+if [ -f test_1.2a.c ]
+then
+    cg -I../../include test_1.2a.c
+    cg -I../../include test_1.2b.c
+    cg -I../../include test_1.3.c
+    cg -I../../include test_1.4.c
+    cg -I../../include test_1.5.1a.c < wordlist
+    cg -I../../include test_1.5.1b.c < wordlist
+    cg -I../../include test_1.5.2a.c < wordlist
+    cg -I../../include test_1.5.2b.c < wordlist
+    cg -I../../include test_1.5.2c.c < wordlist
+    cg -I../../include test_1.5.2d.c < wordlist
+    cg -I../../include test_1.5.3.c < wordlist
+    cg -I../../include test_1.5.4.c < wordlist
+    cg -I../../include test_1.6.c < test_1.6.c
+    cg -I../../include test_1.7.c
+    cg -I../../include test_2.10.c
+    cg -I../../include test_2.9.c
+    cx -o test_4.3 -I../../include test_4.3a.c test_4.3b.c test_4.3c.c
+    xc test_4.3 
+fi
+cg -I../../include test_align.c
+cg -I../../include test_align2.c
+cg -I../../include test_atof.c
+cg -I../../include test_atof2.c
+cg -I../../include test_const.c
+cg -I../../include test_conversions.c
+cg -I../../include test_decl.c
+cg -I../../include test_decl2.c
+cg -I../../include test_double.c
+cg -I../../include test_enum.c
+cg -I../../include test_enum.c
+cg -I../../include test_enum2.c
+cg -I../../include test_enum3.c
+cg -I../../include test_float_inc.c
+cg -I../../include test_funcptr.c
+cg -I../../include test_hello.c
+cg -I../../include test_ident.c
+cg -I../../include test_init.c
+cg -I../../include test_math.c
+cg -I../../include test_notyet.c
+cg -I../../include test_showbits.c
+cg -I../../include test_sizeof.c
+cg -I../../include test_sizeof_bad.c
+cg -I../../include test_stdout.c
+cg -I../../include test_strlen.c
+cg -I../../include test_strlen2.c
+cg -I../../include test_struct.c
+cg -I../../include test_struct_assign.c
+cg -I../../include test_struct_redecl.c
+cg -I../../include test_switch.c
+cg -I../../include test_time.c
+cg -I../../include test_unary_minus.c
+cg -I../../include test_vararg.c
+if [ -f test_ansi.c ]
+then
+    cg -I../../include test_ansi.c
+fi
+cg -I../../include test_const.c
+cx -o tavl3 -g -I../../include tavl3.c alloc.c avl3a.c avl3b.c
+xc tavl3
+rm -f *.ocx test_4.3 tavl3

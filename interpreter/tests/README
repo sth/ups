@@ -1,0 +1,4 @@
+The eic directory contains test programs adapted from EiC.
+The upstests directory contains programs I have created myself or copied
+from the K&R2 book.Some programs are based upon material in C Reference Manual,
+4th Ed., H&S.

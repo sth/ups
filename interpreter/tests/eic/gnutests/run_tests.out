@@ -1,0 +1,24 @@
+Test passed
+Test passed
+(f)u = 2.14748e+09
+(f)(u)0x80000000 = 2.14748e+09
+Test passed
+Test passed
+Test passed
+in main()
+Test passed.
+Test passed.
+Test passed
+Test passed
+Test passed
+Test passed
+Test passed
+Passed
+Failure on line 66
+Failure on line 68
+Failure on line 70
+Failure on line 72
+Passed
+11, 22, 3, 4 : 2.718180
+-1, -2, -3, -4 : 2.718180
+1, 2, 3, 4 : 3.141500

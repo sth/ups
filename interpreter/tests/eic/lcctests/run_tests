@@ -1,0 +1,12 @@
+cg -I../../../include stdarg.c 
+cg -I../../../include struct.c 
+cg -I../../../include -oldc tst8q.c 
+cg -I../../../include -oldc tstarray.c 
+cg -I../../../include -oldc tstcq.c 
+cg -I../../../include tstcvt.c 
+cg -I../../../include tstinit.c 
+cg -I../../../include tstinit2.c 
+cg -I../../../include tstsort.c 
+cg -I../../../include tststruct.c 
+cg -I../../../include -oldc tstswitch.c 
+cg -I../../../include tstw.c

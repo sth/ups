@@ -1,0 +1,52 @@
+gethashwords.c, 22: Function isalpha undefined
+Assert should fail on line 10
+testctype.c, 41: Function isalnum undefined
+testctype.c, 45: Function isalpha undefined
+testctype.c, 49: Function iscntrl undefined
+testctype.c, 53: Function isdigit undefined
+testctype.c, 57: Function isgraph undefined
+testctype.c, 61: Function islower undefined
+testctype.c, 65: Function isprint undefined
+testctype.c, 69: Function ispunct undefined
+testctype.c, 73: Function isspace undefined
+testctype.c, 77: Function isupper undefined
+testctype.c, 81: Function isxdigit undefined
+testdeclerr.c, 10: syntax error
+cg: Parse of testdeclerr.c failed
+testfloat.c, 15: Function log10 undefined
+testinit2.c, 132: Initialisation of local aggregate p not yet implemented
+testinit2.c, 122: Initialisation of local aggregate y not yet implemented
+testinit2.c, 109: Initialisation of local aggregate a not yet implemented
+testinit2.c, 90: Initialisation of local aggregate un not yet implemented
+testinit2.c, 56: Initialisation of local aggregate xs0 not yet implemented
+testinit2.c, 64: Initialisation of local aggregate xs1 not yet implemented
+testinit2.c, 72: Initialisation of local aggregate arg not yet implemented
+testinit2.c, 29: Initialisation of local aggregate names not yet implemented
+testinit2.c, 8: Initialisation of local aggregate a not yet implemented
+testinit2.c, 9: Initialisation of local aggregate b not yet implemented
+testlexerr.c, 8: Unterminated char constant
+testlexerr.c, 8: syntax error
+cg: Parse of testlexerr.c failed
+testparserr.c, 13: syntax error
+cg: Parse of testparserr.c failed
+teststru2.c, 42: Scalar initialiser for aggregate variable `x'
+teststru2.c, 53: Scalar initialiser for aggregate variable `x'
+teststru2.c, 85: Scalar initialiser for aggregate variable `y'
+teststru2.c, 86: Scalar initialiser for aggregate variable `x'
+teststru2.c, 95: Scalar initialiser for aggregate variable `x'
+cg: Parse of teststru2.c failed
+testtypeerr.c, 20: syntax error
+cg: Parse of testtypeerr.c failed
+testtypes.c, 99: Sorry, ++ and -- on floating expressions not yet implemented
+testtypes.c, 99: Sorry, ++ and -- on floating expressions not yet implemented
+testtypes.c, 100: Sorry, ++ and -- on floating expressions not yet implemented
+testtypes.c, 100: Sorry, ++ and -- on floating expressions not yet implemented
+testtypes.c, 124: Type defaults to int
+testtypes.c, 129: Type defaults to int
+testtypes.c, 187: Undefined variable T8a
+testtypes.c, 192: Undefined variable a
+testtypes.c, 203: Warning: Cast ignored in initialisation of variable `PP'
+	Expression: (pointer to void)(0)
+	      type: pointer to void
+cg: Parse of testtypes.c failed
+error 13 hello 13.333 

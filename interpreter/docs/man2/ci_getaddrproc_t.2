@@ -1,0 +1,69 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_getaddrproc_t - Callback to determine type of an external name
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBtypedef ci_nametype_t (*ci_getaddrproc_t)
+.br
+(const char *\fIname\fB,
+.br
+unsigned long *\fIp_addr\fB);
+.sp
+.fi
+.SH DESCRIPTION
+The UPS C interpreter uses this callback to determine the type of
+an external name. An external name is one which is not defined within
+the interpreted code. Following types of external names are
+supported:
+.PP
+.TP
+.B CI_DIRECT_LIBFUNC	
+Built-in C library functions (see
+.B xc_builtins.h
+) are of this type.
+These are native C functions which are
+called directly by the Interpreter Virtual
+Machine.
+.br
+.TP
+.B CI_INDIRECT_LIBFUNC
+These functions are not part of the
+Interpreter built-in library. The 
+Interpreter executes such functions via
+a callback - rather than directly. See
+.B ci_indirect_call_proc_t 
+for more information.
+.br
+.TP
+.B CI_DATA			
+External variables are of this type.
+.PP
+The callback must return one of above or 
+.BR CI_UNDEFINED . 
+.I p_addr
+should be set to the logical address of the object referred to
+by the name. In case of functions, this is just an index into
+an array (I think) - but for variables, it is a pointer value.
+.PP
+.SH SEE ALSO
+.BR ci_indirect_call_proc_t (2),
+.br 
+.BR ci_make_machine_from_linkinfo (2)
+

@@ -1,0 +1,217 @@
+assertion failed at testAassert.c(10)
+0 0 0 0 0 0 :-> 0 0 0 0 0 0 
+1 2 3 4 5 6 :-> 1 2 3 4 5 6 
+1 2 0 4 5 0 :-> 1 2 0 4 5 0 
+1 2 4 5 0 0 :-> 1 2 4 5 0 0 
+14 :-> 14
+[Hello, world!] :-> [Hello, world!]
+5 :-> 5
+Edmond :-> Edmond
+Claire :-> Claire
+Sarah :-> Sarah
+Alexandra :-> Alexandra
+Georgia :-> Georgia
+1 2 3 4 5 0 :-> 1 2 3 4 5 0
+1 0 2 0 3 0 :-> 1 0 2 0 3 0
+1 2 3 4 5 6 7 0 :-> 1 2 3 4 5 6 7 0
+abc :-> abc
+120  :-> 120
+450  :-> 450
+1245 :-> 1245
+2, 2, 5 :-> 2, 2, 5
+::TooL0:00000::Me000:Yes00 :-> ::TooLo:00000::Me000:Yes00
+ISO C compliant, line 11
+ISO C compliant, line 20
+shep = 4 :-> shep = 4
+shep = 13 :-> shep = 13
+colour = 0
+RGB = 5
+Ed = 1, CLAIRE = 2, SARAH = 1, ALEX 2, GEORGIA = 3
+RED = 0,GREEN = 13,BLUE = 14 :-> RED = 0,GREEN = 13,BLUE = 14  
+CHAR = 0,INT = 1,DOUBLE = 2 :-> CHAR = 0,INT = 1,DOUBLE = 2 
+audible alert (bell) BEL  \a   7
+backspace            BS   \b   8
+horizontal tab       HT   \t   9
+newline              LF   \n  10
+vertical tab         VT   \v  11
+formfeed             FF   \f  12
+carriage return      CR   \r  13
+double quote         "    \"  34
+single quote         '    \'  39
+question mark        ?    \?  63
+backslash            \    \\  92
+double getNumber( double f ):
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+    This function is passed a default value then requests a
+    number from stdin.  If a RETURN is entered, the default
+    value is returned.  If a new number is entered, the new
+    number is returned. However, if an invalid number is
+    entered, the function asks for a number again.
+
+
+012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678
+
+
+012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678
+
+
+-2147483648 = 2147483648.000000
+assertion failed at testlimits.c(40)
+-128
+
+---------------test1
+|       365|%|10x|       16D|       555|
+|      +365|+365      |+000000365|      -365|
+|     0x16d|0X16D     |%|10s|%|.10s|
+|000000000000000000013|%!21.2f|
+|000000000000001000.00|%!21.2f|
+---------- test2
+0.000000 :-> 0.000000
+1.000000 :-> 1.000000
+10.000000 :-> 10.000000
+12.345000 :-> 12.345000
+1234567.800000 :-> 1234567.800000
+1000.00 :-> 1000.00
+999.99 :-> 999.99
+0.100000 :-> 0.100000
+1.000000 :-> 1.000000
+0.000000e+00 :-> 0.000000e+00
+1.000000e+00 :-> 1.000000e+00
+1.000000e+01 :-> 1.000000e+01
+1.234568e+06 :-> 1.234568e+06
+1.234568E+06 :-> 1.234568E+06
+4.94066e-300 :-> 4.94066e-300
+-0.00000 :-> -0.00000
+-1.234568e+11 :-> -1.234568e+11
+-4.94066e-300 :-> -4.94066e-300
+-123456789999.399994 :-> -123456789999.400000
+-0.00000 :-> -0.00000
+---------- test3
+0 :-> 0
+13 :-> 13
+0 :-> 0
+1 :-> 1
+0e+00 :-> 0e+00
+1e+11 :-> 1e+11
+2e+11 :-> 2e+11
+-0 :-> -0
+-123456790000 :-> -123456790000
+-1e+11 :-> -1e+11
+-5e-300 :-> -5e-300
+---------- test4a
+0 :-> 0
+10 :-> 10
+0.02 :-> 0.02
+1.23457e+06 :-> 1.234578e+06
+123.456 :-> 123.456
+1E+06 :-> 1E+06
+---------- test4b
+0 :-> 0e+00
+1e+01 :-> 1e+01
+0.02 :-> 0
+1e+06 :-> 1e+06
+-2E+02 :-> -2E+02
+1e+06 :-> 1e+06
+---------- test4c
+0. :-> 0.0e+00
+1.e+01 :-> 1.0e+01
+0.02 :-> 0.0
+1.e+06 :-> 1.2e+06
++2.E+02 :-> +1.5E+02
+1.e+06 :-> 1.0e+06
+
+---------------test5
+|--------------------|
+|%!*g|
+|%!*.*f|
+|%!*.*f|
+|%!*.*f|
+|%!*.*f|
+|%!*g|
+|%!*G|
+|%!*g|
+|%#!*g|
+|%!*.*f|
+|%!*.*f|
+|%!*.*f|
+|%!*.*f|
+|%!*g|
+|%!*G|
+|%#!*.*g|
+|%+!*.*f|
+|%+!*.*f|
+|%+!*.*f|
+|%+!*.*f|
+|--------------------|
+<fini>
+
+110  86  22 100  85  74  25 109  95 116 
+ 22  25  74  85  86  95 100 109 110 116 
+ 22 = 22
+ 116 = 116
+ 95 = 95
+This file should generate 2 dangling pointer warnings
+Okay 1
+Okay 1
+count = [3]  quant = [2] units = [quarts] item = [oil]
+count = [2]  quant = [-12.8] units = [degrees] item = []
+count = [0]  quant = [-12.8] units = [] item = []
+count = [3]  quant = [10] units = [LBS] item = [dirt]
+count = [3]  quant = [100] units = [rgs] item = [energy]
+	--- EiC test signed values ---
+char c; short s; int i; long l;  float f; double d;
+
+c = -6 s = 0 i = 5 l = -100 f = 2.600000 d = 0.900000 :->
+c = -6 s = 0 i = 5 l = -100 f = 2.6 d = 0.9
+
+-c  = 6 :-> -c = 6
+~s  = -1 :-> ~s = -1
+f * c = -15.6  :-> f * c = -15.6
+f / d = 2.888889  :-> f / d = 2.88889
+l / f = -38.461540  :-> l / f = -38.4615
+i << 2 = 20 :-> i << 2 = 20
+	--- EiC test unsigned values ---
+unsigned char uc; short unsigned us; unsigned ui; unsigned long ul;
+
+uc = 0 us = 0  ui = 0  ul = 0:->
+uc = 0 us = 0  ui = 0 ul = 0
+
+125 :-> 1
+2
+5
+
+:-> error 13 hello 13.333
+error 13 hello 13.333 
+6 34 -4 
+-5 6 98 23 4 

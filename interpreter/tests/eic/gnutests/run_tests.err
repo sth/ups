@@ -1,0 +1,47 @@
+gnu11.c, 7: Sizeof may not be applied to a function
+	Expression: main
+	      type: function(void) returning int
+gnu11.c, 8: Warning: Implicit declaration of function printf
+cg: Parse of gnu11.c failed
+gnu12.c, 28: Warning: Implicit declaration of function printf
+gnu12.c, 30: Warning: No prototype in scope for function printf
+cg: Error executing gnu12.c: stack overflow
+Fatal internal error: bad unary ot (aborting) ...
+gnu18.c, 37: Warning: No prototype in scope for function iscmd
+gnu21.c, 24: syntax error
+cg: Parse of gnu21.c failed
+gnu23.c, 53: Conversion to `unsigned short' ignored
+	Expression: (unsigned short)(d7)
+	      type: unsigned short
+gnu24.c, 18: syntax error
+cg: Parse of gnu24.c failed
+gnu26.c, 51: Warning: Implicit declaration of function printf
+gnu26.c, 53: Warning: No prototype in scope for function printf
+cg: Error executing gnu26.c: stack overflow
+gnu3.c, 29: Warning: Implicit declaration of function printf
+gnu30.c, 70: Warning: No prototype in scope for function ExaminePosition
+gnu30.c, 72: Warning: Implicit declaration of function printf
+gnu30.c, 76: Warning: No prototype in scope for function ExaminePosition
+gnu30.c, 78: Warning: Implicit declaration of function printf
+gnu30.c, 82: Warning: Implicit declaration of function printf
+gnu4.c, 13: Warning: Implicit declaration of function printf
+gnu4.c, 14: Warning: No prototype in scope for function printf
+gnu4.c, 15: Warning: No prototype in scope for function printf
+gnu4.c, 23: Warning: Implicit declaration of function printf
+gnu4.c, 13: Warning: Implicit declaration of function printf
+gnu4.c, 14: Warning: No prototype in scope for function printf
+gnu4.c, 15: Warning: No prototype in scope for function printf
+gnu4.c, 23: Warning: Implicit declaration of function printf
+gnu6.c, 6: Warning: Implicit declaration of function printf
+gnu6.c, 8: Warning: No prototype in scope for function printf
+gnu7.c, 5: Warning: Implicit declaration of function printf
+gnu7.c, 7: Warning: No prototype in scope for function printf
+gnu8.c, 5: Warning: Implicit declaration of function printf
+gnu8.c, 7: Warning: No prototype in scope for function printf
+Passed test
+testconvert.c, 186: Warning: No prototype in scope for function test_integer_to_float
+testconvert.c, 187: Warning: No prototype in scope for function test_float_to_integer
+tststruct-big.c, 48: Warning: No prototype in scope for function f
+tststructret.c, 50: Warning: No prototype in scope for function init
+tststructret.c, 54: Warning: No prototype in scope for function init
+tststructret.c, 58: Warning: No prototype in scope for function init

@@ -1,0 +1,34 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_free_parse_id - Free a parse tree.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBvoid 
+.br
+ci_free_parse_id(\fIparse_id\fB)
+.br
+parse_id_t \fIparse_id\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function frees all memory associated to a parse tree.
+.PP
+.SH SEE ALSO
+.BR ci_parse_file (2)

@@ -1,0 +1,123 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_indirect_call_proc_t - Callback used to invoke external functions
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBtypedef ci_exec_result_t (*\fIci_indirect_call_proc_t\fB)(
+.br
+machine_t *\fImachine\fB,
+.br
+unsigned long \fIaddr\fB,
+.br
+unsigned long *\fIargs\fB,
+.br
+int \fInargs\fB,
+.br
+unsigned long *\fIp_res\fB);
+.sp
+.fi
+.SH DESCRIPTION
+This function is used to invoke external functions. The 
+interpreter passes the following:
+.PP
+.TP
+.I machine
+This is a pointer to the Virtual Machine.
+.br
+.TP
+.I addr
+This is the address previously returned by the
+callback 
+.BR ci_getaddrproc_t . 
+It has no meaning for
+the interpreter - its purpose is to indicate which
+function is to invoked. 
+.br
+.TP
+.I args
+This is a pointer to the stack. Note that an argument which is
+bigger than 4 bytes will have consumed more than one stack word. 
+Depending on the type of the argument, you may have to account
+for this. See 
+.B NOTES
+for more information.
+.br
+.TP
+.I nargs
+This is the number of stack words in args (as opposed to actual
+number of arguments).
+.PP
+This function should set 
+.I *p_res 
+to the return value of the
+invoked function. Because 
+.I p_res 
+points to an unsigned long, the
+return value must be a datum that will fit in 4 bytes.
+This means any value other than a 
+.B double 
+, 
+.B long double
+,
+.B struct 
+or 
+.BR union .
+.PP
+The return code from this function should be set to  
+.B CI_ER_CONTINUE
+to indicate success. 
+.B CI_ER_USER1 
+can be used to indicate failure.
+.PP
+Note that if 
+.B CI_ER_USER1 
+is returned, the Virtual Machine will
+stop executing the interpreted code.
+.PP
+.SH NOTES
+If a suitable 
+.I checkarg_proc 
+is defined in
+.B ci_compile()
+, the type-codes of the arguments in
+.I args
+can be supplied to the callback. For example, the 
+.B checkarg()
+function in
+.B ups/ui_misc.c
+pushes the type structure for each argument after the arguments,
+in the same order as the arguments. Thus, 
+.I args[nargs]
+points to the type structure
+.B type_t*
+of the first argument,
+.I args[nargs+1]
+points to the type structure of the second argument, and so on.
+.PP
+The UPS function 
+.B $printf()
+uses this to advantage. See 
+.B ups/printf.c
+for details of how this is done.
+.PP
+.SH SEE ALSO
+.BR ci_getaddrproc_t (2),
+.br
+.BR ci_execute_machine (2)

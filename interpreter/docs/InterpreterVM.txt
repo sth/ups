@@ -1,0 +1,144 @@
+The UPS C Interpreter Virtual Machine
+-------------------------------------
+
+The UPS C Interpreter Virtual Machine (hereafter called VM) is a stack oriented
+interpreter. It consists of 5 registers and a stack. The registers are:
+
+FP - frame pointer
+CF - code file
+PC - program counter
+SP - stack pointer
+RETVAL - holds return values from functions (other than those returning
+         structs/unions)
+
+PC points to code within a code file.
+
+The stack is a series of UNSIGNED LONGs. Therefore each slot
+in the stack consumes 4 bytes (32 bits).
+
+It is assumed that an UNSIGNED LONG can contain all basic types other than
+DOUBLEs. A DOUBLE consumes two UNSIGNED LONGs.
+
+The stack grows downwards, and is organised as follows for
+function calls which do not involve returning a value. Example
+shows function call with 2 arguments.
+
+--------------------------|-----------------|
+       lower addresses    |                 |
+                          |   temp space    |
+                          |-----------------|
+               -8(fp)     |   local n-1     |
+                          |-----------------|
+               -4(fp)     |   local n       |
+                          |-----------------|
+   fp -------> 0(fp)      |   saved fp      |
+                          |-----------------|
+               4(fp)      |   saved pc      |
+                          |-----------------|
+               8(fp)      |   saved cf      |
+                          |-----------------|
+              12(fp)      |   arg 1         |
+                          |-----------------|
+              16(fp)      |   arg 2         |
+ -------------------------|-----------------|
+      higher address      .                 . sp after function returns
+                          .                 . (return value ignored)
+
+If a function returns any value other than a struct
+or union, the stack organisation depends upon whether the
+return value is being stored or not. If not, the
+stack organisation remains as above. If yes, then the
+address of the variable to contain the return value
+appears as the last argument.
+
+--------------------------|-----------------|
+       lower addresses    |                 |
+                          |   temp space    |
+                          |-----------------|
+               -8(fp)     |   local n-1     |
+                          |-----------------|
+               -4(fp)     |   local n       |
+                          |-----------------|
+   fp -------> 0(fp)      |   saved fp      |
+                          |-----------------|
+               4(fp)      |   saved pc      |
+                          |-----------------|
+               8(fp)      |   saved cf      |
+                          |-----------------|
+              12(fp)      |   arg 1         |
+                          |-----------------|
+              16(fp)      |   arg 2         |
+                          |-----------------|
+   address of variable    |  &return value  |  <---- RETVAL
+    being assigned to     |-----------------|
+  ------------------------|                 . sp after returning from function
+
+The register RETVAL is used to hold a function's return value initially.
+The value is assigned to a variable by the calling routine - otherwise
+it is discarded.
+
+For functions returning structures, the register RETVAL is not used.
+Instead, the following occurs.
+
+The calling function pushes an extra argument on the stack - this
+becomes the first argument (hidden). The value of this argument is zero (0)
+if the calling function is not expecting to assign the structure value.
+
+--------------------------|-----------------|
+       lower addresses    |                 |
+                          |   temp space    |
+                          |-----------------|
+               -8(fp)     |   local n-1     |
+                          |-----------------|
+               -4(fp)     |   local n       |
+                          |-----------------|
+   fp -------> 0(fp)      |   saved fp      |
+                          |-----------------|
+               4(fp)      |   saved pc      |
+                          |-----------------|
+               8(fp)      |   saved cf      |
+                          |-----------------|
+              12(fp)      |   0             |
+                          |-----------------|
+              16(fp)      |   arg 1         |
+                          |-----------------|
+              20(fp)      |   arg 2         |
+  ------------------------|-----------------|
+                          .                 . sp after function return
+
+If however the calling function wants the structure return value
+to be assigned to a variable, it does two things. Before pushing
+any arguments required by the function, it pushes the address of the
+structure that will receive the value. After pushing the function
+arguments, it pushes the offset that can be used to determine the
+location of the structure.
+
+--------------------------|-----------------|
+       lower addresses    |                 |
+                          |   temp space    |
+                          |-----------------|
+               -8(fp)     |   local n-1     |
+                          |-----------------|
+               -4(fp)     |   local n       |
+                          |-----------------|
+   fp -------> 0(fp)      |   saved fp      |
+                          |-----------------|
+               4(fp)      |   saved pc      |
+                          |-----------------|
+               8(fp)      |   saved cf      |
+                          |-----------------|
+       +----- 12(fp)      |   3             | offset of return value    [0]
+       |                  |-----------------| relative to this position
+       |      16(fp)      |   arg 1         |                           [1]
+       |                  |-----------------|
+       v      20(fp)      |   arg 2         |                           [2]
+                          |-----------------|
+   address of structure   |  &return value  |                           [3]
+   being assigned to      |-----------------|
+ -------------------------|                 . sp after function return
+
+
+
+Dibyendu Majumdar <dibyendu@mazumdar.demon.co.uk>
+13th January 1999
+

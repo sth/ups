@@ -1,0 +1,30 @@
+stdarg.c, 27: Scalar initialiser for aggregate variable `x'
+cg: Parse of stdarg.c failed
+struct.c, 50: Scalar initialiser for aggregate variable `x'
+struct.c, 59: Scalar initialiser for aggregate variable `screen'
+cg: Parse of struct.c failed
+tstcq.c, 3846: Conversion to `char' ignored
+	Expression: (char)(s)
+	      type: char
+tstcq.c, 3846: Conversion to `char' ignored
+	Expression: (char)(i)
+	      type: char
+tstcq.c, 3847: Conversion to `char' ignored
+	Expression: (char)(l)
+	      type: char
+tstcq.c, 3847: Conversion to `char' ignored
+	Expression: (char)(u)
+	      type: char
+tstcq.c, 3850: Conversion to `short' ignored
+	Expression: (short)(c)
+	      type: short
+tstcq.c, 3850: Conversion to `short' ignored
+	Expression: (short)(i)
+	      type: short
+tstcq.c, 3851: Conversion to `short' ignored
+	Expression: (short)(l)
+	      type: short
+tstcq.c, 3851: Conversion to `short' ignored
+	Expression: (short)(u)
+	      type: short
+sh: tstw.aux: No such file or directory

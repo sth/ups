@@ -1,0 +1,260 @@
+1 5 8 6 3 7 2 4 
+1 6 8 3 7 4 2 5 
+1 7 4 6 8 2 5 3 
+1 7 5 8 2 4 6 3 
+2 4 6 8 3 1 7 5 
+2 5 7 1 3 8 6 4 
+2 5 7 4 1 8 6 3 
+2 6 1 7 4 8 3 5 
+2 6 8 3 1 4 7 5 
+2 7 3 6 8 5 1 4 
+2 7 5 8 1 4 6 3 
+2 8 6 1 3 5 7 4 
+3 1 7 5 8 2 4 6 
+3 5 2 8 1 7 4 6 
+3 5 2 8 6 4 7 1 
+3 5 7 1 4 2 8 6 
+3 5 8 4 1 7 2 6 
+3 6 2 5 8 1 7 4 
+3 6 2 7 1 4 8 5 
+3 6 2 7 5 1 8 4 
+3 6 4 1 8 5 7 2 
+3 6 4 2 8 5 7 1 
+3 6 8 1 4 7 5 2 
+3 6 8 1 5 7 2 4 
+3 6 8 2 4 1 7 5 
+3 7 2 8 5 1 4 6 
+3 7 2 8 6 4 1 5 
+3 8 4 7 1 6 2 5 
+4 1 5 8 2 7 3 6 
+4 1 5 8 6 3 7 2 
+4 2 5 8 6 1 3 7 
+4 2 7 3 6 8 1 5 
+4 2 7 3 6 8 5 1 
+4 2 7 5 1 8 6 3 
+4 2 8 5 7 1 3 6 
+4 2 8 6 1 3 5 7 
+4 6 1 5 2 8 3 7 
+4 6 8 2 7 1 3 5 
+4 6 8 3 1 7 5 2 
+4 7 1 8 5 2 6 3 
+4 7 3 8 2 5 1 6 
+4 7 5 2 6 1 3 8 
+4 7 5 3 1 6 8 2 
+4 8 1 3 6 2 7 5 
+4 8 1 5 7 2 6 3 
+4 8 5 3 1 7 2 6 
+5 1 4 6 8 2 7 3 
+5 1 8 4 2 7 3 6 
+5 1 8 6 3 7 2 4 
+5 2 4 6 8 3 1 7 
+5 2 4 7 3 8 6 1 
+5 2 6 1 7 4 8 3 
+5 2 8 1 4 7 3 6 
+5 3 1 6 8 2 4 7 
+5 3 1 7 2 8 6 4 
+5 3 8 4 7 1 6 2 
+5 7 1 3 8 6 4 2 
+5 7 1 4 2 8 6 3 
+5 7 2 4 8 1 3 6 
+5 7 2 6 3 1 4 8 
+5 7 2 6 3 1 8 4 
+5 7 4 1 3 8 6 2 
+5 8 4 1 3 6 2 7 
+5 8 4 1 7 2 6 3 
+6 1 5 2 8 3 7 4 
+6 2 7 1 3 5 8 4 
+6 2 7 1 4 8 5 3 
+6 3 1 7 5 8 2 4 
+6 3 1 8 4 2 7 5 
+6 3 1 8 5 2 4 7 
+6 3 5 7 1 4 2 8 
+6 3 5 8 1 4 2 7 
+6 3 7 2 4 8 1 5 
+6 3 7 2 8 5 1 4 
+6 3 7 4 1 8 2 5 
+6 4 1 5 8 2 7 3 
+6 4 2 8 5 7 1 3 
+6 4 7 1 3 5 2 8 
+6 4 7 1 8 2 5 3 
+6 8 2 4 1 7 5 3 
+7 1 3 8 6 4 2 5 
+7 2 4 1 8 5 3 6 
+7 2 6 3 1 4 8 5 
+7 3 1 6 8 5 2 4 
+7 3 8 2 5 1 6 4 
+7 4 2 5 8 1 3 6 
+7 4 2 8 6 1 3 5 
+7 5 3 1 6 8 2 4 
+8 2 4 1 7 5 3 6 
+8 2 5 3 1 7 4 6 
+8 3 1 6 2 5 7 4 
+8 4 1 3 6 2 7 5 
+ 0 1 2 3 1000 1001 1002 1003 2000 2001 2002 2003
+ 0 1 2 3 1000 1001 1002 1003 2000 2001 2002 2003
+ 0 1 2 3 1000 1001 1002 1003 2000 2001 2002 2003
+ 0 1 2 3 1000 1001 1002 1003 2000 2001 2002 2003
+Section s22     returned 0.
+Section s241    returned 0.
+Section s243    returned 0.
+Section s244    returned 0.
+Section s25     returned 0.
+  8 bits in chars.
+ 32 bits in ints.
+ 16 bits in shorts.
+ 32 bits in longs.
+ 32 bits in unsigneds.
+ 32 bits in floats.
+ 64 bits in doubles.
+1.192093e-07 is the least number that can be added to 1. (float).
+2.220446e-16 is the least number that can be added to 1. (double).
+Section s26     returned 0.
+Section s4      returned 0.
+Section s61     returned 0.
+Section s626    returned 0.
+Section s71     returned 0.
+Section s72     returned 0.
+Section s757    returned 0.
+Section s7813   returned 0.
+Section s714    returned 0.
+Section s715    returned 0.
+0 registers assigned to char variables.
+0 registers assigned to pointer variables.
+0 registers assigned to int variables.
+Section s81     returned 0.
+Section s84     returned 0.
+char alignment: 1
+short alignment: 2
+int alignment: 4
+long alignment: 4
+unsigned alignment: 4
+float alignment: 4
+double alignment: 4
+Section s85     returned 0.
+Section s86     returned 0.
+Section s88     returned 0.
+Section s9      returned 0.
+
+No errors detected.
+1 1 1 1 1 1 1.000000 1.000000
+2 2 2 2 2 2 2.000000 2.000000
+3 3 3 3 3 3 3.000000 3.000000
+4 4 4 4 4 4 4.000000 4.000000
+5 5 5 5 5 5 5.000000 5.000000
+6 6 6 6 6 6 6.000000 6.000000
+7 7 7 7 7 7 7.000000 7.000000
+8 8 8 8 8 8 8.000000 8.000000
+if
+for
+else
+while
+1 2 3 if
+4 5 0 for
+6 7 8 else
+9 10 11 while
+1 2 3 if
+4 5 0 for
+6 7 8 else
+9 10 11 while
+0 0 0 
+exchange(1,9)
+exchange(3,7)
+exchange(5,6)
+exchange(0,5)
+exchange(0,3)
+exchange(0,0)
+exchange(1,2)
+exchange(6,6)
+exchange(8,9)
+exchange(7,8)
+-51
+-1
+0
+1
+3
+10
+18
+32
+567
+789
+(-1,-1) is not within [10,10; 310,310]
+(1,1) is not within [10,10; 310,310]
+(20,300) is within [10,10; 310,310]
+(500,400) is not within [10,10; 310,310]
+ab
+b = 0x8
+f = 0xc
+n = 0xa
+r = 0xd
+t = 0x9
+v = 0xb
+x = 0x78
+f:
+x = 0
+x = 1
+x = 2
+x = 2
+x = 2
+x = 2
+x = 2
+x = 7
+x = 8
+x = 9
+x = 9
+x = 9
+x = 9
+x = 9
+x = 9
+x = 9
+x = 16
+x = 17
+x = 18
+x = 19
+x = 20
+g:
+1 1
+1 2
+2 3
+2 4
+2 5
+3 6
+d 6
+3 7
+d 7
+3 8
+d 8
+d 9
+d 10
+h:
+i = 8
+i = 16
+i = 120
+i = 128
+i = 248
+i = 264
+i = 272
+i = 280
+i = 288
+i = 296
+i = 304
+i = 312
+488 defaults
+x = 0x1000000
+x = 0x2000000
+x = 0x3000000
+x = 0x4000000
+x = 0x5000000
+x = 0x6000000 (default)
+x = 0x7000000 (default)
+0
+1
+2
+3
+4
+5
+0
+1
+2
+3
+4
+5

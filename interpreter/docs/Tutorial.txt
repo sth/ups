@@ -1,0 +1,383 @@
+Background
+----------
+One of the reasons I wanted the UPS C Interpreter was so that
+I could allow my programs to be extended at run-time using interpreted
+code. Users would be allowed to add functionality by defining
+new functions in C which could be invoked from within my program. The
+interpreted functions would even be able to modify the state of the
+program using special built-in functions. 
+
+A typical use of above would be allow users to define pre/post triggers
+in an event driven environment, or to allow users to write code that
+will be used to validate input, or even compute some value in a user
+defined way. 
+
+Because of the plug-in architecture of the UPS C Interpreter, I think
+it is very much suitable for this kind of use. The UPS debugger itself
+uses it in a similar way. 
+
+There are a few problems which prevent full realization of the 
+potential for the C Interpreter to be used this way.
+
+1. The UPS C Interpreter API is undocumented. 
+
+2. It is assumed in the distribution that the C Interpreter will either be 
+   used stand-alone or as a component of UPS - there is no attempt to define 
+   a library to allow easy linking of the C Interpreter to foreign 
+   applications. Similarly, the header files which would be required by the 
+   foreign application are not "isolated" in any way - making it difficult to 
+   know which ones are needed and which not.
+
+3. While the basic Interpreter functionality can be encapsulated in a library
+   without much effort, most of the symbol table management routines are 
+   inextricably linked with the debugger functionality. 
+
+This Project
+------------
+I have started this project to solve above problems and make it easier 
+for the UPS C Interpeter to be used in this way. I hope to do this 
+as follows:
+
+1. Modify the UPS Makefiles so that the C Interpreter objects are 
+   archived into a library that can be linked by a foreign application.
+   I intend to identify header files that need to be used by a foreign 
+   application.
+
+2. Document the C Interpreter API - so that programmers know how to
+   interface with it.
+
+3. Provide a tutorial which demonstrates usage of the C Interpreter.
+
+4. Provide sample Make scripts that can be modified for use in foreign
+   applications.
+
+Status of the project
+---------------------
+I have started work on a tutorial using 'cg' as an example. This file
+contains the tutorial.
+
+I have modified the Makefiles in the UPS distribution so that a C Interpreter
+library can be built.
+
+I have created man pages for some of the important functions in the
+API. These can be found in the interpreter/docs/man2 subdirectory.
+
+I have created an easy to use front-end to the API. This is described
+in Cinterpreter.h, and implemented in Cinterpreter.c. A few example
+programs in interpreter/tutorial use this front-end instead of directly 
+using the Interpreter API.
+
+
+Tutorial
+--------
+The following tutorial describes how to use the UPS C Interpreter 
+to create a program that can run a stand-alone C program. The tutorial 
+is based upon the program 'cg.c' in the UPS distribution - though it is
+simplified.
+
+Please note that like you I am also learning how to use the C Interpeter -
+and this is as much a voyage of discovery for me as for you. It is likely
+that I have misunderstood some aspects and made incorrect statements -
+I would be very happy if you point out such mistakes to me so that I can
+improve this document.
+
+How to build the tutorial example
+---------------------------------
+The tutorial example can be built as follows:
+
+1. Replace the standard Makefile.in in ups distribution with the version
+   named Makefile.in.tutorial. Do the same with ups/Makefile.in.
+
+2. Run configure as described in the build instructions. This will rebuild
+   the Makefiles.
+
+3. Build the C Interpreter. This will also build the library 
+   ups/libci.a.
+
+4. cd to the interpreter/tutorial directory and execute:
+   make
+
+   If everything goes well you should see an executable called 'example1'.
+   Try executing it.
+
+Required Headers
+================
+Following headers from UPS need to be included in any application that 
+wants to use the Interpreter functionality.
+
+#include <mtrprog/ifdefs.h>
+#include <local/ukcprog.h>
+
+#include <ups.h>
+#include <symtab.h>
+#include <ci.h>
+#include <xc_opcodes.h>
+#include <xc_machine.h>
+#include <xc_builtins.h>
+#include <cc.h>
+
+
+An overview of minimum requirements
+===================================
+
+Following describes a bare-bones interpreter driver based upon 'cg.c' in the
+UPS distribution. It demonstrates how the basic interpreter functionality
+can be used. The complete source code is in example1.c.
+
+1. The C Interpreter requires a context to operate. The context defines
+   the behaviour of the interpreter by supplying compilation flags.
+
+   The first step in using the interpreter is to define its context.
+   Ofcourse, strictly speaking, a default context always exists, so this step 
+   is not mandatory.
+    
+2. The UPS C Interpreter implements separate Parser and Compiler phases.
+   Each phase can be used independently. For simple uses, a convenient
+   function is provided which combines these two phases into one - we will
+   use that function in this example.
+
+3. Once the source code has been successfully compiled, we need to create a 
+   Virtual Machine (VM) to execute the compiled code. The VM requires 
+   a few run-time support routines - these need to be created.
+   We also need to define an entry point for execution - the default
+   entry point is "main".
+
+4. The Virtual Machine can then be initialized and executed. The 
+   execution ends when the interpreted code has returned from "main" or
+   called exit(). The VM returns a code to indicate the termination
+   status. It is possible to retrieve the return code from the interpreted
+   code.
+
+
+Each of above steps is described below in more detail:
+
+Defining the context for the Interpreter
+========================================
+
+In this example, context information is collected in a structure of type 
+ccstate_t. The function cc_create_ccstate() allocates a default ccstate_t.
+
+ccstate_t *cs;
+cs = cc_create_ccstate("", (unsigned)CI_CP_ONEFILE);
+
+You can change the default context by
+supplying arguments understood by the Interpreter as follows:
+
+char *args[] = { "-oldc", "-D__STDC__", "-U__GNUC__", "-I/usr/include", NULL };
+char **argv;
+for (argv = args; *argv != NULL; ++argv) {
+	cc_handle_arg(cs, &argv);
+}
+
+See Interpreter.txt for a description of some flags recognised by the
+Interpreter.
+
+Note that is not strictly necessary to use ccstate_t to define the context.
+ccstate_t is for convenience only - it simplifies the setting of certain
+flags by allowing you to use a "familiar" interface.
+
+Parsing and Compiling the code
+==============================
+
+The next step is to parse/compile the code.  In this example, this is achieved
+in a single step, using the utility function cc_parse_and_compile(). This 
+function also pre-processes the file if the file extension happens to be 
+'.c'. By default, the compiler used to build UPS is used to preprocess the
+file.
+
+The resulting byte-code from cc_parse_and_compile() is returned as a pointer 
+to a structure of type linkinfo_t. 
+
+Following shows the steps required to preprocess, parse and compile the source 
+file 'hello.c': 
+
+linkinfo_t *li;
+parse_id_t parse_id;
+char *srcpath;
+
+srcpath = "hello.c";
+li = cc_parse_and_compile(cs, srcpath, &parse_id);
+
+parse_id is the handle to the parse tree generated by the above process.
+li points to the compiled/linked byte-code.
+
+It is possible to parse and compile the source in two separate steps. 
+Pre-processing can be omitted. The source need not always be a file; it is
+possible to parse/compile a program that is completely in memory.
+
+Define the library
+==================
+
+The VM is designed in such a way that the library support can be
+provided externally. However, there is a default built-in library for the
+stand-alone Interpreter.
+
+In order to access the library, the VM needs pointers
+to i) library variables, ii) library functions. Following describes
+the first part of how this is done.
+
+First, we obtain a pointer to the list of library variables:
+
+static char **Libvars;
+size_t n_libfuncs, n_libvars;
+
+cc_get_libinfo(&n_libfuncs, &n_libvars);
+Libvars = cx_get_libvars(n_libvars);
+
+The function cc_get_libinfo() tells us the number of library functions
+and variables available to the Interpreter. 
+
+The function cx_get_libvars() returns a pointer to  an array of library
+variable names.
+	
+Next, we define a function that takes a name and tells the interpreter
+whether the name is a library function or variable. It also returns the
+address of the name. This function will be used by the Interpreter to
+resolve external names.
+
+static ci_nametype_t
+getaddr(name, p_addr)
+	const char *name;
+	taddr_t *p_addr;
+{
+	ci_nametype_t nametype;
+
+	if ((nametype = cc_getaddr(name, p_addr)) == CI_DATA)
+		*p_addr = (taddr_t)Libvars[*p_addr];
+
+	return nametype;
+}
+
+The final step uses the function cx_get_libfuncs() to obtain an array of
+pointers to functions in the library. This step is deferred to until after
+we have created the Vitual Machine.
+
+Create the VM
+=============
+
+We can now create the Virtual Machine as follows:
+
+char *entry_name;
+machine_t *ma;
+
+entry_name = "main";	/* our entry function */
+ma = ci_make_machine_from_linkinfo(li, entry_name, 10240, getaddr,
+				   (ci_get_regaddr_proc_t)NULL,
+				   (char *)NULL, cc_report_error);
+
+Here "main" is the startup procedure. This need not always be true. If
+a startup procedure is not defined, the first function in the file becomes
+the startup function.
+
+We can now complete the identification of library functions as follows:
+
+ma->ma_libfuncs = cx_get_libfuncs(n_libfuncs);
+
+Initialize and execute Virtual Machine
+======================================
+
+We can now initialize the Virtual Machine as follows:
+
+	char *argv[] = { "hello.c", NULL };
+	char *envp[] = { NULL };
+
+	ma->ma_libfuncs = Libfuncs;
+	ci_initialise_machine(ma, TRUE, FALSE, argv, envp);
+
+where,
+
+	argv (char **)- array of strings that will be passed as  argv
+                        to main(int argc, char *argv[]).
+	envp (char **)- array of environment variable definitions passed
+                        to main(int atgc, char *argv[], char *envp[]);
+	       
+Supplying argv makes sense only if our startup function is main().
+
+We are now almost ready to execute the Interpreter. However, before
+we can execute our program, we need to define 2 callback functions - here
+named noread() and nowrite(). These callbacks are used by the Interpreter
+to access data that is foreign to it - i.e., not an interpreter variable.
+
+static int
+noread(addr, buf, nbytes)
+	taddr_t addr;
+	voidptr buf;
+	size_t nbytes;
+{
+	panic("unexpected readdata");
+	return -1;
+}
+
+static int
+nowrite(addr, buf, nbytes)
+	taddr_t addr;
+	constvoidptr buf;
+	size_t nbytes;
+{
+	panic("unexpected writedata");
+	return -1;
+}
+
+Above implementation shows that we do not expect to read/write foreign data.
+
+There is another function that we need to provide. This function is not really 
+used by the Interpreter but is required to satisfy references to it. The
+implementation shown here is a dummy version.
+
+void
+demangle_name_2(name, len, alloc_id, ptr, func, fil)
+	char *name;
+	int len;
+	alloc_pool_t *alloc_id;
+	char **ptr;
+	int func;
+	fil_t *fil;
+{
+	*ptr = strdup (name);
+}
+
+Once above is done, we can invoke the Interpreter to execute our code:
+	
+	int res;
+	res = ci_execute_machine(ma, (taddr_t)0, (taddr_t)0, noread, nowrite,
+				 (ci_indirect_call_proc_t)NULL);
+
+The return code res tells us if the Interpreter completed successfully:
+
+	if (res != CI_ER_EXITED && res != CI_ER_TRAP) {
+		errf("Error executing %s: %s",
+			srcpath, ci_exec_result_to_string(res));
+		exit(1);
+	}
+
+We can obtain the return code of the interpreted "main" as follows:
+
+	int status;
+	status = ci_get_exit_status(ma);
+	
+Finally we can free up resources occupied by the Interpreter as follows:
+
+	ci_free_parse_id(parse_id);
+	ci_free_linkinfo(li);
+	ci_reset_machine(ma);
+	ci_free_machine(ma);
+
+Where to go from here
+=====================
+This tutorial, like any tutorial, presents a rather simplistic picture of
+what can be done with the UPS C Interpreter.
+
+See man pages in interprter/docs/man2 for a deeper understanding of the 
+C Interpreter API. 
+
+See example2.c for another example of how the Interpreter can be used.
+This example uses a front-end declared in Cinterpreter.h to further simply 
+using the API. 
+
+example3.c shows how the Interpreter can cope with memory based C source.
+
+example4.c shows how to add native functions to the Interpreter "on the fly"
+without having to create hard-wired built-ins.
+
+example5.c and example6.c show how to extend the Interpreter by providing
+useful native functions that can be called from Interpreted code.

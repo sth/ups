@@ -1,0 +1,102 @@
+.TH CI_PARSE_FILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_parse_file - Parse a C program.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBparse_id_t 
+.br
+ci_parse_file (\fIfilename\fB, \fIblock\fB, \fIflags\fB, \fIreport_error_func\fB, 
+\fIresolve_name_func\fB, \fIgetline_func\fB, \fIgetline_arg\fB)
+.br
+const char *\fIfilename\fB;
+.br
+block_t *\fIblock\fB; 
+.br
+unsigned long \fIflags\fB;
+.br
+ci_report_error_func_t \fIreport_error_func\fB;
+.br
+ci_resolve_name_func_t \fIresolve_name_func\fB;
+.br
+const char *(*\fIgetline_func\fB)(char *\fIarg\fB);
+.br
+char *\fIgetline_arg\fB;
+.sp
+.fi
+.SH DESCRIPTION
+
+.B ci_parse_file
+generates a parse tree from C source code. 
+.PP
+The source can be presented in any 
+way you like because this function uses the callback 
+.I getline_func 
+to obtain a line of source. 
+.I getline_func
+should return a line of source every time it is invoked; a 
+.B NULL
+return value 
+indicates end-of-file. 
+.I getline_arg
+is a suitable argument to 
+.I getline_func
+, cast to 
+.BR char* .
+.PP
+.I filename 
+can be any name; usually it is set to the source file name when parsing a 
+file. 
+.PP
+.I block
+is optional, set it to 
+.BR NULL .
+It is used by UPS; I do not yet know how. 
+.PP
+.I flags
+is used to modify parser behaviour. Permissible values are:
+.PP
+.TP
+.B CI_MAKE_EXTERNS_TOPLEVEL  
+Treat local extern declarations like pcc.
+.br
+.TP
+.B CI_DONT_PANIC
+Generate error message instead of aborting on errors.
+.PP
+.I report_error_func
+should point to a suitable error reporting function such as 
+.B cc_report_error()
+in 
+.BR ups/cc.c . 
+.PP
+.I resolve_name_func
+is used to resolve names outside interpreted code; set it to 
+.BR NULL . 
+.PP
+.SH RETURN VALUE
+On success,
+.B ci_parse_file()
+returns a pointer to the parse tree. On error,
+.B NULL
+is returned.
+.SH SEE ALSO
+.BR ci_free_parse_id (2),
+.br
+.BR ci_compile (2)

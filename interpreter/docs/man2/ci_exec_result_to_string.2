@@ -1,0 +1,35 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_exec_result_to_string - Convert ci_exec_result_t to text.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBconst char *
+.br
+ci_exec_result_to_string(\fIres\fB)
+.br
+ci_exec_result_t \fIres\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function returns a textual representation of the return code from
+the Virtual Machine.
+.PP
+.SH SEE ALSO
+.BR ci_execute_machine (2)

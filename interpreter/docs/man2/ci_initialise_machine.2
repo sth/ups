@@ -1,0 +1,77 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_initilise_machine - Initialise a Virtual Machine.
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBvoid
+.br
+ci_initialise_machine(\fIma\fB, \fIreset_data\fB, \fIwant_opcounts\fB, 
+\fIargv\fB, \fIenvp\fB)
+.br
+machine_t *\fIma\fB;
+.br
+bool \fIreset_data\fB, \fIwant_opcounts\fB;
+.br
+char **\fIargv\fB, **\fIenvp\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function initialises the Virtual Machine. 
+.PP
+It requires a valid 
+.I machine 
+as an argument. 
+.PP
+If 
+.I reset_data 
+is true, global (static) data is initialised.  
+.PP
+If 
+.I argv 
+and 
+.I envp 
+are supplied, these are copied and the machine values for 
+.IR argc , 
+.I argv 
+and 
+.I envp 
+are set. Note that these 
+are made available to interpreted code only if the startup function 
+is called "main". 
+.PP
+If 
+.I want_opcounts 
+is true, an array of longs is allocated to 
+.IR ma->ma_opcounts . 
+.PP
+The various interpreter registers (
+.IR CF , 
+.IR FP , 
+.I SP 
+and 
+.IR PC ) 
+are initialised. Std IO descriptors (0,1 and 2) 
+are registered to the Virtual Machine so that it can recognise them 
+as open descriptors.
+.PP
+.SH SEE ALSO
+.BR ci_make_machine_from_linkinfo (2), 
+.br
+.BR ci_execute_machine (2)

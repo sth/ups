@@ -1,0 +1,38 @@
+.TH CI_COMPILE 2 "April 11, 1999" "UPS 3.x" "C Interpreter API"
+.SH NAME
+ci_reset_machine - Reset a Virtual Machine
+.SH SYNOPSIS
+.B #include <mtrprog/ifdefs.h>
+.br
+.B #include <local/ukcprog.h>
+.br
+.B #include <ups.h>
+.br
+.B #include <symtab.h>
+.br
+.B #include <ci.h>
+.br
+.B #include <xc_opcodes.h>
+.br
+.B #include <xc_machine.h>
+.br
+.B #include <xc_builtins.h>
+.br
+.B #include <cc.h>
+.sp
+\fBvoid
+.br
+ci_reset_machine(\fIma\fB)
+.br
+machine_t *\fIma\fB;
+.sp
+.fi
+.SH DESCRIPTION
+This function releases resources acquired by a Virtual Machine. File 
+descriptors other than 0,1 and 2 are closed. All memory allocated by 
+interpreted code is freed.
+.PP
+.SH SEE ALSO
+.BR ci_initialise_machine (2),
+.br 
+.BR ci_free_machine (2)

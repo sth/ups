@@ -1,0 +1,26 @@
+# @(#) Makefile $Id$
+
+# -----------------------------------------------------------------------------
+#  Makefile for interpreter test directories
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+
+# List one to a line the files in this directory that should go in a release
+list:
+	@find . -type f -name '*.[ch]' -print | \
+	    egrep -v 'test_ansi.c|test_[0-9].*.c' | \
+	    sed -e 's;^..;;'
+	@find . -type f -name 'run_tests*' -print | sed -e 's;^..;;'
+	@find . -type f -name README -print | sed -e 's;^..;;'
+	@find . -type f -name Makefile.in -print | sed -e 's;^..;;'
+	@echo docs/*.txt | tr ' ' '\012'
+	@echo docs/man2/*.2 | tr ' ' '\012'
+	@echo tests/eic/eictests/hashwords
+	@echo tests/upstest/wordlist
+
