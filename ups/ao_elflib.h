@@ -69,7 +69,7 @@ void elf_update_dynamic_solibs PROTO((alloc_pool_t *target_ap, const char *path,
 bool scan_main_elf_symtab PROTO((alloc_pool_t *target_ap, const char *path,
 				 int fd, long modtime, Solib **p_solib,
 				 Solib_addr **p_solib_addrs,
-				 taddr_t *p_entryaddr,
+				 int *p_addrsize, taddr_t *p_entryaddr,
 				 struct func_s **p_mainfunc,
 				 struct func_s **p_initfunc,
 				 bool target_updated, int pid));

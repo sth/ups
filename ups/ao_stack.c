@@ -89,17 +89,6 @@ char ups_ao_stack_c_rcsid[] = "$Id$";
 #include "mips_frame.h"
 #endif /* ARCH_MIPS */
 
-#if defined(ARCH_BSDI386) || defined(ARCH_LINUX386)
-/*  There is no <machine/frame.h> on the BSDi box.  This is what a
- *  stack frame looks like.  Don't add to this - the signal handling
- *  code in ao_get_stack_trace depends on the size of this struct.
- */
-struct frame {
-	struct frame *fr_savfp;
-	int fr_savpc;
-};
-#endif
-
 #ifndef ARCH_MIPS
 static Stack *discard_junk_frames PROTO((target_t *xp, Stack *stk));
 #endif
@@ -399,6 +388,11 @@ target_t *xp;
 #define EBP tEBP
 #endif
 
+#if defined(RBX) && !defined(EBX)
+#define EBX RBX
+#define EBP RBP
+#endif
+
 #define EBXMASK (1u << EBX)
 #define EBPMASK (1u << EBP)
 
@@ -411,12 +405,12 @@ ebx_valid(xp, ebx)
 target_t *xp;
 taddr_t ebx;
 {
-	unsigned char ebx_buf[16];
+	taddr_t fa;
 	func_t *f;
 
-	if (dread(xp, ebx, ebx_buf, sizeof(ebx_buf)) != 0) return FALSE;
+	if (dread_addrval(xp, ebx + 8, &fa) != 0) return FALSE;
 
-	f = addr_to_func(*(taddr_t *)(ebx_buf + 8));
+	f = addr_to_func(fa);
 
 	if (f && strcmp(f->fu_name, "_dl_runtime_resolve") == 0) return TRUE;
 
@@ -430,11 +424,11 @@ Stack *
 ao_get_stack_trace(xp)
 target_t *xp;
 {
+	int wordsize = xp_get_addrsize(xp) / 8;
 	taddr_t pc, fp, sp;
 	register Stack *stk;
 	func_t *f;
 	Stack *last;
-	struct frame fbuf;
 	
 	pc = xp_getreg(xp, UPSREG_PC);
 	fp = xp_getreg(xp, UPSREG_FP);
@@ -506,14 +500,14 @@ target_t *xp;
 
 			for (mask = pr->pr_rsave_mask; mask; mask >>= 1)
 				if (mask & 1u)
-					offset += 4;
+					offset += wordsize;
 
 			offsetlim = offset + 1000;
 
 			if (pr->pr_rsave_mask & EBXMASK) {
 				ebxoffset = pr->pr_rsave_offset;
 				for (i = 0; i < N_PUSHABLE_REGS; i++) {
-					ebxoffset -= 4;
+					ebxoffset -= wordsize;
 					if (pr->pr_regtab[i] == EBX)
 						break;
 				}
@@ -522,7 +516,7 @@ target_t *xp;
 			if (pr->pr_rsave_mask & EBPMASK) {
 				ebpoffset = pr->pr_rsave_offset;
 				for (i = 0; i < N_PUSHABLE_REGS; i++) {
-					ebpoffset -= 4;
+					ebpoffset -= wordsize;
 					if (pr->pr_regtab[i] == EBP)
 						break;
 				}
@@ -531,7 +525,7 @@ target_t *xp;
 			for (; offset < offsetlim; offset += sizeof(taddr_t)) {
 				func_t *cfunc;
 
-				if (dread(xp, sp + offset, (char *)&pc, sizeof(pc)) == 0 &&
+				if (dread_addrval(xp, sp + offset, &pc) == 0 &&
 				    (cfunc = addr_to_func(pc)) != NULL) {
 					unsigned char s_buf[7];
 					taddr_t ebx = 0;
@@ -540,37 +534,44 @@ target_t *xp;
 						continue;
 
 					if (ebxoffset)
-						dread(xp, sp + offset + ebxoffset, (char *)&ebx, sizeof(ebx));
+						dread_addrval(xp, sp + offset + ebxoffset, &ebx);
 					else
 						ebx = xp_getreg(xp, 3);
 
 #if defined(ARCH_LINUX386)
-                                        if (!ebx_valid(xp, ebx)) {
+                                        if (wordsize == 4 && !ebx_valid(xp, ebx)) {
 						int i;
 
-						for (i = offset; i > offset - 20; i -= 4)
-							if (dread(xp, sp + i, (char *)&ebx, sizeof(ebx)) == 0 && ebx_valid(xp, ebx))
+						for (i = offset; i > offset - 20; i -= wordsize)
+							if (dread_addrval(xp, sp + i, &ebx) == 0 && ebx_valid(xp, ebx))
 								break;
                                         }
 #endif
                                         
 					if (ebpoffset) {
-						if (dread(xp, sp + offset + ebpoffset, (char *)&fp, sizeof(fp)) != 0 || !fp)
+						if (dread_addrval(xp, sp + offset + ebpoffset, &fp) != 0 || !fp)
 							fp = (taddr_t)-1;
 					}
 
 					if (s_buf[2] == 0xe8) {
-						taddr_t cpc = pc + *(taddr_t *)(s_buf + 3);
+						taddr_t cpc = pc + *(int *)(s_buf + 3);
 
 						if (cpc == f->fu_addr)
 							break;
 
 						dread(xp, cpc, (char *)s_buf, 6);
 
-						if (s_buf[0] == 0xff && s_buf[1] == 0x25)
-							dread(xp, *(taddr_t *)(s_buf + 2), &cpc, sizeof(cpc));
-						else if (s_buf[0] == 0xff && s_buf[1] == 0xa3)
-							dread(xp, *(taddr_t *)(s_buf + 2) + ebx, &cpc, sizeof(cpc));
+						if (s_buf[0] == 0xff && s_buf[1] == 0x25) {
+							if (wordsize == 4) {
+								dread_addrval(xp, *(unsigned int *)(s_buf + 2), &cpc);
+							}
+							else {
+								dread_addrval(xp, *(int *)(s_buf + 2) + cpc + 6, &cpc);
+							}
+						}
+						else if (s_buf[0] == 0xff && s_buf[1] == 0xa3) {
+							dread_addrval(xp, *(int *)(s_buf + 2) + ebx, &cpc);
+						}
 
 						if (cpc == f->fu_addr)
 							break;
@@ -641,9 +642,13 @@ target_t *xp;
 		} else {
 			stk->stk_fp = stk->stk_ap = fp;
 			stk->stk_sp = sp;
-			if (dread(xp, fp, (char *)&fbuf, sizeof(fbuf)) != 0)
+
+			if (dread_addrval(xp, stk->stk_fp, &fp) != 0)
 				break;
-			sp = fp + sizeof(fbuf);
+			if (dread_addrval(xp, stk->stk_fp + wordsize, &pc) != 0)
+				break;
+
+			sp = stk->stk_fp + 2 * wordsize;
 
 #ifdef DEBUG_STACK
 			if (Debug_flags & DBFLAG_STACK) {
@@ -652,9 +657,6 @@ target_t *xp;
 					fp, fbuf.fr_savfp, fbuf.fr_savpc);
 			}
 #endif
-
-			fp = (taddr_t)fbuf.fr_savfp;
-			pc = fbuf.fr_savpc;
 		}
 
 #if defined(ARCH_FREEBSD386)

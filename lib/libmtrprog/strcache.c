@@ -224,7 +224,7 @@ sc_make_fd_strcache(fd)
 int fd;
 {
 	return sc_make_strcache(get_input_from_fd, (sc_close_func_t)NULL,
-								(char *)fd);
+								(char *)(long)fd);
 }
 
 void
@@ -460,7 +460,7 @@ size_t nbytes;
 {
 	int fd;
 
-	fd = (int)arg;
+	fd = (long)arg;
 
 	if (lseek(fd, offset, L_SET) == -1)
 		return -1;

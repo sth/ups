@@ -515,31 +515,30 @@ bool want_calls;
  *  integer.  Hence the SW_MOVL_ESP_EBP and SW_SUBL_IMM_ISP definitions.
  */
 #define PUSHL_EBP	0x55
+#define PUSHQ_RBP	0x55
 #define JMP_FAR		0xe9	/* + 4 byte operand */
 #define JMP_SHORT	0xeb
 
-#define SUBL_IMM_ESP		0x81ec	/* four byte operand */
-#define SUBL_IMM_ESP_SHORT	0x83ec	/* one byte operand */
+#define SUBL_IMM_ESP		0xec81	/* four byte operand */
+#define SUBL_IMM_ESP_SHORT	0xec83	/* one byte operand */
 
 /*  No, I don't have the faintest idea why opcodes should be different
  *  across operating systems using the same chip ...
  */
 #ifdef OS_SUNOS
-#define MOVL_ESP_EBP	0x8bec
+#define MOVL_ESP_EBP	0xec8b
+#define MOVQ_RSP_RBP	0xec8b48
 #endif
 
 #ifdef OS_LINUX
-#define MOVL_ESP_EBP	0x89e5
+#define MOVL_ESP_EBP	0xe589
+#define MOVQ_RSP_RBP	0xe58948
 #endif
 
 #ifdef OS_BSD44
-#define MOVL_ESP_EBP	0x89e5
+#define MOVL_ESP_EBP	0xe589
+#define MOVQ_RSP_RBP	0xe58948
 #endif
-
-#define SWAP_SHORT(x)		((x >> 8) | (((x) & 0xff) << 8))
-#define SW_MOVL_ESP_EBP		SWAP_SHORT(MOVL_ESP_EBP)
-#define SW_SUBL_IMM_ESP		SWAP_SHORT(SUBL_IMM_ESP)
-#define SW_SUBL_IMM_ESP_SHORT	SWAP_SHORT(SUBL_IMM_ESP_SHORT)
 
 /*  80386 version of get_startup_code().
  */
@@ -555,10 +554,17 @@ ao_preamble_t *pr;
 	 *	subl xxx, %esp		5 bytes
 	 *	8 * pushl <reg>		8 bytes
 	 *
+	 * or, in 64 bit mode:
+	 * 
+	 *	pushq %rbp		1 byte
+	 *	movq %rsp, %rbp		3 bytes
+	 *	subq xxx, %rsp		6 bytes
+	 *	8 * pushq <reg>		16 bytes
+	 *
 	 *  I don't think we'd ever see 8 register pushes, but
 	 *  who cares, PTRACE_READ is reasonably fast.
 	 */
-	unsigned char textbuf[1 + 2 + 5 + 8], *text;
+	unsigned char textbuf[1 + 3 + 6 + 16], *text;
 	taddr_t addr;
 	int count;
 
@@ -596,18 +602,20 @@ ao_preamble_t *pr;
 		text = textbuf;
 	}
 
-	if ((*(unsigned *)text & 0xffffff) ==
-					(PUSHL_EBP | (SW_MOVL_ESP_EBP << 8))) {
+	if ((*(unsigned *)text & 0xffffff) == (PUSHL_EBP | (MOVL_ESP_EBP << 8))) {
 		text += 3;
+	}
+	else if ((*(unsigned *)text & 0xffffffff) == (PUSHQ_RBP | (MOVQ_RSP_RBP << 8))) {
+		text += 4;
 	}
 	else
 		f->fu_flags |= FU_NO_FP;
 
-	if (*(unsigned short *)text == SW_SUBL_IMM_ESP) {
+	if (*(unsigned short *)text == SUBL_IMM_ESP) {
 		pr->pr_rsave_offset = -*(int *)&text[2];
 		text += 6;
 	}
-	else if (*(unsigned short *)text == SW_SUBL_IMM_ESP_SHORT) {
+	else if (*(unsigned short *)text == SUBL_IMM_ESP_SHORT) {
 		pr->pr_rsave_offset = -*(unsigned char *)&text[2];
 		text += 3;
 	}
@@ -616,27 +624,37 @@ ao_preamble_t *pr;
 	
 	count = 0;
 	pr->pr_rsave_mask = 0;
-	for (pr->pr_rsave_mask = 0; (*text & ~7) == 0x50; ++text) {
+	while ((text[0] & 0x7) == 0x50 ||
+	       (text[0] == 0x41 && (text[1] & 0x7) == 0x50)) {
 #ifdef OS_SUNOS
 		static int regs[] = { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
 #endif
-#ifdef OS_LINUX
+#if defined(ARCH_LINUX386_64)
+		static int regs[] = { RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 };
+#elif defined(ARCH_LINUX386_64)
 		static int regs[] = { EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI };
 #endif
-		int reg;
+		int reg = 0;
 
 		if (text >= textbuf + sizeof(textbuf))
 			panic("pushl botch in gsf");
 
+		if (text[0] == 0x41) {
+			reg += 8;
+			text++;
+		}
+
 #if defined(OS_SUNOS) || defined(OS_LINUX)
-		reg = regs[*text & 7];
+		reg += regs[text[0] & 7];
 #endif
 #ifdef OS_BSD44
-		reg = *text & 7;
+		reg += text[0] & 7;
 #endif
 
 		pr->pr_rsave_mask |= 1 << reg;
 		pr->pr_regtab[count++] = reg;
+
+		text++;
 	}
 		
 	if (pr->pr_bpt_offset == 0)

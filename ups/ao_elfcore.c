@@ -158,7 +158,7 @@ get_prpsinfo_info(alloc_pool_t *ap, prpsinfo_t *ps,
 
 static bool
 get_note_info(alloc_pool_t *ap, const char *path, int fd,
-	      Elf32_Phdr *note_ph,
+	      const Elfops *elops, Elf_Phdr *note_ph,
 	      int *p_signo, char **p_cmdname, const char **p_cmdline,
 	      elf_core_gregset_t **p_regs, elf_core_fpregset_t **p_p_fpregs)
 {
@@ -175,9 +175,10 @@ get_note_info(alloc_pool_t *ap, const char *path, int fd,
 		return FALSE;
 	}
 
-	buf = e_malloc(note_ph->p_filesz);
+	buf = e_malloc(elf_phdr_filesz(elops, note_ph));
 	if (!read_chunk(path, "Elf executable", fd, "note section",
-			(off_t)note_ph->p_offset, buf, note_ph->p_filesz)) {
+			elf_phdr_offset(elops, note_ph), buf,
+			elf_phdr_filesz(elops, note_ph))) {
 		return FALSE;
 	}
 
@@ -187,7 +188,7 @@ get_note_info(alloc_pool_t *ap, const char *path, int fd,
 	cmdline = NULL;
 
 	pos = 0;
-	while (pos < note_ph->p_filesz) {
+	while (pos < elf_phdr_filesz(elops, note_ph)) {
 		int *ip;
 		const char *name, *desc;
 		int namesz, descsz, type;
@@ -307,8 +308,9 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 		  int *p_signo, char **p_cmdname, const char **p_cmdline,
 		  Core_segment **p_segments, int *p_nsegments, char **p_regs)
 {
-	Elf32_Ehdr hdr;
-	Elf32_Phdr *phtab, *note_ph;
+	const Elfops *elops;
+	Elf_Ehdr *hdr;
+	Elf_Phdr *phtab, *note_ph;
 	Core_segment *segments, *sc, *psc;
 	unsigned i;
 	int nsegments, signo;
@@ -320,17 +322,18 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 	Elf_core_regs *cr;
 #endif
 	
-	if (!read_chunk(corepath, "", fd, "ELF header",
-			(off_t)0, &hdr, sizeof(hdr)) ||
-	    !check_elf_header_type(&hdr, corepath, ET_CORE, "debug from")) {
+	if (!check_elf_ident(corepath, fd, (off_t)0, "debug from", &elops) ||
+	    !elf_read_header(elops, corepath, fd, (off_t)0, &hdr) ||
+	    !check_elf_header_type(elops, hdr, corepath, ET_CORE, "debug from")) {
 		return FALSE;
 	}
 
-	phtab = e_malloc((size_t)(hdr.e_phentsize * hdr.e_phnum));
+	phtab = e_malloc(elf_header_phsize(elops, hdr));
 	
 	if (!read_chunk(corepath, "Elf executable", fd, "program header table",
-			(off_t)hdr.e_phoff,
-			phtab, (size_t)(hdr.e_phentsize * hdr.e_phnum))) {
+			elf_header_phoff(elops, hdr),
+			phtab, elf_header_phsize(elops, hdr))) {
+		free(hdr);
 		free(phtab);
 		return FALSE;
 	}
@@ -338,14 +341,18 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 	note_ph = NULL;
 	nsegments = 0;
 	
-	for (i = 0; i < hdr.e_phnum; ++i) {
-		switch (phtab[i].p_type) {
+	for (i = 0; i < elf_header_phnum(elops, hdr); ++i) {
+		Elf_Phdr *ph;
+
+		ph = elf_lookup_phdr(elops, phtab, i);
+	   
+		switch (elf_phdr_type(elops, ph)) {
 		case PT_NOTE:
-			note_ph = &phtab[i];
+			note_ph = ph;
 			break;
 			
 		case PT_LOAD:
-			if (phtab[i].p_filesz != 0)
+			if (elf_phdr_filesz(elops, ph) != 0)
 				++nsegments;
 			break;
 
@@ -356,17 +363,19 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 
 	if (nsegments == 0) {
 		errf("No PT_LOAD segments in ELF core file %s", corepath);
+		free(hdr);
 		free(phtab);
 		return FALSE;
 	}
 
 #if AO_ELF_CORE_REGS
-	if (!get_note_info(ap, corepath, fd, note_ph,
+	if (!get_note_info(ap, corepath, fd, elops, note_ph,
 			   &signo, &cmdname, &cmdline, &regs, &p_fpregs)) {
 #else
-	if (!get_note_info(ap, corepath, fd, note_ph,
+	if (!get_note_info(ap, corepath, fd, elops, note_ph,
 			   &signo, &cmdname, &cmdline, NULL, NULL)) {
 #endif
+		free(hdr);
 		free(phtab);
 		return FALSE;
 	}
@@ -375,24 +384,28 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 	sc = segments;
 	psc = NULL;
 
-	for (i = 0; i < hdr.e_phnum; ++i) {
-		Elf32_Phdr *ph;
+	for (i = 0; i < elf_header_phnum(elops, hdr); ++i) {
+		Elf_Phdr *ph;
 
-		ph = &phtab[i];
+		ph = elf_lookup_phdr(elops, phtab, i);
 
-		if ((ph->p_type == PT_LOAD) && (ph->p_filesz != 0)) {
-			if ((psc != NULL) && (psc->lim == ph->p_vaddr)) {
+		if ((elf_phdr_type(elops, ph) == PT_LOAD) &&
+		    (elf_phdr_filesz(elops, ph) != 0)) {
+			if ((psc != NULL) && (psc->lim == elf_phdr_vaddr(elops, ph))) {
 				/* Contiguous with previous segment. */
-				psc->lim += ph->p_memsz;
+				psc->lim += elf_phdr_memsz(elops, ph);
 				nsegments--;
 			} else {
-				sc->base = ph->p_vaddr;
-				sc->lim = ph->p_vaddr + ph->p_memsz;
-				sc->file_offset = ph->p_offset;
+				sc->base = elf_phdr_vaddr(elops, ph);
+				sc->lim = sc->base + elf_phdr_memsz(elops, ph);
+				sc->file_offset = elf_phdr_offset(elops, ph);
 				psc = sc++;
 			}
 		}
 	}
+	
+	free(hdr);
+	hdr = NULL;
 
 #if AO_ELF_CORE_REGS
 	cr = (Elf_core_regs *)alloc(ap, sizeof(Elf_core_regs));
@@ -409,6 +422,7 @@ elf_get_core_info(alloc_pool_t *ap, const char *corepath, int fd,
 #else
 	*p_regs = NULL;
 #endif
+	
 	return TRUE;
 }
 

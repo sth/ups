@@ -109,6 +109,7 @@ char ups_ao_pt_uarea_c_rcsid[] = "$Id$";
 #include "dx.h"
 #include "as.h"
 #include "ao.h"
+#include "ao_regs.h"
 #include "ao_syms.h"
 #include "ao_asm.h"
 #include "ao_text.h"
@@ -182,26 +183,7 @@ static void convert_68881_reg PROTO((unsigned *rwords, bool is_double,
 static int get_uarea_word_with_ptrace PROTO((int pid, int offset));
 #endif
 
-#ifdef ARCH_LINUX386
-static int do_register_translation PROTO((int regno));
-#endif
-
 #if defined(UAREA_REGS) || defined(USERCORE)
-
-#ifdef ARCH_LINUX386
-static 
-int
-do_register_translation(regno)
-int regno;
-{
-  static int regmap[] = {
-	  EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI,
-	  EIP, EFL, CS, SS, DS, ES, FS, GS, ORIG_EAX
-	};
-  return regmap[regno];
-}
-#endif
-
 
 /*
  *  Convert machine independent register number regno to u area register number.
@@ -227,7 +209,7 @@ int regno;
 		if (regno < 0 || regno >= N_UAREA_GREGS)
 			panic("bad regno in xp_getreg");
 #ifdef ARCH_LINUX386
-		return do_register_translation(regno);
+		return x86_gcc_register(regno);
 #else
 		return regno;
 #endif
@@ -585,7 +567,7 @@ ureg_t *ur;
 	int i;
 
 	for (i = 0; i < N_UDREGS; i++)
-		ur[i].ur_uaddr = (int)U_OFFSET(u_debugreg[i]);
+		ur[i].ur_uaddr = (long)U_OFFSET(u_debugreg[i]);
 
 	return;
 }
@@ -605,7 +587,7 @@ taddr_t *p_val;
 	if (!ur->ur_is_current) {
 		errno = 0;
 		ur->ur_value = std_ptrace(PTRACE_PEEKUSER, ip->ip_pid,
-					  (char *)(int)ur->ur_uaddr, 0);
+					  (char *)(long)ur->ur_uaddr, 0);
 		if (errno != 0)
 			return -1;
 		ur->ur_is_current = TRUE;
@@ -625,7 +607,7 @@ taddr_t value;
 
 	ur = ip->ip_ptrace_info->udregs + ri;
 	errno = 0;
-	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(int)ur->ur_uaddr, (int)value);
+	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(long)ur->ur_uaddr, (int)value);
 	ur->ur_is_current = FALSE;
 	return (errno == 0) ? 0 : -1;
 }

@@ -210,13 +210,13 @@ int num_bytes;
 		    break;
 #if HAVE_LONG_DOUBLE
 		case sizeof(int)*3:
-		    sprintf(buf, "<illegal long double %d bytes %s [0]0x%08x [1]0x%08x [2]0x%08x>",
+		    sprintf(buf, "<illegal long double %lu bytes %s [0]0x%08x [1]0x%08x [2]0x%08x>",
 			    sizeof(long double),
 			    (words_big_endian ? "1st word on left" : "1st word on right"),
 			    vl.vl_ints[0], vl.vl_ints[1], vl.vl_ints[2]);
 		    break;
 		case sizeof(int)*4:
-		    sprintf(buf, "<illegal long double %d bytes %s [0]0x%08x [1]0x%08x [2]0x%08x [3]0x%08x>",
+		    sprintf(buf, "<illegal long double %lu bytes %s [0]0x%08x [1]0x%08x [2]0x%08x [3]0x%08x>",
 			    sizeof(long double),
 			    (words_big_endian ? "1st word on left" : "1st word on right"),
 			    vl.vl_ints[0], vl.vl_ints[1], vl.vl_ints[2], vl.vl_ints[3]);
@@ -362,6 +362,32 @@ char *buf;
 	return 0;
 }
 
+int
+dread_addrval(xp, addr, buf)
+target_t *xp;
+taddr_t addr;
+taddr_t *buf;
+{
+	int addrsize = xp_get_addrsize(xp);
+   
+	if (addrsize == sizeof(taddr_t) * 8) {
+		return dread(xp, addr, buf, sizeof(taddr_t));
+	}
+	else if (addrsize == 32) {
+		unsigned int val;
+
+		if (dread(xp, addr, &val, sizeof(val)) != 0)
+			return -1;
+
+		*buf = val;
+	}
+	else {
+		panic("unsupported target address size in dread_addrval");
+	}
+
+	return 0;
+}
+
 /*  Read n bytes into buf from the data or stack area of the target process.
  *  We deduce from addr whether we are supposed to read the stack or
  *  the data area.
@@ -427,6 +453,28 @@ size_t nbytes;
 	}
 
 	return xp_read_data(xp, addr, buf, nbytes);
+}
+
+int
+dwrite_addrval(xp, addr, buf)
+target_t *xp;
+taddr_t addr;
+const taddr_t *buf;
+{
+	int addrsize = xp_get_addrsize(xp);
+   
+	if (addrsize == sizeof(taddr_t) * 8) {
+		return dwrite(xp, addr, buf, sizeof(taddr_t));
+	}
+	else if (addrsize == 32) {
+		unsigned int val = *buf;
+
+		return dwrite(xp, addr, &val, sizeof(val));
+	}
+	else {
+		panic("unsupported target address size in dwrite_addrval");
+		return -1;
+	}
 }
 
 int

@@ -60,7 +60,7 @@ xp_ops_t Gd_ops = {
 	gd_enable_breakpoint, gd_disable_breakpoint,
 	gd_addr_to_breakpoint, gd_get_breakpoint_addr,
 	NULL, NULL, NULL, NULL, NULL, NULL,
-	gd_is_attached, gd_detach,
+	gd_is_attached, gd_detach, gd_get_addrsize,
 	gd_get_state, gd_get_lastsig, NULL, gd_get_sigstate,
 	gd_get_stack_trace, gd_get_reg_addr, gd_get_signal_tag,
 	gd_read_fpval, gd_read_fpreg, gd_readreg, gd_setreg,

@@ -1963,7 +1963,7 @@ srcwin_reset()
   srcwin_clear_stopline();
   sw->fil = NULL;
   font = wn_get_sysfont();
-  wn = (int)srcwin_get_data(sw);
+  wn = (long)srcwin_get_data(sw);
   wn_get_window_size(wn, &width, &height);
   nchars = (width - 8) / font->ft_width;
   if (nchars > sizeof(nbuf) - 1)

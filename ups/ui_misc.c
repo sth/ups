@@ -508,7 +508,7 @@ struct drawst *dets;
 {
 	char buf[12];
 
-	(void) sprintf(buf, "%d", (int) dets->dr_fval);
+	(void) sprintf(buf, "%ld", (long) dets->dr_fval);
 /* AMC enhancements */
 	if (dets->selected)
 	  wn_wd_ttext(dets->dr_wn, buf, dets->dr_x, dets->dr_y, dets->dr_width, dets->dr_bg, dets->dr_fg);

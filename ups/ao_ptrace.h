@@ -198,7 +198,7 @@ int ptrace PROTO((ptracereq_t req, int pid, char *addr, int data, char *addr2));
 #elif defined(OS_BSD44)
 #define std_ptrace(req, pid, addr, data)	ptrace(req, pid, addr, data)
 #elif defined(OS_LINUX)
-#define std_ptrace(req, pid, addr, data)	ptrace(req, pid, (int)addr, data)
+#define std_ptrace(req, pid, addr, data)	ptrace(req, pid, (void *)(addr), data)
 #else
 int ptrace PROTO((ptracereq_t req, int pid, char *addr, int data));
 #define std_ptrace(req, pid, addr, data)	ptrace(req, pid, addr, data)

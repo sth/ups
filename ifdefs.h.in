@@ -43,7 +43,9 @@
  *  ARCH_ALPHA		- DEC Alpha
  *
  *  ARCH_386		- any Intel x86
+ *  ARCH_386_64		- any 64 bit Intel x86
  *  ARCH_LINUX386	- Linux (x86)
+ *  ARCH_LINUX386_64	- Linux (64 bit x86)
  *  ARCH_BSDI386	- should be BSD/OS (x86), actually any BSD (x86)
  *  ARCH_FREEBSD386	- FreeBSD (x86)
  *  ARCH_SOLARIS386	- Solaris (x86)
@@ -80,12 +82,14 @@
 #undef ARCH_SUN3
 #undef ARCH_SUN4
 #undef ARCH_386
+#undef ARCH_386_64
 #undef ARCH_SOLARIS386
 #undef ARCH_FREEBSD386
 #undef ARCH_OPENBSD386
 #undef ARCH_NETBSD386
 #undef ARCH_BSDI386
 #undef ARCH_LINUX386
+#undef ARCH_LINUX386_64
 #undef ARCH_ALPHA
 #undef ARCH_CLIPPER
 #undef ARCH_MIPS_ULTRIX
@@ -118,10 +122,26 @@
 #endif
 
 /* ---------------------------------------------------------------------------
+ *  A 64 bit x86 Linux is much the same as a 32 bit x86 Linux
+ * ---------------------------------------------------------------------------
+ */
+#if (ARCH_LINUX386_64)
+#define ARCH_LINUX386		1
+#endif
+
+/* ---------------------------------------------------------------------------
+ *  Any 64 bit 386 ?
+ * ---------------------------------------------------------------------------
+ */
+#if (ARCH_LINUX386_64)
+#define ARCH_386_64		1
+#endif
+
+/* ---------------------------------------------------------------------------
  *  Any 386 ?
  * ---------------------------------------------------------------------------
  */
-#if (ARCH_BSDI386) || (ARCH_LINUX386) || (ARCH_SOLARIS386)
+#if (ARCH_386_64) || (ARCH_BSDI386) || (ARCH_LINUX386) || (ARCH_SOLARIS386)
 #define ARCH_386		1
 #endif
 

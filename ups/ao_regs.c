@@ -36,6 +36,64 @@ char ups_ao_regs_c_rcsid[] = "$Id$";
 
 #include "ao_regs.h"
 
+#if defined(ARCH_LINUX386_64)
+
+static const int regmap32[] = {
+	RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, RIP, EFLAGS
+};
+
+static const int regmap64[] = {
+	RAX, RDX, RCX, RBX, RSI, RDI, RBP, RSP,
+	R8, R9, R10, R11, R12, R13, R14, R15
+};
+
+#elif defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
+
+static const int regmap32[] = {
+	EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI, EIP, EFL
+};
+
+static const int *regmap64 = NULL;
+
+#elif defined(ARCH_FREEBSD386) && defined(z__FreeBSD__) && __FreeBSD__ > 3
+
+static const int regmap32[] = {
+	/*  9     8     7     6     5    4      3     2 */
+	  tECX, tEDX, tEBX, tISP, tEBP, tESI, tEDI, tDS,
+	/*  12    14  13   16   1    0 */
+	  tERR, tCS, tEIP, tESP, tES, tFS
+};
+
+static const int *regmap64 = NULL;
+
+#elif defined(ARCH_FREEBSD386)
+
+static const int regmap32[] = {
+	/*  9     8     7     6     5    4      3     2 */
+	  tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI,
+	/*  12    14      13   16   1    0 */
+	  tEIP, tEFLAGS, tCS, tSS, tDS, tES
+};
+
+static const int *regmap64 = NULL;
+
+#endif
+
+static const int *regmap = regmap32;
+
+void
+x86_gcc_register_init(int addrsize)
+{
+	if (addrsize == 32) {
+		regmap = regmap32;
+	}
+	else if (addrsize == 64) {
+		regmap = regmap64;
+	}
+        
+	return;
+}
+
 /*
  *  This maps 'regno' (the register number GCC puts in the symbol table)
  *  to the actual register.
@@ -47,37 +105,7 @@ int
 x86_gcc_register(regno)
 int regno;
 {
-#if (defined ARCH_LINUX386)
-  static int regmap[] = {
-	  EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI,
-	  EIP, EFL, CS, SS, DS, ES, FS, GS, ORIG_EAX
-	};
-  return regmap[regno];
-#elif (defined ARCH_SOLARIS386)
-  static int regmap[] = {
-	  EAX, ECX, EDX, EBX, UESP, EBP, ESI, EDI,
-	  EIP, EFL, CS, SS, DS, ES, FS, GS
-	};
-  return regmap[regno];
-#elif (defined ARCH_FREEBSD386) && defined(z__FreeBSD__) && __FreeBSD__ > 3
-  static int regmap[] = {
-	/*  9     8     7     6     5    4      3     2 */
-	  tECX, tEDX, tEBX, tISP, tEBP, tESI, tEDI, tDS,
-	/*  12    14  13   16   1    0 */
-	  tERR, tCS, tEIP, tESP, tES, tFS
-	};
-  return regmap[regno];
-#elif (defined ARCH_FREEBSD386)
-  static int regmap[] = {
-	/*  9     8     7     6     5    4      3     2 */
-	  tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI,
-	/*  12    14      13   16   1    0 */
-	  tEIP, tEFLAGS, tCS, tSS, tDS, tES
-	};
-  return regmap[regno];
-#else
-  return regno;
-#endif
+	return regmap[regno];
 }
 
 #endif /* ARCH_386 */

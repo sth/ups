@@ -1312,7 +1312,7 @@ set_bpt:
 	  oldf = errf_set_ofunc(null_ofunc);
 	  for (fl = funchead; fl != NULL; fl = fl->fl_next)
 	    if (fl->fl_bp)
-	      dx_remove_breakpoint(xp, (breakpoint_t*)fl->fl_bp);
+	      dx_remove_breakpoint(xp, fl->fl_bp);
 	  do_free_func_bp_list_list(funchead);
 	  errf_set_ofunc(oldf);
 	}

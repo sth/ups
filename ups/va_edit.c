@@ -1024,7 +1024,7 @@ bool *p_done_mesg;
 		res = DWRITE_VAR(xp, addr, value.vl_char);
 		break;
 	case DT_PTR_TO:
-		res = DWRITE_VAR(xp, addr, value.vl_addr);
+		res = dwrite_addrval(xp, addr, &value.vl_addr);
 		break;
 	default:
 		errf("Ignoring new value %s", vstr);

@@ -379,7 +379,7 @@ linkinfo_t *li;
 		lim = sf->sf_letab + sf->sf_letab_size;
 		fprintf(fp, "\t%4s  %5s %6s\n", "", "lnum", "addr");
 		for (le = sf->sf_letab; le < lim; ++le) {
-			fprintf(fp, "\t%4d: %5d %6ld\n", le - sf->sf_letab,
+			fprintf(fp, "\t%4ld: %5d %6ld\n", le - sf->sf_letab,
 						  le->le_lnum, le->le_addr);
 		}
 	}
@@ -420,7 +420,7 @@ size_t count;
 		int i;
 		unsigned char buf[NPERLINE];
 
-		fprintf(fp, "  %06x   ", cp - data);
+		fprintf(fp, "  %06lx   ", cp - data);
 		
 		for (i = 0; i < NPERLINE; ++i) {
 			if (cp < lim) {
@@ -938,11 +938,11 @@ opcode_t opcode;
 		pc += 4;
 		fprintf(fp, "#%d,+%d\n", ncase, minval);
 		for (i = 0; i < ncase; ++i) {
-			fprintf(fp, "\t\tcase %d: jump %d\n",
+			fprintf(fp, "\t\tcase %d: jump %ld\n",
 					i + minval, JUMPDEST(pc, text));
 			pc += 2;
 		}
-		fprintf(fp, "\t\tdefault: jump %d", JUMPDEST(pc, text));
+		fprintf(fp, "\t\tdefault: jump %ld", JUMPDEST(pc, text));
 		break;
 
 	case OC_SWITCH_ON_CHAIN_B:
@@ -973,11 +973,11 @@ opcode_t opcode;
 				panic("bad opcode");
 				val = 0;	/* to satisfy gcc */
 			}
-			fprintf(fp, "\t\tcase %d: jump %d\n",
+			fprintf(fp, "\t\tcase %d: jump %ld\n",
 					val + minval, JUMPDEST(pc, text));
 			pc += 2;
 		}
-		fprintf(fp, "\t\tdefault: jump %d", JUMPDEST(pc, text));
+		fprintf(fp, "\t\tdefault: jump %ld", JUMPDEST(pc, text));
 		break;
 
 	case OC_PUSH_FLOAT_CONST:
@@ -1030,17 +1030,17 @@ opcode_t opcode;
 #else
 	case OC_LINK_B:
 		ival = *pc++;
-		fprintf(fp, "%d.b,%d", ival, GETLONG(pc));
+		fprintf(fp, "%d.b,%ld", ival, GETLONG(pc));
 		break;
 	case OC_LINK_W:
 		ival = GETWORD(pc);
 		pc += 2;
-		fprintf(fp, "%d.w,%d", ival, GETLONG(pc));
+		fprintf(fp, "%d.w,%ld", ival, GETLONG(pc));
 		break;
 	case OC_LINK_L:
 		ival = GETLONG(pc);
 		pc += 4;
-		fprintf(fp, "%d.l,%d", ival, GETLONG(pc));
+		fprintf(fp, "%d.l,%ld", ival, GETLONG(pc));
 		break;
 #endif
 
@@ -1048,7 +1048,7 @@ opcode_t opcode;
 	case OC_JUMP:
 	case OC_JUMP_IF_ZERO:
 	case OC_JUMP_IF_NON_ZERO:
-		fprintf(fp, "%d", JUMPDEST(pc, text));
+		fprintf(fp, "%ld", JUMPDEST(pc, text));
 		break;
 
 	case OC_INSERT_SIGNED_BITFIELD:

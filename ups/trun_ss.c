@@ -103,7 +103,7 @@ rtype_t rtype;
 			get_current_func(&f, &orig_fp, &pc, &atol_pc);
 			orig_f = f;
 
-			if (fp != orig_fp) {
+			if ((f->fu_flags & FU_NO_FP) == 0 && fp != orig_fp) {
 				stop_bp = dx_addr_to_breakpoint(xp, pc);
 				if (stop_bp == NULL) {
 					tmp_bp = dx_add_breakpoint(xp, pc);

@@ -66,6 +66,7 @@ char ups_ao_target_c_rcsid[] = "$Id$";
 #include "dx.h"
 #include "breakpoint.h"
 #include "st.h"
+#include "ao_regs.h"
 #include "ao_syms.h"
 #include "ao_core.h"
 #include "ao_target.h"
@@ -90,6 +91,7 @@ static int ao_init_from_textfile PROTO((target_t *xp, int textfd,
                                         bool user_gave_core, 
                                         const char **p_cmdline));
 static int ao_is_attached PROTO((target_t *xp));
+static int ao_get_addrsize PROTO((target_t *xp));
 static tstate_t ao_get_state PROTO((target_t *xp));
 static int ao_get_lastsig PROTO((target_t *xp));
 static stopres_t ao_get_stopres PROTO((target_t *xp));
@@ -209,7 +211,7 @@ xp_ops_t Ao_ops = {
 	dx_add_watchpoint, dx_remove_watchpoint,
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	ao_install_watchpoint, ao_uninstall_watchpoint,
-	ao_is_attached, ao_detach,
+	ao_is_attached, ao_detach, ao_get_addrsize,
 	ao_get_state, ao_get_lastsig, ao_get_stopres, ao_get_sigstate,
 	ao_get_stack_trace, ao_get_reg_addr, ao_get_signal_tag,
 	ao_read_fpval, ao_read_fpreg, ao_readreg, ao_setreg,
@@ -304,6 +306,7 @@ const char **p_cmdline;
 	ip = (iproc_t *)alloc(xp->xp_apool, sizeof(iproc_t));
 	ip->ip_apool = xp->xp_apool;
 	ip->ip_pid = 0;
+	ip->ip_addrsize = 32;
 	ip->ip_core = co;
 	ip->ip_lastsig = lastsig;
 	ip->ip_base_sp = (taddr_t)~0;	/* Fixed later for non-ELF */
@@ -325,9 +328,9 @@ const char **p_cmdline;
 	
 	ret = scan_main_elf_symtab(xp->xp_apool, xp->xp_textpath, textfd,
 				   xp->xp_modtime, &ip->ip_solibs,
-				   &ip->ip_solib_addrs, &xp->xp_entryaddr,
-				   &xp->xp_mainfunc, &xp->xp_initfunc,
-				   xp->xp_target_updated, pid);
+				   &ip->ip_solib_addrs, &ip->ip_addrsize,
+				   &xp->xp_entryaddr, &xp->xp_mainfunc,
+				   &xp->xp_initfunc, xp->xp_target_updated, pid);
 	xp->xp_target_updated = FALSE;
 	if (!ret)
 	  return -1;
@@ -355,6 +358,10 @@ const char **p_cmdline;
 
 	if (co != NULL && *p_cmdline == NULL)
 		*p_cmdline = core_get_cmdline(co);
+
+#ifdef ARCH_386
+	x86_gcc_register_init(ip->ip_addrsize);
+#endif
 
 	return 0;
 }
@@ -458,6 +465,13 @@ target_t *xp;
 
 	ip = GET_IPROC(xp);
 	return ip->ip_pid && ip->ip_attached;
+}
+
+static int
+ao_get_addrsize(xp)
+target_t *xp;
+{
+	return GET_IPROC(xp)->ip_addrsize;
 }
 
 static tstate_t
@@ -643,9 +657,14 @@ int rlink_reg;
 #if defined(ARCH_SUN3) || defined(ARCH_CLIPPER) || \
    defined(ARCH_BSDI386) || defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
 	taddr_t sp, retaddr;
+	iproc_t *ip;
 
+	ip = GET_IPROC(xp);
+	
 	sp = xp_getreg(xp, UPSREG_SP);
-	if (ao_read_data(xp, sp, (char *)&retaddr, sizeof(retaddr)) == -1)
+	retaddr = 0;
+	
+	if (ao_read_data(xp, sp, (char *)&retaddr, ip->ip_addrsize / 8) == -1)
 		panic("bad sp in pgraj");
 	return retaddr;
 #else
@@ -805,7 +824,8 @@ xp_opcode_t opcode, *p_old_opcode;
 	int byte_shift;
 	unsigned mask;
 #endif
-	int pid, temp;
+	int pid;
+        unsigned long temp;
 	xp_opcode_t old_opcode;
 	iproc_t *ip;
 

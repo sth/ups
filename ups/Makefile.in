@@ -126,14 +126,16 @@ AOOBJS = ao_target.o ao_regs.o ao_procfs.o ao_core.o \
 	 ao_ptrace.o ao_pt_regs.o ao_pt_uarea.o \
 	 ao_symread.o ao_shlib.o ao_symload.o ao_symparse.o \
          ao_symscan.o ao_symcb.o ao_aout.o ao_elfcore.o \
-	 ao_elfread.o ao_elfsym.o ao_elflib.o ao_aflist.o \
+	 ao_elfread.o ao_elfread32.o ao_elfread64.o \
+	 ao_elfsym.o ao_elflib.o ao_aflist.o \
 	 ao_dwarf.o ao_dwfsyms.o ao_dwftext.o ao_dwftype.o ao_dwfutil.o \
 	 ao_dwfname.o ao_te.o ao_text.o ao_stack.o ${ASOBJS}
 AOSRCS = ao_target.c ao_regs.c ao_procfs.c ao_core.c \
 	 ao_ptrace.c ao_pt_regs.c ao_pt_uarea.c \
 	 ao_symread.c ao_shlib.c ao_symload.c ao_symparse.c  \
          ao_symscan.c ao_symcb.c ao_aout.c ao_elfcore.c \
-	 ao_elfread.c ao_elfsym.c ao_elflib.c ao_aflist.c \
+	 ao_elfread.c ao_elfread32.c ao_elfread64.c \
+	 ao_elfsym.c ao_elflib.c ao_aflist.c \
 	 ao_dwarf.c ao_dwfsyms.c ao_dwftext.c ao_dwftype.c ao_dwfutil.c \
 	 ao_dwfname.c ao_te.c ao_text.c ao_stack.c ${ASSRCS}
 
@@ -544,6 +546,12 @@ ao_elfcore.o: develhdrs/mtrprog/ifdefs.h ao_elfcore.c ao_ifdefs.h ups.h ao_core.
 ao_elfread.o: develhdrs/mtrprog/ifdefs.h ao_elfread.c ao_ifdefs.h ups.h ao_execinfo.h ao_elfpriv.h ao_elfread.h \
   ao_elflib.h elfstab.h ao_dwarf.h 
 	${CCLINE}ao_elfread.c
+ao_elfread32.o: develhdrs/mtrprog/ifdefs.h ao_elfread32.c ao_ifdefs.h ups.h ao_execinfo.h ao_elfpriv.h ao_elfread.h \
+  ao_elflib.h elfstab.h ao_dwarf.h ao_elfreadbase.c
+	${CCLINE}ao_elfread32.c
+ao_elfread64.o: develhdrs/mtrprog/ifdefs.h ao_elfread64.c ao_ifdefs.h ups.h ao_execinfo.h ao_elfpriv.h ao_elfread.h \
+  ao_elflib.h elfstab.h ao_dwarf.h ao_elfreadbase.c
+	${CCLINE}ao_elfread64.c
 ao_elfsym.o: develhdrs/mtrprog/ifdefs.h ao_elfsym.c ao_ifdefs.h ups.h symtab.h target.h st.h srcwin.h \
   ui.h ao_core.h ao_execinfo.h ao_syms.h ao_text.h ao_symread.h ao_symscan.h ao_aflist.h \
   ao_elfpriv.h ao_elfread.h ao_elfsym.h ao_elflib.h elfstab.h ao_dwarf.h 

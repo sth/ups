@@ -75,7 +75,7 @@ objid_t add_block_object PROTO((objid_t par, block_t *block));
 bool iterate_over_stack_funcs PROTO((
 			    bool (*func)(objid_t stack_obj, func_t *f, char *args),
 			    char *args, stackpos_t startpos, stackpos_t endpos));
-bool back_iterate_over_stack_files PROTO((int sw_id, char *name,
+bool back_iterate_over_stack_files PROTO((void *sw, char *name,
 					  stackpos_t startpos, stackpos_t limpos));
 #endif /* SYMTAB_H_INCLUDED */
 int match_name_start_in_obj PROTO((char *name, objid_t given_obj, 

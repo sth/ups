@@ -202,7 +202,7 @@ typedef struct machine_s machine_t;
  *  well defined for int as for unsigned.  The casts also suppress
  *  buggy warning messages from the Ultrix C compiler.
  */
-#define UBYTE(c)	((unsigned)(unsigned char)c)
+#define UBYTE(c)	((unsigned long)(unsigned char)c)
 #define GETWORD(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8))
 #define GETLONG(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8) | \
 			 UBYTE((pc)[2] << 16) | UBYTE((pc)[3] << 24))

@@ -38,6 +38,7 @@ bool elf_scan_then_setup_symio PROTO((fil_t *fil, symio_t **p_symio));
 bool scan_elf_symtab PROTO((alloc_pool_t *target_ap,
 			    const char *textpath, int fd,
 			    Libdep *libdep,
+                            int *p_addrsize,
 			    taddr_t *p_entryaddr,
 			    struct func_s **p_mainfunc,
 			    struct func_s **p_initfunc,

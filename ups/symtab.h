@@ -130,9 +130,9 @@ typedef enum typecodeen {
 #define TC_CODEMASK	0x7f
 #define TC_HAS_TYPEDEF	0x80
 
-#define ISDERIV(code)		((int)(code) < (int)TY_NOTYPE)
+#define ISDERIV(code)		((long)(code) < (long)TY_NOTYPE)
 
-#define IS_BASIC_TYPE(code)	((int)(code) > (int)TY_BASIC_TYPES)
+#define IS_BASIC_TYPE(code)	((long)(code) > (long)TY_BASIC_TYPES)
 
 /*  Opaque handles on C interpreter objects
  */
@@ -471,7 +471,7 @@ typedef struct func_s {
 
 typedef struct func_bp_list_s {
 	func_t *fl_func;
-	int fl_bp;
+	void *fl_bp;
 	struct func_bp_list_s *fl_next;
 } func_bp_list_t;
 

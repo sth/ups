@@ -137,8 +137,8 @@ struct drawst *dets;
 	char buf[12];
 
 	buf[0] = 0;
-	if ((int)dets->dr_fval)
-	  sprintf(buf, "0x%x", (int)dets->dr_fval);
+	if ((long)dets->dr_fval)
+	  sprintf(buf, "0x%lx", (long)dets->dr_fval);
 
 	if (dets->selected)
 		wn_wd_ttext(dets->dr_wn, buf, dets->dr_x, dets->dr_y,
@@ -679,7 +679,7 @@ wpaddr_edit(fdets)
 struct drawst fdets;
 {
 	field_edit_start(&fdets, "watchpoint address",
-			 (int)fdets.dr_fval ? strf("0x%x", (int)fdets.dr_fval) :
+			 (long)fdets.dr_fval ? strf("0x%lx", (long)fdets.dr_fval) :
 			 strf(""));
 }
 
@@ -688,7 +688,7 @@ wpsize_edit(fdets)
 struct drawst fdets;
 {
 	field_edit_start(&fdets, "watchpoint length",
-			 strf("%d", (int)fdets.dr_fval));
+			 strf("%ld", (long)fdets.dr_fval));
 }
 
 void

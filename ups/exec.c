@@ -721,7 +721,7 @@ taddr_t addr;
 	lastsig = 0;
 	do {
 		xp_restart_child(xp, lastsig, CT_CONT);
-	} while (xp_get_stopres(xp) == SR_SIG);
+	} while (xp_get_stopres(xp) == SR_SIG && xp_get_state(xp) == TS_STOPPED);
 
 	if (xp_remove_breakpoint(xp, bp) != 0)
 		panic("can't uninstall initial breakpoint");

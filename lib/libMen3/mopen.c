@@ -159,7 +159,7 @@ MENU * parent;
 {
 	MENU * menu;
 	struct omnode om;
-	int n;
+	long n;
 	char *newcap;
 
 	menu = (MENU *)malloc(sizeof(MENU));
@@ -182,7 +182,7 @@ MENU * parent;
 	menu->me_botrite = (MENU *)om.ome_botrite;
 
 	menu->me_parent = parent;
-	if ((n = (int)menu->me_cap) != 0) {
+	if ((n = (long)menu->me_cap) != 0) {
 		if ((n < 0) || (n > 2000))
 			return(NULL);
 		newcap = malloc((size_t)n);

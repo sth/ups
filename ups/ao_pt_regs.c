@@ -97,7 +97,14 @@ char ups_ao_pt_regs_c_rcsid[] = "$Id$";
 #define INTEGER_REG(sr, regno)	((&(sr)->sr_regs.r_y)[regno])
 #endif
 
-#if (defined ARCH_LINUX386)
+#if (defined ARCH_LINUX386_64)
+
+#define PC_REG(pr)		((pr)->regs.rip)
+#define SP_REG(pr)		((pr)->regs.rsp)
+#define FRAME_REG(pr)		((pr)->regs.rbp)
+#define INTEGER_REG(pr, regno)	((&(pr)->regs.r15)[x86_gcc_register(regno)])
+
+#elif (defined ARCH_LINUX386)
 
 #define PC_REG(pr)		((pr)->regs.eip)
 #define SP_REG(pr)		((pr)->regs.esp)
@@ -312,7 +319,7 @@ taddr_t val;
 
 	errno = 0;
 #ifdef OS_LINUX
-	e_ptrace(PTRACE_SETREGS, pid, 0, (int)&pr->regs);
+	e_ptrace(PTRACE_SETREGS, pid, 0, (long)&pr->regs);
 #else
 	e_ptrace(PTRACE_SETREGS, pid, (char *)&pr->regs, 0);
 #endif
@@ -373,7 +380,7 @@ target_t *xp;
 
 	pr = &ip->ip_ptrace_info->ptrace_regs;
 #ifdef OS_LINUX
-        e_ptrace(PTRACE_GETREGS, ip->ip_pid, 0, (int)&pr->regs);
+        e_ptrace(PTRACE_GETREGS, ip->ip_pid, 0, (long)&pr->regs);
 #else
         e_ptrace(PTRACE_GETREGS, ip->ip_pid, (char *)&pr->regs, 0);
 #endif

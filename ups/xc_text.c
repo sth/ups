@@ -127,6 +127,7 @@ static stopres_t xc_restart_child PROTO((target_t *xp, int sig,
 					 cont_type_t ctype));
 static void xc_kill PROTO((target_t *xp));
 static int xc_is_attached PROTO((target_t *xp));
+static int xc_get_addrsize PROTO((target_t *xp));
 static tstate_t xc_get_state PROTO((target_t *xp));
 static int xc_get_lastsig PROTO((target_t *xp));
 static stopres_t xc_get_stopres PROTO((target_t *xp));
@@ -188,7 +189,7 @@ xp_ops_t Xc_ops = {
 	dx_add_watchpoint, dx_remove_watchpoint,
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	NULL, NULL,
-	xc_is_attached, NULL,
+	xc_is_attached, NULL, xc_get_addrsize,
 	xc_get_state, xc_get_lastsig, xc_get_stopres, xc_get_sigstate,
 	xc_get_stack_trace, NULL, xc_get_signal_tag,
 	xc_read_fpval, NULL, xc_readreg, xc_setreg, NULL, NULL,
@@ -212,7 +213,7 @@ xp_ops_t Cc_ops = {
 	dx_add_watchpoint, dx_remove_watchpoint,
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	NULL, NULL,
-	xc_is_attached, NULL,
+	xc_is_attached, NULL, xc_get_addrsize,
 	xc_get_state, xc_get_lastsig, xc_get_stopres, xc_get_sigstate,
 	xc_get_stack_trace, NULL, xc_get_signal_tag,
 	xc_read_fpval, NULL, xc_readreg, xc_setreg, NULL, NULL,
@@ -611,6 +612,13 @@ xc_is_attached(xp)
 target_t *xp;
 {
 	return FALSE;
+}
+
+static int
+xc_get_addrsize(xp)
+target_t *xp;
+{
+	return 32;
 }
 
 static tstate_t

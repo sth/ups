@@ -591,7 +591,7 @@ dvar_t *dv;
                 return "<Unreadable data>";
 
 	if (type->ty_code == DT_PTR_TO) {
-		if (!DREAD_VAR(xp, addr, vl.vl_addr)) {
+		if (dread_addrval(xp, addr, &vl.vl_addr) != 0) {
 			note_badaddr(buf, sizeof(buf), v->va_language, addr);
 			return buf;
 		}

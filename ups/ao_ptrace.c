@@ -87,7 +87,7 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 
 #ifndef AO_HAS_PTRACE_RANGE
 /* Word size (and alignment) for ptrace read/write data requests.  */
-#define WORDSIZE	4
+#define WORDSIZE	sizeof(long)
 #endif
 
 #if defined(OS_SUNOS) || defined(OS_BSD44) || defined(OS_LINUX)
@@ -135,7 +135,8 @@ char *buf;
 size_t nbytes;
 {
 	char *optr;
-	int word, trailing_nbytes;
+	long word;
+	int trailing_nbytes;
 	taddr_t lim;
 
 	optr = buf;
@@ -164,14 +165,14 @@ size_t nbytes;
 		nbytes -= count;
 	}
 
-	/*  At this point addr is on a 32 bit word boundary.
+	/*  At this point addr is on a word boundary.
 	 */
-	trailing_nbytes = nbytes & 03;
+	trailing_nbytes = nbytes & (WORDSIZE - 1);
 	nbytes -= trailing_nbytes;
 
 	lim = addr + nbytes;
 	errno = 0;
-
+        
 	/*  Copy the whole words into the buffer.  We still have to use
 	 *  memcpy because optr might not be four byte aligned (in our
 	 *  address space) and some machines (e.g. MIPS) would object.
@@ -187,7 +188,7 @@ size_t nbytes;
 		word = std_ptrace(ptrace_req, pid, (char *)addr, 0);
 		memcpy(optr, (char *)&word, trailing_nbytes);
 	}
-	
+
 	return errno != 0 ? -1 : 0;
 }
 
@@ -689,10 +690,10 @@ size_t nbytes;
 		return -1;
 	return 0;
 #else
-	int word;
+	long word;
 
-	if (nbytes != sizeof(int))
-		panic("ptrace_write_text for nbytes!=sizeof(int) NYI");
+	if (nbytes != WORDSIZE)
+		panic("ptrace_write_text for nbytes!=WORDSIZE NYI");
 
 	memcpy((char *)&word, buf, sizeof(word));
 	
@@ -813,10 +814,10 @@ size_t nbytes;
 		addr += count;
 		nbytes -= count;
 	}
-	/*  At this point addr is on a 32 bit word boundary.
+	/*  At this point addr is on a word boundary.
 	 */
 
-	trailing_nbytes = nbytes & 03;
+	trailing_nbytes = nbytes & (WORDSIZE - 1);
 	nbytes -= trailing_nbytes;
 
 	lim = addr + nbytes;
@@ -1038,7 +1039,7 @@ int data;
 #ifdef ARCH_LINUX386
 	if (req == PTRACE_CONT || req == PTRACE_SINGLESTEP) {
 		if (addr != (char *) 1) {
-			std_ptrace(PTRACE_POKEUSER, pid, 4*EIP, addr);
+			std_ptrace(PTRACE_POKEUSER, pid, WORDSIZE*RIP, addr);
 			addr = (char *) 1;
 		}
 	}

@@ -1359,8 +1359,8 @@ stackpos_t startpos, limpos;
 }
 
 bool
-back_iterate_over_stack_files(sw_id, name, startpos, limpos)
-     int sw_id;
+back_iterate_over_stack_files(sw, name, startpos, limpos)
+     void *sw;
      char *name;
      stackpos_t startpos, limpos;
 {
@@ -1388,7 +1388,7 @@ back_iterate_over_stack_files(sw_id, name, startpos, limpos)
 	stk1 = stk1->stk_inner;
      }
       if (!skip && show_global
-	  ((Srcwin *)sw_id, stk->stk_func->fu_fil, (func_t*)NULL,
+	  (sw, stk->stk_func->fu_fil, (func_t*)NULL,
 	   (common_block_t *)NULL,
 	   name, TRUE, FALSE, FALSE, (objid_t *)NULL, TRUE, FALSE))
 	return TRUE;

@@ -50,6 +50,7 @@ char ups_ao_elfread_c_rcsid[] = "$Id$";
 
 #include "ups.h"
 #include "symtab.h"
+#include "target.h"
 #include "st.h"
 #include "ao_execinfo.h"
 #include "ao_dwarf.h"
@@ -79,22 +80,47 @@ elftype_to_what(int type)
 }
 
 bool
-check_elf_header_type(Elf32_Ehdr *eh, const char *path, int type,
-		      const char *action)
+check_elf_ident(const char *path, int fd, off_t offset, const char *action,
+		const Elfops **p_ops)
 {
+	unsigned char ident[EI_NIDENT];
+
+	if (!read_chunk(path, "", fd, "ELF ident", offset, ident, EI_NIDENT)) {
+		return FALSE;
+	}
+   
 #if defined(ELFMAG) && defined(SELFMAG)
-	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0) {
+	if (memcmp(ident, ELFMAG, SELFMAG) != 0) {
 #elif defined(IS_ELF)
-	if (!IS_ELF (*eh)) {
+	if (!IS_ELF (ident)) {
 #endif
 		errf("Can't %s %s: it is not an ELF file", action, path);
 		return FALSE;
 	}
 
-	if (eh->e_type != type) {
+	if (ident[EI_CLASS] == ELFCLASS32) {
+		*p_ops = &elf32_ops;
+	}
+	else if (ident[EI_CLASS] == ELFCLASS64) {
+		*p_ops = &elf64_ops;
+	}
+	else {
+		errf("Can't %s %s: unsupported ELF class", action, path);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+bool
+check_elf_header_type(const Elfops *elops, Elf_Ehdr *eh, const char *path,
+		      int type, const char *action)
+{
+	if (elf_header_type(elops, eh) != type) {
 		errf("Can't %s %s: it is %s (need %s)",
 		     action, path,
-		     elftype_to_what(eh->e_type), elftype_to_what(type));
+		     elftype_to_what(elf_header_type(elops, eh)),
+		     elftype_to_what(type));
 		return FALSE;
 	}
 		       
@@ -104,53 +130,25 @@ check_elf_header_type(Elf32_Ehdr *eh, const char *path, int type,
 int
 check_elf_file_type(int fd, const char *path, int type, const char *action)
 {
-	Elf32_Ehdr hdr;
+	const Elfops *elops;
+	Elf_Ehdr *hdr;
+	bool ok;
 
-	return (read_chunk(path, "", fd, "ELF header",
-			  (off_t)0, &hdr, sizeof(hdr)) &&
-		check_elf_header_type(&hdr, path, type, action));
+	if (!check_elf_ident(path, fd, (off_t)0, action, &elops) ||
+	    !elf_read_header(elops, path, fd, (off_t)0, &hdr))
+		return FALSE;
+	
+	ok = check_elf_header_type(elops, hdr, path, type, action);
+
+	free(hdr);
+
+	return ok;
 }
 
 int
 check_elf_exec_header(int fd, const char *path)
 {
 	return check_elf_file_type(fd, path, ET_EXEC, "debug");
-}
-
-static bool
-lookup_section(Elfinfo *el, const char *secname, Elf32_Shdr **p_sh)
-{
-	int i;
-
-	for (i = 0; i < el->num_sections; ++i) {
-		if (strcmp(&el->sec_strings[el->sections[i].sh_name],
-			   secname) == 0) {
-			*p_sh = &el->sections[i];
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-bool
-read_elf_section(Elfinfo *el, const char *what, Elf32_Shdr *sh, void *buf)
-{
-	return read_chunk(el->path, el->what, el->fd, what,
-			  (off_t)sh->sh_offset, buf, sh->sh_size);
-}
-
-bool
-elf_find_section(Elfinfo *el, const char *secname, const char *what,
-		 Elf32_Shdr **p_sh)
-{
-	if (!lookup_section(el, secname, p_sh)) {
-		errf("Can't find %s in ELF %s %s (no `%s' section)",
-		     what, el->what, el->path, secname);
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 bool
@@ -168,54 +166,29 @@ check_elf_entsize(Elf32_Shdr *sh, const char *secname, size_t structsize)
 }
 
 static bool
-validate_elf_file(const char *path, Elf32_Ehdr *eh)
-{
-	if (eh->e_type == ET_EXEC) {
-		if (eh->e_phnum == 0) {
-			errf("No program header table in ELF file %s", path);
-			return FALSE;
-		}
-		
-		if (eh->e_phentsize != sizeof(Elf32_Phdr)) {
-			errf("Wrong program header entry size in %s "
-			     "(expected %ld, found %d)",
-			     path, (long)sizeof(Elf32_Phdr), eh->e_phentsize);
-			return FALSE;
-		}
-	}
-
-	if (eh->e_shstrndx >= eh->e_shnum) {
-		errf("ELF strings section number %d not in range 0..%d in %s",
-		     eh->e_shstrndx, eh->e_shnum - 1, path);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static bool
-get_load_addrs(const char *path, Elf32_Phdr *phtab, int phnum,
-	       taddr_t *p_text_load_addr, size_t *p_text_size,
+get_load_addrs(const char *path, const Elfops *elops, Elf_Phdr *phtab,
+	       int phnum, taddr_t *p_text_load_addr, size_t *p_text_size,
 	       off_t *p_addr_to_fpos_offset, taddr_t *p_min_file_vaddr)
 {
 	int i;
-	Elf32_Phdr *textph, *loadph;
+	Elf_Phdr *textph, *loadph;
 
 	textph = loadph = NULL;
 
 	for (i = 0; i < phnum; ++i) {
-		Elf32_Phdr *ph;
+		Elf_Phdr *ph;
 
-		ph = &phtab[i];
+		ph = elf_lookup_phdr(elops, phtab, i);
 		
-		if (ph->p_type == PT_LOAD) {
-			if (loadph == NULL || ph->p_vaddr < loadph->p_vaddr)
+		if (elf_phdr_type(elops, ph) == PT_LOAD) {
+			if (loadph == NULL ||
+			    elf_phdr_vaddr(elops, ph) < elf_phdr_vaddr(elops, loadph))
 				loadph = ph;
 			
 			/*  We assume that the first read-only loadable segment
 			 *  is the text segment.
 			 */
-			if ((ph->p_flags & PF_W) == 0)
+			if ((elf_phdr_flags(elops, ph) & PF_W) == 0)
 				textph = ph;
 		}
 	}
@@ -231,55 +204,56 @@ get_load_addrs(const char *path, Elf32_Phdr *phtab, int phnum,
 		return FALSE;
 	}
 
-	*p_text_load_addr = textph->p_vaddr;
-	*p_text_size = textph->p_memsz;
-	*p_addr_to_fpos_offset = textph->p_vaddr - textph->p_offset;
+	*p_text_load_addr = elf_phdr_vaddr(elops, textph);
+	*p_text_size = elf_phdr_memsz(elops, textph);
+	*p_addr_to_fpos_offset = elf_phdr_vaddr(elops, textph) - elf_phdr_offset(elops, textph);
 
-	*p_min_file_vaddr = loadph->p_vaddr - loadph->p_offset;
+	*p_min_file_vaddr = elf_phdr_vaddr(elops, loadph) - elf_phdr_offset(elops, loadph);
 
 	return TRUE;
 }
 
 bool
-prepare_to_parse_elf_file(const char *textpath, int fd,
-			  Elf32_Ehdr *eh, Elfinfo **p_el, off_t ar_offset)
+prepare_to_parse_elf_file(const char *textpath, int fd, Elf_Ehdr *eh,
+			  const Elfops *elops, Elfinfo **p_el, off_t ar_offset)
 {
 	Elfinfo *el;
-	Elf32_Shdr *strsh;
+	Elf_Shdr *strsh;
 	alloc_pool_t *ap;
 
-	if (!validate_elf_file(textpath, eh))
+	if (!elf_validate_header(elops, textpath, eh))
 		return FALSE;
 
 	ap = alloc_create_pool();
 	el = (Elfinfo *)alloc(ap, sizeof(Elfinfo));
 
 	el->apool = ap;
+	el->ops = elops;
 
 	el->path = textpath;
 	el->fd = fd;
-	el->sections = alloc(ap, (size_t)eh->e_shnum * eh->e_shentsize);
+	el->sections = alloc(ap, elf_header_shsize(elops, eh));
 
 	if (!read_chunk(textpath, Elfwhat, fd, "section header table",
-			(off_t)eh->e_shoff + ar_offset, el->sections,
-			(size_t)eh->e_shnum * eh->e_shentsize)) {
+			elf_header_shoff(elops, eh) + ar_offset, el->sections,
+			elf_header_shsize(elops, eh))) {
 		alloc_free_pool(ap);
 		return FALSE;
 	}
 
-	strsh = &el->sections[eh->e_shstrndx];
+	strsh = elf_header_shstr(el, eh);
 
-	el->num_sections = eh->e_shnum;
-	el->sec_strings = allocstr(ap, strsh->sh_size);
+	el->num_sections = elf_header_shnum(elops, eh);
+	el->sec_strings = allocstr(ap, elf_section_size(el, strsh));
 
 	/*  In Japanese language no article. [...] In Japanese hotel rooms
 	 *  not many articles either.  -- David Lodge.
 	 */
-	el->what = strchr(elftype_to_what(eh->e_type), ' ') + 1;
+	el->what = strchr(elftype_to_what(elf_header_type(elops, eh)), ' ') + 1;
 
 	if (!read_chunk(textpath, Elfwhat, fd, "section strings table",
-			(off_t)strsh->sh_offset + ar_offset,
-			(char *)el->sec_strings, strsh->sh_size)) {
+			elf_section_offset(el, strsh) + ar_offset,
+			(char *)el->sec_strings, elf_section_size(el, strsh))) {
 		alloc_free_pool(ap);
 		return FALSE;
 	}
@@ -292,35 +266,42 @@ bool
 elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		  Execinfo *ex, Elfinfo **p_el, symtab_type_t *p_st_is)
 {
-	Elf32_Ehdr hdr;
-	Elf32_Phdr *phtab;
-	Elf32_Shdr *textsh;
-	Elf32_Shdr *symsh, *symstrsh, *indexsh, *indexstrsh;
+	const Elfops *elops;
+	Elf_Ehdr *hdr;
+	Elf_Phdr *phtab;
+	Elf_Shdr *textsh;
+	Elf_Shdr *symsh, *symstrsh, *indexsh, *indexstrsh;
 	Elfinfo *el;
 	const char *symtab_secname;
 #if WANT_DWARF
-	Elf32_Shdr *dwarfsh;
+	Elf_Shdr *dwarfsh;
 #endif
 
-	if (!read_chunk(textpath, "", fd, "ELF header",
-			(off_t)0, &hdr, sizeof(Elf32_Ehdr)))
+	if (!check_elf_ident(textpath, fd, (off_t)0, "debug", &elops))
 		return FALSE;
 
-	if (!prepare_to_parse_elf_file(textpath, fd, &hdr, &el, (off_t)0))
+	if (!elf_read_header(elops, textpath, fd, (off_t)0, &hdr))
 		return FALSE;
+
+	if (!prepare_to_parse_elf_file(textpath, fd, hdr, elops, &el, (off_t)0)) {
+		free(hdr);
+		return FALSE;
+	}
 
 	if (!elf_find_section(el, ".text", "text", &textsh)) {
+		free(hdr);
 		free_elfinfo(el);
 		return FALSE;
 	}
 
-	if (lookup_section(el, ".symtab", &el->symtab_sh)) {
+	if (elf_lookup_section(el, ".symtab", &el->symtab_sh)) {
 		symtab_secname = ".symtab";
 	}
 	else {
-		if (!lookup_section(el, ".dynsym", &el->symtab_sh)) {
+		if (!elf_lookup_section(el, ".dynsym", &el->symtab_sh)) {
 			errf("Can't debug %s: no .symtab or .dynsym section",
 			     el->path);
+			free(hdr);
 			free_elfinfo(el);
 			return FALSE;
 		}
@@ -332,28 +313,30 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		symtab_secname = ".dynsym";
 	}
 
-	if (el->symtab_sh->sh_link >= el->num_sections) {
-		errf("sh_link (%ld) for %s section of %s not in range 0..%d",
-		     el->symtab_sh->sh_link, symtab_secname, el->path,
+	if (elf_section_link(el, el->symtab_sh) == NULL) {
+		errf("sh_link for %s section of %s not in range 0..%d",
+		     symtab_secname, el->path,
 		     el->num_sections - 1);
+		free(hdr);
 		free_elfinfo(el);
 		return FALSE;
 	}
 
-	if (!lookup_section(el, ".plt", &el->pltsh)) {
+	if (!elf_lookup_section(el, ".plt", &el->pltsh)) {
 		el->pltsh = NULL;
 	}
 
 #if WANT_DWARF
-	if (lookup_section(el, ".debug_info", &dwarfsh)) {
+	if (elf_lookup_section(el, ".debug_info", &dwarfsh)) {
 		*p_st_is = ST_DWARF;
 		symsh = symstrsh = NULL;
 	} else
 #endif
-	if (lookup_section(el, ".stab", &symsh)) {
-		if (!lookup_section(el, ".stabstr", &symstrsh)) {
+	if (elf_lookup_section(el, ".stab", &symsh)) {
+		if (!elf_lookup_section(el, ".stabstr", &symstrsh)) {
 			errf("Found .stab section in %s but no "
 			     ".stabstr strings section for it", el->path);
+			free(hdr);
 			free_elfinfo(el);
 			return FALSE;
 		}
@@ -364,8 +347,8 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		*p_st_is = ST_NONE;
 	}
 		
-	if (lookup_section(el, ".stab.index", &indexsh)) {
-		if (!lookup_section(el, ".stab.indexstr", &indexstrsh)) {
+	if (elf_lookup_section(el, ".stab.index", &indexsh)) {
+		if (!elf_lookup_section(el, ".stab.indexstr", &indexstrsh)) {
 			errf("Found .stab.index section in %s but no "
 			     ".stab.indexstr strings section for it", el->path);
 			indexsh = NULL;
@@ -375,20 +358,23 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		indexsh = indexstrsh = NULL;
 	}
 
+#ifdef fixme
 	if (!check_elf_entsize(symsh, ".stab", sizeof(struct nlist)) ||
 	    !check_elf_entsize(indexsh, ".stab.index", sizeof(struct nlist)) ||
 	    !check_elf_entsize(el->symtab_sh, ".symtab", sizeof(Elf32_Sym)))
 		return FALSE;
+#endif
 
-	phtab = e_malloc((size_t)(hdr.e_phentsize * hdr.e_phnum));
+	phtab = e_malloc(elf_header_phsize(elops, hdr));
 	if (!read_chunk(textpath, Elfwhat, fd, "program header table",
-			(off_t)hdr.e_phoff,
-			phtab, (size_t)(hdr.e_phentsize * hdr.e_phnum)) ||
-	    !get_load_addrs(textpath, phtab, hdr.e_phnum,
+			elf_header_phoff(elops, hdr),
+			phtab, elf_header_phsize(elops, hdr)) ||
+	    !get_load_addrs(textpath, elops, phtab, elf_header_phnum(elops, hdr),
 			    &ex->text_mem_addr, &ex->text_size,
 			    &ex->addr_to_fpos_offset,
 			    &el->min_file_vaddr)) {
 		free(phtab);
+		free(hdr);
 		free_elfinfo(el);
 		return FALSE;
 	}
@@ -400,7 +386,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 
 	ex->text_addr_delta = 0;
 	ex->dynamic = FALSE;
-	ex->entry_addr = hdr.e_entry;
+	ex->entry_addr = elf_header_entry(elops, hdr);
 
 #if WANT_DWARF
 	if (*p_st_is == ST_DWARF) {
@@ -411,15 +397,17 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	else
 #endif
 	if (*p_st_is == ST_STABS) {
-		ex->file_syms_offset = symsh->sh_offset;
-		ex->nsyms = symsh->sh_size / symsh->sh_entsize;
-		ex->file_symstrings_offset = symstrsh->sh_offset;
+		ex->file_syms_offset = elf_section_offset(el, symsh);
+		ex->nsyms = elf_section_entries(el, symsh);
+		ex->file_symstrings_offset = elf_section_offset(el, symstrsh);
 	}
 	else {
 		ex->file_syms_offset = 0;
 		ex->nsyms = 0;
 		ex->file_symstrings_offset = 0;
 	}
+
+	free(hdr);
 
 	*p_el = el;
 

@@ -775,6 +775,7 @@ case "$host" in
     i?86-*-netbsd*)	ups_arch=ARCH_NETBSD386 ;;
     i?86-*-*bsd*)	ups_arch=ARCH_BSDI386 ;;
     i?86-*-linux*)	ups_arch=ARCH_LINUX386 ;;
+    x86_64-*-linux*)	ups_arch=ARCH_LINUX386_64 ;;
     alpha-*-*)		ups_arch=ARCH_ALPHA ;;
     clipper-*-*)	ups_arch=ARCH_CLIPPER ;;
     mips-dec-*)		ups_arch=ARCH_MIPS_ULTRIX ;;

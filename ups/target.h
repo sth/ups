@@ -257,6 +257,7 @@ typedef struct xp_ops_s {
 
 	/*  Information.
 	 */
+	int (*xo_get_addrsize)PROTO((target_t *xp));
 	tstate_t (*xo_get_state)PROTO((target_t *xp));
 	int (*xo_get_lastsig)PROTO((target_t *xp));
 	stopres_t (*xo_get_stopres)PROTO((target_t *xp));
@@ -367,6 +368,8 @@ typedef struct xp_ops_s {
 #define xp_detach(xp) \
 	(xp->xp_ops->xo_detach)(xp)
 
+#define xp_get_addrsize(xp) \
+	(xp->xp_ops->xo_get_addrsize)(xp)
 #define xp_get_state(xp) \
 	(xp->xp_ops->xo_get_state)(xp)
 #define xp_get_lastsig(xp) \

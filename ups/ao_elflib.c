@@ -33,9 +33,6 @@ char ups_ao_elflib_c_rcsid[] = "$Id$";
 #include <sys/stat.h>
 #include <sys/param.h>                /* for MAXPATHLEN */
 #include <elf.h>
-#define FREEBSD_ELF 1
-#include <link.h>
-#undef FREEBSD_ELF
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,6 +82,8 @@ struct Solib_addr {
 };
 
 struct Solib {
+	const Elfops *elops;
+   
 	symtab_t *symtab;
 	
 	const char *soname;
@@ -517,8 +516,8 @@ load_elf_shlib(target_t *xp, Libdep *ld)
 	    if (verbose == 1)
 	      fprintf(stderr, "%s symtab %s...", reload ? "Reloading" :
 		      "Loading", path);
-	    ok = scan_elf_symtab(xp->xp_apool, path, fd, ld, (taddr_t *)NULL,
-				 (func_t **)NULL, (func_t **)NULL,
+	    ok = scan_elf_symtab(xp->xp_apool, path, fd, ld, (int *)NULL,
+				 (taddr_t *)NULL, (func_t **)NULL, (func_t **)NULL,
 				 &ip->ip_solibs, xp->xp_target_updated);
 	    if (xp->xp_hit_solib_event == TRUE)
 	      xp->xp_new_dynamic_libs_loaded = TRUE;
@@ -753,43 +752,47 @@ elf_note_shlib_addr(alloc_pool_t *ap, iproc_t *ip, dev_t dev, ino_t ino,
 bool
 elf_get_core_shlib_info(alloc_pool_t *ap, iproc_t *ip)
 {
-	struct r_debug debug;
+	struct r_debug *debug;
 	Solib *so;
 	const char *path;
-	taddr_t dbaddr, lmaddr;
+	taddr_t lmaddr;
 	Coredesc *co;
-	struct link_map lmap;
+	struct link_map *lmap;
 	
 	so = ip->ip_solibs;
 	co = ip->ip_core;
 	path = so->symtab->st_path;
+	lmap = NULL;
 
 	if (so->debug_vaddr == 0) {
 		errf("No DT_DEBUG entry in .dynamic section of %s", path);
 		return FALSE;
 	}
 
-	if (!core_dread(co, so->debug_vaddr, &dbaddr, sizeof(dbaddr)) ||
-	    !core_dread(co, dbaddr, (char *)&debug, sizeof(debug))) {
+	if ((debug = elf_read_r_debug(so->elops, so->debug_vaddr, core_dread, co)) == NULL) {
 		errf("Can't read r_debug structure from %s", path);
 		return FALSE;
 	}
 
-	for (lmaddr = (taddr_t)debug.r_map;
+	for (lmaddr = elf_r_debug_map(so->elops, debug);
 	     lmaddr != TADDR_NULL;
-	     lmaddr = (taddr_t)lmap.l_next) {
+	     lmaddr = elf_link_map_next(so->elops, lmap)) {
 		char libpath[1024]; /* TODO: use MAXPATHLEN or similar */
 		struct stat stbuf;
 
-		if (!core_dread(co, lmaddr, &lmap, sizeof(lmap))) {
+		free(lmap);
+
+		if ((lmap = elf_read_link_map(so->elops, lmaddr, core_dread, co)) == NULL) {
 			errf("Error reading lmap at address %lx in %s",
 			     lmaddr, path);
+			free(debug);
 			return FALSE;
 		}
+
 		/*  Skip the first entry - it refers to the executable file
 		 *  rather than a shared library.
 		 */
-		if (lmap.l_prev == NULL)
+		if (elf_link_map_prev(so->elops, lmap) == TADDR_NULL)
 			continue;
 #if HAVE_L_PHNUM_F
 		if (lmap.l_phnum == 0) {
@@ -798,10 +801,10 @@ elf_get_core_shlib_info(alloc_pool_t *ap, iproc_t *ip)
 			continue;
 		}
 #endif
-		if (!core_readstr(co, (taddr_t)lmap.l_name,
+		if (!core_readstr(co, elf_link_map_name(so->elops, lmap),
 				  libpath, sizeof(libpath))) {
 			errf("Error reading lmap.l_name at address %lx in %s",
-			     lmap.l_name, path);
+			     elf_link_map_name(so->elops, lmap), path);
 			return FALSE;
 		}
 
@@ -813,7 +816,7 @@ elf_get_core_shlib_info(alloc_pool_t *ap, iproc_t *ip)
 
 		elf_note_shlib_addr(ap, ip, stbuf.st_dev, stbuf.st_ino,
 				    0, 0, 0,
-				    0, (taddr_t)lmap.l_addr, 0);
+				    0, elf_link_map_addr(so->elops, lmap), 0);
 		/* Here libpath is a full path, when we first got the
 		   shared library details we just got a name. */
 		/* Possibly not necessary as library should be findable
@@ -833,6 +836,9 @@ elf_get_core_shlib_info(alloc_pool_t *ap, iproc_t *ip)
 		}
 	}
 
+	free(lmap);
+	free(debug);
+
 	return TRUE;
 }
 
@@ -841,70 +847,78 @@ elf_get_dynamic_shlib_info(alloc_pool_t *ap, Libdep *ld, const char *textpath,
 			   taddr_t debug_vaddr,
 			   Libdep **last_child)
 {
-	struct r_debug debug;
+	struct r_debug *debug;
 	const char *path = "DT_DEBUG";
 	const char *libpath_copy;
-	taddr_t dbaddr, lmaddr;
-	struct link_map lmap;
+	taddr_t lmaddr;
+	struct link_map *lmap;
 	target_t *xp;
 	iproc_t *ip;
 	breakpoint_t *bp;
 	static bool dl_bp_installed = FALSE;
+	Solib *so;
 
 	xp = get_current_target();
-
 	ip = GET_IPROC(xp);
+	so = ip->ip_solibs;
+
+	lmap = NULL;
+	
 	if (debug_vaddr == 0) {
 		errf("No DT_DEBUG entry in .dynamic section of %s", path);
 		return FALSE;
 	}
 
-	if (dread(xp, debug_vaddr, &dbaddr, sizeof(taddr_t)) == -1 ||
-	    dread(xp, dbaddr, (char *)&debug, sizeof(struct r_debug)) == -1) {
-	  errf("Can't read r_debug structure from %s", path);
-	  return FALSE;
+	if ((debug = elf_read_r_debug(so->elops, debug_vaddr, dread, xp)) == NULL) {
+		errf("Can't read r_debug structure from %s", path);
+		return FALSE;
 	}
 
-	if (debug.r_brk && dl_bp_installed == FALSE)
+	if (elf_r_debug_brk(so->elops, debug) && dl_bp_installed == FALSE)
 	{
-	  bp = xp_add_breakpoint(xp, (taddr_t)debug.r_brk);
-	  if (install_breakpoint(bp, xp, FALSE) != 0)
-	    errf("can't install breakpoint in dynamic linker");
-	  else
-	  {
-	    dl_bp_installed = TRUE;
-	    set_breakpoint_as_solib_event(bp);
-	  }
+		bp = xp_add_breakpoint(xp, elf_r_debug_brk(so->elops, debug));
+		
+		if (install_breakpoint(bp, xp, FALSE) != 0) {
+			errf("can't install breakpoint in dynamic linker");
+		}
+		else {
+			dl_bp_installed = TRUE;
+			set_breakpoint_as_solib_event(bp);
+		}
 	}
 	  
-	for (lmaddr = (taddr_t)debug.r_map;
+	for (lmaddr = elf_r_debug_map(so->elops, debug);
 	     lmaddr != TADDR_NULL;
-	     lmaddr = (taddr_t)lmap.l_next) {
+	     lmaddr = elf_link_map_next(so->elops, lmap)) {
 		char libpath[MAXPATHLEN], buf[MAXPATHLEN], *path_ptr; 
 		struct stat stbuf;
 
-		if (dread(xp, lmaddr, &lmap, sizeof(struct link_map)) == -1)
-		{
-		  errf("Error reading lmap at address %lx in %s",
-		       lmaddr, path);
-		  return FALSE;
+		free(lmap);
+
+		if ((lmap = elf_read_link_map(so->elops, lmaddr, dread, xp)) == NULL) {
+			errf("Error reading lmap at address %lx in %s",
+			     lmaddr, path);
+			free(debug);
+			return FALSE;
 		}
-		if (lmaddr == (taddr_t)lmap.l_next) /* break possible */
-						   /* infinite loop */
-		  break;
+
+		/* break possible infinite loop */
+		if (lmaddr == elf_link_map_next(so->elops, lmap)) 
+			break;
 
 		/*  Skip the first entry - it refers to the executable file
 		 *  rather than a shared library.
 		 */
-		if (lmap.l_prev == NULL || !lmap.l_name)
-		  continue;
+		if (elf_link_map_prev(so->elops, lmap) == TADDR_NULL ||
+		    elf_link_map_name(so->elops, lmap) != TADDR_NULL)
+			continue;
 		
-		if (dgets(xp, (taddr_t)lmap.l_name,
+		if (dgets(xp, elf_link_map_name(so->elops, lmap),
 			  libpath, MAXPATHLEN-1) == -1)
 		{
-		  errf("Error reading lmap name %lx in %s",
-		       lmap.l_name, path);
-		  return FALSE;
+			errf("Error reading lmap name %lx in %s",
+			     elf_link_map_name(so->elops, lmap), path);
+			return FALSE;
 		}
 		
 		if (libpath[0] == '.')
@@ -944,17 +958,22 @@ elf_get_dynamic_shlib_info(alloc_pool_t *ap, Libdep *ld, const char *textpath,
 				    stbuf.st_dev, stbuf.st_ino,
 				    stbuf.st_size,
 				    0, 0,
-				    0, (taddr_t)lmap.l_addr, 0);
+				    0, elf_link_map_addr(so->elops, lmap), 0);
 #endif
-	      }
+	}
+
+	free(lmap);
+	free(debug);
+	
 	return TRUE;
 }
 
 bool
 scan_main_elf_symtab(alloc_pool_t *target_ap, const char *path, int fd,
 		     long modtime, Solib **p_solibs, Solib_addr **p_solib_addrs,
-		     taddr_t *p_entryaddr, struct func_s **p_mainfunc,
-		     struct func_s **p_initfunc, bool target_updated, int pid)
+		     int *p_addrsize, taddr_t *p_entryaddr,
+		     struct func_s **p_mainfunc, struct func_s **p_initfunc,
+		     bool target_updated, int pid)
 {
 	Libdep *ld;
 	bool ok;
@@ -967,8 +986,8 @@ scan_main_elf_symtab(alloc_pool_t *target_ap, const char *path, int fd,
 	  errf("\bScanning symbols of `%s'...", path);
 	  wn_do_flush();
 	}
-	ok = scan_elf_symtab(target_ap, path, fd, ld, p_entryaddr,
-			     p_mainfunc, p_initfunc, p_solibs,
+	ok = scan_elf_symtab(target_ap, path, fd, ld, p_addrsize,
+			     p_entryaddr, p_mainfunc, p_initfunc, p_solibs,
 			     target_updated);
 	if (target_updated == TRUE)
 	{
@@ -1114,8 +1133,8 @@ get_elf_shlib_info(alloc_pool_t *ap, Elfinfo *el,
 		   taddr_t *p_dyn_symtab_vaddr, taddr_t *p_dyn_strtab_vaddr, 
 		   taddr_t *p_plt_rel_vaddr, int *p_plt_rel_type)
 {
-	Elf32_Shdr *dynsh, *strsh;
-	Elf32_Dyn *dyntab;
+	Elf_Shdr *dynsh, *strsh;
+	Elf_Dyn *dyntab;
 	int i, count;
 	char *strings;
 	Libdep first_child, *last_child;
@@ -1123,25 +1142,27 @@ get_elf_shlib_info(alloc_pool_t *ap, Elfinfo *el,
 	if (!elf_find_section(el, ".dynamic", "shared library information",
 			      &dynsh))
 		return FALSE;
-	
+
+#ifdef fixme
 	if (!check_elf_entsize(dynsh, ".dynamic", sizeof(Elf32_Dyn)))
 		return FALSE;
-	count = dynsh->sh_size / sizeof(Elf32_Dyn);
-	
-	if (dynsh->sh_link >= el->num_sections) {
-		errf("String table index (%ld) for .dynamic section "
-		     "not in range 0..%d in %s %s",
-		     dynsh->sh_link, el->num_sections - 1, el->what, el->path);
+#endif
+
+	count = elf_section_entries(el, dynsh);
+		
+	strsh = elf_section_link(el, dynsh);
+
+	if (dynsh == NULL) {
+		errf("String table index for .dynamic section invalid in %s %s",
+		     el->what, el->path);
 		return FALSE;
 	}
 	
-	strsh = &el->sections[dynsh->sh_link];
-	
-	dyntab = e_malloc(dynsh->sh_size);
-	strings = e_malloc(strsh->sh_size);
+	dyntab = e_malloc(elf_section_size(el, dynsh));
+	strings = e_malloc(elf_section_size(el, strsh));
 
-	if (!read_elf_section(el, ".dynamic section", dynsh, dyntab) ||
-	    !read_elf_section(el, ".dynamic section strings", strsh, strings)) {
+	if (!elf_read_section(el, ".dynamic section", dynsh, dyntab) ||
+	    !elf_read_section(el, ".dynamic section strings", strsh, strings)) {
 		free(dyntab);
 		free(strings);
 		return FALSE;
@@ -1155,13 +1176,13 @@ get_elf_shlib_info(alloc_pool_t *ap, Elfinfo *el,
 	*p_plt_rel_vaddr = *p_plt_rel_type = 0;
 	
 	for (i = 0; i < count; ++i) {
-		Elf32_Dyn *d;
+		Elf_Dyn *d;
 		const char **p_str, *depname;
 		off_t offset;
 
-		d = &dyntab[i];
+		d = elf_lookup_dynamic(el, dyntab, i);
 		
-		switch (d->d_tag) {
+		switch (elf_dynamic_tag(el, d)) {
 		case DT_SONAME:
 			p_str = p_soname;
 			break;
@@ -1177,37 +1198,37 @@ get_elf_shlib_info(alloc_pool_t *ap, Elfinfo *el,
 			p_str = &depname;
 			break;
 		case DT_DEBUG:
-			*p_debug_vaddr = dynsh->sh_addr +
-				((char *)&d->d_un.d_ptr - (char *)dyntab);
+			*p_debug_vaddr = elf_dynamic_ptr_address(el, dynsh, dyntab, d);
 			continue;
 		case DT_SYMTAB:
-			*p_dyn_symtab_vaddr = d->d_un.d_ptr;
+			*p_dyn_symtab_vaddr = elf_dynamic_ptr(el, d);
 			continue;
 		case DT_STRTAB:
-			*p_dyn_strtab_vaddr = d->d_un.d_ptr;
+			*p_dyn_strtab_vaddr = elf_dynamic_ptr(el, d);
 			continue;
 		case DT_JMPREL:
-			*p_plt_rel_vaddr = d->d_un.d_ptr;
+			*p_plt_rel_vaddr = elf_dynamic_ptr(el, d);
 			continue;
 		case DT_PLTREL:
-			*p_plt_rel_type = d->d_un.d_val;
+			*p_plt_rel_type = elf_dynamic_val(el, d);
 			continue;
 		default:
 			continue;
 		}
 
-		offset = d->d_un.d_val;
+		offset = elf_dynamic_val(el, d);
 
-		if (offset >= strsh->sh_size) {
+		if (offset >= elf_section_size(el, strsh)) {
 			errf("\bString offset for .dynamic entry %d in %s %s "
 			     "not in range 0..%ld - ignored",
-			     i, el->what, el->path, strsh->sh_size - 1);
+			     i, el->what, el->path,
+			     elf_section_size(el, strsh) - 1);
 			continue;
 		}
 		
 		*p_str = alloc_strdup(ap, &strings[offset]);
 
-		if (d->d_tag == DT_NEEDED) {
+		if (elf_dynamic_tag(el, d) == DT_NEEDED) {
 			last_child->next = make_libdep(ap, depname, el->libdep,
 						       0);
 			last_child = last_child->next;
@@ -1270,7 +1291,7 @@ add_solib_entry(alloc_pool_t *ap, symtab_t *st, func_t *flist, Elfinfo *el, Soli
 	else {
 		Solib *so2, *last;
 		
-	so = alloc(ap, sizeof(Solib));
+		so = alloc(ap, sizeof(Solib));
 
 		so->next = NULL;
 		
@@ -1285,7 +1306,8 @@ add_solib_entry(alloc_pool_t *ap, symtab_t *st, func_t *flist, Elfinfo *el, Soli
 
 		oldst = NULL;
 	}
-	
+
+	so->elops = el->ops;
 	so->symtab = st;
 	so->soname = soname;
 	so->rpath = rpath;
@@ -1726,9 +1748,9 @@ int pid;
     errf("\bScanning symbols of `%s'...", xp->xp_textpath);
     wn_do_flush();
   }
-  scan_elf_symtab(xp->xp_apool, xp->xp_textpath, fd, ld, &xp->xp_entryaddr,
-		  &xp->xp_mainfunc, &xp->xp_initfunc, &ip->ip_solibs,
-		  target_updated);
+  scan_elf_symtab(xp->xp_apool, xp->xp_textpath, fd, ld, &ip->ip_addrsize,
+		  &xp->xp_entryaddr, &xp->xp_mainfunc, &xp->xp_initfunc,
+		  &ip->ip_solibs, target_updated);
   if (target_updated == TRUE)
   {
     errf("\bScanning symbols of `%s'...done", xp->xp_textpath);
@@ -1761,19 +1783,30 @@ taddr_t pc;
    ebx = xp_getreg(xp, 3);
    
    xp_read_data(xp, pc, (char *)jmp, 6);
-
-   if (jmp[0] == 0xff && jmp[1] == 0x25) /* jmp *ADDR */
-      xp_read_data(xp, *((taddr_t *)(jmp + 2)), (char *)&newpc, 4);
-   else if (jmp[0] == 0xff && jmp[1] == 0xa3) /* jmp *OFFSET(%ebx) */
-      xp_read_data(xp, *((taddr_t *)(jmp + 2)) + ebx, (char *)&newpc, 4);
-   else
-      panic("Unexpected opcode in procedure linkage table");
-
+   
+   if (xp_get_addrsize(xp) == 32) {
+      newpc = 0;
+      
+      if (jmp[0] == 0xff && jmp[1] == 0x25) /* jmp *ADDR */
+         xp_read_data(xp, *((unsigned int *)(jmp + 2)), (char *)&newpc, 4);
+      else if (jmp[0] == 0xff && jmp[1] == 0xa3) /* jmp *OFFSET(%ebx) */
+         xp_read_data(xp, *((int *)(jmp + 2)) + ebx, (char *)&newpc, 4);
+      else
+         panic("Unexpected opcode in procedure linkage table");
+   }
+   else {
+      if (jmp[0] == 0xff && jmp[1] == 0x25) /* jmp *OFFSET(%rip) */
+         xp_read_data(xp, *((int *)(jmp + 2)) + pc + 6, (char *)&newpc, 8);
+      else if (jmp[0] == 0xff && jmp[1] == 0xa3) /* jmp *OFFSET(%rbx) */
+         xp_read_data(xp, *((int *)(jmp + 2)) + ebx, (char *)&newpc, 8);
+      else
+         panic("Unexpected opcode in procedure linkage table");
+   }
+   
    if (newpc == pc + 6) {
       ao_stdata_t *ast = AO_STDATA(addr_to_func(pc)->fu_symtab);
       Solib *solib = ast->st_solib;
       unsigned char push[5];
-      Elf32_Sym sym;
       taddr_t off;
       char func_name[256];
       func_t *f1;
@@ -1782,28 +1815,14 @@ taddr_t pc;
       if (push[0] != 0x68) /* push NNN */
          panic("Unexpected opcode in procedure linkage table");
 
-      off = *((taddr_t *)(push + 1)) + solib->plt_rel_vaddr;
+      off = *((int *)(push + 1)) + solib->plt_rel_vaddr;
 
-      if (solib->plt_rel_type == DT_REL) {
-	 Elf32_Rel rel;
-	 
-	 xp_read_data(xp, ast->st_base_address + off, (char *)&rel, sizeof(rel));
-	 off = ELF32_R_SYM(rel.r_info) * sizeof(sym) + solib->dyn_symtab_vaddr;
-      }
-      else if (solib->plt_rel_type == DT_RELA) {
-	 Elf32_Rela rela;
-	 
-	 xp_read_data(xp, ast->st_base_address + off, (char *)&rela, sizeof(rela));
-	 off = ELF32_R_SYM(rela.r_info) * sizeof(sym) + solib->dyn_symtab_vaddr;
-      }
-      else {
+      if (!elf_resolve_relocation(solib->elops, xp, ast->st_base_address,
+				  solib->dyn_symtab_vaddr,
+				  solib->dyn_strtab_vaddr,
+				  solib->plt_rel_type, off, func_name)) {
 	 panic("Unexpected relocation type in procedure linkage table");
       }
-
-      xp_read_data(xp, ast->st_base_address + off, (char *)&sym, sizeof(sym));
-
-      off = sym.st_name + solib->dyn_strtab_vaddr;
-      xp_read_data(xp, ast->st_base_address + off, func_name, 256);
 
       (void)find_func_by_name(func_name, &f, &f1, FALSE);
 

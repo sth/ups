@@ -98,8 +98,7 @@ dvar_t *dv;
                         if (addr == 0)
                                 return 0;
                         
-                        if (dread(get_current_target(), addr,
-                                  (char *)&addr, sizeof(addr)) != 0)
+                        if (dread_addrval(get_current_target(), addr, &addr) != 0)
                                 return BAD_ADDR;
 		}
 

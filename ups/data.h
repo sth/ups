@@ -55,7 +55,9 @@ int dgets PROTO((target_t *xp, taddr_t addr, char *optr, int max_nbytes));
 int dread PROTO((target_t *xp, taddr_t addr, void *buf, size_t nbytes));
 int dread_fpval PROTO((target_t *xp, taddr_t addr,
 				bool is_reg, int num_bytes, char *buf));
+int dread_addrval PROTO((target_t *xp, taddr_t addr, taddr_t *buf));
 int dwrite PROTO((target_t *xp, taddr_t addr, const void *buf, size_t nbytes));
+int dwrite_addrval PROTO((target_t *xp, taddr_t addr, const taddr_t *buf));
 taddr_t regno_to_addr PROTO((int regno));
 const char *get_real PROTO((bool words_big_endian,
 			    value_t vl, bool want_hex, int num_bytes));

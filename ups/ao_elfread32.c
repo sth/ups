@@ -1,6 +1,6 @@
-/* ao_regs.c - header file for ao_regs.c */
+/* ao_elfread32.c - functions for reading ELF and ar files  */
 
-/*  Copyright 2003 Tom Hughes <thh@cyberscience.com>
+/*  Copyright 2004 Tom Hughes <thh@cyberscience.com>
  *  All Rights Reserved.
  *
  *  This file is part of UPS.
@@ -20,9 +20,25 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef ARCH_386
 
-void x86_gcc_register_init PROTO((int addrsize));
-int x86_gcc_register PROTO((int regno));
+char ups_ao_elfread32_c_rcsid[] = "$Id$";
 
-#endif
+#define ELF_ADDRESS_SIZE 32
+
+#define Elf_Addr Elf32_Addr
+#define Elf_Ehdr Elf32_Ehdr
+#define Elf_Shdr Elf32_Shdr
+#define Elf_Phdr Elf32_Phdr
+#define Elf_Sym Elf32_Sym
+#define Elf_Dyn Elf32_Dyn
+#define Elf_Rel Elf32_Rel
+#define Elf_Rela Elf32_Rela
+
+#define ELF_ST_TYPE(val) ELF32_ST_TYPE(val)
+#define ELF_ST_BIND(val) ELF32_ST_BIND(val)
+#define ELF_R_SYM(val) ELF32_R_SYM(val)
+#define ELF_R_TYPE(val) ELF32_R_TYPE(val)
+
+#define ELF(x) elf32_##x
+
+#include "ao_elfreadbase.c"

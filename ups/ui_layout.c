@@ -1714,7 +1714,7 @@ int split;
 	re_set_display_callback(regs[TEXT], source_window_get_display);
 
 	tb_set_callback_and_data(tbar_id, tbar_srcwin_callback, (char *)sw);
-	srcwin_set_data(sw, (char *)re_get_wn(regs[NAMEWIN]));
+	srcwin_set_data(sw, (char *)(long)re_get_wn(regs[NAMEWIN]));
 
 	re_set_callbacks(regs[TEXT], srcwin_draw, source_window_event_handler,
 			 (re_destroy_proc_t)NULL);

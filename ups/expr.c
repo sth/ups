@@ -1090,9 +1090,9 @@ search_stack_files(sw, name)
 
   xp = get_current_target();
   update_target_menu_state(TS_SEARCHING, xp_is_attached(xp));
-  ret = back_iterate_over_stack_files((int)sw, name, STK_OUTER, STK_SELECTED);
+  ret = back_iterate_over_stack_files(sw, name, STK_OUTER, STK_SELECTED);
   if (!ret)
-    ret = back_iterate_over_stack_files((int)sw, name, STK_SELECTED, STK_INNER);
+    ret = back_iterate_over_stack_files(sw, name, STK_SELECTED, STK_INNER);
   if (target_menu_search_disabled(0, 0) == FALSE)
     update_target_menu_state(xp_get_state(xp), xp_is_attached(xp));
   wn_define_cursor(WN_STDWIN, old_cursor);

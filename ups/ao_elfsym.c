@@ -418,7 +418,7 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 static bool
 setup_ofile_symio(Elfinfo *el, stf_t *stf, off_t ar_offset)
 {
-	Elf32_Shdr *symsh, *strsh;
+	Elf_Shdr *symsh, *strsh;
 	const char *path;
 
 	if (stf->stf_symio != NULL)
@@ -438,9 +438,9 @@ setup_ofile_symio(Elfinfo *el, stf_t *stf, off_t ar_offset)
 #endif
 	path = alloc_strdup(stf->stf_symtab->st_apool, el->path);
 	stf->stf_symio = make_symio((alloc_pool_t *)NULL, path, el->fd,
-				    (off_t)symsh->sh_offset + ar_offset,
-				    (int)(symsh->sh_size / symsh->sh_entsize),
-				    (off_t)strsh->sh_offset + ar_offset);
+				    elf_section_offset(el, symsh) + ar_offset,
+				    elf_section_entries(el, symsh),
+				    elf_section_offset(el, strsh) + ar_offset);
 	return TRUE;
 }
 
@@ -460,7 +460,8 @@ to_output_window(const char *mesg)
 static bool
 scan_dot_o_file_symtab(stf_t *stf)
 {
-	Elf32_Ehdr hdr;
+	Elf_Ehdr *hdr;
+	const Elfops *elops;
 	Elfinfo *el;
 	char *name, *member;
 	const char *path;
@@ -473,6 +474,7 @@ scan_dot_o_file_symtab(stf_t *stf)
 	fd = -1;
 	path = member = NULL;
 	Had_error = FALSE;
+	hdr = NULL;
 	el = NULL;
 	
 	ar_get_path_and_member(stf->stf_objname, &name, &member);
@@ -481,10 +483,10 @@ scan_dot_o_file_symtab(stf_t *stf)
 				   name, &path) &&
 	      open_for_reading(path, ".o file", &fd) &&
 	      ar_get_member_offset(path, fd, member, &ar_offset) &&
-	      read_chunk(path, "", fd, "ELF header", ar_offset,
-			&hdr, sizeof(hdr)) &&
-	      check_elf_header_type(&hdr, path, ET_REL, "read symbols from") &&
-	      prepare_to_parse_elf_file(path, fd, &hdr, &el, ar_offset) &&
+	      check_elf_ident(path, fd, ar_offset, "read symbols from", &elops) &&
+	      elf_read_header(elops, path, fd, ar_offset, &hdr) &&
+	      check_elf_header_type(elops, hdr, path, ET_REL, "read symbols from") &&
+	      prepare_to_parse_elf_file(path, fd, hdr, elops, &el, ar_offset) &&
 	      setup_ofile_symio(el, stf, ar_offset));
 
 	if (ok) {
@@ -496,6 +498,9 @@ scan_dot_o_file_symtab(stf_t *stf)
 	if (el != NULL)
 		free_elfinfo(el);
 	
+	if (hdr != NULL)
+		free(hdr);
+
 	free(member);
 	
 	if (!ok) {
@@ -687,10 +692,10 @@ scan_stab_index(symtab_t *st, Elfinfo *el, fil_t **p_sfiles,
 		return FALSE;
 	}
 
-	nsyms = el->indexsh->sh_size / el->indexsh->sh_entsize;
+	nsyms = elf_section_entries(el, el->indexsh);
 	symio = make_symio((alloc_pool_t *)NULL, el->path, fd,
-			   (off_t)el->indexsh->sh_offset, nsyms,
-			   (off_t)el->indexstrsh->sh_offset);
+			   elf_section_offset(el, el->indexsh), nsyms,
+			   elf_section_offset(el, el->indexstrsh));
 
 	ok = scan_index_syms(st, el, p_sfiles, p_flist, symio, nsyms,
 			     p_mainfunc_name);
@@ -814,8 +819,8 @@ make_fil_hash(alloc_pool_t *ap, fil_t *sfiles)
 static bool
 set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 {
-	Elf32_Shdr *strings_sh;
-	Elf32_Sym *syms;
+	Elf_Shdr *strings_sh;
+	Elf_Sym *syms;
 	size_t i, nsyms, strings_nbytes;
 	char *strings;
 	func_t *funclist;
@@ -825,20 +830,20 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 	hashvalues_t *hv;
 	Ambig_fil *aflist;
 
-	strings_sh = &el->sections[el->symtab_sh->sh_link];
+	strings_sh = elf_section_link(el, el->symtab_sh);
 
-	syms = e_malloc(el->symtab_sh->sh_size);
-	strings = e_malloc(strings_sh->sh_size);
+	syms = e_malloc(elf_section_size(el, el->symtab_sh));
+	strings = e_malloc(elf_section_size(el, strings_sh));
 
-	if (!read_elf_section(el, "symbol table", el->symtab_sh, syms) ||
-	    !read_elf_section(el, "symtab strings", strings_sh, strings)) {
+	if (!elf_read_section(el, "symbol table", el->symtab_sh, syms) ||
+	    !elf_read_section(el, "symtab strings", strings_sh, strings)) {
 		free(syms);
 		free(strings);
 		return FALSE;
 	}
 
-	nsyms = el->symtab_sh->sh_size / el->symtab_sh->sh_entsize;
-	strings_nbytes = strings_sh->sh_size;
+	nsyms = elf_section_entries(el, el->symtab_sh);
+	strings_nbytes = elf_section_size(el, strings_sh);
 
 	hash_ap = alloc_create_pool();
 	fil = lastfil = NULL;
@@ -852,27 +857,27 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 	st->st_func_hv = (char *)hv;
 
 	for (i = 0; i < nsyms; ++i) {
-		Elf32_Sym *sym;
+		Elf_Sym *sym;
 		const char *name;
 		taddr_t value;
 		int type, bind, ar;
 
-		sym = &syms[i];
+		sym = elf_lookup_symbol(el, syms, i);
 
-		value = sym->st_value;
-		type = ELF32_ST_TYPE(sym->st_info);
-		bind = ELF32_ST_BIND(sym->st_info);
+		value = elf_symbol_value(el, sym);
+		type = elf_symbol_type(el, sym);
+		bind = elf_symbol_bind(el, sym);
+		name = elf_symbol_name(el, sym, strings, strings_nbytes);
 
-		if (sym->st_name > strings_nbytes) {
+		if (name == NULL) {
 			errf("\bString offset out of range for "
 			     ".stab symbol #%ld - ignored", (long)i);
 			continue;
 		}
-		name = &strings[sym->st_name];
 
 		switch (type) {
 		case STT_FUNC:
-			if (sym->st_shndx == SHN_UNDEF)
+			if (elf_symbol_section(el, sym) == NULL)
 				break;
 			if (!resolve_func_addr(name, bind, fil, value,
 					       func_ht, hv)) {
@@ -888,7 +893,7 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 			break;
 			
 		case STT_OBJECT:
-			if (sym->st_shndx == SHN_UNDEF)
+			if (elf_symbol_section(el, sym) == NULL)
 				break;
 			insert_global_addr(st->st_apool, &st->st_addrlist,
 					   alloc_strdup(st->st_apool, name),
@@ -943,12 +948,13 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 /*  Do a prescan of the symbol table of textpath.
  */
 bool
-scan_elf_symtab(target_ap, textpath, fd, libdep, p_entryaddr, p_mainfunc,
-		p_initfunc, p_solibs, reattach_with_rescan)
+scan_elf_symtab(target_ap, textpath, fd, libdep, p_addrsize, p_entryaddr,
+		p_mainfunc, p_initfunc, p_solibs, reattach_with_rescan)
 alloc_pool_t *target_ap;
 const char *textpath;
 int fd;
 Libdep *libdep;
+int *p_addrsize;
 taddr_t *p_entryaddr;
 func_t **p_mainfunc;
 func_t **p_initfunc;
@@ -968,6 +974,9 @@ bool reattach_with_rescan;
 	if (!elf_get_exec_info(textpath, fd, libdep, &eibuf, &el, &st_is))
 		return FALSE;
 
+	if (p_addrsize)
+		*p_addrsize = elf_address_size(el);
+	
 #if WANT_DWARF
 	if (st_is == ST_DWARF) {
 		if ((rv = dwarf_init(fd, DW_DLC_READ, NULL, NULL,
@@ -1017,7 +1026,8 @@ bool reattach_with_rescan;
 
 	if (el->pltsh) {
 		add_function_to_symtab(st, &flist, "[_plt_]", NULL, NULL, 
-					FALSE, FALSE, 0, el->pltsh->sh_addr );
+                                       FALSE, FALSE, 0,
+                                       elf_section_addr(el, el->pltsh));
 		flist->fu_flags |= FU_PLT;
 	}
 

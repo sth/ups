@@ -351,7 +351,7 @@ int lnum;
 	size_t len;
 	font_t *font;
 
-	wn = (int)srcwin_get_data(sw);
+	wn = (long)srcwin_get_data(sw);
 	
 	if (name == NULL || lnum == -1)
 		return;
