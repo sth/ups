@@ -202,10 +202,10 @@ target_t *xp;
 		}
 
 		if (xp_read_data(xp, wp->wp_addr, buf, wp->wp_size) < 0) {
-			errf("Bad watch area 0x%x", wp->wp_addr);
+			errf("Bad watch area 0x%lx", wp->wp_addr);
 		}
 		else if (memcmp(buf, wp->wp_val, wp->wp_size) != 0) {
-			errf("Watch area at 0x%x has changed", wp->wp_addr);
+			errf("Watch area at 0x%lx has changed", wp->wp_addr);
 			return wp;
 		}
 	}

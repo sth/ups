@@ -384,7 +384,7 @@ taddr_t value;
 
 	ur = ip->ip_ptrace_info->uregs + ri;
 	errno = 0;
-	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(int)ur->ur_uaddr, (int)value);
+	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(int)ur->ur_uaddr, (long)value);
 	ur->ur_is_current = FALSE;
 	return (errno == 0) ? 0 : -1;
 }
@@ -607,7 +607,7 @@ taddr_t value;
 
 	ur = ip->ip_ptrace_info->udregs + ri;
 	errno = 0;
-	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(long)ur->ur_uaddr, (int)value);
+	e_ptrace(PTRACE_POKEUSER, ip->ip_pid, (char *)(long)ur->ur_uaddr, (long)value);
 	ur->ur_is_current = FALSE;
 	return (errno == 0) ? 0 : -1;
 }

@@ -170,7 +170,7 @@ void ptrace_init_pid PROTO((iproc_t *ip, int pid, bool attached));
 void ptrace_wait_for_target PROTO((target_t *xp));
 int ptrace_update_regs PROTO((target_t *xp));
 int ptrace_update_dregs PROTO((target_t *xp));
-int e_ptrace PROTO((ptracereq_t req, int pid, char *addr, int data));
+int e_ptrace PROTO((ptracereq_t req, int pid, char *addr, long data));
 
 
 #if defined(OS_SUNOS)

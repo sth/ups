@@ -854,9 +854,15 @@ size_t size;
 #ifdef ARCH_386
 	taddr_t control;
 	unsigned flags;
-	int i, watchnum;
+	int i;
 
+	if (size > 8 || (size & (size - 1)) != 0 || addr % size != 0)
+		return -1;
+
+#ifndef ARCH_386_64
 	if (size == 8) {
+		int watchnum;
+	   
 		if ((watchnum = ptrace_install_watchpoint(ip, addr, 4)) < 0)
 			return -1;
 		if ((i = ptrace_install_watchpoint(ip, addr + 4, 4)) < 0) {
@@ -870,9 +876,7 @@ size_t size;
 #endif
 		return 0;
 	}
-
-	if (size == 3 || size > 4 || addr % size != 0)
-		return -1;
+#endif
 
 #if HAVE_I386_SET_WATCH
 	watchnum = i386_set_watch (-1, addr, size, DBREG_DR7_WRONLY, &ip->ip_ptrace_info->ptrace_regs.dbregs);
@@ -905,6 +909,11 @@ size_t size;
 	case 4:
 		flags = DR_LEN_4 | DR_RW_WRITE;
 		break;
+#ifdef ARCH_386_64
+	case 8:
+		flags = DR_LEN_8 | DR_RW_WRITE;
+		break;
+#endif
 	default:
 		panic("invalid watchpoint size");
 		flags = 0; /* to satisfy gcc */
@@ -937,6 +946,10 @@ int watchnum;
 	unsigned flags;
 	int i;
 
+	if (size > 8 || (size & (size - 1)) != 0 || addr % size != 0)
+		return -1;
+
+#ifndef ARCH_386_64
 	if (size == 8) {
 		if (ptrace_uninstall_watchpoint(ip, addr, 4, watchnum) < 0)
 			return -1;
@@ -944,9 +957,7 @@ int watchnum;
 			return -1;
 		return 0;
 	}
-
-	if (size == 3 || size > 4 || addr % size != 0)
-		return -1;
+#endif
 
 #if HAVE_I386_CLR_WATCH
 	if (i386_clr_watch (watchnum, &ip->ip_ptrace_info->ptrace_regs.dbregs) != 0)
@@ -968,6 +979,11 @@ int watchnum;
 	case 4:
 		flags = DR_LEN_4 | DR_RW_WRITE;
 		break;
+#ifdef ARCH_386_64
+	case 8:
+		flags = DR_LEN_8 | DR_RW_WRITE;
+		break;
+#endif
 	default:
 		panic("invalid watchpoint size");
 		flags = 0; /* to satisfy gcc */
@@ -1032,7 +1048,7 @@ e_ptrace(req, pid, addr, data)
 ptracereq_t req;
 int pid;
 char *addr;
-int data;
+long data;
 {
 	int res;
 
