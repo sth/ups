@@ -257,6 +257,7 @@ target_t *xp;
 	int pid, at_bpt, at_wpt;
 	bool user_stopped_target;
 	wait_arg_t status;
+	int wait_errno;
 	bool want_timer = FALSE;
 	struct timeval when, t;
 
@@ -279,11 +280,14 @@ target_t *xp;
 	for (;;) {
 		abort_func_t oldfunc;
 
-		if ((Debug_flags & DBFLAG_NO_STOP) != 0)
+		if ((Debug_flags & DBFLAG_NO_STOP) != 0) {
 			pid = wait(&status);
+			wait_errno = errno;
+		}
 		else {
 			oldfunc = set_user_abort_func(stop_target);
 			pid = wait_with_intr(&status);
+			wait_errno = errno;
 			(void) set_user_abort_func(oldfunc);
 		}
 
@@ -308,7 +312,9 @@ target_t *xp;
 		if (pid == ip->ip_pid)
 			break;
 		else if (pid == -1) {
-			if (errno != EINTR)
+			if (wait_errno == ECHILD)                           
+				break;
+			else if (wait_errno != EINTR)
 				errf("Wait returned -1: %s", get_errno_str());
 		}
 		else {
@@ -318,7 +324,7 @@ target_t *xp;
 		}
 	}
 
-	if (WIFSTOPPED(status)) {
+	if (pid > 0 && WIFSTOPPED(status)) {
 		ip->ip_lastsig = 0;
 		at_bpt = ptrace_update_regs(xp);
 		at_wpt = ptrace_update_dregs(xp);
@@ -444,22 +450,29 @@ target_t *xp;
 
 	ip = GET_IPROC(xp);
 
+	uninstall_all_breakpoints(xp);
+	std_ptrace(PTRACE_SINGLESTEP, ip->ip_pid, (char *)NULL, SIGTERM);
+	ptrace_wait_for_target(xp);
+
 	std_ptrace(PTRACE_KILL, ip->ip_pid, (char *)NULL, 0);
 
-	if (ip->ip_attached) {
-		/*  wait() hangs on a PTRACE_ATTACH process which
-		 *  has been killed, so fake the status.
-	 */
+	if (ip->ip_stopres != SR_DIED) {
+		if (ip->ip_attached) {
+			/*  wait() hangs on a PTRACE_ATTACH process which
+			 *  has been killed, so fake the status.
+			 */
 #ifdef WAIT_STATUS_IS_INT
-		status = SIGKILL;
+			status = SIGKILL;
 #else
-		status.w_T.w_Termsig = SIGKILL;
-		status.w_T.w_Retcode = 0;
+			status.w_T.w_Termsig = SIGKILL;
+			status.w_T.w_Retcode = 0;
 #endif
+		}
+		else {
+			ptrace_wait_for_target(xp);
+		}
 	}
-	else {
-		ptrace_wait_for_target(xp);
-	}
+        
         mark_breakpoints_as_uninstalled(xp);
 	unload_shared_library_symtabs(xp);
 	ip->ip_pid = 0;
