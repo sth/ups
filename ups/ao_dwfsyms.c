@@ -1076,7 +1076,10 @@ Dwarf_Debug dbg;
 	/*
 	 * Get CU attributes.
 	 */
-	cu_name  = dwf_get_string(dbg, ap, cu_die, DW_AT_name);
+	if (dwf_has_attribute(dbg, cu_die, DW_AT_name))
+	    cu_name  = dwf_get_string(dbg, ap, cu_die, DW_AT_name);
+	else
+	    cu_name = "";
 	comp_dir = dwf_get_string(dbg, ap, cu_die, DW_AT_comp_dir);
 	lang     = dwf_get_src_language(dbg, cu_die);
 	ct       = dwf_get_compiler_type(dbg, cu_die);
