@@ -37,9 +37,7 @@ void dump_aggr_or_enum_def_t PROTO((aggr_or_enum_def_t *ae, int ty_code,
 void dump_type_t PROTO((type_t *t, int level, bool follow));
 void dump_dim_t PROTO((dim_t *dim, int level));
 void dump_typedef_t PROTO((typedef_t *td, int level, bool follow));
-#if WANT_DWARF
 void dump_dtype_t PROTO((dtype_t *dt, int level, bool follow));
-#endif
 void dump_var_t PROTO((var_t *v, int level, bool follow));
 void dump_func_t PROTO((func_t *f, bool follow));
 void dump_lno_t PROTO((lno_t *lno, bool follow));
