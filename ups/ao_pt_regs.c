@@ -402,11 +402,8 @@ ptrace_set_all_regs(ip, sr)
 iproc_t *ip;
 sunregs_t *sr;
 {
-#ifdef OS_LINUX
-	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, (char *)&sr->sr_regs, 0) != 0) {
-#else
-	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, 0, (char *)&sr->sr_regs) != 0) {
-#endif
+ 	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid,
+ 		       (char *)&sr->sr_regs, 0) != 0) {
 		return FALSE;
 	}
 	ip->ip_ptrace_info->sunregs = *sr;
@@ -428,8 +425,11 @@ ptrace_set_all_regs(ip, pr)
 iproc_t *ip;
 ptrace_regs_t *pr;
 {
-	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid,
-		       (char *)&pr->regs, 0) != 0) {
+#ifdef OS_LINUX
+	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, 0, (char *)&pr->regs) != 0) {
+#else
+	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, (char *)&pr->regs, 0) != 0) {
+#endif
 		return FALSE;
 	}
 
