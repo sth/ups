@@ -186,11 +186,6 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
 	return (DW_DLV_ERROR);
     }
 
-    if (max_count < 1) {
-	_dwarf_error(NULL, error, DW_DLE_DEBUG_MACRO_MAX_BAD);
-	return (DW_DLV_ERROR);
-    }
-
     macro_base = dbg->de_debug_macinfo;
     if (macro_base == NULL) {
 	return (DW_DLV_NO_ENTRY);
@@ -220,11 +215,6 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
 	unsigned long slen;
 	Dwarf_Word len;
 
-	endloc = (pnext - macro_base) + 1;
-	if (endloc > dbg->de_debug_macinfo_size) {
-	    _dwarf_error(dbg, error, DW_DLE_DEBUG_MACRO_LENGTH_BAD);
-	    return (DW_DLV_ERROR);
-	}
 	uc = *pnext;
 	++pnext;		/* get past the type code */
 	switch (uc) {
@@ -271,12 +261,21 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
 	case DW_MACINFO_end_file:
 	    break;		/* no string or number here */
 	case 0:
-	    done = 1;
 	    /* end of cu's entries */
+	    done = 1;
+	    break;
 	default:
 	    _dwarf_error(dbg, error, DW_DLE_DEBUG_MACRO_INCONSISTENT);
 	    return (DW_DLV_ERROR);
 	    /* bogus macinfo! */
+	}
+        
+	endloc = (pnext - macro_base);
+	if (endloc == dbg->de_debug_macinfo_size) {
+	    done = 1;
+	} else if (endloc > dbg->de_debug_macinfo_size) {
+	    _dwarf_error(dbg, error, DW_DLE_DEBUG_MACRO_LENGTH_BAD);
+	    return (DW_DLV_ERROR);
 	}
     }
     if (count == 0) {
@@ -300,17 +299,19 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
     }
     pstart = pnext = macro_base + macro_offset;
 
+    done = 0;
+    
     for (final_count = 0; !done && final_count < count; ++final_count) {
 	unsigned long slen;
 	Dwarf_Word len;
 	Dwarf_Unsigned v1;
-	Dwarf_Macro_Details *pdmd = (Dwarf_Macro_Details *) (pstart +
+	Dwarf_Macro_Details *pdmd = (Dwarf_Macro_Details *) (pdata +
 							     final_count
 							     *
 							     sizeof
 							     (Dwarf_Macro_Details));
 
-	endloc = (pnext - macro_base) + 1;
+	endloc = (pnext - macro_base);
 	if (endloc > dbg->de_debug_macinfo_size) {
 	    _dwarf_error(dbg, error, DW_DLE_DEBUG_MACRO_LENGTH_BAD);
 	    return (DW_DLV_ERROR);
@@ -377,8 +378,9 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
 	    fileindex = _dwarf_mac_pop_index();
 	    break;		/* no string or number here */
 	case 0:
-	    done = 1;
 	    /* end of cu's entries */
+	    done = 1;
+	    break;
 	default:
 	    _dwarf_error(dbg, error, DW_DLE_DEBUG_MACRO_INCONSISTENT);
 	    return (DW_DLV_ERROR);
