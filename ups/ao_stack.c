@@ -416,6 +416,10 @@ target_t *xp;
 	fp = xp_getreg(xp, UPSREG_FP);
 	sp = xp_getreg(xp, UPSREG_SP);
 
+	if (fp == (taddr_t)0) {
+		fp = (taddr_t)-1;
+	}
+        
 #ifdef DEBUG_STACK
 	if (Debug_flags & DBFLAG_STACK)
 		fprintf(stderr, "bst: pc=0x%x fp=0x%x sp=0x%x\n", pc, fp, sp);
@@ -436,7 +440,8 @@ target_t *xp;
 #endif
 #ifdef ARCH_LINUX386
 		if ((strcmp(f->fu_demangled_name, "_entry") == 0) ||
-		    (strcmp(f->fu_demangled_name, "_start") == 0)) {
+		    (strcmp(f->fu_demangled_name, "_start") == 0) ||
+		    (strcmp(f->fu_demangled_name, "__libc_start_main") == 0)) {
 			fp = (taddr_t)0;
 			break;
 		}
@@ -467,6 +472,8 @@ target_t *xp;
 			int i;
 			int ebxoffset = 0;
 			int ebpoffset = 0;
+			taddr_t possible_pc = 0;
+			int possible_offset;
 
 			if (!get_preamble(f, &pr))
 				panic("can't get function preamble");
@@ -477,7 +484,7 @@ target_t *xp;
 				if (mask & 1u)
 					offset += 4;
 
-			offsetlim = offset + 800;
+			offsetlim = offset + 1000;
 
 			if (pr->pr_rsave_mask & EBXMASK) {
 				ebxoffset = pr->pr_rsave_offset;
@@ -515,7 +522,7 @@ target_t *xp;
 
 					if (ebpoffset) {
 						if (dread(xp, sp + offset + ebpoffset, (char *)&fp, sizeof(fp)) != 0 || !fp)
-							fp = -1;
+							fp = (taddr_t)-1;
 					}
 
 					if (s_buf[2] == 0xe8) {
@@ -538,28 +545,58 @@ target_t *xp;
 						 ((s_buf[6] & 0xf0) == 0xd0 ||
 						  ((s_buf[6] & 0xf0) == 0x10 &&
 						   (s_buf[6] & 0x07) != 0x04))) {
-						break; /* call REG or call *REG */
+						/* call REG or call *REG */
+						if (possible_pc == 0) {
+							possible_pc = pc;
+							possible_offset = offset;
+						}
 					}
 					else if (s_buf[4] == 0xff &&
 						 ((s_buf[5] & 0xf7) == 0x14 ||
 						  ((s_buf[5] & 0xf0) == 0x50 &&
 						   (s_buf[5] & 0x07) != 0x04))) {
-						break; /* call *(REG*x) or call *NN(REG) */
+						/* call *(REG*x) or call *NN(REG) */
+						if (possible_pc == 0) {
+							possible_pc = pc;
+							possible_offset = offset;
+						}
 					}
 					else if (s_buf[3] == 0xff &&
 						 (s_buf[4] & 0xf7) == 0x54) {
-						break; /* call *NN(REG*x) */
+						/* call *NN(REG*x) */
+						if (possible_pc == 0) {
+							possible_pc = pc;
+							possible_offset = offset;
+						}
 					}
 					else if (s_buf[1] == 0xff &&
 						 ((s_buf[2] & 0xf7) == 0x15 ||
 						  ((s_buf[2] & 0xf0) == 0x90 &&
 						   (s_buf[2] & 0x07) != 0x04))) {
-						break; /* call *NNNNNNNN or call *NNNNNNNN(REG) */
+						/* call *NNNNNNNN or call *NNNNNNNN(REG) */
+						if (possible_pc == 0) {
+							possible_pc = pc;
+							possible_offset = offset;
+						}
 					}
 					else if (s_buf[0] == 0xff &&
 						 (s_buf[1] & 0xf7) == 0x94) {
-						break; /* cal *NNNNNNNN(REG*x) */
+						/* call *NNNNNNNN(REG*x) */
+						if (possible_pc == 0) {
+							possible_pc = pc;
+							possible_offset = offset;
+						}
 					}
+				}
+			}
+
+			if (offset == offsetlim) {
+				if (possible_pc) {
+					pc = possible_pc;
+					offset = possible_offset;
+				}
+				else {
+					break;
 				}
 			}
 
@@ -567,9 +604,6 @@ target_t *xp;
 			stk->stk_sp = sp;
 
 			sp = sp + offset + 4;
-
-			if (offset == offsetlim)
-				break;
 		} else {
 			stk->stk_fp = stk->stk_ap = fp;
 			stk->stk_sp = sp;
