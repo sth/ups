@@ -643,6 +643,7 @@ bool call_callback;
 	else
 		prev->next = eb->next;
 
+	free(eb->text);
 	free((char *)eb);
 }
 

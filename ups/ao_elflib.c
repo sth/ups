@@ -1530,7 +1530,7 @@ Solib_addr **p_solib_addrs;
 					      stbuf.st_mtime);
 	    last_child = last_child->next;
 */
-	    sa = e_malloc(sizeof(Solib_addr));
+	    sa = alloc(ap, sizeof(Solib_addr));
 	    sa->dev = stbuf.st_dev;
 	    sa->ino = stbuf.st_ino;
 	    sa->size = stbuf.st_size;

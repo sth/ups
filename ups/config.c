@@ -156,6 +156,7 @@ bool *p_want_auto_start;
 		path = strf("%s/.upsrc", home);
 		read_config_file(path, FALSE, FALSE, FALSE, FALSE,
 				 &want_auto_start, FALSE);
+		free(path);
 	}
 		
 	read_config_file(".upsrc", FALSE,  FALSE, FALSE, FALSE,

@@ -1717,6 +1717,7 @@ objid_t obj;
 	if (bd->machine != NULL)
 		ci_free_machine(bd->machine);
 	
+	free((char *)get_field_value(obj, FN_BPT_LNUM));
 	free((char *)bd);
 }
 
@@ -2399,9 +2400,9 @@ int lnum;
 			fields[FN_BPT_SEPARATOR] = (fval_t)"";
 
 			if ((f->fu_flags & FU_NOSYM) != 0)
-				fields[FN_BPT_LNUM] = (fval_t)"(no syms)";
+				fields[FN_BPT_LNUM] = (fval_t)strsave("(no syms)");
 			else
-				fields[FN_BPT_LNUM] = (fval_t)"(no ln #)";
+				fields[FN_BPT_LNUM] = (fval_t)strsave("(no ln #)");
 		}
 		else {
 			fields[FN_BPT_FILE] = (fval_t)f->fu_fil->fi_name;
@@ -2413,7 +2414,7 @@ int lnum;
 		fields[FN_BPT_FNAME] = (fval_t)"";
 		fields[FN_BPT_FILE] = (fval_t)"";
 		fields[FN_BPT_SEPARATOR] = (fval_t)"";
-		fields[FN_BPT_LNUM] = (fval_t)"";
+		fields[FN_BPT_LNUM] = (fval_t)strsave("");
 	}
 
 	return;

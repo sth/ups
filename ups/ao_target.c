@@ -302,6 +302,7 @@ const char **p_cmdline;
 	}
 
 	ip = (iproc_t *)alloc(xp->xp_apool, sizeof(iproc_t));
+	ip->ip_apool = xp->xp_apool;
 	ip->ip_pid = 0;
 	ip->ip_core = co;
 	ip->ip_lastsig = lastsig;

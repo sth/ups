@@ -106,6 +106,7 @@ struct Outwin {
  */
 struct Srcwin {
 	Outwin outwin;
+	Edit_buffer *buffer;
 	fil_t *fil;
 	hist_t *hist;
 };
@@ -225,6 +226,7 @@ tbar_id_t tbar;
 
 	sw = (Srcwin *)e_malloc(sizeof(Srcwin));
 	init_outwin(&sw->outwin, wn, tbar, (Edit_buffer *)NULL, TRUE, breakpoint_history); /* folded lines, history */
+	sw->buffer = NULL;
 	sw->fil = NULL;
 	sw->hist = NULL;
 	
@@ -1954,7 +1956,6 @@ srcwin_reset()
   Srcwin *sw = get_current_srcwin();
   Outwin *ow;
   Text_buffer *tb;
-  Edit_buffer *buffer;
   font_t *font;
   int wn, width, height, nchars;
   char nbuf[60];
@@ -1971,12 +1972,18 @@ srcwin_reset()
   nbuf[nchars] = 0;
   wn_tputs(wn, nbuf, 4, (height - font->ft_height) / 2);
 
+  if (sw->buffer) {
+    edit_delete(sw->buffer, 0, edit_get_buffer_length(sw->buffer));
+  }
+  else {
+    tb = text_create_empty_lbuf_buffer(alloc_create_pool(), 0, 1024);
+    sw->buffer = edit_create_buffer(tb, Srcfont_info, 0);
+  }
+  
   ow = &sw->outwin;
-  tb = text_create_empty_lbuf_buffer(alloc_create_pool(), 0, 1024);
-  buffer = edit_create_buffer(tb, Srcfont_info, 0);
-  if (buffer != NULL)
-    edit_set_buffer(ow->display, buffer);
-  ow->buffer = buffer;
+  if (sw->buffer != NULL)
+    edit_set_buffer(ow->display, sw->buffer);
+  ow->buffer = sw->buffer;
   srcbuf_reset_file_handle();
   srcwin_redraw(sw);
 }

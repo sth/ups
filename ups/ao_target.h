@@ -42,6 +42,7 @@ typedef struct shlibst {
 #endif
 
 typedef struct iproc {
+	alloc_pool_t *ip_apool;
 	int ip_pid;
 	struct Coredesc *ip_core;
 	taddr_t ip_base_sp;

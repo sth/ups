@@ -672,7 +672,7 @@ bool attached;
 {
 	if (ip->ip_ptrace_info == NULL) {
 		ip->ip_ptrace_info =
-			(Ptrace_info *)e_malloc(sizeof(Ptrace_info));
+			(Ptrace_info *)alloc(ip->ip_apool, sizeof(Ptrace_info));
 	}
 	
 	ip->ip_core = NULL;
