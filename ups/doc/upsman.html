@@ -59,6 +59,7 @@ $Id$
 <br>
 <a href="#EXAMINING THE TARGETS STATE">Examining The Target&acute;s State</a><br>
 <a href="#EXAMINING VARIABLE VALUES">Examining Variable Values</a><br>
+<a href="#EXAMINING MACRO VALUES">Examining Macro Values</a><br>
 <a href="#ACCELERATORS IN THE DISPLAY AREA">Accelerators in the Display Area</a><br>
 <a href="#SOURCE FILES MENU">Source Files Menu</a><br>
 <a href="#BREAKPOINT MENUS">Breakpoint Menus</a><br>
@@ -1577,6 +1578,41 @@ and step through the elements of an array.
 
 
 <table width=100% bgcolor=#ffffcc border=0 cellspacing=0><tr><td>&nbsp;</td></tr><tr><td align=center>
+<a name="EXAMINING MACRO VALUES"><h3>EXAMINING MACRO VALUES</h3></a>
+</td></tr></table>
+
+<p>
+It is also possible to examine the value of macros if that information
+has been included by the compiler. This can be done by clicking with
+the left mouse button on the name of a macro in the source region.
+A line is added to the display region which looks something like :
+<blockquote>
+<pre>
+macroname          86
+</pre>
+</blockquote>
+In this example, a macro called <i>macroname</i> with a value of 86 is
+shown. This line is actually an expression, as described in
+<a href="#EXPRESSIONS IN THE DISPLAY AREA"><small>EXPRESSIONS IN THE DISPLAY AREA</small></a>
+below.
+
+<p>
+Because macros do not follow the normal language scoping rules, there
+is sometimes an ambiguity about what value to use for a macro.
+The rule used by <i>ups</i> is that the value of the macro on the first
+line of the function where you evaluate the macro is shown.
+
+<p>
+If you are using <i>gcc(1)</i> you need to use the <tt>-g3</tt> command line
+option when compiling to include macro information.
+</p>
+
+<hr>
+
+<!-- XXXXXXXX ------------------------------------------------------------- -->
+
+
+<table width=100% bgcolor=#ffffcc border=0 cellspacing=0><tr><td>&nbsp;</td></tr><tr><td align=center>
 <a name="ACCELERATORS IN THE DISPLAY AREA"><h3>ACCELERATORS IN THE DISPLAY AREA</h3></a>
 </td></tr></table>
 
@@ -2483,6 +2519,13 @@ on a variable in the inner block in the source region.
 Once it is displayed select the block header and click on
 <b>Add expr</b>
 in its menu.
+
+<p>
+If your compiler has included macro information as part of the
+debugging data then you can also use macro names in an expression.
+When you do this the macro is assumed to have the value
+which it held on the first line of the function where you have entered
+the expression.
 
 <p>
 You can <i>bump</i> numbers in expressions in a similar way to array
@@ -4014,7 +4057,7 @@ click on symbols in C++ source, <i>ups</i> searches local variables, and
 if that fails, it searches fields in the <i>this</i> pointer, and finally
 it searches for globals.
 In addition it searches in all unions for matching
-components - that is, the union tag does not have appear in the source.
+components - that is, the union tag does not have to appear in the source.
 When breakpoints are set on overloaded methods in C++ code, <i>ups</i> queries
 whether to place breakpoints on all matching names.
 
