@@ -1,0 +1,9 @@
+Makefile
+UpsMakefile
+_tag_attr_table.c
+_tag_tree_table.c
+config.h
+config.log
+config.status
+develhdrs
+dwarfdump

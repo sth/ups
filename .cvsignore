@@ -1,0 +1,6 @@
+Makefile
+Makefile.conf
+config.cache
+config.log
+config.status
+ifdefs.h
