@@ -943,7 +943,8 @@ prot_type_t ptype;
 		prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 		break;
         default:
-		prot = 0; /* to satisfy gcc */
+		panic("bad protection type in ao_set_protection");
+		prot = PROT_NONE; /* to satisfy gcc */
 		break;
 	}
 
