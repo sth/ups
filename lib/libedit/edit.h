@@ -76,6 +76,7 @@ typedef struct {
 	bool (*copy_area)PROTO((char *data,
 				int old_x, int old_y, int new_x, int new_y,
 				int width, int height));
+	void (*destroy)PROTO((char *data));
 } Edit_render_ops;
 
 typedef struct Edit_history_item

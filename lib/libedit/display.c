@@ -87,6 +87,7 @@ Edit_display *d;
 		prev->next = d->next;
 
 	(*d->display_ops->destroy)(d);
+	(*d->render_ops->destroy)(d->render_data);
 
 	free((char *)d);
 }

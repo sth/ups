@@ -67,6 +67,7 @@ static bool wt_copy_area PROTO((char *data,
 				int width, int height));
 static bool wt_get_selection PROTO((char *data, const char **p_bytes, 
                                     size_t *p_nbytes));
+static void wt_destroy PROTO((char *data));
 
 static void edit_clear_xclipboard PROTO((void*));
 
@@ -94,6 +95,7 @@ bool want_cursor, keep_cursor_visible;
 		wt_set_area,
 		wt_show_cursor,
 		wt_copy_area,
+		wt_destroy
 	};
 	Wdesc *wd;
 	Edit_display *d;
@@ -209,6 +211,13 @@ event_t *ev;
 	}
 			
 	edit_handle_key_event(d, ch, modifiers);
+}
+
+static void
+wt_destroy(data)
+char *data;
+{
+	free(data);
 }
 
 static bool
