@@ -1470,6 +1470,7 @@ char *arg;
 	case MR_VAR_DUP:
 		dv2 = new_dvar();
 		*dv2 = *dv;
+		if (dv->dv_va_name) dv2->dv_va_name = strdup(dv->dv_va_name);
 		dv2->dv_ilist = dup_ilist(dv->dv_ilist);
 /*
 **		Auto increment the highest index when duplicating
