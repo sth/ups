@@ -582,6 +582,10 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
 	    *regval = fp;
 	else if (register_num == SP_COL)
 	    *regval = sp;
+	else if (register_num == DW_FRAME_SAME_VAL && regnum == FP_COL)
+	    *regval = fp;
+	else if (register_num == DW_FRAME_SAME_VAL && regnum == SP_COL)
+	    *regval = cfa;
 	else
 	    rv = DW_DLV_ERROR;
 
