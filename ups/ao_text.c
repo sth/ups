@@ -55,6 +55,7 @@ char ups_ao_text_c_rcsid[] = "$Id$";
 #include "target.h"
 #include "st.h"
 #include "as.h"
+#include "ao_dwarf.h"
 #include "ao_syms.h"
 #include "ao_asm.h"
 #include "ao_symread.h"
@@ -66,6 +67,8 @@ char ups_ao_text_c_rcsid[] = "$Id$";
 #include "ao_shlib.h"
 #include "ao_elfread.h"
 #include "ao_elfsym.h"
+#include "ao_dwftext.h"
+#include "ao_dwfsyms.h"
 #include "ao_aout.h"
 #include "trun.h"
 
@@ -73,10 +76,6 @@ char ups_ao_text_c_rcsid[] = "$Id$";
 #include <sys/ptrace.h>
 #endif
 
-#if WANT_DWARF
-#include "ao_dwftext.h"
-#include "ao_dwfsyms.h"
-#endif
 
 static int ao_get_min_bpt_addr PROTO((func_t *f, taddr_t *p_addr));
 static void ao_close_symtab_data PROTO((symtab_t *st));
@@ -243,7 +242,7 @@ const char **p_mainfunc_name;
 #ifndef AO_ELF
 	ast->st_next = NULL;
 #endif
-	
+
 #if WANT_DWARF
 	ast->st_type_names = NULL;
 	if (st_is == ST_DWARF)
@@ -264,11 +263,14 @@ const char **p_mainfunc_name;
 	}
 	flist = NULL;
 #else
+#if WANT_DWARF
 	if (st_is == ST_DWARF) {
 		ast->st_text_symio = NULL;
 		dwf_scan_symtab(st, textpath, (stf_t *)NULL, &flist,
 				p_mainfunc_name, dw_dbg);
-	} else if (ei->nsyms == 0) {
+	} else
+#endif
+		if (ei->nsyms == 0) {
 		ast->st_text_symio = NULL;
 		flist = NULL;
 	} else {
