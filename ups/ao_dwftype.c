@@ -62,6 +62,8 @@ dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 				 dtype_t *dt));
 static int
 dwf_guess_ae_alignment PROTO((aggr_or_enum_def_t *ae));
+static type_t *
+dwf_fixup_type PROTO((dtype_t *dt));
 
 /*
  * Determine the UPS typecode_t value from DWARF encoding etc.
@@ -912,125 +914,34 @@ dtype_t *dt;
 int recursed;
 {
     dtype_t *start;
-    lexinfo_t *lx;
+    type_t *dest;
     int incomplete = 0;
     int bad_dummy = 0;
-    qualifiers_t qual;
-    type_t *base, *dest;
-    typedef_t *tdef;
 
     start = dt;
 
     /*
-     * First resolve base types.
+     * First resolve base types and fixup dummy types.
      */
     while (dt != NULL) {
-	/*
-	 * Base type missing ?
-	 */
-	if (dt->dt_base_offset != (off_t)0) {
-	    /*
-	     * Resolve.
-	     */
-	    if ((base = dwf_lookup_type(dt, dt->dt_base_offset)) != NULL) {
-		*(dt->dt_p_type) = base;
-		dt->dt_base_offset = (off_t)0; /* mark it done */
-	    } else {
-		incomplete++;
-		if (recursed == 0)
-		    errf("\bDWARF type incomplete, offset <%ld>", (long)dt->dt_base_offset);
+	if (dwf_fixup_type(dt) == NULL) {
+	    incomplete++;
+	    if (recursed == 0)
+		errf("\bDWARF type incomplete, offset <%ld>", (long)dt->dt_base_offset);
 #if WANT_DEBUG
 if (recursed == 0)
 fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
 #endif
-	    }
 	}
 	dt = dt->dt_next;
     }
 
     /*
-     * Next fix dummy types.
+     * Look for struct/union to fix.
+     * Also does base class names.
      */
     dt = start;
     while (dt != NULL) {
-	/*
-	 * Look for dummy types (ty_code == TY_NOTYPE) to fix.
-	 */
-	if (dt->dt_base_offset == (off_t)0) {
-	    dest = NULL;
-	    switch (dt->dt_is) {
-	    case DT_IS_TYPE:
-		dest = dt->dt_type;
-		if (dest->ty_code != TY_NOTYPE)
-		    break;
-		/*
-		 * Only qualified types should have got a dummy type.
-		 */
-		if (dt->dt_type->ty_qualifiers == 0) {
-		    errf("\bUnqualified dummy DWARF type");
-		    break;
-		}
-		/*
-		 * Copy the base type, preserving the qualifiers and lexinfo.
-		 */
-		base = dt->dt_type->ty_base;
-		qual = dest->ty_qualifiers;
-		lx = dest->ty_lexinfo;
-		dwf_copy_type(dest, base);
-		dest->ty_qualifiers = qual;
-		if (lx)
-		    dest->ty_lexinfo = lx;
-		break;
-
-	    case DT_IS_TYPEDEF:
-		dest = dt->dt_type;
-		if (dest->ty_code != TY_NOTYPE)
-		    break;
-		/*
-		 * Copy the base type, preserving the 'typedef' pointer
-		 * and lexinfo
-		 */
-		base = *(dt->dt_p_type);
-		tdef = dest->ty_typedef;
-		lx = dest->ty_lexinfo;
-		dwf_copy_type(dest, base);
-		dest->ty_typedef = tdef;
-		if (lx)
-		    dest->ty_lexinfo = lx;
-		/*
-		 * If the base type does not already contain a reference to
-		 * a typedef then set it.  This is so that variables are
-		 * shown with the typedef name even if the symbol table
-		 * used the underlying type.
-		 */
-		if ((base->ty_typedef == NULL) && (base->ty_lexinfo != NULL))
-		    base->ty_typedef = tdef;
-		break;
-		
-	    case DT_IS_VAR:
-	    case DT_IS_RANGE:
-	    case DT_IS_BITFIELD:
-		break;
-
-	    } /* switch */
-
-	    /*
-	     * Check for unresolved derivative types.
-	     */
-	    if (dest && !IS_BASIC_TYPE(dest) && (dest->ty_base == NULL)) {
-		if (recursed == 0)
-		    errf("\\bBad DWARF type, offset <%ld>", (long)dt->dt_base_offset);
-#if WANT_DEBUG
-fprintf(stderr, "level %d bad type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
-#endif
-		bad_dummy++;
-	    }
-	}
-
-	/*
-	 * Look for struct/union to fix.
-	 * Also does base class names.
-	 */
 	if ((dt->dt_base_offset == (off_t)0) && (dt->dt_is == DT_IS_TYPE)) {
 	    dest = dt->dt_type;
 	    if ((dest->ty_code == TY_STRUCT) || (dest->ty_code == TY_UNION)) {
@@ -1064,6 +975,99 @@ if (recursed == 0)
 fprintf(stderr, "recursed %d - %d incomplete type, %d bad type\n", recursed, incomplete, bad_dummy);
 #endif
     return incomplete + bad_dummy;
+}
+
+static type_t *
+dwf_fixup_type(dt)
+dtype_t *dt;
+{
+    dtype_t *dbase;
+    type_t *base;
+    type_t *dest;
+    qualifiers_t qual;
+    typedef_t *tdef;
+    lexinfo_t *lx;
+
+    /*
+     * Base type missing ?
+     */
+    if (dt->dt_base_offset != (off_t)0) {
+	/*
+	 * Look for the base type in our list.
+	 */
+	if ((dbase = dwf_lookup_dtype(dt, dt->dt_base_offset)) != NULL) {
+	    /*
+	     * Resolve the base type if possible.
+	     */
+	    if ((base = dwf_fixup_type(dbase)) != NULL) {
+		*(dt->dt_p_type) = base;
+		dt->dt_base_offset = (off_t)0;
+	    }
+	}
+    }
+
+    if (dt->dt_base_offset == (off_t)0) {
+	/*
+	 * If this is a dummy type (ty_code == TY_NOTYPE) then fix it.
+	 */
+	switch (dt->dt_is) {
+	case DT_IS_TYPE:
+	    dest = dt->dt_type;
+	    if (dest->ty_code != TY_NOTYPE)
+		break;
+	    /*
+	     * Only qualified types should have got a dummy type.
+	     */
+	    if (dt->dt_type->ty_qualifiers == 0) {
+		errf("\bUnqualified dummy DWARF type");
+		break;
+	    }
+	    /*
+	     * Copy the base type, preserving the qualifiers and lexinfo.
+	     */
+	    base = dt->dt_type->ty_base;
+	    qual = dest->ty_qualifiers;
+	    lx = dest->ty_lexinfo;
+	    dwf_copy_type(dest, base);
+	    dest->ty_qualifiers = qual;
+	    if (lx)
+		dest->ty_lexinfo = lx;
+	    break;
+		
+	case DT_IS_TYPEDEF:
+	   dest = dt->dt_type;
+	   if (dest->ty_code != TY_NOTYPE)
+		break;
+	   /*
+	    * Copy the base type, preserving the 'typedef' pointer
+	    * and lexinfo
+	    */
+	   base = *(dt->dt_p_type);
+	   tdef = dest->ty_typedef;
+	   lx = dest->ty_lexinfo;
+	   dwf_copy_type(dest, base);
+	   dest->ty_typedef = tdef;
+	   if (lx)
+		dest->ty_lexinfo = lx;
+	   /*
+	    * If the base type does not already contain a reference to
+	    * a typedef then set it.  This is so that variables are
+	    * shown with the typedef name even if the symbol table
+	    * used the underlying type.
+	    */
+	   if ((base->ty_typedef == NULL) && (base->ty_lexinfo != NULL))
+		base->ty_typedef = tdef;
+	   break;
+	   
+	case DT_IS_VAR:
+	case DT_IS_RANGE:
+	case DT_IS_BITFIELD:
+	   break;
+	   
+	}
+    }
+    
+    return (dt && dt->dt_base_offset == (off_t)0) ? dt->dt_type : NULL;
 }
 
 /*
