@@ -1099,15 +1099,22 @@ ci_exec_result_t res;
 	case DT_ARRAY_OF:
 	case DT_PTR_TO:
 		addr_to_string(buf, sizeof(buf) - 1, vl.vl_addr,
-								type, de->de_format);
+			       type, de->de_format);
 		break;
 	case TY_INT:
-	case TY_LONG:
-		int_to_string(buf, sizeof(buf), (vlong)vl.vl_int, de->de_format);
-		break;
 	case TY_UINT:
+	case TY_LONG:
 	case TY_ULONG:
-		int_to_string(buf, sizeof(buf), (vlong)vl.vl_int, de->de_format);
+		if (is_signed_format(de->de_format)) {
+		    int_to_string(buf, sizeof(buf),
+				  (vlong)vl.vl_int,
+				  de->de_format);
+		}
+		else {
+		    int_to_string(buf, sizeof(buf),
+				  (vlong)(vl.vl_int & (unsigned)~0),
+				  de->de_format);
+		}
 		break;
 #if HAVE_LONG_LONG
 	case TY_LONGLONG:

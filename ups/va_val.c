@@ -47,7 +47,6 @@ static void show_string PROTO((const char *iptr, size_t ilen,
 			       int delim, language_t language));
 static vlong get_fieldval PROTO((bool bits_big_endian, vlong word,
 			       bitfield_t *bf, int is_signed));
-static int is_signed_format PROTO((vformat_t format));
 static void note_badaddr PROTO((char *buf, size_t bufsize, language_t language, 
                                 taddr_t addr));
 static void vtbl_to_string PROTO(( char *buf, size_t bufsize, taddr_t addr,
@@ -501,7 +500,7 @@ int is_signed;
 	return val;
 }
 
-static int
+int
 is_signed_format(format)
 vformat_t format;
 {

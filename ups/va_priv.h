@@ -163,6 +163,7 @@ void read_and_show_C_string PROTO((taddr_t addr, char *rbuf, size_t rbufsize,
 int var_or_expr_getwidth PROTO((objid_t obj, int fnum, fval_t fval));
 #endif
 int addr_to_number PROTO((vlong *val, taddr_t addr, type_t *type));
+int is_signed_format PROTO((vformat_t format));
 
 /*  va_menu.c
  */
