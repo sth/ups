@@ -191,7 +191,7 @@ int x86_gcc_register PROTO((int regno));
 #if defined(OS_SUNOS)
 int ptrace_set_all_regs PROTO((iproc_t *ip, sunregs_t *regtab));
 void ptrace_get_regtab PROTO((iproc_t *ip, sunregs_t *regtab));
-#else
+#elif AO_HAS_PTRACE_REGS
 int ptrace_set_all_regs PROTO((iproc_t *ip, ptrace_regs_t *pr));
 void ptrace_get_regtab PROTO((iproc_t *ip, ptrace_regs_t *pr));
 #endif
