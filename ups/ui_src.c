@@ -91,7 +91,7 @@ int lnum;
       if ((ed = getenv("EDITOR")) == NULL)
 	ed = "vi";		/* default if EDITOR is not set */
       
-      if (strstr(ed,"emacs"))
+      if (strstr(ed,"emacs") || (*ed == 'x'))
 	sprintf (buf, "%s +%d ", ed, lnum);
       else
 	sprintf	/* vi is default */
