@@ -91,7 +91,7 @@ char ups_sccsdata_c_rcsid[] = "$Id$";
  */
 
 const char *ups__sccsdata[] = {
-	"ups version  3.38beta1 (build date: Fri Oct 25 16:57:55 BST 2002)",
+	"ups version 3.38beta1-cvs (build date: Fri Oct 25 16:57:55 BST 2002)",
 	"@{$ups$}: sccsdata.c 3.14 ",
 	"@{$ups$}: st_debug.c 1.1 ",
 	"@{$ups$}: st_lookup.c 1.8 ",

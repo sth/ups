@@ -1972,9 +1972,8 @@ static const char *help_level_13A[]=	/* ups version */
 {
 "                     UPS VERSION\n",
 "\n",
-"     This is version 3.37. Press control-V to  show the version\n",
-"     version number  and  build  date. This version includes\n",
-"     enhancements from the authors listed below.\n",
+"     Press control-V  to show the version  number and build date.\n",
+"     The help information was last updated for version 3.37.\n",
 0,
 };
 
