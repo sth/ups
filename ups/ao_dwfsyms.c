@@ -819,11 +819,12 @@ int recursed;		/* Recursion level, 0 = top. */
 		     * For C++ the "struct" may really be a class,
 		     * and contain type definitions, which can get referenced
 		     * from a higher level, so we have to descend :-(
+		     *
+		     * It seems that gcc 3.2.2 also embeds types inside
+		     * structures in C mode, so we always load the types.
 		     */
-		    if (stf->stf_language == LANG_CC) {
-			dw_what_next = DWL_ANY_TYPES;
-			descend = TRUE;
-		    }
+		    dw_what_next = DWL_ANY_TYPES;
+		    descend = TRUE;
 
 		} else {
 		    /*
@@ -835,10 +836,13 @@ int recursed;		/* Recursion level, 0 = top. */
 		     * Determine which child DIEs we need to process.
 		     * For C++ the "struct" may really be a "class",
 		     * and contain type definitions.
+		     *
+		     * It seems that gcc 3.2.2 also embeds types inside
+		     * structures in C mode, so we always load the types.
 		     */
-		    dw_what_next = DWL_STRUCT_MEMBERS;
+		    dw_what_next = DWL_STRUCT_MEMBERS | DWL_ANY_TYPES;
 		    if (stf->stf_language == LANG_CC)
-			dw_what_next |= DWL_CLASS_MEMBERS | DWL_ANY_TYPES;
+			dw_what_next |= DWL_CLASS_MEMBERS;
 		    descend = TRUE;
 
 		    dt = dwf_make_struct_type(dbg, die, ap, stf, TY_STRUCT, parent_bl);
