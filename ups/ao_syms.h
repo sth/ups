@@ -53,7 +53,7 @@ typedef struct fsyminfo {
 	unsigned fs_initial_sline_offset; /* initial lnum offset (N_XLINE) */
 	int fs_symlim;			/* ditto */
 	long fs_cblist;			/* used only in st_cb.c */
-#ifdef ST_TE
+#if WANT_THIRD_EYE
 	/* Fields for extracting line number information.  */
 	int fs_lno_base;
 	int fs_first_lnum;
@@ -132,7 +132,7 @@ typedef struct ao_stdata_t {
 	int st_textfd;			/* Fd open for reading on textfile */
 	symio_t *st_text_symio;		/* Symio for the a.out file itself */
 
-#ifdef ST_TE
+#if WANT_THIRD_EYE
 	extsym_t *st_exttab;		/* External symbols */
 	int st_exttab_size;		/* # external symbols */
 	char *st_lnotab;		/* The whole line number table */
@@ -140,6 +140,10 @@ typedef struct ao_stdata_t {
 	strcache_id_t st_aux_strcache;	/* Aux symbols (TIRs etc) */
 	struct stfst **st_stftab;	/* For rndx mapping */
 	int st_stftab_size;		/* # entries in st_stftab */
+#endif
+
+#if WANT_DWARF
+	hashtab_t *st_type_names;	/* Type name -> DIE. */
 #endif
 
 #if WANT_ELF
@@ -200,10 +204,15 @@ typedef struct Dataspace {
 
 #if WANT_DWARF
 /*
- * Used to keep track of type information.
+ * Used to keep track of type etc. information gathered from each
+ * compilation unit (CU).
  */
 typedef enum {
-    DT_IS_TYPE, DT_IS_TYPEDEF, DT_IS_VAR, DT_IS_RANGE, DT_IS_BITFIELD,
+    DT_IS_TYPE,
+    DT_IS_TYPEDEF,
+    DT_IS_VAR,
+    DT_IS_RANGE,
+    DT_IS_BITFIELD,
 } dt_is_t;
 typedef struct dtype_s {
 	off_t dt_offset;	/* CU relative offset of DIE for this type. */
@@ -213,6 +222,17 @@ typedef struct dtype_s {
 	type_t *dt_type;	/* Type (DT_IS_TYPE/DT_IS_TYPEDEF) */
 	struct dtype_s *dt_next;
 } dtype_t;
+
+/*
+ * Type information saved on initial skim through compilation units.
+ * Currently only C++ classes are recorded.
+ */
+typedef struct typename_s {
+	char *tn_name;		/* Name. */
+	off_t tn_offset;	/* CU relative offset of DIE for this type. */
+	struct stf_s *tn_stf;
+	struct typename_s *tn_next;	/* Next with the same name. */
+} typename_t;
 
 /*
  * Extended address description, abstracted from DWARF location description.
