@@ -21,7 +21,7 @@
  */
 
 
-/* @(#)debug.h	1.7 24 May 1995 (UKC) */
+/* $Id$ */
 
 /*  These flags are set by the -dbflags command line switch.
  *  They mostly enable debugging output (useful in the first
@@ -81,5 +81,13 @@
 /*  Dump memory map info on target startup.
  */
 #define DBFLAG_DUMP_MMAP_INFO		0x0100
+
+/*  If UPS built with -DWANT_DEBUG dump symbol table information.
+ */
+#define DBFLAG_DUMP_SYMTAB		0x0200
+
+/*  If UPS built with -DWANT_DEBUG dump source line number info.
+ */
+#define DBFLAG_DUMP_LNOS		0x0400
 
 extern unsigned long Debug_flags;
