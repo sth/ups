@@ -615,11 +615,10 @@ static taddr_t
 ao_get_retaddr_after_sig(xp)
 target_t *xp;
 {
-#if defined(ARCH_SUN3) || defined(ARCH_VAX) || defined(ARCH_LINUX386)
+#if defined(ARCH_SUN3) || defined(ARCH_VAX) || defined(ARCH_386)
 	return xp_getreg(xp, UPSREG_PC);
-#endif
-#if defined(ARCH_MIPS) || defined(ARCH_SUN4) || defined(ARCH_CLIPPER)
-	panic("gras NYI on MIPS");
+#else
+	panic("gras NYI");
 	return 0;	/* to satisfy gcc */
 #endif
 }
