@@ -1800,8 +1800,12 @@ expr_context_t context;
 #if WANT_LL
 			case TY_LONGLONG:
 			case TY_ULONGLONG:
+#if HAVE_LONG_LONG
 				ci_code_constpush(tx, ((long *)&val.cv_long_long)[1]);
 				ci_code_constpush(tx, ((long *)&val.cv_long_long)[0]);
+#else
+				ci_code_constpush(tx, val.cv_long_long);
+#endif
 				break;
 #endif
 			default:
