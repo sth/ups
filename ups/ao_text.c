@@ -199,6 +199,8 @@ const char **p_mainfunc_name;
 		ao_get_fi_vars,
 		ao_get_fi_macros,
 
+		ao_unwind,
+
 		ao_disassemble_instruction,
 		ao_get_jumps,
 	};
@@ -226,6 +228,8 @@ const char **p_mainfunc_name;
 		dw_get_fu_blocks,
 		dw_get_fi_vars,
 		dw_get_fi_macros,
+
+		dw_unwind,
 
 		ao_disassemble_instruction,
 		ao_get_jumps,
@@ -611,10 +615,9 @@ ao_preamble_t *pr;
 	else if ((*(unsigned int *)text & 0xffffffff) == (PUSHQ_RBP | (MOVQ_RSP_RBP << 8))) {
 		text += 4;
 	}
-#else
+#endif
 	else
 		f->fu_flags |= FU_NO_FP;
-#endif
 
 	if (*(unsigned short *)text == SUBL_IMM_ESP) {
 		pr->pr_rsave_offset = -*(int *)&text[2];
