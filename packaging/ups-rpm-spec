@@ -10,14 +10,14 @@ Summary: A native X Windows based debugger for C, C++ and Fortran
 Name: ups 
 Version: __VERSION__
 Release: __RELEASE__ 
-Copyright: BSD 
+Copyright: GPL 
 Group: Development/Debuggers
 
 # Source: should be - ftp://...
 Source: http://www.concerto.demon.co.uk/UPS/src/ups-__RELTAG__.tar.gz
 Source1: ups.wmconfig
 Source2: ups.sh
-URL: http://www.concerto.demon.co.uk/UPS/
+URL: http://ups.sourceforge.net/
 # Distribution: N/A
 # Vendor: N/A
 Packager: Ian Edwards <ian@concerto.demon.co.uk>
