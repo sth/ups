@@ -1175,8 +1175,7 @@ bool attach;
 	if (want_window) {
 		char title[20];
 		strcpy(title, "%a ");
-		if (strchr(textname, '/'))
-		    textname = strrchr(textname,'/')+1;
+		textname = base_name(textname);
 		strncpy(title+3,textname,sizeof(title)-4);
 		title[sizeof(title)-1] = 0;
 		wn_set_window_hints(wn, title,title, &ups_icon);
@@ -1210,7 +1209,10 @@ bool attach;
 	td_set_displayed_source((fil_t *)NULL, 0, (const char *)NULL);
 
 	st = xp_main_symtab(xp);
-	if (st->st_sfiles != NULL && st->st_sfiles->fi_next == NULL)
+	/* If single file compiled into a.out... */
+	if ((strcmp(base_name(xp->xp_textpath), "a.out") == 0)
+			&& (st->st_sfiles != NULL)
+			&& (st->st_sfiles->fi_next == NULL))
 		basepath = st->st_sfiles->fi_name;
 	else
 		basepath = xp->xp_textpath;
@@ -1392,10 +1394,10 @@ char *textname;
   char title[20];
 
   strcpy(title, "%a ");
-  if (strchr(textname, '/'))
-    textname = strrchr(textname,'/')+1;
+  textname = (char *)base_name(textname);
   strncpy(title+3,textname,sizeof(title)-4);
   title[sizeof(title)-1] = 0;
   wn = wn_get_root_window(get_message_wn());
   wn_set_window_hints(wn, title,title, &ups_icon);
 }
+
