@@ -361,6 +361,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	}
 	else {
 		symsh = symstrsh = NULL;
+		*p_st_is = ST_NONE;
 	}
 		
 	if (lookup_section(el, ".stab.index", &indexsh)) {
@@ -409,7 +410,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	}
 	else
 #endif
-	if (symsh != NULL) {
+	if (*p_st_is == ST_STABS) {
 		ex->file_syms_offset = symsh->sh_offset;
 		ex->nsyms = symsh->sh_size / symsh->sh_entsize;
 		ex->file_symstrings_offset = symstrsh->sh_offset;

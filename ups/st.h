@@ -127,7 +127,8 @@ typedef struct addrlist_s addrlist_t;	/* Defined in st_util.c */
 typedef struct Module Module;		/* Defined in st_module.c */
 
 typedef enum symtab_type_e {
-	ST_STABS = 0,
+	ST_NONE,
+	ST_STABS,
 	ST_DWARF,
 	ST_ThirdEye		/* probably obsolete */
 } symtab_type_t;
