@@ -832,24 +832,24 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-debug          use this when debugging UPS no
-  --enable-dwarf          include support for DWARF symbol tables auto
+  --enable-debug          use this when debugging UPS (no)
+  --enable-dwarf          include support for DWARF symbol tables (auto)
   --enable-multiscreen    allows the '-split' option to put each window on
-                             a different X screen yes
-  --enable-clibrary       C library routines in the C interpreter yes
-  --enable-gets           gets() routine in the C interpreter no
-  --enable-math           math library routines in the C interpreter no
-  --enable-longlong       allow 'long long' in the C interpreter no
-  --enable-longdouble     allow 'long double' in the C interpreter no
-  --enable-aout           debug 'aout' executables auto
-  --enable-elf            debug ELF executables auto
+                             a different X screen (yes)
+  --enable-clibrary       C library routines in the C interpreter (yes)
+  --enable-gets           gets() routine in the C interpreter (no)
+  --enable-math           math library routines in the C interpreter (no)
+  --enable-longlong       allow 'long long' in the C interpreter (no)
+  --enable-longdouble     allow 'long double' in the C interpreter (no)
+  --enable-aout           debug 'aout' executables (auto)
+  --enable-elf            debug ELF executables (auto)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-gdb=DIR          build UPS as an interface to GDB n/a
+  --with-gdb=DIR          build UPS as an interface to GDB (currently broken)
   --with-x                use the X Window System
-  --with-xt               include Xt dependent features no
+  --with-xt               include Xt dependent features (no)
 
 Some influential environment variables:
   CC          C compiler command
