@@ -34,6 +34,7 @@ char ups_xc_c_rcsid[] = "$Id$";
 #include <local/ukcprog.h>
 
 #include "ups.h"
+#include "symtab.h"
 #include "ci.h"
 #include "xc_load.h"
 

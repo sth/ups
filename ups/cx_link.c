@@ -222,7 +222,7 @@ const char *path;
 
 	for (ll = linklist; ll != NULL; ll = ll->ll_next) {
 		if (many)
-			fprintf(fp, "Offset %ld\n\n", ll->ll_offset);
+			fprintf(fp, "Offset %ld\n\n", (long)ll->ll_offset);
 
 		if (ci_disassemble_linkinfo(ll->ll_linkinfo, fp, path) != 0) {
 			fclose(fp);

@@ -34,6 +34,7 @@ char ups_cg_c_rcsid[] = "$Id$";
 #include "xc_machine.h"
 #include "xc_builtins.h"
 #include "cc.h"
+#include "st.h"
 
 int main PROTO((int argc, char **argv));
 static int noread PROTO((taddr_t addr, voidptr buf, size_t nbytes));
@@ -164,13 +165,13 @@ size_t nbytes;
 /* (IDE) Dummy so 'cx' will build. */
 void
 demangle_name_2(name, len, alloc_id, ptr, func, fil)
-     char *name;
-     int len;
-     alloc_pool_t *alloc_id;
-     char **ptr;
-     int func;
-     fil_t *fil;
+char *name;
+int len;
+alloc_pool_t *alloc_id;
+char **ptr;
+int func;
+fil_t *fil;
 {
-  *ptr = strdup (name);
+	*ptr = strdup (name);
 }
 

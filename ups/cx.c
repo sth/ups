@@ -28,12 +28,15 @@ char ups_cx_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 
+#include <stdlib.h>
+
 #include "ups.h"
 #include "symtab.h"
 #include "ci.h"
 #include "xc_load.h"
 #include "cx_link.h"
 #include "cc.h"
+#include "st.h"
 
 int main PROTO((int argc, char **argv));
 static char *get_opath PROTO((const char *srcpath, bool want_ccpaths,
@@ -224,13 +227,13 @@ bool *p_is_source;
 /* (IDE) Dummy so 'cx' will build. */
 void
 demangle_name_2(name, len, alloc_id, ptr, func, fil)
-     char *name;
-     int len;
-     alloc_pool_t *alloc_id;
-     char **ptr;
-     int func;
-     fil_t *fil;
+char *name;
+int len;
+alloc_pool_t *alloc_id;
+char **ptr;
+int func;
+fil_t *fil;
 {
-  *ptr = strdup (name);
+	*ptr = strdup (name);
 }
 
