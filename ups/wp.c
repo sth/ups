@@ -45,7 +45,7 @@ struct watchpoint_s {
 	char *wp_val;
 };
 
-static watchpoint_t Wphead = { &Wphead, &Wphead };
+static watchpoint_t Wphead = { &Wphead, &Wphead, 0, 0, FALSE, FALSE, FALSE, 0, NULL };
 
 watchpoint_t *
 dx_add_watchpoint(xp, addr, size)

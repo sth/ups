@@ -33,7 +33,9 @@ char ups_trun_j_c_rcsid[] = "$Id$";
 #include <signal.h>
 #include <string.h>
 
+#include <local/wn.h>
 #include <local/ukcprog.h>
+#include <local/obj/obj.h>
 #include <mtrprog/utils.h>
 
 #include "ups.h"
@@ -49,6 +51,7 @@ char ups_trun_j_c_rcsid[] = "$Id$";
 #include "obj_stack.h"
 #include "obj_signal.h"
 #include "obj_bpt.h"
+#include "obj_wpt.h"
 #include "srcbuf.h"
 #include "dx.h"
 #include "expr.h"
@@ -814,11 +817,11 @@ stopres_t *p_stopres;
 	static char error_stackfile[] = "ups_stack.error";
 	taddr_t addrlim;
 	jump_t *jumps, *j, *last_j;
-	jumptype_t alt_jumptype, alt_jumptype1;
+	jumptype_t alt_jumptype;
 	lno_t *lno, *old_lno;
-	func_t *f, *old_f, *orig_f;
+	func_t *f, *old_f;
 	taddr_t fp, orig_fp, adjusted_pc, pc, last_pc;
-        taddr_t addr, nextaddr, bpt_addr, alt_addr, alt_addr1, dummy_addr;
+        taddr_t addr, nextaddr, bpt_addr, alt_addr, dummy_addr;
 	stopres_t stopres;
 	bool off_end_of_main;
 	breakpoint_t *bp, *tmp_bp, *tmp_bp1 = 0;
@@ -831,6 +834,9 @@ stopres_t *p_stopres;
 
 #ifdef ARCH_SUN4
 	static int checked = 0, sunos_step = 1;
+	jumptype_t alt_jumptype1;
+	func_t *orig_f;
+        taddr_t alt_addr1;
 
 	if (!checked)
 	{
@@ -1224,7 +1230,9 @@ retry:
 			taddr_t call_bpt_addr;
 			breakpoint_t *bp_at_start_of_func;
 
+#ifdef ARCH_SUN4
 set_bpt:
+#endif
 			if (get_min_bpt_addr(f, &call_bpt_addr, FALSE) != 0)
 				panic("can't get min bpt addr");
 			bp_at_start_of_func = dx_addr_to_breakpoint(xp, call_bpt_addr);

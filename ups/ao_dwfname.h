@@ -26,6 +26,10 @@
 
 int		find_types_by_name PROTO((void));
 
+int		set_find_types_by_name PROTO((int val));
+
+#ifdef DWARF_DEBUG_TYPEDEFED
+
 type_t *	dwf_find_alt_type_defn PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 					      stf_t *stf));
 
@@ -33,5 +37,7 @@ typename_t *	dwf_save_typename PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 					 symtab_t *st, stf_t *stf));
 typename_t *	dwf_find_typename PROTO((symtab_t *st, stf_t *stf,
 					 const char *name));
+
+#endif /* DWARF_DEBUG_TYPEDEFED */
 
 #endif /* WANT_DWARF */

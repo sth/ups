@@ -53,13 +53,11 @@ char ups_srcwin_c_rcsid[] = "$Id$";
 #include "va_priv.h"
 #include "ui.h"
 #include "state.h"
-
-void bpt_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
-void env_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
-void srcfile_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
-void func_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
-void sig_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
-void wpt_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
+#include "obj_misc.h"
+#include "obj_bpt.h"
+#include "obj_wpt.h"
+#include "obj_env.h"
+#include "obj_signal.h"
 
 #define TO_1BASE(lnum)	((lnum) + 1)
 #define TO_0BASE(lnum)	((lnum) - 1)
@@ -151,6 +149,7 @@ static void init_display_area_overlay PROTO((Outwin *dw, int wn,
 					     Edit_buffer *buffer));
 static void srcwin_scroll_up PROTO((char *data, event_t *ev));
 static void srcwin_scroll_down PROTO((char *data, event_t *ev));
+static void srcwin_clear_stopline PROTO((void));
 
 
 /*  List of all display windows (source and output).

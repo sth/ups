@@ -33,6 +33,8 @@ char ups_ups_if_c_rcsid[] = "$Id$";
 
 #include <demangle.h>
 
+#include "libiberty.h"
+
 /*
  *  Demangle a GNU C++ function name into a a C++ representation of the name.
  *  Returns NULL or a pointer to a malloc'd string which the caller must free.

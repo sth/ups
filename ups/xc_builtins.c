@@ -29,6 +29,8 @@ char ups_xc_builtins_c_rcsid[] = "$Id$";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
 
 #include <local/ukcprog.h>
 
@@ -95,8 +97,10 @@ static int builtin_XCloseDisplay PROTO(( Display *dpy));
 #endif
 static FILE *builtin_fopen PROTO((const char *path, const char *mode));
 static int builtin_fclose PROTO(( FILE *fp));
+#if HAVE_POPEN
 static FILE *builtin_popen PROTO((const char *cmd, const char *mode));
 static int builtin_pclose PROTO(( FILE *fp));
+#endif
 static FILE *builtin_freopen PROTO((const char *path, const char *mode, FILE *fp));
 #if HAVE___BUILTIN_NEXT_ARG
 #endif
@@ -118,7 +122,9 @@ extern char *optarg;
 
 static char **Builtin_environ = NULL;
 static char **Builtin_sys_errlist = NULL;
+#if HAVE_GLOBAL_CTYPE
 static char **Builtin_ctype = NULL;
+#endif
 
 /* ---------------------------------------------------------------------------
  */
@@ -432,6 +438,8 @@ FILE *fp;
 	return fp;
 }
 
+#if HAVE_POPEN
+
 static FILE *
 builtin_popen(cmd, mode)
 const char *cmd, *mode;
@@ -453,6 +461,8 @@ FILE *fp;
 	ci_unregister_fd((machine_t *)NULL, fileno(fp));
 	return pclose(fp);
 }
+
+#endif /* HAVE_POPEN */
 
 #if HAVE_X_WINDOWS
 static Display *

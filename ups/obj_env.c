@@ -83,8 +83,8 @@ static enventry_t *Envtab = NULL;
 
 Edit_history* env_history = NULL;
 fnamemap_t Env_fnamemap[] = {
-	{ FN_ENV_VALUE,	"env-var-value",	TRUE,	env_quitfunc, &env_history	},
-	{ 0,		NULL,			FALSE,	NULL		},
+	{ FN_ENV_VALUE,	"env-var-value",	TRUE,	env_quitfunc,	&env_history	},
+	{ 0,		NULL,			FALSE,	NULL,		NULL		},
 };
 
 const char Envhead_format[] = "Environment\n";

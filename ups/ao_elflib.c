@@ -60,6 +60,8 @@ char ups_ao_elflib_c_rcsid[] = "$Id$";
 #include "ao_elflib.h"
 #include "ao_elfsym.h"
 #include "ao_symscan.h"
+#include "ao_shlib.h"
+#include "ao_elflib.h"
 #include "breakpoint.h"
 #include "data.h"		/* RGA for dread & dgets */
 #include "srcwin.h"
@@ -137,6 +139,11 @@ get_preload_shlib_list PROTO((alloc_pool_t *ap, const char *textpath,
 static const char **
 add_to_env PROTO((const char *s));
 #endif
+
+static Libdep *libdep_find_name PROTO((Libdep *new_libdep, const char *name));
+static int addr_cmp PROTO((const void *addr1p, const void *addr2p));
+static void load_from_libdep PROTO((target_t *xp, Libdep *par,
+				    int level, char *name));
 
 static unsigned long Main_debug_vaddr = 0;
 
@@ -1443,7 +1450,7 @@ Solib_addr **p_solib_addrs;
 		*pos = '\0';
 	pos = buf;
 	addr = 0;
-	if ((sscanf(buf, "%*s => %s (%x)", name, &addr) == 2)
+	if ((sscanf(buf, "%*s => %s (%lx)", name, &addr) == 2)
 		|| (sscanf(buf, "%*s => %s", name) == 1))
 	{
 	    if (stat(name, &stbuf) != 0)
@@ -1516,9 +1523,12 @@ typedef struct addr_s{
 } addr_t;
 
 static int
-addr_cmp(addr1, addr2)
-addr_t *addr1, *addr2;
+addr_cmp(addr1p, addr2p)
+const void *addr1p, *addr2p;
 {
+  const addr_t *addr1 = addr1p;
+  const addr_t *addr2 = addr2p;
+   
   if (!addr1 || !addr2)
     return 1;
   return addr1->addr < addr2->addr;

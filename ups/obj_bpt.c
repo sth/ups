@@ -135,6 +135,7 @@ static bool execute_bp_code_internal PROTO((breakpoint_t *bp,
 					    taddr_t fp, taddr_t ap,
 					    int button));
 static void set_bpt_location PROTO((fval_t *fields, func_t *f, int lnum));
+static void null_ofunc PROTO((const char *s));
 
 /*  Maximum length of a function name. If you change this you must also
  *  change the Bpt_format string to match.
@@ -165,11 +166,11 @@ const char Bpt_format[] = "%8cs:%[-]:8c:64cb  %[F]:8c:64cf%1cs%[-]10cn%[-]9cq   
 Edit_history* bpt_history = NULL;
 
 fnamemap_t Bpt_fnamemap[] = {
-	{ FN_BPT_FNAME,	"function-name",	FALSE,	bpfunc_quitfunc, &bpt_history	},
-	{ FN_BPT_FILE,	"filename",		FALSE,	bpfunc_quitfunc	},
-	{ FN_BPT_LNUM,	"lnum",			FALSE,	bplnum_quitfunc	},
-	{ FN_BPT_STATE,	"state",		FALSE,	bpstate_quitfunc},
-	{ 0,		NULL,			FALSE,	NULL		},
+	{ FN_BPT_FNAME,	"function-name",	FALSE,	bpfunc_quitfunc,  &bpt_history	},
+	{ FN_BPT_FILE,	"filename",		FALSE,	bpfunc_quitfunc,  NULL		},
+	{ FN_BPT_LNUM,	"lnum",			FALSE,	bplnum_quitfunc,  NULL		},
+	{ FN_BPT_STATE,	"state",		FALSE,	bpstate_quitfunc, NULL		},
+	{ 0,		NULL,			FALSE,	NULL,		  NULL		},
 };
 
 const char Bphead_format[] = "Breakpoints\n";
@@ -726,7 +727,7 @@ bpstate_draw(dets)
 register struct drawst *dets;
 {
 	long fg;
-	static color_done = -1;
+	static int color_done = -1;
 	static color_t color_fg;
 	int bp_enabled, use_alloc_color;
 
@@ -1145,7 +1146,6 @@ bool show;
 {
 	fval_t fields[FN_BPT_LAST + 1];
 	bpdesc_t *bd;
-	const char *fname;
 	taddr_t addr;
 	target_t *xp;
 
@@ -1350,10 +1350,11 @@ const char **p_display_string;
 	fval_t fields1[FN_BPT_LAST + 1];
 	objid_t obj1 = NULL;
 	taddr_t addr1;
+	bpdesc_t *bd1 = NULL;
 #endif /* OS_SUNOS */
 	fval_t fields[FN_BPT_LAST + 1];
 	func_t *f, *f1 = NULL;
-	bpdesc_t *bd, *bd1 = NULL;
+	bpdesc_t *bd;
 	const char *fname;
 	fil_t *fil;
 	int lnum, lnum1, ret, method_call = 0, multi_func = 0, lnum_n;
@@ -1749,7 +1750,7 @@ bool verbose;
 	fval_t fields[FN_BPT_LAST + 1];
 	bpdesc_t *bd;
 
-	if (verbose)
+	if (verbose) {
 	  if (disable)
 	    errf("\bSelected breakpoint code will be ignored");
 	  else
@@ -1757,6 +1758,7 @@ bool verbose;
 	      errf("\bSelected breakpoint code will be executed");
 	    else
 	      errf("\bSelected breakpoint code will be executed when globally enabled");
+	}
 	bd = (bpdesc_t *)obj;
 	bd->bd_inactive = disable;
 /*	if (disable)
@@ -2121,7 +2123,6 @@ bool remove_bpts;
   bool junk;
   struct stat stat_buf;
   char *state_path;
-  int res = 0;
   FILE *fp;
   errf_ofunc_t oldf, oldf1;
 

@@ -30,6 +30,7 @@ char ups_ao_dwfutil_c_rcsid[] = "$Id$";
 #include <mtrprog/utils.h>
 #include <mtrprog/hash.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -440,13 +441,11 @@ stf_t *stf;
 vaddr_t *
 dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
 {
-    int rv;
     int i;
-    Dwarf_Error err;
     Dwarf_Locdesc *loclist;
     Dwarf_Signed count = 0;
     Dwarf_Small op;
-    vaddr_t *head = NULL, *last, *vaddr;
+    vaddr_t *head = NULL, *vaddr;
 
     if ((loclist = dwf_get_locdesc(dbg, die, id, &count)) == NULL)
 	return (vaddr_t *)NULL;

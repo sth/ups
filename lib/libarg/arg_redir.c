@@ -404,7 +404,6 @@ redirtype_t redirtype;
 {
 	int fd;
 	const char *mesg;
-	extern int errno;
 
 	mesg = NULL;
 	switch(redirtype) {

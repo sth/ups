@@ -38,6 +38,7 @@ char wn_wn_win_c_rcsid[] = "$Id$";
 #include "wn_win.h"
 
 static int find_wn PROTO((int wn));
+static void wn_record_root PROTO((swin_t *w));
 static void create_subwin_batch PROTO((int parwn, batchwin_t *wins, int nwins));
 static swin_t *make_w PROTO((int wn, const char *name, int xscreen));
 static void rchange_win PROTO((swin_t *par, int x_delta, int y_delta, int width, int height));
@@ -140,7 +141,7 @@ int wid;
 	return -1;
 }
 
-void
+static void
 wn_record_root(w)
 swin_t* w;
 {

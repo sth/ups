@@ -44,6 +44,11 @@ char ups_reg_c_rcsid[] = "$Id$";
 #include "debug.h"
 #include "tdr.h"
 #include "ui.h"
+#include "srcwin.h"
+#include "state.h"
+#include "ups.h"
+#include "symtab.h"
+#include "target.h"
 
 #define XPOS_OR_WIDTH	0
 #define YPOS_OR_HEIGHT	1

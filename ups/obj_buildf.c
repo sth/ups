@@ -67,6 +67,9 @@ typedef struct
 static const char *gen_getobjname PROTO((objid_t code));
 static void init_objtype PROTO((int objtype, const char *format, ot_t *ot,
 				bool have_window));
+static int get_row_resource_number PROTO((char *resource, int row_default,
+					  int max_rows, int check_only));
+static int row_compare PROTO((const void *ap, const void *bp));
 
 static bool  Src_header_header_exists = FALSE; 
 static bool Have_watchpoints = FALSE;
@@ -493,7 +496,7 @@ int check_only;
       if (env_str && str_ok)
       {
 	sprintf(violation_msg,
-		"WARNING: ups*%s resource value of %d already used\n",
+		"WARNING: ups*%s resource value of %ld already used\n",
 		resource, i);
 	fprintf(stderr, violation_msg);
       }
@@ -511,7 +514,7 @@ int check_only;
 	  if (env_str && str_ok)
 	  {
 	    sprintf(violation_msg,
-		    "  - using %d for ups*%s instead.\n",
+		    "  - using %ld for ups*%s instead.\n",
 		    i, resource);
 	    fprintf(stderr, violation_msg);
 	  }
@@ -525,7 +528,7 @@ int check_only;
       if (env_str && !str_ok)
       {
 	sprintf(violation_msg,
-		"  - using %d for ups*%s instead.\n",
+		"  - using %ld for ups*%s instead.\n",
 		i, resource);
 	fprintf(stderr, violation_msg);
       }
@@ -535,9 +538,11 @@ int check_only;
   return (i);
 }
   
-static int row_compare(a, b)
-Display_row *a, *b;
+static int row_compare(ap, bp)
+const void *ap, *bp;
 {
+  const Display_row *a = ap;
+  const Display_row *b = bp;
   if (a->row < b->row)
     return (1);
   if (a->row > b->row)

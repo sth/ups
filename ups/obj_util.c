@@ -27,9 +27,11 @@ char ups_obj_util_c_rcsid[] = "$Id$";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #include <local/ukcprog.h>
+#include <mtrprog/utils.h>
 #include <local/wn.h>
 #include <local/obj/obj.h>
 #include <local/obj/o_priv.h>

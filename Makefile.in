@@ -215,6 +215,7 @@ ups/develhdrs:
 	@-for i in ups lib/libdwarf lib/dwarfdump; do \
 		mkdir $$i/develhdrs/libelf; \
 	done
+	@-ln -s ../../../../${topdir}/lib/libMen3/menu3.h lib/libx11wn/develhdrs/local/menu3.h
 	@-ln -s ../../../${topdir}/lib/libarg/arg.h ups/develhdrs/local/arg.h
 	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h ups/develhdrs/local/menu3.h
 	@-ln -s ../../../${topdir}/lib/libobj ups/develhdrs/local/obj

@@ -23,13 +23,14 @@
 
 #ifdef OBJ_H_INCLUDED
 int wpt_accelerator_action PROTO((objid_t obj));
-objid_t add_watchpoint_object PROTO((taddr_t address, size_t size, char *text));
+objid_t add_watchpoint_object PROTO((taddr_t address, size_t size, const char *text));
 void remove_watchpoint_object PROTO((objid_t obj));
 char *wpt_format_obj PROTO((objid_t code));
 void do_wpt PROTO((objid_t obj, int command, char *arg));
 void add_watchpoint_header PROTO((objid_t par));
 int get_watchpoint_refresh_interval PROTO((void));
 void do_wps PROTO((objid_t obj, int command, char *arg));
+int global_wp_enabled PROTO((int set, int reset));
 void wpt_getcolor PROTO((objid_t obj, int wn, long *p_fg, long *p_bg));
 #endif
 

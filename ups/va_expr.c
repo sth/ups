@@ -51,6 +51,7 @@ char ups_va_expr_c_rcsid[] = "$Id$";
 #include "obj_stack.h"
 #include "obj_util.h"
 #include "obj_misc.h"
+#include "obj_wpt.h"
 #include "menudata.h"
 #include "va_priv.h"
 #include "tdr.h"
@@ -119,7 +120,7 @@ fdef_t Expr_fdefs[] = {
 Edit_history* expr_history = NULL;
 fnamemap_t Expr_fnamemap[] = {
 	{ FN_EXPR_STR,	"expression",	FALSE,	expr_quitfunc, &expr_history	},
-	{ 0,		NULL,		FALSE,	NULL		}
+	{ 0,		NULL,		FALSE,	NULL,          NULL		}
 };
 
 ALLOC_NEW_FREE(static,dexpr_t,dexpr,de_nextfree)

@@ -71,6 +71,9 @@ char ups_ao_elfsym_c_rcsid[] = "$Id$";
 #include "srcpath.h"
 #include "util.h"
 #include "va.h"
+#if WANT_DEBUG
+#include "st_debug.h"
+#endif
 
 static bool Had_error;
 	

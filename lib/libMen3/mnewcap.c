@@ -39,7 +39,10 @@ char Men3_mnewcap_c_rcsid[] = "$Id$";
 #include "menu_priv.h"
 
 static int mchange MPROTO((MENU * menu, int oldrv, int newrv,
-						const char *str, int fontno));
+			   const char *str, int fontno));
+static int mdelete_entry MPROTO((MENU **p_menu, int rv, short *p_xshift,
+				 short *p_yshift, short flags));
+static int mmaketoggle MPROTO((MENU *menu, int rv, int *p_value, int value));
 
 /*  Change the menu caption return value and font number of the menu
  *  buttons with return value oldrv. If str is NULL the caption is left

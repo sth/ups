@@ -34,6 +34,7 @@ char ups_cc_c_rcsid[] = "$Id$";
 #include <ctype.h>
 
 #include <local/ukcprog.h>
+#include <mtrprog/utils.h>
 
 #include "ups.h"
 #include "symtab.h"

@@ -47,6 +47,7 @@ char ups_va_menu_c_rcsid[] = "$Id$";
 #include "va_priv.h"
 #include "ui.h"
 #include "obj_stack.h"
+#include "obj_wpt.h"
 #include "tdr.h"
 #include "st.h"
 #include "ao_syms.h"
@@ -54,11 +55,24 @@ char ups_va_menu_c_rcsid[] = "$Id$";
 #include "ci.h"
 #include "expr.h" /* RCB, for show_static_member() */
 
-taddr_t
-get_vtbl_based_addr PROTO((taddr_t addr, type_t* type, int offset));
-
+static char *make_pattern PROTO((const char *string, int len));
+static int match PROTO((const char *pattern, const char *string, int len));
+static void alloc_special PROTO((const char *pattern, int name_len,
+				 typecode_t typecode, vformat_t format));
+static const char *skip_comment PROTO((const char *format));
+static int parse_identifier PROTO((const char **p_format, const char **start));
+static vformat_t parse_format PROTO((const char **p_format));
+static void parse_format_specifier PROTO((const char **format_spec));
+static void parse_format_string PROTO((void));
+static int match_types PROTO((typecode_t var_type, typecode_t format_type));
+static vformat_t check_for_special_format PROTO((const char *name,
+						 typecode_t typecode));
 static taddr_t get_dv_addr PROTO((objid_t par, var_t *v, ilist_t *ilist,
 				  bool *p_decl_may_have_changed));
+static taddr_t get_vtbl PROTO((taddr_t addr, type_t *type));
+static taddr_t get_vtbl_based_addr PROTO((taddr_t addr, type_t* type,
+					  int offset));
+static void dump_dv_to_outwin PROTO((dvar_t *dv));
 static void do_var PROTO((objid_t obj, int cmd, char *arg));
 
 ALLOC_NEW_FREE(static,dvar_t,dvar,dv_nextfree)
@@ -388,7 +402,7 @@ const char** p_format;
 	{ DF_STRING,	"STRING" },
 	{ DF_UBIN,	"UBIN" },
      };
-     char* start;
+     const char* start;
      int i = sizeof(fnames)/sizeof(fnames[0]);
 
      int name_len = parse_identifier(p_format, &start);
@@ -433,7 +447,7 @@ const char** format_spec;
 
      for (i = 0; i < 3; i++)
      {
-	char *start;
+	const char *start;
 	int name_len = parse_identifier(&format, &start);
 
 	if (name_len == 0) break;
@@ -512,7 +526,7 @@ const char** format_spec;
 
 static void parse_format_string()
 {
-    char *format = getenv("UPS_FORMATS");
+    const char *format = getenv("UPS_FORMATS");
     got_special_formats = TRUE;
     if (format == NULL)
 	return;
@@ -1130,12 +1144,11 @@ type_t* type;
 ** In the case of multiple inheritance, returns the first vtable
 ** found, which should be the vtable for the first base class.
 */
-taddr_t
+static taddr_t
 get_vtbl(addr, type)
 taddr_t addr;
 type_t* type;
 {
-    dvar_t* dv_vtbl = NULL;
     taddr_t vtbl_addr = BAD_ADDR;
     target_t* xp = get_current_target();
 
@@ -1175,7 +1188,7 @@ type_t* type;
 ** to look at, and may be ( actually, is) negative.  This mechanism
 ** is used by SC5 for virtual base classes.
 */
-taddr_t
+static taddr_t
 get_vtbl_based_addr(addr, type, offset)
 taddr_t addr;
 type_t* type;

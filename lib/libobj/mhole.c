@@ -27,12 +27,11 @@ char shared_mhole_c_rcsid[] = "$Id$";
 
 #include <local/wn.h>
 #include <string.h>
+#include <errno.h>
 
 #include <local/ukcprog.h>
 
 #include "mhole.h"
-
-extern int errno;
 
 static window_t Mh_wn = -1;		/* file descriptor of the current window */
 
@@ -52,7 +51,7 @@ struct mhcst {
 	short mh_capnum;
 	short mh_x;
 	short mh_y;
-} Bpos[4] = { {0}, {1}, {2}, {3} };
+} Bpos[4] = { {0, 0, 0}, {1, 0, 0}, {2, 0, 0}, {3, 0, 0} };
 
 /*  We do not record absolute positions for mousehole captions, as
  *  the size of the mousehole depends on the font size. Instead we

@@ -542,6 +542,7 @@ fpval_t *p_val;
 #endif
 	}
 #endif
+	return -1;
 }
 
 /*  Get the value currently stored in register regno of process xp.

@@ -180,6 +180,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
     unsigned long count;
     unsigned long max_count = (unsigned long) maximum_count;
 
+    unsigned long depth = 0;
+
     _dwarf_reset_index_stack();
     if (dbg == NULL) {
 	_dwarf_error(NULL, error, DW_DLE_DBG_NULL);
@@ -256,9 +258,13 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
 			     DW_DLE_DEBUG_MACRO_INCONSISTENT);
 		return (DW_DLV_ERROR);
 	    }
+	    ++depth;
 	    break;
 
 	case DW_MACINFO_end_file:
+	    if (--depth == 0) {
+		done = 1;
+	    }
 	    break;		/* no string or number here */
 	case 0:
 	    /* end of cu's entries */

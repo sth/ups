@@ -39,7 +39,13 @@ char ups_ao_dwftext_c_rcsid[] = "$Id$";
 #include "ao_syms.h"
 #include "ao_symscan.h"
 #include "ao_dwfsyms.h"
+#include "ao_dwftext.h"
+#include "ao_symcb.h"
 #include "cursors.h"
+#include "ui.h"
+#if WANT_DEBUG
+#include "st_debug.h"
+#endif
 
 
 void display_message PROTO((const char *mesg));
@@ -77,7 +83,7 @@ char *data, *newdata;
 bool same_func;
 {
     /* Original probably OK to use */
-    ao_cblocks_match(data, newdata, same_func);
+    return ao_cblocks_match(data, newdata, same_func);
 }
 
 void
@@ -113,6 +119,8 @@ char *data;
 taddr_t addr;
 {
     panic("dw_get_cblock_vars NYI");
+
+    return NULL; /* Shut compiler up */
 }
 
 /*
@@ -205,7 +213,7 @@ func_t *f;
     /*
      * Finish up.
      */
-    /* fix_params(f); /* dwarfTODO: required ? */
+    /* fix_params(f); */ /* dwarfTODO: required ? */
 
     errf("\bReading symbols of `%s'... done", f->fu_demangled_name);
     errf_set_ofunc(oldf);
@@ -225,11 +233,10 @@ var_t *
 dw_get_fi_vars(fil)
 fil_t *fil;
 {
-    fsyminfo_t *fs;
     symtab_t *st;
     ao_stdata_t *ast;
     stf_t *stf;
-    snlist_t *sn;
+/*    snlist_t *sn; */
     errf_ofunc_t oldf;
     cursor_t old_cursor;
 

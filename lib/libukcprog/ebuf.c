@@ -25,6 +25,7 @@
 char ukcprog_ebuf_rcsid[] = "$Id$";
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "ukcprog.h"
 

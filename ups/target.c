@@ -39,9 +39,11 @@ char ups_target_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <mtrprog/alloc.h>
 #include <mtrprog/ifdefs.h>
 #include <local/wn.h>		/* for cursor_t */
+#include <local/obj/obj.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -59,6 +61,16 @@ char ups_target_c_rcsid[] = "$Id$";
 #include "st.h"
 #include "srcwin.h"
 #include "obj_bpt.h"
+#include "obj_misc.h"
+#include "ao_target.h"
+#include "ao_syms.h"
+#include "ao_text.h"
+#if AO_USE_PROCFS
+#include "ao_procfs.h"
+#endif
+#if AO_USE_PTRACE
+#include "ao_ptrace.h"
+#endif
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -85,6 +97,8 @@ static xp_ops_t *Target_drivers[] = {
 
 ALLOC_NEW_FREE(static,Stack,stk,stk_inner)
 
+static void close_all_symtabs PROTO((target_t *xp, bool skip_main));
+static void null_ofunc PROTO((const char *s));
 
 static
 void

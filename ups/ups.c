@@ -57,6 +57,7 @@ char ups_ups_c_rcsid[] = "$Id$";
 #include "tdr.h"
 #include "exec.h"
 #include "target.h"
+#include "ao_dwfname.h"
 #include "st.h"
 #include "ui.h"
 #include "obj_stack.h"
@@ -120,7 +121,7 @@ static Edit_history_item history_items[] =
    { "ValueEdit",  &value_history,       20},
    { "ExprEdit",   &expr_history,        20},
    { "Prompt",     &prompt_history,      10},
-   { NULL }
+   { NULL, NULL, 0 }
 };
 
 /*  This spider on a web icon is supposed to suggest something that

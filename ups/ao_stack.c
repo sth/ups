@@ -68,10 +68,6 @@ char ups_ao_stack_c_rcsid[] = "$Id$";
 #include <sys/user.h>
 #endif
 
-#if defined(AO_USE_PTRACE) && defined(ARCH_LINUX386)
-#include <asm/ptrace.h>		/* for EBX, EBP */
-#endif
-
 #include <local/ukcprog.h>
 #include <mtrprog/alloc.h>
 #include <mtrprog/hash.h>
@@ -82,6 +78,8 @@ char ups_ao_stack_c_rcsid[] = "$Id$";
 #include "data.h"
 #include "st.h"
 #include "ao_syms.h"
+#include "ao_target.h"
+#include "ao_ptrace.h"
 #include "ao_stack.h"
 #include "ao_text.h"
 
@@ -407,7 +405,6 @@ Stack *
 ao_get_stack_trace(xp)
 target_t *xp;
 {
-	bool normal_frame;
 	taddr_t pc, fp, sp;
 	register Stack *stk;
 	func_t *f;

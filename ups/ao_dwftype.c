@@ -40,6 +40,8 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 #include "ups.h"
 #include "symtab.h"
 #include "ci.h"
+#include "ci_parse.h"
+#include "ci_types.h"
 #include "st.h"
 #include "ao_dwarf.h"
 #include "ao_syms.h"
@@ -48,10 +50,18 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 #include "ao_dwfutil.h"
 
 
+static void
+dwf_copy_type PROTO((type_t *dst, type_t *src));
+static type_t *
+dwf_type_from_dtype PROTO((dtype_t *dt));
+static type_t *
+dwf_get_void_type PROTO((alloc_pool_t *ap));
 static type_t *
 dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 				 alloc_pool_t *ap, stf_t *stf,
 				 dtype_t *dt));
+static int
+dwf_guess_ae_alignment PROTO((aggr_or_enum_def_t *ae));
 
 /*
  * Determine the UPS typecode_t value from DWARF encoding etc.
@@ -354,7 +364,6 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
     var_t *v;
     dtype_t *dt = NULL;
     type_t *type = NULL;
-    typedef_t *td;
     off_t type_offset;
     char *name = NULL;
     class_t class = CL_NOCLASS;
@@ -690,7 +699,6 @@ block_t *bl;
 {
     dtype_t *dt;
     type_t *type;
-    off_t base_offset;
     aggr_or_enum_def_t *ae;
     char *name = NULL;
 
@@ -903,7 +911,7 @@ dwf_fixup_types(dt, recursed)
 dtype_t *dt;
 int recursed;
 {
-    dtype_t *start, *base_dt;
+    dtype_t *start;
     lexinfo_t *lx;
     int incomplete = 0;
     int bad_dummy = 0;
@@ -998,6 +1006,11 @@ fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->
 		if ((base->ty_typedef == NULL) && (base->ty_lexinfo != NULL))
 		    base->ty_typedef = tdef;
 		break;
+		
+	    case DT_IS_VAR:
+	    case DT_IS_RANGE:
+	    case DT_IS_BITFIELD:
+		break;
 
 	    } /* switch */
 
@@ -1087,6 +1100,9 @@ dtype_t *dt;
     case TY_UNION:
 	if (ae->ae_aggr_members == NULL)
 	    dt->dt_type->ty_code = TY_U_UNION;
+	break;
+    default:
+	panic("botch in dwf_finish_aggregate()");
 	break;
     }
 

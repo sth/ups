@@ -26,6 +26,8 @@ char ups_ci_types_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
+#include <stdlib.h>
+
 #include <local/ukcprog.h>
 
 #include "ups.h"

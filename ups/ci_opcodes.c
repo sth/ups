@@ -26,6 +26,8 @@ char ups_ci_opcodes_c_rcsid[] = "$Id$";
 
 #include <mtrprog/ifdefs.h>
 
+#include <ctype.h>
+
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
 #include <mtrprog/so.h>
@@ -40,6 +42,7 @@ char ups_ci_opcodes_c_rcsid[] = "$Id$";
 #include "cx_link.h"
 #include "ci_compile.h"
 #include "ci_opcodes.h"
+#include "ci_types.h"
 
 typedef enum { OS_ZERO, OS_BYTE, OS_WORD, OS_LONG, OS_OTHER } operand_size_t;
 

@@ -30,6 +30,7 @@ char ups_st_lookup_c_rcsid[] = "$Id$";
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include <local/wn.h>
 #include <local/ukcprog.h>

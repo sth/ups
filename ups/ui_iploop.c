@@ -51,6 +51,7 @@ char ups_ui_iploop_c_rcsid[] = "$Id$";
 #include <local/edit/edit.h>
 #include <local/edit/win.h>
 #include <mtrprog/strcache.h>
+#include <mtrprog/hash.h>
 
 #include "cursors.h"
 #include "ups.h"
@@ -69,6 +70,7 @@ char ups_ui_iploop_c_rcsid[] = "$Id$";
 #include "debug.h"
 #include "obj_bpt.h"
 #include "va.h"
+#include "ao_syms.h"
 #include "st_debug.h"
 
 #ifndef __STDC__
@@ -434,7 +436,6 @@ const char *text;
 	        int    displRoot = wn_get_root_window(displ_wn);
 		if ( displRoot == ourRoot)
 		{
-    		    Outwin* dw = (Outwin *)re_get_data(get_display_area_region());
     		    display_area_overlay_search
       		       ((Outwin*)displ_region, text+1, *text == '/');
 		} else

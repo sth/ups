@@ -464,8 +464,6 @@ display_area_scroll_down(data, ev)
 char *data;
 event_t *ev;
 {
-	Srcwin *sw = (Srcwin *)data;
-
 	if (ev->ev_type & EV_BUTTON_DOWN)
 	{
 		int amount = 10;

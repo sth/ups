@@ -45,7 +45,6 @@ char ups_ci_expr_c_rcsid[] = "$Id$";
 
 static bool int_is_bigger_than_char PROTO((void));
 static bool int_is_bigger_than_short PROTO((void));
-static bool long_is_bigger_than_unsigned PROTO((void));
 
 static bool var_is_lvalue PROTO((var_t *v));
 static void make_implicit_func_declaration PROTO((expr_t *func_expr));
@@ -71,6 +70,10 @@ static bool complain_if_not_arithmetic_or_ptr PROTO((expr_t *expr,
 static expr_t *make_binary_expr PROTO((optype_t op, expr_t *left,
 						expr_t *right, type_t *type));
 static expr_t *make_scale_expr PROTO((expr_t *expr, optype_t op, type_t *type));
+static int integer_rank PROTO((typecode_t type));
+static int integer_size PROTO((typecode_t type));
+static bool can_accomodate PROTO((typecode_t target, typecode_t source));
+static typecode_t to_unsigned PROTO((typecode_t type));
 
 #define IS_PTR(code)	(((code) == DT_PTR_TO) || ((code) == DT_ARRAY_OF))
 
@@ -84,12 +87,6 @@ static bool
 int_is_bigger_than_short()
 {
 	return sizeof(int) > sizeof(short);
-}
-
-static bool
-long_is_bigger_than_unsigned()
-{
-	return sizeof(long) > sizeof(unsigned);
 }
 
 static expr_t *
@@ -273,8 +270,8 @@ typecode_t source;
 	if (ci_is_signed_type(target) && !ci_is_signed_type(source)) {
 		return integer_size(target) > integer_size(source);
 	}
-	else if (ci_is_signed_type(target) && ci_is_signed_type(source) 
-	|| !ci_is_signed_type(target) && !ci_is_signed_type(source)) {
+	else if ((ci_is_signed_type(target) && ci_is_signed_type(source))
+	|| (!ci_is_signed_type(target) && !ci_is_signed_type(source))) {
 		return integer_size(target) >= integer_size(source);
 	}
 	return FALSE;
@@ -351,8 +348,8 @@ const char *opname;
 	if (leftcode == rightcode)
 		return left->ex_type;
 
-	if (ci_is_signed_type(leftcode) && ci_is_signed_type(rightcode) 
-	|| !ci_is_signed_type(leftcode) && !ci_is_signed_type(rightcode)) {
+	if ((ci_is_signed_type(leftcode) && ci_is_signed_type(rightcode))
+	|| (!ci_is_signed_type(leftcode) && !ci_is_signed_type(rightcode))) {
 		if (integer_rank(leftcode) > integer_rank(rightcode)) {
 			(void) ci_push_conversion(left, leftcode, ET_PROMOTION);
 			return ci_push_conversion(right, leftcode, ET_PROMOTION);

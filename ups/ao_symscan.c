@@ -105,7 +105,7 @@ static func_t *note_ofile_function PROTO((alloc_pool_t *ap,
 
 void display_message PROTO((const char *mesg));
 
-const char
+char
 bump_str(sr, p_s)
 Symrec *sr;
 const char **p_s;
@@ -2027,6 +2027,7 @@ get_mangled_name_info(var, name, name_start, name_len,
     {
       t = strstr(t, "__");
       if (t)
+      {
 	if (isdigit(*(t + 2)) || (isalpha(*(t + 2)) && isupper(*(t + 2))))
 	{
 	  for (*name_len = 0, n = start; n < t; (*name_len)++, n++);
@@ -2118,6 +2119,7 @@ get_mangled_name_info(var, name, name_start, name_len,
 	}
 	else
 	  ++t;
+      }
     }
     if (!(*name_len))
       for(*name_len = 0, t = start; isalnum(*t) || *t == '_';

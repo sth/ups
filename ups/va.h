@@ -44,7 +44,6 @@ void update_vars_of PROTO((objid_t par, int change_caused_by_edit));
 objid_t add_blocks_as_needed PROTO((objid_t par, block_t *rootbl, block_t *bl));
 
 #ifdef SYMTAB_H_INCLUDED
-
 objid_t find_var PROTO((objid_t par, var_t *v));
 objid_t add_var_object PROTO((objid_t par, var_t *v, int poscode,
 			      bool restoring));
@@ -54,8 +53,6 @@ objid_t add_expr_object PROTO((objid_t par, block_t *bl, const char *text,
 
 int get_member_of_aggr PROTO((objid_t par, const char *name,
 			      var_t **p_v, taddr_t *p_addr, type_t **btype));
-
-void update_var_state PROTO((symtab_t *oldst, symtab_t *newst));
 #endif
 
 #ifdef TARGET_H_INCLUDED
@@ -73,6 +70,10 @@ void note_file_collapsed PROTO((objid_t obj, bool dummy));
 extern char Var_format[], Expr_format[];
 extern fdef_t Var_fdefs[], Expr_fdefs[];
 extern fnamemap_t Var_fnamemap[], Expr_fnamemap[];
+#endif
+
+#ifdef SYMTAB_H_INCLUDED
+void update_var_state PROTO((symtab_t *oldst, symtab_t *newst));
 #endif
 
 #ifdef EDIT_H_INCLUDED

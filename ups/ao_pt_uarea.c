@@ -153,14 +153,7 @@ int gethostid PROTO((void));
 #endif /* OS_SUNOS_4 */
 
 
-#ifdef UAREA_REGS
-int get_uarea_reg PROTO((iproc_t *ip, int ri, taddr_t *p_value));
-int set_uarea_reg PROTO((iproc_t *ip, int ri, taddr_t value));
-#endif
-
-
 #if defined(UAREA_REGS) || defined(USERCORE)
-int reg_to_uarea_index PROTO((int regno));
 #ifdef ARCH_BSDI386
 typedef int (*get_uarea_word_func_t)PROTO((int arg, int offset));
 void set_uarea_reg_offsets PROTO((ureg_t *ur,
@@ -170,6 +163,10 @@ void set_uarea_reg_offsets PROTO((ureg_t *ur,
 void set_uarea_reg_offsets PROTO((ureg_t *ur));
 #endif
 #endif /* UAREA_REGS or USERCORE */
+
+#ifdef UAREA_DREGS
+static void set_uarea_dreg_offsets PROTO((ureg_t *ur));
+#endif
 
 
 #ifdef ARCH_CLIPPER
@@ -185,6 +182,9 @@ static void convert_68881_reg PROTO((unsigned *rwords, bool is_double,
 static int get_uarea_word_with_ptrace PROTO((int pid, int offset));
 #endif
 
+#ifdef ARCH_LINUX386
+static int do_register_translation PROTO((int regno));
+#endif
 
 #if defined(UAREA_REGS) || defined(USERCORE)
 

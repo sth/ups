@@ -56,6 +56,10 @@ static const char* history_home_file;
 static Edit_history_item* the_histories;
 
 static Edit_history* edit_create_history_by_size PROTO((int size));
+static void edit_create_history PROTO((Edit_history_item *history_item));
+static FILE *open_history_file PROTO((const char *mode));
+static void load_history PROTO((FILE *file, Edit_history_item *history_item));
+static void save_history PROTO((FILE *file, Edit_history_item *history_item));
 
 
 static Edit_display *All_displays = NULL;

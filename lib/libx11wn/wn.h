@@ -190,7 +190,7 @@ typedef struct bitmapst {
  */
 #define wn_make_static_bm(w, h, np, xh, yh, bit_o, byte_o, pixfmt, lineinc, data) \
 	{ data, bit_o, byte_o, pixfmt, BM_CHOOSE_FORMAT, 0, \
-					w, h, np, xh, yh, lineinc, 0 }
+					w, h, np, xh, yh, lineinc, 0, 0 }
 
 /*   Macro to create a bitmap from the output of the X11 bitmap program:
  */
@@ -673,6 +673,7 @@ int wn_parse_color wn__PROTO((int wn, const char *name, color_t *color));
 int wn_alloc_color wn__PROTO((int wn, color_t *color, const char *colorname));
 unsigned long wn_fg_pixel wn__PROTO((int wn));
 unsigned long wn_bg_pixel wn__PROTO((int wn));
+int wn_is_truecolor wn__PROTO((int s_screen));
 
 /* fonts */
 void wn_set_sysfont wn__PROTO((font_t *font));

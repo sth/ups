@@ -62,7 +62,9 @@ static Edit_propchange *get_prev_propchange PROTO((Proplist *pl,
 static void redo_fontinfo_and_flags PROTO((Proplist *pl, 
 					   Edit_propchange *prev));
 static void free_pclist PROTO((Edit_propchange *list));
+#if 0
 static void check_proplist_order PROTO((Proplist *pl));
+#endif
 static Pcrel relation_to_pc PROTO((size_t point, bool backsliding, 
                                    Edit_propchange *pc));
 
@@ -592,7 +594,8 @@ Edit_propchange *pc;
 
 	return SAME;
 }
-	
+
+#if 0
 static void
 check_proplist_order(pl)
 Proplist *pl;
@@ -613,6 +616,7 @@ Proplist *pl;
 		last_backsliding = pc->backsliding;
 	}
 }
+#endif
 
 Edit_propchange *
 edit_get_propchange_at_point(buffer, point)

@@ -37,7 +37,7 @@ char obj_globals_rcsid[] = "$Id$";
  *  See o_obj.h for a description of the fields in odescst.
  */
 static struct odescst Descs[MAX_OBJTYPES+1] = {
-	{ 0, 0, 20, 0, OB_NL_AFTER|OB_FIXED_SIZE, NULL, NULL, NULL, NULL }
+	{ 0, 0, 20, 0, OB_NL_AFTER|OB_FIXED_SIZE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 /*  The public pointer to the object type table Desc above

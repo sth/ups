@@ -65,6 +65,9 @@ char ups_ao_symload_c_rcsid[] = "$Id$";
 #include "ao_elfsym.h"
 #include "util.h"
 #include "cursors.h"
+#if WANT_DEBUG
+#include "st_debug.h"
+#endif
 
 static double compiler_version;
 
@@ -791,7 +794,7 @@ fil_t *fil;
 #if WANT_DEBUG
 dump_header(fil->fi_name_only);
 dump_fil_t(fil, FALSE, FALSE);
-dump_var_t(fil->fi_block->bl_vars, TRUE);
+dump_var_t(fil->fi_block->bl_vars, 0, TRUE);
 dump_trailer();
 #endif
 	return fil->fi_block->bl_vars;
@@ -1707,7 +1710,7 @@ func_t *f;
 
     /* RGA use unsigned - for files over 32k ! */
     u = (unsigned)nm.n_desc;
-    bogus_last_lno = compiler == CT_CLCC && lno && (max_lnum > (int)u | sline_offset);
+    bogus_last_lno = compiler == CT_CLCC && lno && (max_lnum > (int)(u | sline_offset));
     if (bogus_last_lno)
       max_lnum = 0;		/* RGA reset */
     else

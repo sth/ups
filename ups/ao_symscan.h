@@ -72,7 +72,7 @@ void change_base_address PROTO((symtab_t *st, taddr_t new_addr));
 bool find_sol_fil PROTO((fil_t *sfiles, const char *path_hint, const char *name,
 			 fil_t **p_fil));
 
-const char bump_str PROTO((Symrec *sr, const char **p_s));
+char bump_str PROTO((Symrec *sr, const char **p_s));
 
 void wrapup_stf PROTO((stf_t *stf, hf_t **orig_fmap, int mapsize));
 void add_to_fil_funclist PROTO((alloc_pool_t *ap, fil_t *fil, func_t *f));

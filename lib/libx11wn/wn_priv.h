@@ -80,8 +80,6 @@ typedef int my_fd_set;
 #define FD_ZERO(p)	(*(p) = 0)
 #endif
 
-extern int errno;
-
 /*  Structure describing a special cursor.  Used only in wn_sc.c
  */
 typedef struct scst {

@@ -176,7 +176,9 @@ static Ftype *add_ftype_to_list PROTO((stf_t *stf, int tnum, bool have_type,
 static void lookup_ftype PROTO((stf_t *stf, int tnum, Ftype **p_ft, 
                                 Ftype **p_prevft));
 
-static type_t* get_safe_type_ptr();
+static type_t* get_safe_type_ptr PROTO((void));
+
+static void patch_ftypes PROTO((stf_t *stf));
 
 /*  The address of this variable is used as a special value for ty_typedef
  *  to signal that it is a basic type not a user defined typedef.

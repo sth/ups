@@ -51,6 +51,10 @@ char wn_wn_event_c_rcsid[] = "$Id$";
 #include <unistd.h>
 #endif
 
+#ifdef X11
+#include <local/menu3.h>
+#endif
+
 #include "wn.h"
 #include "wn_priv.h"
 #include "wn_init.h"  /* RCB, for process_client_message */

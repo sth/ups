@@ -253,7 +253,7 @@ vformat_t format;
 	   if ( maxcp > 0 )
 	   {
 	       char offset_buff[12];
-	       sprintf(offset_buff,"+0x%lx",offset);
+	       sprintf(offset_buff,"+0x%lx",(unsigned long)offset);
 	       strncpy(buf+len, offset_buff, maxcp);
 	   }
 	}

@@ -71,6 +71,12 @@ static void set_max_src_width PROTO((fil_t *fil, bool dummy));
 static int module_cmp PROTO((objid_t obj1, objid_t obj2));
 static void add_mfunc_object PROTO((objid_t par, func_t *f, int pos));
 static void expand_module PROTO((objid_t par));
+static void srcfile_getsize_internal PROTO((objid_t unused_obj,
+					    objid_t unused_par,
+					    struct szst *sz, bool reset));
+static void module_getsize_internal PROTO((objid_t unused_obj,
+					   objid_t unused_par,
+					   struct szst *sz, bool reset));
 static void add_module_object_if_necessary PROTO((Module *module));
 static int modfunc_cmp PROTO((objid_t obj1, objid_t obj2));
 static void set_max_module_width PROTO((Module *module));

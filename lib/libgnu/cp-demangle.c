@@ -226,6 +226,14 @@ static status_t result_push
   PARAMS ((demangling_t));
 static string_list_t result_pop
   PARAMS ((demangling_t));
+static int result_get_caret
+  PARAMS ((demangling_t));
+static void result_set_caret
+  PARAMS ((demangling_t, int));
+static void result_shift_caret
+  PARAMS ((demangling_t, int));
+static int result_previous_char_is_space
+  PARAMS ((demangling_t));
 static int substitution_start
   PARAMS ((demangling_t));
 static status_t substitution_add

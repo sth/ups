@@ -95,6 +95,8 @@ static int skipwhite MPROTO((FILE *fp, int expected));
 static int getword MPROTO((FILE *fp, char *buf));
 static int checkword MPROTO((FILE *fp, const char *word));
 static int getnodenum MPROTO((FILE *fp, MENU **p_mnode, int expected));
+static int get_named_value MPROTO((FILE *fp, short *p_value));
+static int getnumber MPROTO((FILE *fp, short *p_res, int base, int minus));
 static int getnum MPROTO((FILE *fp, short *p_res, int followch));
 static int getlongnum MPROTO((FILE *fp, long *p_res, int followch));
 static int mygetc MPROTO((FILE *fp));

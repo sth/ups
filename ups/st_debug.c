@@ -36,12 +36,12 @@ char ups_st_debug_c_rcsid[] = "$Id$";
 
 #include "ups.h"
 #include "symtab.h"
+#include "ao_syms.h"
 #include "target.h"
 #include "st.h"
 #include "st_debug.h"
 #include "va.h"
 #include "util.h"
-#include "ao_syms.h"
 #include "ci.h"
 
 static int load_func_info PROTO((func_t *f));
@@ -64,6 +64,8 @@ static bool dump_block PROTO((FILE *fp, int level, language_t language,
 static bool dump_func_syms PROTO((FILE *fp, int level, func_t *f));
 static bool dump_all_syms PROTO((target_t *xp, FILE *fp));
 static const char *get_fil_name PROTO((fil_t *fil));
+static const char *st_dt_is_str PROTO((dt_is_t dt_is));
+static const char *st_class_str PROTO((class_t class));
 
 enum { ISPACES = 4 };
 
@@ -577,8 +579,6 @@ const char *name;
  * (IDE)
  */
 
-void	dump_var_t(var_t *v, int level, bool follow);
-
 void
 dump_header(const char *s)
 {
@@ -605,9 +605,9 @@ int level;
 	return;
     }
     while (em != NULL) {
-	fprintf(stderr, "%*.*senum  \t[0x%08lx]:  %ld  '%s'\n",
+	fprintf(stderr, "%*.*senum  \t[%p]:  %ld  '%s'\n",
 		level*4, level*4, "....",
-		(long)em, em->em_val, em->em_name);
+		em, em->em_val, em->em_name);
 	em = em->em_next;
     }
 }
@@ -649,9 +649,9 @@ bool follow;
 		level*4, level*4, "....");
 	return;
     }
-    fprintf(stderr, "%*.*stype_t\t[0x%08lx]:  [0x%08lx]  code %2d size %3d",
+    fprintf(stderr, "%*.*stype_t\t[%p]:  [%p]  code %2d size %3ld",
 	    level*4, level*4, "....",
-	    (long)t, (long)t->ty_base, (int)t->ty_code, t->ty_size);
+	    t, t->ty_base, t->ty_code, t->ty_size);
     if (t->ty_name)
 	fprintf(stderr, " name '%s'", t->ty_name);
     if (t->ty_base == NULL) {
@@ -686,15 +686,16 @@ bool follow;
 void
 dump_dim_t(dim, level)
 dim_t *dim;
+int level;
 {
     if (dim == NULL) {
 	fprintf(stderr, "%*.*sdim_t  \t[NULL]\n",
 		level*4, level*4, "....");
 	return;
     }
-    fprintf(stderr, "%*.*sdim_t  \t[0x%08lx]:  %s %ld %s %ld\n",
+    fprintf(stderr, "%*.*sdim_t  \t[%p]:  %s %ld %s %ld\n",
 	    level*4, level*4, "....",
-	    (long)dim,
+	    dim,
 	    dim->di_ltype == DT_CONSTANT ? "" : "variable",
 	    dim->di_ltype == DT_CONSTANT ? dim->di_low : 0,
 	    dim->di_htype == DT_CONSTANT ? "" : "variable",
@@ -714,9 +715,9 @@ bool follow;
 	return;
     }
     while (td) {
-	fprintf(stderr, "%*.*stypedef\t[0x%08lx]:  '%s'\n",
+	fprintf(stderr, "%*.*stypedef\t[%p]:  '%s'\n",
 		level*4, level*4, "....",
-		(long)td, td->td_name);
+		td, td->td_name);
 	dump_type_t(td->td_type, level+1, follow);
 	if (!follow)
 	    break;
@@ -750,9 +751,9 @@ bool follow;
 	return;
     }
     while (dt) {
-	fprintf(stderr, "%*.*sdtype_t\t[0x%08lx]:  <%ld>  %s",
+	fprintf(stderr, "%*.*sdtype_t\t[%p]:  <%ld>  %s",
 		level*4, level*4, "....",
-		(long)dt, (long)dt->dt_offset, st_dt_is_str(dt->dt_is));
+		dt, (long)dt->dt_offset, st_dt_is_str(dt->dt_is));
 	if (dt->dt_base_offset != (off_t)0)
 	    fprintf(stderr, "  *** INCOMPLETE *** <%ld>\n", dt->dt_base_offset);
 	else
@@ -813,9 +814,9 @@ bool follow;
 	return;
     }
     while (v) {
-	fprintf(stderr, "%*.*svar_t\t[0x%08lx]:  0x%08lx  %04x  %s\t%s\n",
+	fprintf(stderr, "%*.*svar_t\t[%p]:  0x%08lx  %04x  %s\t%s\n",
 		level*4, level*4, "....",
-		(long)v, (long)v->va_addr, (int)v->va_flags,
+		v, v->va_addr, v->va_flags,
 		st_class_str(v->va_class), v->va_name);
 	dump_type_t(v->va_type, level+1, FALSE);
 	if (!follow)
@@ -834,8 +835,8 @@ bool follow;
 	return;
     }
     while (f) {
-	fprintf(stderr, "func_t\t[0x%08lx]:  fil [0x%08lx] addr 0x%08lx %s '%s'\n",
-		(long)f, (long)f->fu_fil, (long)f->fu_addr,
+	fprintf(stderr, "func_t\t[%p]:  fil [%p] addr 0x%08lx %s '%s'\n",
+		f, f->fu_fil, f->fu_addr,
 		(strcmp(f->fu_name,f->fu_demangled_name) ? "*" : " "),
 		(f->fu_demangled_name ? f->fu_demangled_name : f->fu_name));
 	if (!follow)
@@ -854,8 +855,8 @@ bool follow;
 	return;
     }
     while (lno) {
-	fprintf(stderr, "lno_t\t[0x%08lx]:  fil [0x%08lx] addr 0x%08lx  %d\n",
-		(long)lno, (long)lno->ln_fil, (long)lno->ln_addr, lno->ln_num);
+	fprintf(stderr, "lno_t\t[%p]:  fil [%p] addr 0x%08lx  %d\n",
+		lno, lno->ln_fil, lno->ln_addr, lno->ln_num);
 	if (!follow)
 	    break;
 	lno = lno->ln_next;
@@ -874,18 +875,18 @@ bool follow;
 	return;
     }
     while (bl) {
-	fprintf(stderr, "%*.*sblock_t [0x%08lx]:  [0x%08lx]%*.*s start %d\n",
+	fprintf(stderr, "%*.*sblock_t [%p]:  [%p]%*.*s start %d\n",
 		level*4, level*4, "....",
-		(long)bl, (long)bl->bl_parent,
+		bl, bl->bl_parent,
 		level*4, level*4, "    ",
 		bl->bl_start_lnum);
 	if (1)
 	    dump_var_t(bl->bl_vars, level+1, TRUE);
 	if (follow && bl->bl_blocks)
 	    dump_block_t(bl->bl_blocks, level+1, follow);
-	fprintf(stderr, "%*.*sblock_t [0x%08lx]:  [0x%08lx]%*.*s   end %d\n",
+	fprintf(stderr, "%*.*sblock_t [%p]:  [%p]%*.*s   end %d\n",
 		level*4, level*4, "....",
-		(long)bl, (long)bl->bl_parent,
+		bl, bl->bl_parent,
 		level*4, level*4, "    ",
 		bl->bl_end_lnum);
 	if (!follow)
@@ -938,8 +939,8 @@ bool follow;
 	fprintf(stderr, "fil_t\t[NULL]\n");
 	return;
     }
-    fprintf(stderr, "fil_t\t[0x%08lx]:  symtab [0x%08lx] block [0x%08lx] '%s'\n",
-	    (long)fil, (long)fil->fi_symtab, (long)fil->fi_block,
+    fprintf(stderr, "fil_t\t[%p]:  symtab [%p] block [%p] '%s'\n",
+	    fil, fil->fi_symtab, fil->fi_block,
 	    fil->fi_name);
     if (details)
 	dump_funclist_t(fil->fi_funclist, TRUE);
@@ -947,9 +948,9 @@ bool follow;
 	if (fil->fi_next)
 	    dump_fil_t(fil->fi_next, details, follow);
 	else
-	    fprintf(stderr, "fil_t\t[0x%08lx]: end of list\n", (long)fil);
+	    fprintf(stderr, "fil_t\t[%p]: end of list\n", fil);
     } else {
-	fprintf(stderr, "fil_t\t[0x%08lx]: no follow\n");
+	fprintf(stderr, "fil_t\t[%p]: no follow\n", fil);
     }
 }
 

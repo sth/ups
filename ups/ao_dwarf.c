@@ -27,6 +27,7 @@ char ups_ao_dwarf_c_rcsid[] = "$Id$";
 #if WANT_DWARF
 #include <local/ukcprog.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "ao_dwarf.h"
 

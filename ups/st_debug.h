@@ -23,5 +23,29 @@
 
 /* @(#)st_debug.h	1.1 04 Jun 1995 (UKC) */
 
-void debug_load_symbols PROTO((target_t *xp, const char *name));
+#ifdef TARGET_H_INCLUDED
 void debug_dump_symbols PROTO((target_t *xp, const char *name));
+void debug_load_symbols PROTO((target_t *xp, const char *name));
+#endif
+
+#if WANT_DEBUG
+void dump_header PROTO((const char *s));
+void dump_trailer PROTO((void));
+void dump_enum_member_t PROTO((enum_member_t *em, int level));
+void dump_aggr_or_enum_def_t PROTO((aggr_or_enum_def_t *ae, int ty_code,
+				    int level, bool follow));
+void dump_type_t PROTO((type_t *t, int level, bool follow));
+void dump_dim_t PROTO((dim_t *dim, int level));
+void dump_typedef_t PROTO((typedef_t *td, int level, bool follow));
+#if WANT_DWARF
+void dump_dtype_t PROTO((dtype_t *dt, int level, bool follow));
+#endif
+void dump_var_t PROTO((var_t *v, int level, bool follow));
+void dump_func_t PROTO((func_t *f, bool follow));
+void dump_lno_t PROTO((lno_t *lno, bool follow));
+void dump_block_t PROTO((block_t *bl, int level, bool follow));
+void dump_funclist_t PROTO((funclist_t *fl, bool follow));
+void dump_stf_t PROTO((stf_t *stf, bool follow));
+void dump_fil_t PROTO((fil_t *fil, bool details, bool follow));
+void dump_symtab_t PROTO((symtab_t *st, bool follow));
+#endif

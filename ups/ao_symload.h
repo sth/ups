@@ -34,5 +34,5 @@ lno_t *ao_get_fu_lnos PROTO((func_t *f));
 Compiler_type ao_compiler PROTO((fil_t *fil, bool compiler_found,
 				 Compiler_type compiler));
 				
-void set_compiler_version(double ver);
-double get_compiler_version();
+void set_compiler_version PROTO((double ver));
+double get_compiler_version PROTO((void));

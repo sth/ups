@@ -53,7 +53,6 @@ char ups_data_c_rcsid[] = "$Id$";
 #define REGBYTES	sizeof(taddr_t)
 
 static volatile int Got_sigill;
-static volatile int Got_sigfpe;
 
 static jmp_buf Sigill_env;
 

@@ -57,6 +57,7 @@ char ups_ao_elfread_c_rcsid[] = "$Id$";
 #include "ao_elfread.h"
 #include "ao_elflib.h"
 #include "elfstab.h"
+#include "state.h"
 
 static const char Elfwhat[] = "ELF executable";
 
@@ -299,9 +300,6 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	const char *symtab_secname;
 #if WANT_DWARF
 	Elf32_Shdr *dwarfsh;
-	Dwarf_Debug dw_dbg;
-	Dwarf_Error dw_err;
-	int rv;
 #endif
 
 	if (!read_chunk(textpath, "", fd, "ELF header",

@@ -30,10 +30,12 @@ char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 #include <mtrprog/utils.h>
 #include <mtrprog/hash.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "ups.h"
 #include "symtab.h"
 #include "ci.h"
+#include "ci_util.h"
 #include "st.h"
 #include "ao_dwarf.h"
 #include "ao_syms.h"
@@ -42,8 +44,24 @@ char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 #include "ao_dwfsyms.h"
 #include "ao_dwftype.h"
 #include "ao_dwfutil.h"
+#include "ui.h"
+#if WANT_DEBUG
+#include "st_debug.h"
+#endif
 
 
+static lno_t *
+penultimate_lno PROTO((lno_t *lno));
+static snlist_t *
+dwf_add_globalvar_to_symtab PROTO((symtab_t *st, stf_t *stf, const char *name));
+static func_t *
+dwf_tag_subprogram PROTO((Dwarf_Debug dbg, Dwarf_Die die, int dw_level,
+			  symtab_t *st, stf_t *stf, func_t **p_flist));
+static void
+dwf_load_globals_from_cu PROTO((symtab_t *st, stf_t *stf, func_t **p_flist,
+				Dwarf_Die cu_die, Dwarf_Off cu_hdr_offset,
+				Dwarf_Signed global_count,
+				Dwarf_Global *globals));
 static bool
 dwf_load_from_die PROTO((symtab_t *st, stf_t *stf, func_t **p_flist, func_t *f,
 			 block_t **p_blocklist, block_t *parent_bl,
@@ -54,7 +72,8 @@ dwf_load_from_die PROTO((symtab_t *st, stf_t *stf, func_t **p_flist, func_t *f,
  * Find last but one 'lno' in the list.
  */
 static lno_t *
-penultimate_lno(lno_t *lno)
+penultimate_lno(lno)
+lno_t *lno;
 {
     if ((lno == NULL) || (lno->ln_next == NULL))
 	return (lno_t *)NULL;
@@ -183,7 +202,7 @@ stf_t *stf;
 /*
  * DWARF version of push_symname (see ao_symscan.c)
  */
-snlist_t *
+static snlist_t *
 dwf_add_globalvar_to_symtab(st, stf, name)
 symtab_t *st;
 stf_t *stf;
@@ -292,7 +311,6 @@ stf_t *stf;
 func_t **p_flist;
 {
     func_t *f;
-    taddr_t addr;
     char *name = NULL, *mangled = NULL;
     bool is_static;
     Dwarf_Die spec_die;
@@ -351,11 +369,9 @@ Dwarf_Global *globals;
     Dwarf_Off offset, die_offset;
     Dwarf_Die die;
     Dwarf_Half tag;
-    taddr_t addr;
     snlist_t *sn;
     alloc_pool_t *ap;
     char *global_name;
-    char *name;
 
     /*
      * Initalise
@@ -433,20 +449,17 @@ dwload_t dw_what;
 int dw_level;		/* DWARF level, 1 = top */
 int recursed;		/* Recursion level, 0 = top. */
 {
-    int rv, i;
-    Dwarf_Error err;
+    int i;
     Dwarf_Debug dbg;
     long rel_offset;
     Dwarf_Die die, spec_die;
     Dwarf_Half tag;
-    taddr_t addr;
     snlist_t *sn;
     block_t *bl_head = NULL;
     aggr_or_enum_def_t *ae;
     alloc_pool_t *ap;
     dtype_t *dt;
     type_t *type;
-    typename_t *tn;
     bool is_static;
     char *name;
     int count = 0;
@@ -565,7 +578,6 @@ int recursed;		/* Recursion level, 0 = top. */
 	    if (dw_what & DWL_BASE_TYPES) {
 		typecode_t typecode;
 		int nbytes;
-		int encoding;
 
 		/*
 		 * Basic type - these can be more than just the
@@ -1151,7 +1163,7 @@ func_t **p_flist;
 const char **p_mainfunc_name;
 Dwarf_Debug dbg;
 {
-    int i, rv;
+    int rv;
     Dwarf_Global *globals = NULL;
     Dwarf_Signed global_count;
     Dwarf_Error err;
@@ -1164,11 +1176,10 @@ Dwarf_Debug dbg;
 
     block_t *rootblock;
     ao_stdata_t *ast;
-    func_t *curfunc, *flist = NULL;
-    fil_t *solfil = NULL;
+    func_t *flist = NULL;
     hf_t **fmap;
     alloc_pool_t *ap;
-    int mapsize, max_mapsize;
+    int max_mapsize;
 
     char *cu_name;
     char *comp_dir;
@@ -1204,7 +1215,6 @@ Dwarf_Debug dbg;
 				      &abbrev_offset, &addr_size,
 				      &next_cu_hdr, &err)) == DW_DLV_OK) {
 	Dwarf_Half tag;
-	Dwarf_Attribute attrib;
 
 	/*
 	 * Get the DIE for this CU.

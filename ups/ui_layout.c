@@ -65,12 +65,14 @@ char ups_ui_layout_c_rcsid[] = "$Id$";
 #include "obj_env.h"
 #include "obj_signal.h"
 #include "obj_bpt.h"
+#include "obj_wpt.h"
 #include "obj_stack.h"
 #include "va.h"
 #include "sccsdata.h"
 #include "util.h"
 #include "st.h"
 #include "target.h"
+#include "exec.h"
 #ifdef AO_ELF
 #include "ao_elflib.h"
 #endif
@@ -176,6 +178,7 @@ static void create_outwin PROTO((Region *root, double outwin_fraction));
 static bool load_outwin PROTO((Outwin *ow, const char *path));
 static bool save_outwin PROTO((Outwin *ow, const char *path, const char *mode));
 static void add_outwin PROTO((void));
+static Outwin *create_display_area_overlay PROTO((int wn, tbar_id_t tbar));
 
 static
 Outwin *
@@ -1160,7 +1163,6 @@ char *arg;
   popup_t loadlibrarypop;
   const char **loadlibrary;
   int res, buttons;
-  Region* focus_re = re_get_keyboard_focus_region();
 
   ev = (event_t *)arg;
   buttons = ev->ev_buttons;
@@ -1515,7 +1517,6 @@ double outwin_fraction;
 
 	if ( out_wn != -1)
 	{
-	    font_t *sysfont = wn_get_sysfont();
 	    font_t *menufont = Mstdfont();
 	    int menu_height = menufont->ft_height + 8;
 	    int historybutton_width = get_default("HistoryButtonWidth", 15, 12);
@@ -1965,21 +1966,19 @@ display_area_input(region, ev)
       }
 			
       if (buttons != B_MIDDLE) {
-	if (ev->ev_type == EV_BUTTON_DOWN)
+        if (ev->ev_type == EV_BUTTON_DOWN) {
 	  if (buttons == B_RIGHT &&
 	      re_get_keyboard_focus_data(region))
 	  {
 	    get_custom_menu_str(handle_display_area_char, ev);
 	    return;
 	  }
-	  else
-	    if (!re_set_keyboard_focus((Region *)NULL,
-				       (char *)NULL)) {
-	      wn_wait_for_release_of(ev->ev_wn,
-				     B_ANY);
-	      return;
-	    }
-				
+	  else if (!re_set_keyboard_focus((Region *)NULL, (char *)NULL)) {
+	    wn_wait_for_release_of(ev->ev_wn, B_ANY);
+	    return;
+	  }
+        }
+        
 	set_dynamic_menu_updating_state(DMU_OFF);
       }
       wn_pushback_event(ev);

@@ -29,7 +29,9 @@ char ups_trun_ss_c_rcsid[] = "$Id$";
 #include <signal.h>
 #include <stdio.h>
 
+#include <local/wn.h>
 #include <local/ukcprog.h>
+#include <local/obj/obj.h>
 #include "ups.h"
 #include "symtab.h"
 #include "target.h"

@@ -44,6 +44,7 @@ char ups_st_util_c_rcsid[] = "$Id$";
 #include <local/arg.h>
 #include <mtrprog/strcache.h>
 #include <mtrprog/alloc.h>
+#include <mtrprog/hash.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -57,6 +58,10 @@ char ups_st_util_c_rcsid[] = "$Id$";
 #include "srcpath.h"
 #include "ui.h"
 #include "tdr.h"
+#ifdef AO_ELF
+#include "ao_syms.h"
+#include "ao_elfsym.h"
+#endif
 
 /*  Element in the linked list of global variable names and 
  *  addresses for a symbol table.
@@ -89,10 +94,7 @@ typedef struct name_s{
   const char *name;
 } name_t;
 
-#ifdef AO_ELF
-bool elf_scan_dot_o_file_symtab PROTO((fil_t *fil));
-#endif /* !AO_ELF */
-
+static int ncmp PROTO((const void *name1p, const void *name2p));
 static noloadlist_t *NoLoadlist = NULL, *NoLoadlist_tail;
 static block_t *make_rootblock PROTO((void));
 static loadlist_t *Loadlist = NULL, *Loadlist_tail;
@@ -142,9 +144,11 @@ int loaded;
 }
 
 static int
-ncmp(name1, name2)
-name_t *name1, *name2;
+ncmp(name1p, name2p)
+const void *name1p, *name2p;
 {
+  const name_t *name1 = name1p;
+  const name_t *name2 = name2p;
   if (!name1 || !name2)
     return 1;
   return strcmp(name1->name,  name2->name);
@@ -809,10 +813,12 @@ bool rematch, reload;
       {
 	ln = FU_LNOS(fl->fl_func);
 	if (!(fl->fl_func->fu_flags & FU_NOTHEADER))
+        {
 	  if (last_ln)
 	    break;
 	  else
-	    continue;
+             continue;
+        }
 	last_ln = fl->fl_func->fu_max_lnum;
       }
     }

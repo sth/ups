@@ -71,7 +71,15 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 #include "ao_syms.h"
 #include "ao_target.h"
 #include "ao_ptrace.h"
+#include "ao_shlib.h"
+#include "ao_core.h"
+#ifdef AO_ELF
+#include "ao_elflib.h"
+#endif
 #include "debug.h"
+#include "breakpoint.h"
+#include "tdr.h"
+#include "state.h"
 
 
 /* Definitions. */

@@ -79,6 +79,8 @@ void nolibfunc_getsize PROTO((objid_t obj, objid_t unused_par, struct szst *sz))
 
 void free_common_block_object PROTO((objid_t obj));
 
+void reset_filesize_operations PROTO((void));
+
 /*  Objcodes for header objects which must be visible in more than one file.
  *  To make a unique objcode, we cast the address of an arbitrary data object.
  *  Here, we use the address of the format string.

@@ -36,6 +36,7 @@ char ups_bp_c_rcsid[] = "$Id$";
 #include "target.h"
 #include "breakpoint.h"
 #include "dx.h"
+#include "obj_bpt.h"
 
 struct breakpoint_s {
 	struct breakpoint_s *bp_next;	/* next entry in the list */
@@ -51,7 +52,7 @@ struct breakpoint_s {
 
 static int set_enabled PROTO((target_t *xp, breakpoint_t *bp, bool enabled));
 
-static breakpoint_t Bphead = { &Bphead, &Bphead };
+static breakpoint_t Bphead = { &Bphead, &Bphead, NULL, FALSE, FALSE, 0, 0, 0, FALSE };
 
 breakpoint_t *
 dx_add_breakpoint(xp, addr)
@@ -293,9 +294,11 @@ target_t *xp;
 
 	for (bp = Bphead.bp_next; bp != &Bphead; bp = bp->bp_next) {
 		if (bp->bp_xp == 0)
+		{
 		  if (xp_tswap(xp, bp->bp_addr, (xp_opcode_t)0,
 			       &bp->bp_code) != 0) 
-				return FALSE;
+		    return FALSE;
+		}
 		else
 		{		/* uninstall */
 		  if (xp_tswap(xp, bp->bp_addr, bp->bp_code,

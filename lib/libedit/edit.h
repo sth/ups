@@ -185,7 +185,7 @@ Edit_propchange *edit_get_propchange_at_point PROTO((Edit_buffer *buffer,
 						     size_t point));
 
 size_t edit_get_propchange_point PROTO((Edit_propchange *pc));
-void edit_move_propchange_pointt PROTO((Edit_propchange *pc, int delta));
+void edit_move_propchange_point PROTO((Edit_propchange *pc, int delta));
 
 char *edit_get_propchange_data PROTO((Edit_propchange *pc));
 void edit_set_propchange_data PROTO((Edit_propchange *pc, char *data));

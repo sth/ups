@@ -30,6 +30,7 @@ char ups_ao_dwfname_c_rcsid[] = "$Id$";
 #include <mtrprog/utils.h>
 #include <mtrprog/hash.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -40,6 +41,7 @@ char ups_ao_dwfname_c_rcsid[] = "$Id$";
 #include "ao_dwftype.h"
 #include "ao_dwfname.h"
 #include "ao_dwfutil.h"
+#include "ao_dwfsyms.h"
 
 
 /*

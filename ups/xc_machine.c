@@ -103,6 +103,27 @@ static stackword_t Sigfuncs[NSIG];
 
 #define M_FREED_BYTE	((unsigned)0x91)
 
+typedef double (*stackword_funcptr_t)PROTO((stackword_t a1, stackword_t a2,
+					    stackword_t a3, stackword_t a4,
+					    stackword_t a5, stackword_t a6,
+					    stackword_t a7, stackword_t a8,
+					    stackword_t a9, stackword_t a10,
+					    stackword_t a11, stackword_t a12,
+					    stackword_t a13, stackword_t a14,
+					    stackword_t a15, stackword_t a16,
+					    stackword_t a17, stackword_t a18,
+					    stackword_t a19, stackword_t a20));
+typedef double (*double_funcptr_t)PROTO((stackword_t a1, stackword_t a2,
+					 stackword_t a3, stackword_t a4,
+					 stackword_t a5, stackword_t a6,
+					 stackword_t a7, stackword_t a8,
+					 stackword_t a9, stackword_t a10,
+					 stackword_t a11, stackword_t a12,
+					 stackword_t a13, stackword_t a14,
+					 stackword_t a15, stackword_t a16,
+					 stackword_t a17, stackword_t a18,
+					 stackword_t a19, stackword_t a20));
+
 /*  This should be called once at startup if we expect to handle arithemetic
  *  signals.
  */
@@ -1222,7 +1243,7 @@ func_call:
 				if (nargs == 0)
 				    rvdouble = (*(double (*)PROTO((void)))lf) ();
 				else
-				    rvdouble = (*(double (*)())lf) (
+				    rvdouble = (*(double_funcptr_t)lf) (
 		    params[0],  params[1],  params[2],  params[3],  params[4],
 		    params[5],  params[6],  params[7],  params[8],  params[9],
 		    params[10], params[11], params[12], params[13], params[14],
@@ -1233,7 +1254,7 @@ func_call:
 				if (nargs == 0)
 				    rvword = (*(stackword_t (*)PROTO((void)))lf) ();
 				else
-				    rvword = (*(stackword_t (*)())lf) (
+				    rvword = (*(stackword_funcptr_t)lf) (
 		    params[0],  params[1],  params[2],  params[3],  params[4],
 		    params[5],  params[6],  params[7],  params[8],  params[9],
 		    params[10], params[11], params[12], params[13], params[14],

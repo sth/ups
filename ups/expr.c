@@ -67,6 +67,7 @@ typedef struct find_func_argsst {
 	objid_t ffa_stack_obj;	/* result */
 } find_func_args_t;
 
+static int get_double_click_action PROTO((objid_t var_obj));
 static int show_member PROTO((struct selst *sel, char **names, int *p_found_a_member));
 static int skip_sref PROTO((const char *name, int sepc, const char **p_next));
 static int skip_varname PROTO((const char *name, const char *seps, const char **p_next));

@@ -67,6 +67,9 @@ char ups_ao_pt_regs_c_rcsid[] = "$Id$";
 #include "ao_target.h"
 #include "ao_ptrace.h"
 #include "ao_aout.h"
+#ifdef AO_ELF
+#include "ao_elfcore.h"
+#endif
 #include "debug.h"
 #include "tdr.h"
 #include "state.h"

@@ -211,4 +211,22 @@ int ptrace PROTO((ptracereq_t req, int pid, char *addr, int data));
 #define std_ptrace(req, pid, addr, data)	ptrace(req, pid, addr, data)
 #endif
 
+#if defined(UAREA_REGS) || defined(USERCORE)
+int reg_to_uarea_index PROTO((int regno));
+#endif
+
+#ifdef UAREA_REGS
+int get_uarea_reg PROTO((iproc_t *ip, int ri, taddr_t *p_value));
+int set_uarea_reg PROTO((iproc_t *ip, int ri, taddr_t value));
+
+int ptrace_update_ua_regs PROTO((target_t *xp));
+#endif
+
+#ifdef UAREA_DREGS
+int get_uarea_dreg PROTO((iproc_t *ip, int ri, taddr_t *p_value));
+int set_uarea_dreg PROTO((iproc_t *ip, int ri, taddr_t value));
+
+int ptrace_update_ua_dregs PROTO((target_t *xp));
+#endif
+
 #endif /*AO_USE_PTRACE*/

@@ -63,6 +63,8 @@ char ups_ui_src_c_rcsid[] = "$Id$";
 #include "state.h"
 #include "st.h"
 
+static void call_editor PROTO((Srcinfo *si, int lnum));
+static void do_src_menu PROTO((Srcwin *sw, Srcinfo *si, event_t *ev));
 static void do_var_selection PROTO((Srcwin *sw, event_t *ev, size_t sel_point,
 				    fil_t *fil, int lnum, int skip_locals,
 				    bool double_click));
@@ -133,7 +135,7 @@ event_t *ev;
 	  , RV_LAST_CHOICE
 	  , RV_NEW_DEFAULT
 	};
-    static popup_t bptpop = { -1, TRUE, 0, bptcaps };
+    static popup_t bptpop = { -1, TRUE, 0, bptcaps, 0 };
     static int default_choice = -1;
     static int alt_default_choice = -1;
     long sa;
@@ -311,6 +313,7 @@ get_user_lang()
       for (c = c_str; *c; c++)
 	*c = tolower(*c);
     if (c_str)
+    {
       if (!strcmp(c_str, "c++"))
 	lang = LANG_CC;
       else
@@ -322,6 +325,7 @@ get_user_lang()
 	  else
 	    if (!strcmp(c_str, "f90"))
 	      lang = LANG_F90;
+    }
     checked = 1;
   }
   return lang;
@@ -558,6 +562,7 @@ Edit_display *display;
 event_t *ev;
 size_t sel_point, start, lim;
 bool *p_done_sel_loop;
+bool do_global_selection;
 {
 	Edit_buffer *buffer;
 	Edit_propchange *startpc, *limpc;
@@ -704,6 +709,7 @@ bool double_click;
 	    if (found != 1)
 	    {
 	      if (mangled)
+	      {
 		if (!this_obj_exists)
 		{
 		  if (this_obj_var)
@@ -712,6 +718,7 @@ bool double_click;
 		else
 		  if (this_obj_var)
 		    clear_selection();
+	      }
 	      if (found != 2)	/* 2 = may be message about virtual or */
 		/* inherited match */
 		errf("No function, variable or macro `%s'", text);
@@ -934,6 +941,7 @@ event_t *ev;
 	else if (ev->ev_type == EV_BUTTON_DOWN &&
 		 (buttons & ~B_SHIFT_MASK) == B_RIGHT &&
 		 srcinfo.fil_lnum != 0)
+	{
 	  if (re_get_keyboard_focus_data(region))
 	  {
 	    get_custom_menu_str(handle_srcwin_char, ev);
@@ -941,6 +949,7 @@ event_t *ev;
 	  {
 	    do_src_menu(sw, &srcinfo, ev);
 	  }
+	}
 }
 
 
@@ -967,7 +976,7 @@ event_t *ev;
       "File dates",
       NULL
     };
-    static popup_t bptpop = { -1, TRUE, 0, bptcaps };
+    static popup_t bptpop = { -1, TRUE, 0, bptcaps, 0 };
     int res, lnum;
     fil_t *fil;
 

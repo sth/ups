@@ -2765,7 +2765,7 @@ int attached;
 
 /*  Menu function for the permanent menu (the quit button).
  */
-static clear_window = 0;
+static int clear_window = 0;
 void
 permanent_menu_func(unused_data, md, command)
 char *unused_data;
@@ -3197,9 +3197,9 @@ get_custom_menu_str(func, ev)
     NULL
   };
   static const char *bptcaps[13];
-  static i = -1;
+  static int i = -1;
   char *env, *c;
-  static popup_t bptpop = { -1, FALSE, 0, bptcaps };
+  static popup_t bptpop = { -1, FALSE, 0, bptcaps, 0 };
   int res, j;
 
   if (i == -1)

@@ -193,7 +193,7 @@ xp_ops_t Xc_ops = {
 	xc_get_retaddr_after_jsr, xc_get_retaddr_after_sig,
 	xc_tswap,
 	xc_read_data, xc_write_data, xc_read_text_from_process,
-	NULL, xc_call_func
+	NULL, xc_call_func, NULL, NULL, NULL, NULL, NULL
 };
 
 static bool Disable_xc;
@@ -217,7 +217,7 @@ xp_ops_t Cc_ops = {
 	xc_get_retaddr_after_jsr, xc_get_retaddr_after_sig,
 	xc_tswap,
 	xc_read_data, xc_write_data, xc_read_text_from_process,
-	NULL, xc_call_func
+	NULL, xc_call_func, NULL, NULL, NULL, NULL, NULL
 };
 
 static bool Disable_cc;

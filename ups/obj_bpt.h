@@ -54,6 +54,7 @@ void collapse_files PROTO((void));
 #ifdef SYMTAB_H_INCLUDED
 void remove_matching_breakpoints PROTO((symtab_t *st, fil_t *fil));
 void save_matching_bpts PROTO((symtab_t *st, fil_t *fil, char *handle));
+void update_matching_bpts PROTO((symtab_t *oldst, symtab_t *newst));
 #endif
 
 void remove_all_breakpoints PROTO((void));
@@ -99,5 +100,4 @@ extern fnamemap_t Bpt_fnamemap[];
 #endif
 
 void restore_target_state PROTO((bool remove_vars, bool remove_bpts));
-void reset_filesize_operations PROTO((void));
 void src_window_redraw PROTO((void));

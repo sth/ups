@@ -79,7 +79,7 @@ static int get_float_constant PROTO((lex_env_t *le, const char *line,
 static const char *getline PROTO((lex_env_t *le));
 static int get_string PROTO((lex_env_t *le, const char *line, string_const_t *sc));
 static bool is_aggr_type_specifier PROTO((token_t token));
-static bool is_type_specifier PROTO((token_t token));
+static bool is_basic_type_specifier PROTO((token_t token));
 static bool is_storage_class_or_qualifier PROTO((token_t token));
 static bool is_decl_specifier PROTO((token_t token));
 

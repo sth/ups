@@ -79,6 +79,7 @@ static void set_fieldval PROTO((bool bits_big_endian, vlong *p_word, vlong value
 static int get_c_string PROTO((const char *vstr, char **p_s, int *p_len));
 static int get_new_string PROTO((const char *orig, const char *vstr,
 				 dvar_t *dv, char **p_s, size_t *p_len));
+static int write_value PROTO((target_t *xp, vlong val, taddr_t addr, type_t *type));
 static int write_new_value PROTO((target_t *xp, taddr_t addr, type_t *type,
 				  value_t value, const char *vstr,
 				  bool *p_done_mesg));
@@ -102,7 +103,7 @@ Edit_history* value_history = NULL;
 fnamemap_t Var_fnamemap[] = {
 	{ FN_VAR_DECL,	"subscript",	TRUE,	var_quitfunc, &subscript_history	},
 	{ FN_VAR_VALUE,	"value",	TRUE,	value_quitfunc, &value_history	},
-	{ 0,		NULL,		FALSE,	NULL		},
+	{ 0,		NULL,		FALSE,	NULL,           NULL		},
 };
 
 fdef_t Var_fdefs[] = {
@@ -958,7 +959,7 @@ value_t value;
 const char *vstr;
 bool *p_done_mesg;
 {
-	int res, word;
+	int res;
 	vlong val;
 
 	*p_done_mesg = FALSE;

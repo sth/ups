@@ -64,6 +64,20 @@ then
     CFLAGS="$upsCFLAGS"
 fi
 
+# Use the strictest possible set of warnings with 'gcc'
+
+if test "$GCC" = "yes"
+then
+    oldCFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -Wno-unused-parameter -Wno-unused-value"
+    AC_TRY_LINK([#include <stdio.h>], [int i;], unused=yes)
+    if test $unused == yes ; then
+        CFLAGS="$oldCFLAGS -Wall -Wno-char-subscripts -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-value"
+    else
+        CFLAGS="$oldCFLAGS -Wall -Wno-char-subscripts -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused"
+    fi
+fi
+
 # -ansi useful with 'gcc' on SunOS4
 
 if test "$GCC" = "yes"

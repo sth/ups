@@ -44,6 +44,7 @@
 #include "menudata.h"
 #include "tdr.h"
 #include "state.h"
+#include "srcwin.h"
 
 typedef struct wpdescst {
 	taddr_t addr;
@@ -91,10 +92,10 @@ const char Wpt_format[] = "address:%[-]16cw      %[-]:3:39cdlength:%[B]8cW  %[-]
 #define WPT_FLIST_TERMINATOR	((fval_t)-1)
 
 fnamemap_t Wpt_fnamemap[] = {
-	{ FN_WPT_ADDR,	"address",	FALSE, wpaddr_quitfunc	},
-	{ FN_WPT_SIZE,	"length",	FALSE, wpsize_quitfunc	},
-	{ FN_WPT_STATE,	"state",	FALSE, wpstate_quitfunc	},
-	{ 0,		NULL,		FALSE, NULL		},
+	{ FN_WPT_ADDR,	"address",	FALSE, wpaddr_quitfunc,  NULL	},
+	{ FN_WPT_SIZE,	"length",	FALSE, wpsize_quitfunc,  NULL	},
+	{ FN_WPT_STATE,	"state",	FALSE, wpstate_quitfunc, NULL	},
+	{ 0,		NULL,		FALSE, NULL,		 NULL	},
 };
 
 const char Wphead_format[] = "Watchpoints\n";
@@ -203,7 +204,7 @@ wpstate_draw(dets)
 register struct drawst *dets;
 {
 	long fg;
-	static color_done = -1;
+	static int color_done = -1;
 	static color_t color_fg;
 	int wp_enabled, use_alloc_color;
 
@@ -344,11 +345,10 @@ objid_t
 add_watchpoint_object(addr, size, decl)
 taddr_t addr;
 size_t size;
-char *decl;
+const char *decl;
 {
 	fval_t fields[FN_WPT_LAST + 1];
 	wpdesc_t *wd;
-	int slen;
 	target_t *xp;
 
 	xp = get_current_target();
@@ -464,7 +464,6 @@ remove_watchpoint_object(obj)
 objid_t obj;
 {
 	wpdesc_t *wd;
-	char *addrtext;
 
 	wd = (wpdesc_t *)obj;
 
@@ -489,6 +488,7 @@ bool verbose;
 	xp = get_current_target();
 
 	if (verbose)
+	{
 	  if (disable)
 	    errf("\bSelected watchpoint code will be ignored");
 	  else
@@ -496,6 +496,7 @@ bool verbose;
 	      errf("\bSelected watchpoint code will be executed");
 	    else
 	      errf("\bSelected watchpoint code will be executed when globally enabled");
+	}
 	wd = (wpdesc_t *)obj;
 	wd->inactive = disable;
 	if (wd->watchpoint && disable)

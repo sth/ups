@@ -44,3 +44,5 @@ bool scan_elf_symtab PROTO((alloc_pool_t *target_ap,
 			    Solib **p_solibs,
 			    bool target_updated));
 #endif
+
+bool elf_scan_dot_o_file_symtab PROTO((fil_t *fil));

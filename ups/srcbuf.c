@@ -220,7 +220,6 @@ srcbuf_get_propchange_at_point(sb, point)
 Srcbuf *sb;
 size_t point;
 {
-        size_t pos = point;
         Editblock *eb;
         
         for (eb = sb->eblist; eb != NULL; eb = eb->next) {

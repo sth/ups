@@ -58,7 +58,9 @@ char wn_wn_init_c_rcsid[] = "$Id$";
 #include "sccsdata.h"
 
 static void default_close_func PROTO((int wn));
-static void default_close_func(wn) {}
+static void default_close_func(wn)
+int wn;
+{}
 
 static wn_close_func_t Close_func = default_close_func;
 
@@ -82,6 +84,13 @@ static void get_def_color PROTO((const char *defaultname, xpixel_t def_pixel, in
 static int   /* RCB: Changed from type void to match X spec */
 non_fatal_x_error_handler PROTO((Display *displayname, XErrorEvent *err));
 static void initialize_atoms PROTO((Window p_win));
+static void wn_merge_databases PROTO((void));
+static int _wn_alloc_x_color PROTO((int wn, color_t *color,
+				    const char *colorname));
+#endif
+
+#if WANT_MULTI_SCREEN
+static int _wn_find_pix PROTO((screen_t *scr));
 #endif
 
 #ifdef SUNVIEW
@@ -1089,7 +1098,9 @@ _wn_init()
 	int wakeup_fd;
 #endif /* SUNVIEW */
 	static int done_init = FALSE;
+#if 0
 	window_t wn;
+#endif
 
 	if (done_init)
 		return 0;
@@ -1616,7 +1627,7 @@ int s_screen;
  * regard to the window, and doing this gets better results.
  */
 
-int
+static int
 _wn_alloc_x_color(wn, color, colorname)
 int wn;
 color_t *color;

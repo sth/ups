@@ -65,32 +65,32 @@ static int get_sig_attrs PROTO((int sig));
 #define SGH_DFL_IGNORE		(1<<4)	/* signal is ignored by default */
 
 static sig_info_t Sigtab[] = {
-	{ SIGINT,	"SIGINT",					      },
+	{ SIGINT,	"SIGINT",	0				      },
 	{ SIGHUP,	"SIGHUP",	SGH_CONT | SGH_ACCEPT		      },
-	{ SIGQUIT,	"SIGQUIT",					      },
-	{ SIGILL,	"SIGILL",					      },
-	{ SIGTRAP,	"SIGTRAP",					      },
+	{ SIGQUIT,	"SIGQUIT",	0				      },
+	{ SIGILL,	"SIGILL",	0				      },
+	{ SIGTRAP,	"SIGTRAP",	0				      },
 #if defined(SIGIOT) && (!defined(SIGABRT) || SIGIOT != SIGABRT)
-	{ SIGIOT,	"SIGIOT",					      },
+	{ SIGIOT,	"SIGIOT",	0				      },
 #endif
 #if defined (SIGABRT)
-	{ SIGABRT,	"SIGABRT",					      },
+	{ SIGABRT,	"SIGABRT",	0				      },
 #endif
 #if defined (SIGEMT)
 	{ SIGEMT,	"SIGEMT",	SGH_CONT | SGH_ACCEPT		      },
 #endif
 	{ SIGFPE,	"SIGFPE",	SGH_CONT | SGH_ACCEPT		      },
 	{ SIGKILL,	"SIGKILL",	SGH_CONT | SGH_ACCEPT		      },
-	{ SIGBUS,	"SIGBUS",					      },
-	{ SIGSEGV,	"SIGSEGV",					      },
+	{ SIGBUS,	"SIGBUS",	0				      },
+	{ SIGSEGV,	"SIGSEGV",	0				      },
 #if defined (SIGSYS)
-	{ SIGSYS,	"SIGSYS",					      },
+	{ SIGSYS,	"SIGSYS",	0				      },
 #endif
-	{ SIGPIPE,	"SIGPIPE",					      },
+	{ SIGPIPE,	"SIGPIPE",	0				      },
 	{ SIGALRM,	"SIGALRM",	SGH_CONT | SGH_ACCEPT		      },
-	{ SIGTERM,	"SIGTERM",					      },
-	{ SIGUSR1,	"SIGUSR1",					      },
-	{ SIGUSR2,	"SIGUSR2",					      },
+	{ SIGTERM,	"SIGTERM",	0				      },
+	{ SIGUSR1,	"SIGUSR1",	0				      },
+	{ SIGUSR2,	"SIGUSR2",	0				      },
 	{ SIGCHLD,	"SIGCHLD",	SGH_DFL_IGNORE | SGH_CONT | SGH_ACCEPT},
 #if defined (SIGPWR)
 	{ SIGPWR,	"SIGPWR",	SGH_DFL_IGNORE | SGH_CONT | SGH_ACCEPT},
@@ -118,33 +118,33 @@ static sig_info_t Sigtab[] = {
 #ifdef SIGVTALRM
 	{ SIGVTALRM,	"SIGVTALRM",	SGH_CONT | SGH_ACCEPT		      },
 #endif
-	{ SIGPROF,	"SIGPROF",					      },
+	{ SIGPROF,	"SIGPROF",	0				      },
 #ifdef SIGXCPU
-	{ SIGXCPU,	"SIGXCPU",					      },
+	{ SIGXCPU,	"SIGXCPU",	0				      },
 #endif
 #ifdef SIGXFSZ
-	{ SIGXFSZ,	"SIGXFSZ",					      },
+	{ SIGXFSZ,	"SIGXFSZ",	0				      },
 #endif
 #ifdef SIGWAITING
-	{ SIGWAITING,	"SIGWAITING",					      },
+	{ SIGWAITING,	"SIGWAITING",	0				      },
 #endif
 #ifdef SIGLWP
-	{ SIGLWP,	"SIGLWP",					      },
+	{ SIGLWP,	"SIGLWP",	0				      },
 #endif
 #ifdef SIGFREEZE
-	{ SIGFREEZE,	"SIGFREEZE",					      },
+	{ SIGFREEZE,	"SIGFREEZE",	0				      },
 #endif
 #ifdef SIGTHAW
-	{ SIGTHAW,	"SIGTHAW",					      },
+	{ SIGTHAW,	"SIGTHAW",	0				      },
 #endif
 #if defined (SIGUNUSED)
-	{ SIGUNUSED,	"SIGUNUSED",					      },
+	{ SIGUNUSED,	"SIGUNUSED",	0				      },
 #endif
 #if defined (SIGCANCEL)
-	{ SIGCANCEL,	"SIGCANCEL",					      },
+	{ SIGCANCEL,	"SIGCANCEL",	0				      },
 #endif
 #if defined (SIGLOST)
-	{ SIGLOST,	"SIGLOST",					      },
+	{ SIGLOST,	"SIGLOST",	0				      },
 #endif
 #if defined(__SIGRTMIN) && !defined(_SIGRTMIN)
 #define _SIGRTMIN __SIGRTMIN
@@ -154,37 +154,37 @@ static sig_info_t Sigtab[] = {
 #endif
 #if defined (_SIGRTMIN) && defined (_SIGRTMAX)
 #if (_SIGRTMIN)  <= (_SIGRTMAX)
-	{ _SIGRTMIN,	"SIGRT0",					      },
+	{ _SIGRTMIN,	"SIGRT0",	0				      },
 #endif
 #if (_SIGRTMIN)+1  <= (_SIGRTMAX)
-	{ _SIGRTMIN+1,	"SIGRT1",					      },
+	{ _SIGRTMIN+1,	"SIGRT1",	0				      },
 #endif
 #if (_SIGRTMIN)+2  <= (_SIGRTMAX)
-	{ _SIGRTMIN+2,	"SIGRT2",					      },
+	{ _SIGRTMIN+2,	"SIGRT2",	0				      },
 #endif
 #if (_SIGRTMIN)+3  <= (_SIGRTMAX)
-	{ _SIGRTMIN+3,	"SIGRT3",					      },
+	{ _SIGRTMIN+3,	"SIGRT3",	0				      },
 #endif
 #if (_SIGRTMIN)+4  <= (_SIGRTMAX)
-	{ _SIGRTMIN+4,	"SIGRT4",					      },
+	{ _SIGRTMIN+4,	"SIGRT4",	0				      },
 #endif
 #if (_SIGRTMIN)+5  <= (_SIGRTMAX)
-	{ _SIGRTMIN+5,	"SIGRT5",					      },
+	{ _SIGRTMIN+5,	"SIGRT5",	0				      },
 #endif
 #if (_SIGRTMIN)+6  <= (_SIGRTMAX)
-	{ _SIGRTMIN+6,	"SIGRT6",					      },
+	{ _SIGRTMIN+6,	"SIGRT6",	0				      },
 #endif
 #if (_SIGRTMIN)+7  <= (_SIGRTMAX)
-	{ _SIGRTMIN+7,	"SIGRT7",					      },
+	{ _SIGRTMIN+7,	"SIGRT7",	0				      },
 #endif
 #if (_SIGRTMIN)+8  <= (_SIGRTMAX)
-	{ _SIGRTMIN+8,	"SIGRT8",					      },
+	{ _SIGRTMIN+8,	"SIGRT8",	0				      },
 #endif
 #if (_SIGRTMIN)+9  <= (_SIGRTMAX)
-	{ _SIGRTMIN+9,	"SIGRT9",					      },
+	{ _SIGRTMIN+9,	"SIGRT9",	0				      },
 #endif
 #if (_SIGRTMIN)+10  <= (_SIGRTMAX)
-	{ _SIGRTMIN+10,	"SIGRT10",					      },
+	{ _SIGRTMIN+10,	"SIGRT10",	0				      },
 #endif
 #endif
 };
