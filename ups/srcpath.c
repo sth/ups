@@ -205,18 +205,15 @@ const char **p_fullpath;
 	 *  components off it.
 	 */
 	if (!found) {
-		const char *basename;
+		const char *filename = base_name(name);
 
-		if ((basename = strrchr(name, '/')) != NULL)
-			++basename;
-		
-		if (basename != NULL && *basename != '\0') {
+		if (filename != name) {
 			found = search_source_path((const char *)NULL,
-						   basename, p_fullpath);
+						   filename, p_fullpath);
 			/* RGA try with path hint */
 			if (!found) 
 			  found = search_source_path(path_hint,
-						     basename, p_fullpath);
+						     filename, p_fullpath);
 		}
 	}
 

@@ -195,11 +195,7 @@ bool *p_is_source;
 	const char *srcname, *objpath, *suf;
 	int len;
 
-	if ((srcname = strrchr(srcpath, '/')) != NULL)
-		++srcname;
-	else
-		srcname = srcpath;
-
+	srcname = base_name(srcpath);
 	objpath = srcpath;
 
 	if (want_ccpaths)

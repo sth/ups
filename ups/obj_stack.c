@@ -483,10 +483,7 @@ fval_t *fields;
 		fields[FN_FUNC_LNUM] = (fval_t)strsave("");
 	}
 	else if ((f->fu_flags & FU_NOSYM) != 0 || lnum == 0) {
-		const char *objname = f->fu_symtab->st_path;
-		const char *slash = strrchr(objname, '/');
-
-		objname = slash ? slash + 1 : objname;
+		const char *objname = base_name(f->fu_symtab->st_path);
 
 		fields[FN_FUNC_FILE] = (fval_t)objname;
 

@@ -191,16 +191,7 @@ make_libdep(alloc_pool_t *ap, const char *name, Libdep *par, long mtime)
 
 	ld = (Libdep *)alloc(ap, sizeof(Libdep));
 	ld->name = name;
-	if (name)
-	{
-	  if ((c = strrchr (name, '/')) != NULL)
-	    c++;
-	  else
-	    c = name;
-	  ld->name_only = c;
-	}
-	else
-	  ld->name_only = name;
+	ld->name_only = base_name(name);
 	ld->so = NULL;
 	ld->par = par;
 	ld->deps = NULL;

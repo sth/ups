@@ -194,7 +194,8 @@ objid_t obj;
 char *new_text;
 const char **p_display_string;
 {
-	char *command_line, *cmdline, *efile, *pos, *new_path;
+	char *command_line, *cmdline, *new_path;
+	const char *efile;
 	int efile_len, fd, i;
 	long mtime;
 
@@ -222,8 +223,7 @@ const char **p_display_string;
 	efile_len = strlen(efile);
 	if (!Use_full_path)
 	{
-	   if ((pos = strrchr(efile, '/')) != NULL)
-		efile = pos + 1;
+	   efile = base_name(efile);
 	   efile_len = strlen(efile);
 	}
 
@@ -236,7 +236,7 @@ const char **p_display_string;
 	{
 	  close(fd);
 	  do_menu_target_command(MR_TGT_INIT);	/* load symbols, don't start */
-	  update_icon_name(efile);
+	  update_icon_name((char *)efile);
 	}
 	free(new_path);
 	return TRUE;
@@ -257,7 +257,7 @@ objid_t par;
 const char *efile, *cmdline;
 bool use_full_path;
 {
-	char *command_line, *pos, *cptr;
+	char *command_line, *cptr;
 	fval_t fields[FN_COM_LAST + 1];
 	int efile_len;
 
@@ -283,8 +283,7 @@ bool use_full_path;
 	   ** useful when programs need their full path name to locate
 	   ** resource files or to let purify monitor them.
 	   */
-	   if ((pos = strrchr(efile, '/')) != NULL)
-		efile = pos + 1;
+	   efile = base_name(efile);
 	   efile_len = strlen(efile);
 	}
 

@@ -130,11 +130,7 @@ const char *state_dir, *basepath, **p_state_path, **p_user_path;
 	const char *target_name, *suf;
 	int len;
 
-	if ((target_name = strrchr(basepath, '/')) != NULL)
-		++target_name;
-	else
-		target_name = basepath;
-
+	target_name = base_name(basepath);
 	if ((suf = strrchr(target_name, '.')) != NULL)
 		len = suf - target_name;
 	else

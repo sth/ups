@@ -671,11 +671,8 @@ register struct drawst *dets;
 
 	s = (char *)dets->dr_fval;
 
-	if (dets->dr_user_info != NULL && dets->dr_user_info[0] == 'F') {
-		char *slash = strrchr( s, '/' );
-		
-		s = slash ? slash + 1 : s;
-	}
+	if (dets->dr_user_info != NULL && dets->dr_user_info[0] == 'F')
+		s = (char *)base_name(s);
 	
 	len = strlen(s);
 	maxlen = dets->dr_width / font->ft_width;

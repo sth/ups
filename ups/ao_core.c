@@ -113,16 +113,10 @@ int user_gave_core;
 		const char *basetext, *basecmd;
 		size_t basetext_len, cmdname_len, len;
 		
-		if ((basetext = strrchr(textname, '/')) == NULL)
-			basetext = textname;
-		else
-			++basetext;
+		basetext = base_name(textname);
 		basetext_len = strlen(basetext);
 		
-		if ((basecmd = strrchr(cmdname, '/')) == NULL)
-			basecmd = cmdname;
-		else
-			++basecmd;
+		basecmd = base_name(cmdname);
 		cmdname_len = strlen(basecmd);
 		
 		len = (basetext_len < cmdname_len) ? basetext_len : cmdname_len;
