@@ -144,6 +144,9 @@ stf_t *stf;
 
 	if ((f = dwf_lookup_func_by_addr(stf, addr)) == NULL) {
 	    errf("\bAddress 0x%lx not found in %s", (long)addr, name);
+	    dwarf_dealloc(dbg, name, DW_DLA_STRING);
+	    dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
+	    lines[i] = (Dwarf_Line)0;
 	    continue;
 	}
 	if (f->fu_flags & FU_DONE_LNOS)
