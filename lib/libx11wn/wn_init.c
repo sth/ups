@@ -1417,6 +1417,8 @@ const char *name, *geometry;
 	XSetWMProperties(wn__Dpy, win, &nameprop, &nameprop,
 				(char **)NULL, 0, &sh, &xwmh, &class_hint);
 
+	XFree(nameprop.value);
+        
 	XSelectInput(wn__Dpy, win, ExposureMask);
 
 	w->w_win = win;
