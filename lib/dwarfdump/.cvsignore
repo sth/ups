@@ -7,3 +7,5 @@ config.log
 config.status
 develhdrs
 dwarfdump
+dwarf_names.c
+dwarf_names.h
