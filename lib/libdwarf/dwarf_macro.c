@@ -164,7 +164,7 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
     Dwarf_Small *pnext;
     Dwarf_Unsigned endloc;
     unsigned char uc;
-    unsigned long depth = 0;
+    unsigned long depth = 1;
 
     int res;
 
