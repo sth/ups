@@ -706,6 +706,15 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * dwarfTODO: we could get the information for 'funcret' ...
 		 */
 		dt->dt_type->ty_funcret = ci_make_funcret(ap, FDT_IDLIST, 0, FALSE);
+
+		/*
+		 * As GCC 3.2.2 sometimes hides type definitions inside
+		 * the parameter list of a function type definition we need
+		 * to process the children of this DIE looking for those
+		 * type definitions.
+		 */
+		dw_what_next = DWL_ANY_TYPES;
+		descend = TRUE;
 	    }
 	    break;
 
