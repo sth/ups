@@ -101,7 +101,7 @@ char ups_ao_pt_regs_c_rcsid[] = "$Id$";
 #define PC_REG(pr)		((pr)->regs.eip)
 #define SP_REG(pr)		((pr)->regs.esp)
 #define FRAME_REG(pr)		((pr)->regs.ebp)
-#define INTEGER_REG(pr, regno)	((&(pr)->regs.es)[x86_gcc_register(regno)])
+#define INTEGER_REG(pr, regno)	((&(pr)->regs.ebx)[x86_gcc_register(regno)])
 
 #elif (defined ARCH_FREEBSD386)
 
@@ -141,11 +141,11 @@ static void convert_68881_reg PROTO((unsigned *rwords, bool is_double,
 static taddr_t get_ptrace_reg PROTO((ptrace_regs_t *pr, int pid, int regno));
 static int set_ptrace_reg PROTO((ptrace_regs_t *pr, int pid, int regno, taddr_t val));
 static int ptrace_update_pt_regs PROTO((target_t *xp));
-static int ptrace_update_pt_dregs PROTO((target_t *xp));
 
 #if AO_HAS_PTRACE_DREGS
 static taddr_t get_ptrace_dreg PROTO((ptrace_regs_t *pr, int pid, int regno));
 static int set_ptrace_dreg PROTO((ptrace_regs_t *pr, int pid, int regno, taddr_t val));
+static int ptrace_update_pt_dregs PROTO((target_t *xp));
 #endif
 
 #ifdef OS_SUNOS
@@ -367,7 +367,11 @@ target_t *xp;
 #else /* not OS_SUNOS */
 
 	pr = &ip->ip_ptrace_info->ptrace_regs;
-	e_ptrace(PTRACE_GETREGS, ip->ip_pid, (char *)&pr->regs, 0);
+#ifdef OS_LINUX
+        e_ptrace(PTRACE_GETREGS, ip->ip_pid, 0, (int)&pr->regs);
+#else
+        e_ptrace(PTRACE_GETREGS, ip->ip_pid, (char *)&pr->regs, 0);
+#endif
 	pc = (taddr_t)PC_REG(pr);
 	bp = get_breakpoint_at_addr(xp, pc - BPT_PC_OFFSET);
 	if (bp != NULL) {

@@ -121,18 +121,25 @@ typedef struct uregst {
 #undef UAREA_REGS
 #if HAVE_MACHINE_REG_H
 #include <machine/reg.h>
+#else
+#include <sys/user.h>
 #endif
 
-#if HAVE_MACHINE_REG_H && !defined(OS_SUNOS_4)
+#ifndef OS_SUNOS_4
 typedef struct ptraceregst {
+#if HAVE_MACHINE_REG_H
 	struct reg regs;
 	struct fpreg fpregs;
+#else
+	struct user_regs_struct regs;
+	struct user_fpregs_struct fpregs;
+#endif
 	bool need_fpregs;
 #if AO_HAS_PTRACE_DREGS
 	struct dbreg dbregs;
 #endif
-} ptrace_regs_t;
 #endif
+} ptrace_regs_t;
 #endif /*AO_HAS_PTRACE_REGS*/ 
 
 

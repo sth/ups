@@ -116,6 +116,7 @@
 #endif
 
 #if defined(OS_LINUX)
+#define AO_HAS_PTRACE_REGS	1	/* 'ptrace()' can get/set registers. */
 #define AO_HAS_PTRACE_ATTACH	1	/* Can attach with 'ptrace()'. */
 #endif
 
