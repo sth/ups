@@ -1007,8 +1007,9 @@ bool reattach_with_rescan;
 		 */
 	} else {
 		scan_stab_index(st, el, &st->st_sfiles, &flist, p_mainfunc_name);
-		set_function_addresses(el, st, &flist);
 	}
+        
+	set_function_addresses(el, st, &flist);
 
 	if (el->pltsh) {
 		add_function_to_symtab(st, &flist, "[_plt_]", NULL, NULL, 
