@@ -226,7 +226,7 @@ ups/develhdrs:
 					ups/develhdrs/mtrprog/$$f; \
 	done
 	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h ups/develhdrs/local/wn.h
-	@-for f in elf_repl.h gelf.h libelf.h nlist.h sys_elf.h; do \
+	@-for f in elf_repl.h gelf.h libelf.h nlist.h; do \
 		ln -s ../../../${topdir}/lib/libelf/lib/$$f \
 					ups/develhdrs/libelf/$$f; \
 		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
@@ -234,6 +234,10 @@ ups/develhdrs:
 		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
 					lib/dwarfdump/develhdrs/libelf/$$f; \
 	done
+	@-for i in libdwarf dwarfdump; do \
+		ln -s ../../../libelf/lib/sys_elf.h lib/$$i/develhdrs/libelf/sys_elf.h; \
+	done
+	@-ln -s ../../../lib/libelf/lib/sys_elf.h ups/develhdrs/libelf/sys_elf.h
 	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h med3/develhdrs/local/menu3.h
 	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h med3/develhdrs/local/wn.h
 	@echo "Making links to local ifdefs.h ..."
