@@ -206,7 +206,7 @@ typedef struct machine_s machine_t;
 #define GETWORD(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8))
 #define GETLONG(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8) | \
 			 UBYTE((pc)[2] << 16) | UBYTE((pc)[3] << 24))
-#if SIZEOF_LONG > 8
+#if SIZEOF_LONG > 4
 #define GETQUAD(pc)	(UBYTE(*(pc)) | UBYTE((pc)[1] << 8) | \
 			 UBYTE((pc)[2] << 16) | UBYTE((pc)[3] << 24) | \
 			 UBYTE((pc)[4] << 32) | UBYTE((pc)[5] << 40) | \
