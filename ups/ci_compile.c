@@ -1121,13 +1121,7 @@ unsigned flags;
 	li->li_apool = tx->tx_apool;
 	li->li_undef_vars = NULL;
 	li->li_undef_funcs = tx->tx_undef_funcs;
-#if 0
 	li->li_text = tx->tx_text;
-#else
-	li->li_text = (textword_t *)alloc(li->li_apool, (size_t)(tx->tx_pclim * sizeof(textword_t)));
-	memcpy(li->li_text, tx->tx_text, (size_t)(tx->tx_pclim * sizeof(textword_t)));
-	free(tx->tx_text);
-#endif
 	li->li_text_size = tx->tx_pc;
 	li->li_data = data;
 	li->li_data_size = data_addr;
@@ -1188,11 +1182,7 @@ unsigned long flags;
 
 	ap = alloc_create_pool();
 	tx = (text_t *)alloc(ap, sizeof(text_t));
-#if 0
-	tx->tx_apool = alloc_create_pool();
-#else
 	tx->tx_apool = ap;
-#endif
 
 	if ((flags & CI_CP_DONT_PANIC) != 0) {
 		if (ci_Catching_panics)
@@ -1208,7 +1198,7 @@ unsigned long flags;
 		}
 	}
 
-	tx->tx_text = (textword_t *)e_malloc((size_t)pclim * sizeof(textword_t));
+	tx->tx_text = (textword_t *)alloc(tx->tx_apool, (size_t)pclim * sizeof(textword_t));
 	tx->tx_pclim = pclim;
 	tx->tx_pc = 0; 
 	tx->tx_labels = NULL;

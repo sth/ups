@@ -560,17 +560,18 @@ ebuf_t *eb;
 	static time_t repltab_mtime = 0;
 	struct stat stbuf;
 	const char *home;
-	char *path;
+	static char *path;
 	
 	if (repl_ap == NULL)
 		repl_ap = alloc_create_pool();
 
-	path = "ups-state/repltab";
-	if (stat(path, &stbuf) != 0)
-	  if (errno == ENOENT)
-	    if ((home = getenv("HOME")) != NULL) 
-		path = strf("%s/repltab", home);
-
+	if (path == NULL) {
+		path = "ups-state/repltab";
+		if (stat(path, &stbuf) < 0 && errno == ENOENT)
+			if ((home = getenv("HOME")) != NULL) 
+				path = strf("%s/repltab", home);
+	}
+	
 	if (!check_repltab(repl_ap, path,
 			   &repltab, &repltab_mtime)) {
 		return FALSE;
