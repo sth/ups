@@ -414,6 +414,7 @@ bool want_outwin;
 	obj_tbar_id = make_tbar(regs[DISPLAY_AREA_TB]);
 	tb_set_callback_and_data(obj_tbar_id, tbar_obj_callback, (char *)NULL);
 	obj_set_callback_and_data(display_area_tbar_callback, (char *)obj_tbar_id);
+	set_display_area_tbar(obj_tbar_id);
 
 	re_set_callbacks(regs[DISPLAY_AREA], display_area_draw,
 				display_area_input, (re_destroy_proc_t)NULL);
@@ -596,6 +597,7 @@ bool want_outwin;
 	obj_tbar_id = make_tbar(regs[DISPLAY_AREA_TB]);
 	tb_set_callback_and_data(obj_tbar_id, tbar_obj_callback, (char *)NULL);
 	obj_set_callback_and_data(display_area_tbar_callback, (char *)obj_tbar_id);
+	set_display_area_tbar(obj_tbar_id);
 
 	re_set_callbacks(regs[DISPLAY_AREA], display_area_draw,
 				display_area_input, (re_destroy_proc_t)NULL);

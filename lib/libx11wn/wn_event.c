@@ -745,7 +745,7 @@ int *p_xyset;
 		   numClicks = 0;
 
 		lastButtonsFlags = ev->ev_flags;
-		ev->ev_buttons |= (numClicks<<8);
+		ev->ev_buttons |= (numClicks<<B_CLICK_SHIFT);
 		break;
 	case KeyPress:
 		xk = (XKeyEvent *)&x_event;
@@ -831,6 +831,10 @@ unsigned xbstate, xbflipped;
 		buttons |= B_MIDDLE;
 	if (xbstate & Button3Mask)
 		buttons |= B_RIGHT;
+	if (xbstate & Button4Mask)
+		buttons |= B_BUTTON4;
+	if (xbstate & Button5Mask)
+		buttons |= B_BUTTON5;
 
 	modflags = 0;
 	if (xbstate & ShiftMask)
@@ -849,6 +853,27 @@ unsigned xbstate, xbflipped;
 		break;
 	case Button3:
 		flipped = B_RIGHT;
+		break;
+	case Button4:
+		flipped = B_BUTTON4;
+		break;
+	case Button5:
+		flipped = B_BUTTON5;
+		break;
+	case 6:
+		flipped = B_BUTTON6;
+		break;
+	case 7:
+		flipped = B_BUTTON7;
+		break;
+	case 8:
+		flipped = B_BUTTON8;
+		break;
+	case 9:
+		flipped = B_BUTTON9;
+		break;
+	case 10:
+		flipped = B_BUTTON10;
 		break;
 	default:
 		flipped = 0;

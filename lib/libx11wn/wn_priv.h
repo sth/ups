@@ -160,7 +160,7 @@ typedef struct bwinst {
 	cursor_t bw_cid;
 	short bw_inmode;
 	short bw_upd_level;
-	short bw_winch_event;
+	unsigned long bw_winch_event;
 	short bw_had_lost_selection_event;
 	short bw_mouse_x;
 	short bw_mouse_y;

@@ -3443,6 +3443,11 @@ The percentage of the window height used for the source window (after
 space used by the fixed size regions is subtracted).
 The default is 50 (i.e. half).
 .TP
+.B SrcwinScrollUpButton, SrcwinScrollDownButton
+The mouse buttons which, when pressed, should cause the source window to
+scroll. This is normally used with wheel mice to make wheel movements
+cause the source window to scroll. There is no default.
+.TP
 .B DisplayAreaPercent
 The percentage of the window height used for the display area (after
 space used by the fixed size regions is subtracted).
@@ -3455,6 +3460,11 @@ are both set they need not add up to 100 \- the values actually
 specify a proportion of the total.
 Thus setting both to 20 (or any pair of identical values) results
 in a 50-50 split.
+.TP
+.B DisplayAreaScrollUpButton, DisplayAreaScrollDownButton
+The mouse buttons which, when pressed, should cause the display area to
+scroll. This is normally used with wheel mice to make wheel movements           
+cause the display area to scroll. There is no default.                         
 .TP
 .B OutwinPercent
 The percentage of the window height used for the output window

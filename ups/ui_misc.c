@@ -72,6 +72,8 @@ static bool report_error PROTO((lexinfo_t *lx, const char *mesg));
 static bool checkarg PROTO((type_t *type, int nargs, int argn, long *p_val));
 static ci_nametype_t getaddr PROTO((const char *name, taddr_t *p_addr));
 static unsigned long get_regaddr_for_ci PROTO((char *arg, int reg));
+static void display_area_scroll_up PROTO((char *data, event_t *ev));
+static void display_area_scroll_down PROTO((char *data, event_t *ev));
 
 /*  Arguments for getline_from_nlines.
  */
@@ -88,6 +90,8 @@ typedef struct getline_from_nlines_argst {
 
 static bool Func_addr_requested;
 static lexinfo_t *Error_lexinfo;
+
+static tbar_id_t Display_area_tbar;
 
 const char Stop_funcname[] = "$st";
 
@@ -420,17 +424,66 @@ const char *new;
 	return FALSE;
 }
 
+void
+set_display_area_tbar(tbar_id)
+tbar_id_t tbar_id;
+{
+	const char *button;
+   
+	Display_area_tbar = tbar_id;
+
+	if ((button = wn_get_default("DisplayAreaScrollUpButton")) != NULL)
+	{
+	   re_set_button_callback(atoi(button), display_area_scroll_up, NULL);
+	}
+
+	if ((button = wn_get_default("DisplayAreaScrollDownButton")) != NULL)
+	{
+	   re_set_button_callback(atoi(button), display_area_scroll_down, NULL);
+	}
+}
+
+static void
+display_area_scroll_up(data, ev)
+char *data;
+event_t *ev;
+{
+	if (ev->ev_type & EV_BUTTON_DOWN)
+	{
+		int amount = 10;
+
+		if (ev->ev_buttons & B_SHIFT_MASK)
+			amount = amount * 10;
+	   
+		display_area_scroll(amount);
+	}
+}
+
+static void
+display_area_scroll_down(data, ev)
+char *data;
+event_t *ev;
+{
+	Srcwin *sw = (Srcwin *)data;
+
+	if (ev->ev_type & EV_BUTTON_DOWN)
+	{
+		int amount = 10;
+	   
+		if (ev->ev_buttons & B_SHIFT_MASK)
+			amount = amount * 10;
+
+		display_area_scroll(-amount);
+	}
+}
+
 /*  Scroll the object display by dist pixels and update the thumb bar.
  */
 void
 display_area_scroll(dist)
 int dist;
 {
-	tbar_id_t tbar_id;
-
-	tbar_id = 0;
-	panic("can't get obj tb");
-	tb_scroll(tbar_id, v_scroll(dist), FALSE);
+	tb_scroll(Display_area_tbar, v_scroll(dist), FALSE);
 }
 
 /*  Move the object display.  Y is an offset from the start of the
@@ -442,14 +495,11 @@ display_area_goto(y)
 int y;
 {
 	int disp_y, disp_wn;
-	tbar_id_t tbar_id;
 
-	tbar_id = 0;
-	panic("can't get obj tb");
 	disp_wn = re_get_wn(get_display_area_region());
-	disp_y = tb_tbpos_to_unit(tbar_id, disp_wn, y, TRUE);
+	disp_y = tb_tbpos_to_unit(Display_area_tbar, disp_wn, y, TRUE);
 	display_from(0, disp_y);
-	tb_goto(tbar_id, disp_y, FALSE);
+	tb_goto(Display_area_tbar, disp_y, FALSE);
 }
 
 /*  Display a number.

@@ -64,6 +64,9 @@ void ta_init PROTO((edesc_t *edesc, int wn, font_t *font));
 #endif
 
 void scroll PROTO((event_t *ev, char *arg));
+#ifdef TB_H_INCLUDED
+void set_display_area_tbar PROTO((tbar_id_t tbar_id));
+#endif
 void display_area_scroll PROTO((int dist));
 void display_area_goto PROTO((int y));
 int select_from_popup PROTO((int wn, const char *name,

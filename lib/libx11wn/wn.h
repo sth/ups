@@ -376,19 +376,19 @@ typedef struct bmcursorst {
 /*  Event structure and flags.
  */
 typedef struct eventst {
-	unsigned long ev_type;	/* type of event */
-	char ev_flags;		/* flags (e.g. which button went up or down) */
-	char ev_char;		/* char for EV_KEY events */
-	short ev_x;		/* mouse x coord */
-	short ev_y;		/* mouse y coord */
-	short ev_xpos;		/* x coord of event */
-	short ev_ypos;		/* y coord of event */
-	short ev_width;		/* width of event */
-	short ev_height;	/* height of event */
-	short ev_buttons;	/* mouse button and modifier state */
-	unsigned long ev_time;	/* timestamp */
-	int ev_wn;		/* window the event happened in */
-	int ev_fdmask;		/* input fds mask for EV_OTHER_INPUT events */
+	unsigned long ev_type;	 /* type of event */
+	unsigned short ev_flags; /* flags (e.g. which button went up or down) */
+	char ev_char;		 /* char for EV_KEY events */
+	short ev_x;		 /* mouse x coord */
+	short ev_y;		 /* mouse y coord */
+	short ev_xpos;		 /* x coord of event */
+	short ev_ypos;		 /* y coord of event */
+	short ev_width;		 /* width of event */
+	short ev_height;	 /* height of event */
+	unsigned long ev_buttons;/* mouse button and modifier state */
+	unsigned long ev_time;	 /* timestamp */
+	int ev_wn;		 /* window the event happened in */
+	int ev_fdmask;		 /* input fds mask for EV_OTHER_INPUT events */
 } event_t;
 
 #define F1_KEY		-95	        /* insert UPS_F1_STR   		*/
@@ -422,6 +422,13 @@ typedef struct eventst {
 #define B_LEFT		 01
 #define B_MIDDLE	 02
 #define B_RIGHT		 04
+#define B_BUTTON4	010
+#define B_BUTTON5	020
+#define B_BUTTON6	040
+#define B_BUTTON7      0100
+#define B_BUTTON8      0200
+#define B_BUTTON9      0400
+#define B_BUTTON10    01000
 
 /*  In an EV_KEY, EV_BUTTON_UP, EV_BUTTON_DOWN event, these bits are set
  *  in ev_buttons if the corresponding key is down (if the window
@@ -437,32 +444,33 @@ typedef struct eventst {
  *  and ev_flags together, so we pick values for shift, control and alt
  *  that are unlikely to cause conflicts.
  */
-#define B_MULT_CLICKS    01400
-#define B_CLICK_CNT(_ev_buttons) ((((ev_buttons)&B_MULT_CLICKS)>>8)+1)
-#define B_SHIFT_MASK	 02000	/* Shift key pressed */
-#define B_CONTROL_MASK	 04000	/* Control key pressed */
-#define B_ALT_MASK	010000	/* Alt key pressed */
+#define B_MULT_CLICKS    014000
+#define B_CLICK_SHIFT	     11
+#define B_CLICK_CNT(ev_buttons) ((((ev_buttons)&B_MULT_CLICKS)>>B_CLICK_SHIFT)+1)
+#define B_SHIFT_MASK	 020000	/* Shift key pressed */
+#define B_CONTROL_MASK	 040000	/* Control key pressed */
+#define B_ALT_MASK	0100000	/* Alt key pressed */
 
-#define EV_WAS_PUSHED_BACK	010	/* This event has was pushed back */
+#define EV_WAS_PUSHED_BACK    02000	/* This event has was pushed back */
 
 /*  Event types.
  *
  *  When these appear in ev_type, they are mutually exclusive - i.e. no more
  *  than one of them is ever set. In an event mask they can be OR'ed together.
  */
-#define EV_KEY			020	/* Keyboard key pressed */
-#define EV_BUTTON_DOWN		040	/* Mouse button pressed */
-#define EV_BUTTON_UP	       0100	/* Mouse button released */
-#define EV_MOUSE_MOVED	       0200	/* Mouse moved (perhaps not really) */
-#define EV_WINDOW_RESIZED      0400	/* Window changed size */
-#define EV_WINDOW_EXPOSED     01000	/* Window exposed (needs repainting) */
-#define EV_WINDOW_SELECTED    02000	/* User selected window */
-#define EV_WINDOW_DESELECTED  04000	/* User deselected window */
-#define EV_INTERRUPT	     010000	/* Interrupt occured (*not* a resize) */
-#define EV_OTHER_INPUT	     020000	/* Input pending on other fds */
-#define EV_SELECTION_REQUEST 040000	/* Selection requested */
-#define EV_LOST_SELECTION   0100000	/* Selection lost */
-#define EV_OTHER	    0200000	/* Unknown event type */
+#define EV_KEY			0200000	/* Keyboard key pressed */
+#define EV_BUTTON_DOWN		0400000	/* Mouse button pressed */
+#define EV_BUTTON_UP	       01000000	/* Mouse button released */
+#define EV_MOUSE_MOVED	       02000000	/* Mouse moved (perhaps not really) */
+#define EV_WINDOW_RESIZED      04000000	/* Window changed size */
+#define EV_WINDOW_EXPOSED     010000000	/* Window exposed (needs repainting) */
+#define EV_WINDOW_SELECTED    020000000	/* User selected window */
+#define EV_WINDOW_DESELECTED  040000000	/* User deselected window */
+#define EV_INTERRUPT	     0100000000	/* Interrupt occured (*not* a resize) */
+#define EV_OTHER_INPUT	     0200000000	/* Input pending on other fds */
+#define EV_SELECTION_REQUEST 0400000000	/* Selection requested */
+#define EV_LOST_SELECTION   01000000000	/* Selection lost */
+#define EV_OTHER	    02000000000	/* Unknown event type */
 
 /*  Combinations of events
  */

@@ -130,6 +130,8 @@ static int numRegions = 0;
 static Region *Keyboard_re = NULL;
 static Region *Default_keyboard_re = NULL;
 static int iconic_state = FALSE;
+static re_button_proc_t Button_proc[10];
+static char *Button_proc_data[10];
 
 
 /* structure used to arbitrate between multible typing line regions:
@@ -855,6 +857,19 @@ Region *re;
 }
 
 void
+re_set_button_callback(button, button_proc, data)
+int button;
+re_button_proc_t button_proc;
+char *data;
+{
+	if (button > 0 && button < 11)
+	{
+		Button_proc[button-1] = button_proc;
+		Button_proc_data[button-1] = data;
+	}
+}
+
+void
 re_event_loop()
 {
 	const int evmask = EV_BUTTON_UP | EV_BUTTON_DOWN | EV_MOUSE_MOVED | EV_KEY |
@@ -898,6 +913,50 @@ re_event_loop()
 		  }
 
 		wn_next_event(WN_ANY, evmask, &event);
+
+		/*  Call any button callback that applies to this event.
+		 */
+		if (event.ev_type & (EV_BUTTON_DOWN|EV_BUTTON_UP))
+		{
+			int button = 0;
+		   
+			switch (event.ev_flags)
+			{
+			case B_LEFT:
+				button = 1;
+				break;
+			case B_MIDDLE:
+				button = 2;
+				break;
+			case B_RIGHT:
+				button = 3;
+				break;
+			case B_BUTTON4:
+				button = 4;
+				break;
+			case B_BUTTON5:
+				button = 5;
+				break;
+			case B_BUTTON6:
+				button = 6;
+				break;
+			case B_BUTTON7:
+				button = 7;
+				break;
+			case B_BUTTON8:
+				button = 8;
+				break;
+			case B_BUTTON9:
+				button = 9;
+				break;
+			case B_BUTTON10:
+				button = 10;
+				break;
+			}
+
+			if (button > 0 && Button_proc[button-1])
+				Button_proc[button-1](Button_proc_data[button-1], &event);
+		}
 
 		/*  Cancel any displayed error message on a mouse ior key press
 		 */

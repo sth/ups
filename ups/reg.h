@@ -61,6 +61,8 @@ typedef bool (*re_accept_focus_proc_t)PROTO((Region *region, char *data));
 
 typedef struct Edit_display* (*re_get_display_proc_t)PROTO((Region *region));
 
+typedef void (*re_button_proc_t)PROTO((char *data, event_t *ev));
+
 Region *re_make_region PROTO((int wn));
 void re_divide PROTO((Region *region, re_orientation_t orientation, ...));
 int re_change_position PROTO((Region *region, int delta));
@@ -120,6 +122,10 @@ int  re_in_icon_state PROTO((void));
 void re_handle_event PROTO((Region* region, event_t* ev));
 #endif
 
+void re_set_button_callback PROTO((int button,
+				   re_button_proc_t button_proc,
+				   char *data));
+
 void re_event_loop PROTO((void));
 
 void re_set_exit_event_loop_flag PROTO((void));
@@ -132,4 +138,3 @@ void re_set_typing_regions PROTO((Region* typing_line, Region* extended));
  *  TODO: zap this!
  */
 void clear_message PROTO((void));
-

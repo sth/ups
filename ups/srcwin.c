@@ -149,6 +149,8 @@ static void electric_c_brace PROTO((Edit_display *display));
 static void init_display_area_overlay PROTO((Outwin *dw, int wn,
 					     tbar_id_t tbar,
 					     Edit_buffer *buffer));
+static void srcwin_scroll_up PROTO((char *data, event_t *ev));
+static void srcwin_scroll_down PROTO((char *data, event_t *ev));
 
 
 /*  List of all display windows (source and output).
@@ -220,6 +222,7 @@ tbar_id_t tbar;
 {
 	Srcwin *sw;
 	Edit_keymap *keymap;
+	const char *button;
 
 	sw = (Srcwin *)e_malloc(sizeof(Srcwin));
 	init_outwin(&sw->outwin, wn, tbar, (Edit_buffer *)NULL, TRUE, breakpoint_history); /* folded lines, history */
@@ -231,6 +234,16 @@ tbar_id_t tbar;
 	edit_add_keymap_entry(keymap, 0, '}', electric_c_brace);
 	edit_add_keymap_entry(keymap, EDIT_SHIFT, '}', electric_c_brace);
 	edit_set_keymap(sw->outwin.display, keymap);
+
+	if ((button = wn_get_default("SrcwinScrollUpButton")) != NULL)
+	{
+	   re_set_button_callback(atoi(button), srcwin_scroll_up, (char *)sw);
+	}
+
+	if ((button = wn_get_default("SrcwinScrollDownButton")) != NULL)
+	{
+	   re_set_button_callback(atoi(button), srcwin_scroll_down, (char *)sw);
+	}
 
 	return sw;
 }
@@ -1967,4 +1980,42 @@ srcwin_reset()
   ow->buffer = buffer;
   srcbuf_reset_file_handle();
   srcwin_redraw(sw);
+}
+
+static void
+srcwin_scroll_up(data, ev)
+char *data;
+event_t *ev;
+{
+	Srcwin *sw = (Srcwin *)data;
+
+	if (ev->ev_type & EV_BUTTON_DOWN)
+	{
+		int amount = Srcfont_height;
+
+		if (ev->ev_buttons & B_SHIFT_MASK)
+			amount = amount * 10;
+	   
+		edit_scroll_display(sw->outwin.display, amount);
+		tb_scroll(sw->outwin.tbar, amount, FALSE);
+	}
+}
+
+static void
+srcwin_scroll_down(data, ev)
+char *data;
+event_t *ev;
+{
+	Srcwin *sw = (Srcwin *)data;
+
+	if (ev->ev_type & EV_BUTTON_DOWN)
+	{
+		int amount = Srcfont_height;
+	   
+		if (ev->ev_buttons & B_SHIFT_MASK)
+			amount = amount * 10;
+
+		edit_scroll_display(sw->outwin.display, -amount);
+		tb_scroll(sw->outwin.tbar, -amount, FALSE);
+	}
 }
