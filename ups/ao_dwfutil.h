@@ -25,8 +25,10 @@
 #if WANT_DWARF
 
 char *		normalise_path PROTO((char *path));
+bool		load_this_stf PROTO((stf_t *stf));
 
 Dwarf_Die	dwf_find_spec_die PROTO((Dwarf_Debug dbg, Dwarf_Die die));
+Dwarf_Die	dwf_find_decl_die PROTO((Dwarf_Debug dbg, Dwarf_Die die));
 Dwarf_Die	dwf_stf_cu_die PROTO((stf_t *stf));
 
 language_t	dwf_get_src_language PROTO((Dwarf_Debug dbg, Dwarf_Die cu_die));

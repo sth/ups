@@ -108,6 +108,27 @@ char *path;
 }
 
 /*
+ * Does the user want the data from this file loaded ?
+ */
+bool
+load_this_stf(stf)
+stf_t *stf;
+{
+    char *lib;
+    bool load = TRUE;
+
+    if (*(stf->stf_name) != '/') {
+	lib = normalise_path(strf("%s/%s", stf->stf_objpath_hint, stf->stf_name));
+	if (lib)
+	    load = user_wants_library_loaded(lib);
+	free(lib);
+    }
+    else
+	load = user_wants_library_loaded((char *)stf->stf_name);
+    return load;
+}
+
+/*
  * Get the source file language.
  *
  * 'cu_die' is the compilation unit DIE
@@ -197,6 +218,32 @@ Dwarf_Die die;
      * This is the specification DIE.
      */
     return die;
+}
+
+/*
+ * Find the DIE giving the file where an object is declared.
+ */
+Dwarf_Die
+dwf_find_decl_die(dbg, die)
+Dwarf_Debug dbg;
+Dwarf_Die die;
+{
+    Dwarf_Die next_die;
+
+    if (dwf_has_attribute(dbg, die, DW_AT_decl_file))
+	return die;
+
+    /*
+     * Is the specification elsewhere ?
+     */
+    if (dwf_has_attribute(dbg, die, DW_AT_abstract_origin)) {
+	next_die = dwf_die_at_attribute(dbg, die, DW_AT_abstract_origin);
+	return dwf_find_decl_die(dbg, next_die);
+    } else if (dwf_has_attribute(dbg, die, DW_AT_specification)) {
+	next_die = dwf_die_at_attribute(dbg, die, DW_AT_specification);
+	return dwf_find_decl_die(dbg, next_die);
+    }
+    return (Dwarf_Die)0;
 }
 
 /*
