@@ -516,7 +516,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * Start of a lexical block.
 		 * Make a new block and trawl the DIEs in it.
 		 */
-		bl = dwf_make_block(dbg, die, ap, parent_bl, f);
+		bl = dwf_make_block(dbg, die, ap, stf, parent_bl, f);
 		bl->bl_next = bl_head;
 		bl_head = bl;
 
@@ -949,7 +949,7 @@ fsyminfo_t *fs;
      * Make the block for the function.
      * (dwf_load_from_die() processes the children of the DIE)
      */
-    bl_head = dwf_make_block(dbg, die, st->st_apool, f->fu_fil->fi_block, f);
+    bl_head = dwf_make_block(dbg, die, st->st_apool, stf, f->fu_fil->fi_block, f);
 
     /*
      * Add file-level types here so "add expr" can reference them.

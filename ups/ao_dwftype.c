@@ -164,10 +164,11 @@ Dwarf_Die die;
  * Make a 'block_t' structure and fill in some values.
  */
 block_t *
-dwf_make_block(dbg, die, ap, parent, f)
+dwf_make_block(dbg, die, ap, stf, parent, f)
 Dwarf_Debug dbg;
 Dwarf_Die die;
 alloc_pool_t *ap;
+stf_t *stf;
 block_t *parent;	/* Parent block list. */
 func_t *f;		/* Function containing the block. */
 {
@@ -186,8 +187,8 @@ func_t *f;		/* Function containing the block. */
 	low_pc = 0;
 	high_pc = 0;
     } else {
-	low_pc  = dwf_get_address(dbg, die, DW_AT_low_pc);
-	high_pc = dwf_get_address(dbg, die, DW_AT_high_pc);
+	low_pc  = dwf_get_address(dbg, die, DW_AT_low_pc) + stf->stf_addr;
+	high_pc = dwf_get_address(dbg, die, DW_AT_high_pc) + stf->stf_addr;
     }
 
     /*
