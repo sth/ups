@@ -353,7 +353,7 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
     type_t *type = NULL;
     typedef_t *td;
     off_t type_offset;
-    char *name;
+    char *name = NULL;
     class_t class = CL_NOCLASS;
     vaddr_t *vaddr = NULL;
     taddr_t addr = 0;
@@ -371,9 +371,11 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
 
     /*
      * Get the variable's name and type.
+     * Only base classes should not have a name.
      */
     spec_die = dwf_find_spec_die(dbg, die);
-    name = dwf_get_string(dbg, ap, spec_die, DW_AT_name);
+    if (dwf_has_attribute(dbg, spec_die, DW_AT_name))
+	name = dwf_get_string(dbg, ap, spec_die, DW_AT_name);
     type_offset = dwf_get_cu_ref(dbg, spec_die, DW_AT_type);
     type = dwf_find_type(stf, type_offset);
 
@@ -480,7 +482,7 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
      * in the block.
      */
     v = ci_make_var(ap, name, class, type, addr);
-    v->va_language = stf->stf_fil->fi_language;	/* dwarfTODO: or stf->stf_language ? */
+    v->va_language = stf->stf_language;
     v->va_lexinfo = dwf_make_lexinfo(dbg, spec_die, ap, stf);
     v->va_next = *p_vars;
     *p_vars = v;
@@ -834,9 +836,18 @@ aggr_or_enum_def_t *ae;
     while (v != NULL) {
 	if (v->va_type == NULL)
 	    return ae->ae_alignment;
-	if (v->va_type->ty_code == TY_NOTYPE)
+	switch(v->va_type->ty_code) {
+	case TY_NOTYPE:
 	    return ae->ae_alignment;
-	alignment = ci_type_alignment(v->va_type);
+	case TY_U_STRUCT:
+	case TY_U_UNION:
+	case TY_U_ENUM:
+	    alignment = 0;
+	    break;
+	default:
+	    alignment = ci_type_alignment(v->va_type);
+	    break;
+	}
 	if (alignment > max_align)
 	    max_align = alignment;
 	v = v->va_next;
@@ -1003,13 +1014,13 @@ dtype_t *dt;
     aggr_or_enum_def_t *ae;
     class_t class;
 
-    ae = dt->dt_type->ty_aggr_or_enum;
     switch (dt->dt_type->ty_code) {
     case TY_ENUM:	break;
     case TY_STRUCT:	class = CL_MOS; break;
     case TY_UNION:	class = CL_MOU; break;
     default:		panic("botch in dwf_finish_aggregate()");
     }
+    ae = dt->dt_type->ty_aggr_or_enum;
 
     /*
      *  If there are no members demote to "undefined".
@@ -1043,6 +1054,32 @@ dtype_t *dt;
     ae->ae_size = dt->dt_type->ty_size;
     ae->ae_alignment = -1;
     ae->ae_is_complete = AE_COMPLETE;
+}
+
+/*
+ * Finish up a C++ class type we have just got the members of.
+ */
+void
+dwf_finish_class(dt)
+dtype_t *dt;
+{
+    var_t *v;
+    aggr_or_enum_def_t *ae;
+
+    if (dt->dt_type->ty_code != TY_STRUCT)
+	return;
+    ae = dt->dt_type->ty_aggr_or_enum;
+
+    /*
+     * Fix class members.
+     * Should now have base class name.
+     */
+    v = ae->ae_aggr_members;
+    while (v != NULL) {
+	if (v->va_flags & VA_BASECLASS)
+	    ci_make_baseclass_name(v);
+	v = v->va_next;
+    }
 }
 
 #endif /* WANT_DWARF */

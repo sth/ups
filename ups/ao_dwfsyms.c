@@ -701,6 +701,20 @@ int recursed;		/* Recursion level, 0 = top. */
 	    }
 	    break;
 
+	case DW_TAG_inheritance:
+	    if (dw_what & DWL_CLASS_MEMBERS) {
+		var_t *v;
+		/*
+		 * A base class the current class inherits from.
+		 */
+		ae = parent_dt->dt_type->ty_aggr_or_enum;
+		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
+				      dw_level, CL_MOS);
+		v->va_flags = VA_BASECLASS;
+		ci_make_baseclass_name(v);
+	    }
+	    break;
+
 	case DW_TAG_enumerator:
 	    if (dw_what & DWL_ENUM_MEMBERS) {
 		enum_member_t *em;
@@ -806,6 +820,13 @@ int recursed;		/* Recursion level, 0 = top. */
 	i = dwf_fixup_types(stf->stf_dtypes, recursed);
 	if ((i > 0) && (recursed == 0))
 	    errf("\b%d incomplete DWARF types", i);
+    }
+
+    /*
+     * If doing class members ...
+     */
+    if (dw_what & DWL_CLASS_MEMBERS) {
+	dwf_finish_class(parent_dt);
     }
 
     /*

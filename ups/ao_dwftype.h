@@ -20,6 +20,7 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* $Id$ */
 
 #if WANT_DWARF
 
@@ -56,5 +57,6 @@ type_t *	dwf_lookup_type PROTO((dtype_t *dt, off_t offset));
 type_t *	dwf_find_type PROTO((stf_t *stf, off_t offset));
 int		dwf_fixup_types PROTO((dtype_t *dt, int recursed));
 void		dwf_finish_aggregate PROTO((dtype_t *dt));
+void		dwf_finish_class PROTO((dtype_t *dt));
 
 #endif /* WANT_DWARF */
