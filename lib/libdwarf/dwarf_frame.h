@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000, 2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -80,7 +80,8 @@
  * the exception handling tables.
  */
 
-#define DW_DEBUG_FRAME_VERSION                 	1
+#define DW_DEBUG_FRAME_VERSION                 	1 /* DWARF2 */
+#define DW_DEBUG_FRAME_VERSION3                	3 /* DWARF3 */
 #define DW_DEBUG_FRAME_AUGMENTER_STRING     	"mti v1"
 
 /* The value of the offset field for Cie's. */
@@ -170,6 +171,7 @@ struct Dwarf_Cie_s {
     Dwarf_Cie ci_next;
     Dwarf_Small ci_length_size;
     Dwarf_Small ci_extension_size;
+    Dwarf_Half ci_cie_version_number;
 };
 
 /*

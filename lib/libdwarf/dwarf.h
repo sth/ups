@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000, 2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000, 2001, 2003, 2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307,
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -44,7 +44,16 @@ extern "C" {
 	$Revision$    $Date$    
 
 	The comment "DWARF3" appears where there are
-	new entries from DWARF3.
+	new entries from DWARF3, and other comments apply
+	where extension entries appear.
+
+ 	A few extension names have omitted the 'vendor id'
+        (See chapter 7, "Vendor Extensibility"). Please
+	always use a 'vendor id' string in extension names.
+
+	Vendors should use a vendor string in names and
+	whereever possible avoid duplicating values used by
+	other vendor extensions 
 
 */
 
@@ -86,7 +95,7 @@ extern "C" {
 #define DW_TAG_file_type		0x29
 #define DW_TAG_friend			0x2a
 #define DW_TAG_namelist			0x2b
-	/* Previous releases of this header had the following
+	/* Early releases of this header had the following
 	   misspelled with a trailing 's' */
 #define DW_TAG_namelist_item		0x2c /* DWARF3/2 spelling */
 #define DW_TAG_namelist_items		0x2c /* SGI misspelling/typo */
@@ -113,22 +122,29 @@ extern "C" {
 #define DW_TAG_imported_unit		0x3d  /* DWARF3 */
 #define DW_TAG_mutable_type		0x3e  /* DWARF3 */
 #define DW_TAG_lo_user			0x4080
-#define DW_TAG_MIPS_loop		0x4081
-#define DW_TAG_hi_user			0xffff
 
-/* The following 3 are GNU extensions 
-   The TAG names are as if the extensions were dwarf standard,
-   not extensions.
-*/
-#define DW_TAG_format_label             0x4101 /* for FORTRAN 77, Fortran 90 */
-#define DW_TAG_function_template        0x4102 /* for C++ */
-#define DW_TAG_class_template           0x4103 /* for C++ */
+#define DW_TAG_MIPS_loop		0x4081
+
+/* HP extensions: ftp://ftp.hp.com/pub/lang/tools/WDB/wdb-4.0.tar.gz  */
+#define DW_TAG_HP_array_descriptor      0x4090 /* HP */
+
+/* GNU extensions.  The first 3 missing the GNU_. */
+#define DW_TAG_format_label             0x4101 /* GNU. Fortran. */
+#define DW_TAG_function_template        0x4102 /* GNU. For C++ */
+#define DW_TAG_class_template           0x4103 /* GNU. For C++ */
+#define DW_TAG_GNU_BINCL                0x4104 /* GNU */
+#define DW_TAG_GNU_EINCL                0x4105 /* GNU */
 
 /* The following 3 are extensions to support UPC */
 #define DW_TAG_upc_shared_type          0x8765 /* UPC */
 #define DW_TAG_upc_strict_type          0x8766 /* UPC */
 #define DW_TAG_upc_relaxed_type         0x8767 /* UPC */
 
+/* PGI (STMicroelectronics) extensions. */
+#define DW_TAG_PGI_kanji_type           0xa000 /* PGI */
+#define DW_TAG_PGI_interface_block      0xa020 /* PGI */
+
+#define DW_TAG_hi_user			0xffff
 
 #define DW_children_no			0
 #define DW_children_yes			1
@@ -232,35 +248,65 @@ extern "C" {
 #define DW_AT_call_file				0x58 /* DWARF3 */
 #define DW_AT_call_line				0x59 /* DWARF3 */
 #define DW_AT_description			0x5a /* DWARF3 */
+/* HP extensions. */
+#define DW_AT_HP_block_index                    0x2000  /* HP */
+
 #define DW_AT_lo_user				0x2000
-#define DW_AT_MIPS_fde				0x2001
-#define DW_AT_MIPS_loop_begin			0x2002
-#define DW_AT_MIPS_tail_loop_begin		0x2003
-#define DW_AT_MIPS_epilog_begin			0x2004
-#define DW_AT_MIPS_loop_unroll_factor		0x2005
-#define DW_AT_MIPS_software_pipeline_depth	0x2006
-#define DW_AT_MIPS_linkage_name			0x2007
-#define DW_AT_MIPS_stride		        0x2008
-#define DW_AT_MIPS_abstract_name	        0x2009
-#define DW_AT_MIPS_clone_origin		        0x200a
-#define DW_AT_MIPS_has_inlines		        0x200b
-#define DW_AT_MIPS_stride_byte		        0x200c
-#define DW_AT_MIPS_stride_elem		        0x200d
-#define DW_AT_MIPS_ptr_dopetype			0x200e
-#define DW_AT_MIPS_allocatable_dopetype		0x200f
-#define DW_AT_MIPS_assumed_shape_dopetype	0x2010
-#define DW_AT_MIPS_assumed_size			0x2011
+
+#define DW_AT_MIPS_fde				0x2001 /* MIPS/SGI */
+#define DW_AT_MIPS_loop_begin			0x2002 /* MIPS/SGI */
+#define DW_AT_MIPS_tail_loop_begin		0x2003 /* MIPS/SGI */
+#define DW_AT_MIPS_epilog_begin			0x2004 /* MIPS/SGI */
+#define DW_AT_MIPS_loop_unroll_factor		0x2005 /* MIPS/SGI */
+#define DW_AT_MIPS_software_pipeline_depth	0x2006 /* MIPS/SGI */
+#define DW_AT_MIPS_linkage_name			0x2007 /* MIPS/SGI */
+#define DW_AT_MIPS_stride		        0x2008 /* MIPS/SGI */
+#define DW_AT_MIPS_abstract_name	        0x2009 /* MIPS/SGI */
+#define DW_AT_MIPS_clone_origin		        0x200a /* MIPS/SGI */
+#define DW_AT_MIPS_has_inlines		        0x200b /* MIPS/SGI */
+#define DW_AT_MIPS_stride_byte		        0x200c /* MIPS/SGI */
+#define DW_AT_MIPS_stride_elem		        0x200d /* MIPS/SGI */
+#define DW_AT_MIPS_ptr_dopetype			0x200e /* MIPS/SGI */
+#define DW_AT_MIPS_allocatable_dopetype		0x200f /* MIPS/SGI */
+#define DW_AT_MIPS_assumed_shape_dopetype	0x2010 /* MIPS/SGI */
+#define DW_AT_MIPS_assumed_size			0x2011 /* MIPS/SGI */
+
+/* HP extensions. */
+#if 0
+#define DW_AT_HP_unmodifiable                   0x2001 /* conflict: MIPS */
+#define DW_AT_HP_actuals_stmt_list              0x2010 /* conflict: MIPS */
+#define DW_AT_HP_proc_per_section               0x2011 /* conflict: MIPS */
+#endif
+#define DW_AT_HP_raw_data_ptr                   0x2012 /* HP */
+#define DW_AT_HP_pass_by_reference              0x2013 /* HP */
+#define DW_AT_HP_opt_level                      0x2014 /* HP */
+#define DW_AT_HP_prof_version_id                0x2015 /* HP */
+#define DW_AT_HP_opt_flags                      0x2016 /* HP */
+#define DW_AT_HP_cold_region_low_pc             0x2017 /* HP */
+#define DW_AT_HP_cold_region_high_pc            0x2018 /* HP */
+#define DW_AT_HP_all_variables_modifiable       0x2019 /* HP */
+#define DW_AT_HP_linkage_name                   0x201a /* HP */
+#define DW_AT_HP_prof_flags                     0x201b /* HP */
 
 
-/* GNU extensions, currently not used in dwarf2 by egcs 
-   Mostly dwarf1 extensions not needed in dwarf2?
-*/
-#define DW_AT_sf_names                          0x2101
-#define DW_AT_src_info                          0x2102
-#define DW_AT_mac_info                          0x2103
-#define DW_AT_src_coords                        0x2104
-#define DW_AT_body_begin                        0x2105
-#define DW_AT_body_end                          0x2106
+/* GNU extensions. */
+#define DW_AT_sf_names                          0x2101 /* GNU */
+#define DW_AT_src_info                          0x2102 /* GNU */
+#define DW_AT_mac_info                          0x2103 /* GNU */
+#define DW_AT_src_coords                        0x2104 /* GNU */
+#define DW_AT_body_begin                        0x2105 /* GNU */
+#define DW_AT_body_end                          0x2106 /* GNU */
+#define DW_AT_GNU_vector                        0x2107 /* GNU */
+
+/* VMS extensions. */
+#define DW_AT_VMS_rtnbeg_pd_address             0x2201 /* VMS */
+
+/* PGI (STMicroelectronics) extensions. */
+#define DW_AT_PGI_lbase                         0x3a00 /* PGI */
+#define DW_AT_PGI_soffset                       0x3a01 /* PGI */
+#define DW_AT_PGI_lstride                       0x3a02 /* PGI */
+
+
 /* UPC extension */
 #define DW_AT_upc_threads_scaled                0x3210 /* UPC */
 
@@ -416,7 +462,22 @@ extern "C" {
 #define DW_OP_call2			0x98 /* DWARF3 */
 #define DW_OP_call4			0x99 /* DWARF3 */
 #define DW_OP_call_ref			0x9a /* DWARF3 */
+
+    /* GNU extensions. */
+#define DW_OP_GNU_push_tls_address      0xe0 /* GNU */
 #define DW_OP_lo_user			0xe0
+
+    /* HP extensions. */
+#if 0
+#define DW_OP_HP_unknown                0xe0 /* HP conflict: GNU */
+#endif
+#define DW_OP_HP_is_value               0xe1 /* HP */
+#define DW_OP_HP_fltconst4              0xe2 /* HP */
+#define DW_OP_HP_fltconst8              0xe3 /* HP */
+#define DW_OP_HP_mod_range              0xe4 /* HP */
+#define DW_OP_HP_unmod_range            0xe5 /* HP */
+#define DW_OP_HP_tls                    0xe6 /* HP */
+
 #define DW_OP_hi_user			0xff
 
 #define DW_ATE_address			0x1
@@ -428,7 +489,20 @@ extern "C" {
 #define DW_ATE_unsigned			0x7
 #define DW_ATE_unsigned_char		0x8
 #define DW_ATE_imaginary_float		0x9  /* DWARF3 */
+
+/* HP Floating point extensions. */
+#define DW_ATE_HP_float80             0x80 /* (80 bit). HP */
+
 #define DW_ATE_lo_user			0x80
+
+/* HP Floating point extensions. */
+#define DW_ATE_HP_complex_float80     0x81 /* Complex (80 bit). HP  */    
+#define DW_ATE_HP_float128            0x82 /* (128 bit). HP */
+#define DW_ATE_HP_complex_float128    0x83 /* Complex (128 bit). HP */
+#define DW_ATE_HP_floathpintel        0x84 /* (82 bit IA64). HP */
+#define DW_ATE_HP_imaginary_float80   0x85 /* HP */
+#define DW_ATE_HP_imaginary_float128  0x86 /* HP */
+
 #define DW_ATE_hi_user			0xff
 
 #define DW_ACCESS_public		1
@@ -459,7 +533,7 @@ extern "C" {
 #define DW_LANG_Fortran95		0x000e /* DWARF3 */
 #define DW_LANG_PLI			0x000f /* DWARF3 */
 #define DW_LANG_lo_user			0x8000
-#define DW_LANG_Mips_Assembler		0x8001
+#define DW_LANG_Mips_Assembler		0x8001 /* MIPS   */
 #define DW_LANG_Upc                     0x8765 /* UPC */
 #define DW_LANG_hi_user			0xffff
 
@@ -472,7 +546,8 @@ extern "C" {
 #define DW_CC_normal			0x1
 #define DW_CC_program			0x2
 #define DW_CC_nocall			0x3
-#define DW_CC_lo_user			0x40
+#define DW_CC_lo_user			0x40 
+
 #define DW_CC_hi_user			0xff
 
 #define DW_INL_not_inlined		0
@@ -502,6 +577,19 @@ extern "C" {
 #define DW_LNE_end_sequence		1
 #define DW_LNE_set_address		2
 #define DW_LNE_define_file		3
+
+/* HP extensions. */
+#define DW_LNE_HP_negate_is_UV_update       0x11 /* 17 HP */
+#define DW_LNE_HP_push_context              0x12 /* 18 HP */
+#define DW_LNE_HP_pop_context               0x13 /* 19 HP */
+#define DW_LNE_HP_set_file_line_column      0x14 /* 20 HP */
+#define DW_LNE_HP_set_routine_name          0x15 /* 21 HP */
+#define DW_LNE_HP_set_sequence              0x16 /* 22 HP */
+#define DW_LNE_HP_negate_post_semantics     0x17 /* 23 HP */
+#define DW_LNE_HP_negate_function_exit      0x18 /* 24 HP */
+#define DW_LNE_HP_negate_front_end_logical  0x19 /* 25 HP */
+#define DW_LNE_HP_define_proc               0x20 /* 32 HP */
+
 #define DW_LNE_lo_user			128 /* DWARF3 */
 #define DW_LNE_hi_user			255 /* DWARF3 */
 
@@ -511,7 +599,7 @@ extern "C" {
 #define DW_MACINFO_end_file		4
 #define DW_MACINFO_vendor_ext		255
 
-#define DW_CFA_advance_loc        0x40
+#define DW_CFA_advance_loc        0x40 
 #define DW_CFA_offset             0x80
 #define DW_CFA_restore            0xc0
 #define DW_CFA_extended           0
@@ -538,11 +626,14 @@ extern "C" {
 #define DW_CFA_def_cfa_offset_sf 0x13      /* DWARF3 */
 
 #define DW_CFA_low_user          0x1c
-#define DW_CFA_MIPS_advance_loc8 0x1d
 
-/* the following two from egcs-1.1.2 */
-#define DW_CFA_GNU_window_save   0x2d 
-#define DW_CFA_GNU_args_size     0x2e
+/* SGI/MIPS extension. */
+#define DW_CFA_MIPS_advance_loc8 0x1d   /* MIPS */
+
+/* GNU extensions. */
+#define DW_CFA_GNU_window_save   0x2d  /* GNU */
+#define DW_CFA_GNU_args_size     0x2e /* GNU */
+#define DW_CFA_GNU_negative_offset_extended  0x2f /* GNU */
 
 #define DW_CFA_high_user         0x3f
 

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2002 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -65,8 +65,6 @@ dwarf_get_aranges(Dwarf_Debug dbg,
        to twice the tuple size.  Libdwarf requirement. */
     Dwarf_Small *header_ptr;
 
-    /* Length of current set of aranges. */
-    Dwarf_Unsigned length;
 
     /* Version of .debug_aranges header. */
     Dwarf_Half version;
@@ -118,6 +116,10 @@ dwarf_get_aranges(Dwarf_Debug dbg,
 
     arange_ptr = dbg->de_debug_aranges;
     do {
+        /* Length of current set of aranges. */
+        Dwarf_Unsigned length;
+	Dwarf_Small *arange_ptr_past_end = 0;
+
 	int local_length_size;
 	/*REFERENCED*/ /* Not used in this instance of the macro */
 	int local_extension_size;
@@ -128,6 +130,7 @@ dwarf_get_aranges(Dwarf_Debug dbg,
 	READ_AREA_LENGTH(dbg, length, Dwarf_Unsigned,
 			 arange_ptr, local_length_size,
 			 local_extension_size);
+	arange_ptr_past_end = arange_ptr + length;
 
 
 	READ_UNALIGNED(dbg, version, Dwarf_Half,
@@ -216,10 +219,16 @@ dwarf_get_aranges(Dwarf_Debug dbg,
 	    }
 	} while (range_address != 0 || range_length != 0);
 
-	if (length != 0) {
+	/* A compiler could emit some padding bytes here.
+	   dwarf2/3 (dwarf3 draft8 sec 7.20) does not clearly make
+	   extra padding bytes illegal. */
+	if(arange_ptr_past_end < arange_ptr) {
 	    _dwarf_error(dbg, error, DW_DLE_ARANGE_LENGTH_BAD);
 	    return (DW_DLV_ERROR);
 	}
+	/* For most compilers, arange_ptr == arange_ptr_past_end
+	   at this point. But not if there were padding bytes */
+	arange_ptr = arange_ptr_past_end;
 
     } while (arange_ptr <
 	     dbg->de_debug_aranges + dbg->de_debug_aranges_size);

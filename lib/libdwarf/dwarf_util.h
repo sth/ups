@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2003 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -34,75 +34,34 @@
 */
 
 
-#include <limits.h>
 
 /*
-    Decodes unsigned leb128 encoded numbers that 
-    are assumed to be less than 4 bytes long.  
+    Decodes unsigned leb128 encoded numbers.
     Make sure ptr is a pointer to a 1-byte type.  
-    Returns UINT_MAX on error.
-
-    Limits.h is included to define UINT_MAX.
+    In 2003 and earlier this was a hand-inlined
+    version of _dwarf_decode_u_leb128() which did
+    not work correctly if Dwarf_Word was 64 bits.
 */
 #define DECODE_LEB128_UWORD(ptr, value) \
     { \
-        Dwarf_Small	byte; \
-    \
-        value = (byte = *(ptr++)) & 0x7f; \
-        if ((byte & 0x80) != 0) { \
-	    value |= ((byte = *(ptr++)) & 0x7f) << 7; \
-	    if ((byte & 0x80) != 0) { \
-	        value |= ((byte = *(ptr++)) & 0x7f) << 14; \
-	        if ((byte & 0x80) != 0) { \
-		    value |= ((byte = *(ptr++)) & 0x7f) << 21; \
-		    if ((byte & 0x80) != 0) { \
-		        value = UINT_MAX; \
-		    } \
-	        } \
-	    } \
-        } \
+       Dwarf_Word uleblen; \
+	value = _dwarf_decode_u_leb128(ptr,&uleblen); \
+        ptr += uleblen; \
     }
 
 /*
-    Decodes signed leb128 encoded numbers that
-    are assumed to be less than 4 bytes long.
+    Decodes signed leb128 encoded numbers.
     Make sure ptr is a pointer to a 1-byte type.
-    Returns INT_MAX on error.
+    In 2003 and earlier this was a hand-inlined
+    version of _dwarf_decode_s_leb128() which did
+    not work correctly if Dwarf_Word was 64 bits.
 
-    Make sure value is a 4-byte signed int.
 */
 #define DECODE_LEB128_SWORD(ptr, value) \
     { \
-	Dwarf_Small	byte; \
-    \
-	value = (byte = *(ptr++)) & 0x7f; \
-	if ((byte & 0x80) == 0) { \
-	    if ((byte & 0x40) != 0)  \
-	        value |= 0xffffff80; \
-	} \
-	else { \
-	    value |= ((byte = *(ptr++)) & 0x7f) << 7; \
-	    if ((byte & 0x80) == 0) { \
-		if ((byte & 0x40) != 0) \
-		    value |= 0xffffc000; \
-	    } \
-	    else { \
-		value |= ((byte = *(ptr++)) & 0x7f) << 14; \
-		if ((byte & 0x80) == 0) { \
-		    if ((byte & 0x40) != 0) \
-			value |= 0xffe00000; \
-		} \
-		else { \
-		    value |= ((byte = *(ptr++)) & 0x7f) << 21; \
-		    if ((byte & 0x80) == 0) { \
-			if ((byte & 0x40) != 0) \
-			    value |= 0xf0000000; \
-		    } \
-		    else  \
-			value = INT_MAX; \
-		} \
-	    } \
-	} \
+       Dwarf_Word sleblen; \
+	value = _dwarf_decode_s_leb128(ptr,&sleblen); \
+        ptr += sleblen; \
     }
 
 

@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2001 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2001,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -59,6 +59,15 @@ dwarf_get_abbrev(Dwarf_Debug dbg,
     if (dbg == NULL) {
 	_dwarf_error(NULL, error, DW_DLE_DBG_NULL);
 	return (DW_DLV_ERROR);
+    }
+    if (dbg->de_debug_abbrev == 0) {
+	/* Loads abbrev section (and .debug_info as we do those
+	   together). */
+	int res = _dwarf_load_debug_info(dbg, error);
+
+	if (res != DW_DLV_OK) {
+	    return res;
+	}
     }
 
     if (offset >= dbg->de_debug_abbrev_size) {

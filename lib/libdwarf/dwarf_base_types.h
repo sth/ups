@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -42,7 +42,8 @@
 
 /* to identify a cie */
 #define DW_CIE_ID 		~(0x0)
-#define DW_CIE_VERSION		1
+#define DW_CIE_VERSION		1 /* DWARF2 */
+#define DW_CIE_VERSION3		3 /* DWARF3 */
 #define ABBREV_HASH_TABLE_SIZE	10
 
 

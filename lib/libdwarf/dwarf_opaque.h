@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2002,2003 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -31,6 +31,20 @@
 
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
+*/
+/* The versions applicable by section are:
+                       DWARF2    DWARF3
+ .debug_info             2         3
+ .debug_abbrev           -         -
+ .debug_frame            1         3
+ .debug_str              -         -
+ .debug_loc              -         -
+ .debug_line             2         3
+ .debug_aranges          2         2
+ .debug_ranges           x         -
+ .debug_pubtypes         x         2
+ .debug_pubnames         2         2
+ .debug_macinfo          -         -
 */
 
 #include <stddef.h>
@@ -51,6 +65,12 @@ struct Dwarf_Die_s {
 struct Dwarf_Attribute_s {
     Dwarf_Half ar_attribute;	/* Attribute Value. */
     Dwarf_Half ar_attribute_form;	/* Attribute Form. */
+    Dwarf_Half ar_attribute_form_direct;
+	        /* Identical to ar_attribute_form except that if
+		the original form uleb was DW_FORM_indirect,
+		ar_attribute_form_direct contains DW_FORM_indirect
+		but ar_attribute_form contains the true form. */
+
     Dwarf_CU_Context ar_cu_context;
     Dwarf_Small *ar_debug_info_ptr;
     Dwarf_Attribute ar_next;
@@ -142,6 +162,11 @@ struct Dwarf_Debug_s {
        Dwarf_Alloc_Hdr_s structs used to manage chunks that are
        malloc'ed for each allocation type for structs. */
     struct Dwarf_Alloc_Hdr_s de_alloc_hdr[ALLOC_AREA_REAL_TABLE_MAX];
+#ifdef DWARF_SIMPLE_MALLOC
+    struct simple_malloc_record_s *  de_simple_malloc_base;
+    struct simple_malloc_record_s *  de_simple_malloc_current;
+#endif
+    
 
     /* 
        These fields are used to process debug_frame section.  **Updated 
@@ -233,7 +258,9 @@ struct Dwarf_Chain_s {
     Dwarf_Chain ch_next;
 };
 
-#define CURRENT_VERSION_STAMP		2
+
+#define CURRENT_VERSION_STAMP		2 /* DWARF2 */
+#define CURRENT_VERSION_STAMP3		3 /* DWARF3 */
 
     /* Size of cu header version stamp field. */
 #define CU_VERSION_STAMP_SIZE   sizeof(Dwarf_Half)

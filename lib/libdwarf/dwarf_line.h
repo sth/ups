@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000, 2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -103,14 +103,24 @@ struct Dwarf_Line_Context_s {
     Dwarf_Small *lc_compilation_directory;
 
     Dwarf_Debug lc_dbg;
+
+    Dwarf_Half lc_version_number; /* DWARF2/3 version number,
+		2 for DWARF2, 3 for DWARF3. */
 };
 
 
 /*
     This structure defines a row of the line table.
-    All of the fields except li_dbg have the exact 
+    All of the fields except li_offset have the exact 
     same meaning that is defined in Section 6.2.2 
-    of the Libdwarf Document.
+    of the Libdwarf Document. 
+
+    li_offset is used by _dwarf_addr_finder() which is called
+    by rqs(1), an sgi utility for 'moving' shared libraries
+    as if the static linker (ld) had linked the shared library
+    at the newly-specified address.  Most libdwarf-using 
+    apps will ignore li_offset and _dwarf_addr_finder().
+    
 */
 struct Dwarf_Line_s {
     Dwarf_Addr li_address;	/* pc value of machine instr */

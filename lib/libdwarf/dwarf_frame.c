@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2002 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -603,6 +603,8 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,	/* Make list of frame
 		}
 
 		reg[DW_FRAME_CFA_COL].ru_register = reg_no;
+		/* Do NOT set ru_offset or ru_is_off here. 
+	           See dwarf2/3 spec.  */
 		fp_register = reg_no;
 		break;
 	    }
@@ -616,6 +618,9 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,	/* Make list of frame
 		    *returned_error = (DW_DLE_DF_NO_CIE_AUGMENTATION);
 		    return DW_DLV_ERROR;
 		}
+		/* Do set ru_is_off here, as here
+	           factored_N_value counts.  */
+	        reg[DW_FRAME_CFA_COL].ru_is_off = 1;  
 		reg[DW_FRAME_CFA_COL].ru_offset = factored_N_value;
 
 		fp_offset = factored_N_value;
@@ -779,8 +784,6 @@ get_augmentation_string(Dwarf_Debug dbg,
     READ_AREA_LENGTH(dbg, length, Dwarf_Unsigned,
 		     cie_ptr, local_length_size, local_extension_size);
 
-
-
     /* Read the Cie Id field. */
     READ_UNALIGNED(dbg, cie_id, Dwarf_Unsigned,
 		   cie_ptr, local_length_size);
@@ -798,7 +801,8 @@ get_augmentation_string(Dwarf_Debug dbg,
     /* Read the version. */
     version = *(Dwarf_Small *) cie_ptr;
     cie_ptr++;
-    if (version != DW_CIE_VERSION) {
+    if (version != DW_CIE_VERSION &&
+	version != DW_CIE_VERSION3) {
 	_dwarf_error(dbg, error, DW_DLE_FRAME_VERSION_BAD);
 	return (DW_DLV_ERROR);
     }
@@ -1045,7 +1049,8 @@ __dwarf_get_fde_list_internal(Dwarf_Debug dbg,
 	       spec, section 6.4.1 */
 	    version = *(Dwarf_Small *) frame_ptr;
 	    frame_ptr++;
-	    if (version != DW_CIE_VERSION) {
+	    if (version != DW_CIE_VERSION &&
+		version != DW_CIE_VERSION3) {
 		_dwarf_error(dbg, error, DW_DLE_FRAME_VERSION_BAD);
 		return (DW_DLV_ERROR);
 	    }
@@ -1156,6 +1161,7 @@ __dwarf_get_fde_list_internal(Dwarf_Debug dbg,
 		return (DW_DLV_ERROR);
 	    }
 
+	    new_cie->ci_cie_version_number = version;
 	    new_cie->ci_initial_table = NULL;
 	    new_cie->ci_length = (Dwarf_Word) length;
 	    new_cie->ci_length_size = local_length_size;
@@ -1576,7 +1582,8 @@ dwarf_get_fde_for_die(Dwarf_Debug dbg,
 
 	version = *(Dwarf_Small *) cie_ptr;
 	cie_ptr++;
-	if (version != DW_CIE_VERSION) {
+	if (version != DW_CIE_VERSION &&
+		version != DW_CIE_VERSION3) {
 	    _dwarf_error(dbg, error, DW_DLE_FRAME_VERSION_BAD);
 	    return (DW_DLV_ERROR);
 	}
@@ -1665,6 +1672,7 @@ dwarf_get_fde_for_die(Dwarf_Debug dbg,
 	    return (DW_DLV_ERROR);
 	}
 
+        new_cie->ci_cie_version_number = version;
 	new_cie->ci_initial_table = NULL;
 	new_cie->ci_length = (Dwarf_Word) length;
 	new_cie->ci_length_size = cie_local_length_size;
@@ -1762,7 +1770,7 @@ dwarf_get_fde_exception_info(Dwarf_Fde fde,
 int
 dwarf_get_cie_info(Dwarf_Cie cie,
 		   Dwarf_Unsigned * bytes_in_cie,
-		   Dwarf_Small * version,
+		   Dwarf_Small * ptr_to_version,
 		   char **augmenter,
 		   Dwarf_Unsigned * code_alignment_factor,
 		   Dwarf_Signed * data_alignment_factor,
@@ -1784,8 +1792,8 @@ dwarf_get_cie_info(Dwarf_Cie cie,
 	return (DW_DLV_ERROR);
     }
 
-    if (version != NULL)
-	*version = DW_CIE_VERSION;
+    if (ptr_to_version != NULL)
+	*ptr_to_version = cie->ci_cie_version_number;
     if (augmenter != NULL)
 	*augmenter = cie->ci_augmentation;
     if (code_alignment_factor != NULL)

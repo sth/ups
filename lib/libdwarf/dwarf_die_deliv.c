@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2001,2002,2003 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2001,2002,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -197,7 +197,8 @@ _dwarf_make_CU_Context(Dwarf_Debug dbg,
 	return (NULL);
     }
 
-    if (cu_context->cc_version_stamp != CURRENT_VERSION_STAMP) {
+    if (cu_context->cc_version_stamp != CURRENT_VERSION_STAMP
+	&& cu_context->cc_version_stamp != CURRENT_VERSION_STAMP3) {
 	_dwarf_error(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
 	return (NULL);
     }
@@ -264,10 +265,11 @@ dwarf_next_cu_header(Dwarf_Debug dbg,
        this has to be the first one. */
     if (dbg->de_cu_context == NULL) {
 	new_offset = 0;
-	if(!dbg->de_debug_info) {
-            int res = _dwarf_load_debug_info(dbg,error);
-	    if(res != DW_DLV_OK) {
-	        return res;
+	if (!dbg->de_debug_info) {
+	    int res = _dwarf_load_debug_info(dbg, error);
+
+	    if (res != DW_DLV_OK) {
+		return res;
 	    }
 	}
 
@@ -393,6 +395,14 @@ _dwarf_next_die_info_ptr(Dwarf_Byte_Ptr die_info_ptr,
 	    attr = (Dwarf_Half) utmp2;
 	DECODE_LEB128_UWORD(abbrev_ptr, utmp2)
 	    attr_form = (Dwarf_Half) utmp2;
+	if (attr_form == DW_FORM_indirect) {
+	    Dwarf_Unsigned utmp6;
+
+	    /* READ_UNALIGNED does update info_ptr */
+	    DECODE_LEB128_UWORD(info_ptr, utmp6)
+		attr_form = (Dwarf_Half) utmp6;
+
+	}
 
 	if (want_AT_sibling && attr == DW_AT_sibling) {
 	    switch (attr_form) {
@@ -486,11 +496,12 @@ dwarf_siblingof(Dwarf_Debug dbg,
 
     if (die == NULL) {
 	/* Find root die of cu */
-	/* die_info_end is untouched here, need not
-	   be set in this branch. */
+	/* die_info_end is untouched here, need not be set in this
+	   branch. */
 	Dwarf_Off off2;
-	/* If we've not loaded debug_info, de_cu_context
-	   will be NULL, so no need to laod */
+
+	/* If we've not loaded debug_info, de_cu_context will be NULL,
+	   so no need to laod */
 
 	if (dbg->de_cu_context == NULL) {
 	    _dwarf_error(dbg, error, DW_DLE_DBG_NO_CU_CONTEXT);
@@ -502,14 +513,14 @@ dwarf_siblingof(Dwarf_Debug dbg,
 	    off2 + _dwarf_length_of_cu_header(dbg, off2);
     } else {
 	/* Find sibling die. */
-        Dwarf_Bool has_child;
-        Dwarf_Sword child_depth;
+	Dwarf_Bool has_child;
+	Dwarf_Sword child_depth;
 
-	/* We cannot have a legal die unless debug_info
-	   was loaded, so no need to load debug_info here. */
+	/* We cannot have a legal die unless debug_info was loaded, so
+	   no need to load debug_info here. */
 	CHECK_DIE(die, DW_DLV_ERROR)
 
-	die_info_ptr = die->di_debug_info_ptr;
+	    die_info_ptr = die->di_debug_info_ptr;
 	if (*die_info_ptr == 0) {
 	    return (DW_DLV_NO_ENTRY);
 	}
@@ -680,10 +691,11 @@ dwarf_offdie(Dwarf_Debug dbg,
 	cu_context = _dwarf_find_offdie_CU_Context(dbg, offset);
 
     if (cu_context == NULL) {
-        int res = _dwarf_load_debug_info(dbg,error);
-        if(res != DW_DLV_OK) {
-            return res;
-        }
+	int res = _dwarf_load_debug_info(dbg, error);
+
+	if (res != DW_DLV_OK) {
+	    return res;
+	}
 
 	if (dbg->de_cu_context_list_end != NULL)
 	    new_cu_offset =

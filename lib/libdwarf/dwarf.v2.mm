@@ -49,11 +49,8 @@
 '\"	UNIX International members.
 '\"
 '\" $Log$
-'\" Revision 1.1  2002/10/26 13:03:39  ianedwards
-'\" Initial revision
-'\"
-'\" Revision 1.2  2001/01/16 17:08:36  davea
-'\" Bringing in latest from osprey tree
+'\" Revision 1.2  2005/03/15 15:20:42  thughes
+'\" Update to 2005-02-16 release of libdwarf.
 '\"
 '\" Revision 1.1  1994/05/18 18:50:42  davea
 '\" Initial revision

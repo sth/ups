@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000, 2002 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -218,7 +218,8 @@ dwarf_srcfiles(Dwarf_Die die,
     READ_UNALIGNED(dbg, version, Dwarf_Half,
 		   line_ptr, sizeof(Dwarf_Half));
     line_ptr += sizeof(Dwarf_Half);
-    if (version != CURRENT_VERSION_STAMP) {
+    if (version != CURRENT_VERSION_STAMP &&
+	version != CURRENT_VERSION_STAMP3) {
 	_dwarf_error(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
 	return (DW_DLV_ERROR);
     }
@@ -561,7 +562,8 @@ _dwarf_internal_srclines(Dwarf_Die die,
     READ_UNALIGNED(dbg, version, Dwarf_Half,
 		   line_ptr, sizeof(Dwarf_Half));
     line_ptr += sizeof(Dwarf_Half);
-    if (version != CURRENT_VERSION_STAMP) {
+    if (version != CURRENT_VERSION_STAMP &&
+	version != CURRENT_VERSION_STAMP3) {
 	_dwarf_error(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
 	return (DW_DLV_ERROR);
     }
@@ -1078,6 +1080,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
 	include_directories_count;
     line_context->lc_line_count = line_count;
     line_context->lc_compilation_directory = comp_dir;
+    line_context->lc_version_number = version;	
     line_context->lc_dbg = dbg;
     *count = line_count;
 

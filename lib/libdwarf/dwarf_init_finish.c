@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2002,2003 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -57,9 +57,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
-#ifndef STDC_HEADERS
 #include <malloc.h>
-#endif
 
 #include "dwarf_incl.h"
 
@@ -385,7 +383,7 @@ _dwarf_setup(Dwarf_Debug dbg, dwarf_elf_handle elf, Dwarf_Error * error)
 				DW_DLE_DEBUG_FRAME_DUPLICATE,
 				DW_DLV_ERROR);
 	    }
-	    if (section_size) {
+	    if (section_size == 0) {
 		/* a zero size section is just empty. Ok, no error */
 		continue;
 	    }

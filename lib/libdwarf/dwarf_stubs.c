@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
   Mountain View, CA 94043, or:
 
   http://www.sgi.com
@@ -39,19 +39,6 @@
 #include "dwarf_incl.h"
 #include <stdio.h>
 
-
- /*ARGSUSED*/ int
-dwarf_get_loclist_entry(Dwarf_Debug dbg,
-			Dwarf_Unsigned offset,
-			Dwarf_Addr * hipc_offset,
-			Dwarf_Addr * lopc_offset,
-			Dwarf_Ptr * data,
-			Dwarf_Unsigned * entry_len,
-			Dwarf_Unsigned * next_entry,
-			Dwarf_Error * error)
-{
-    return (DW_DLV_NO_ENTRY);
-}
 
 
  /*ARGSUSED*/ int
