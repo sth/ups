@@ -321,7 +321,7 @@ int kill_children, kill_parent, kill_descendents;
  *  has been.
  */
 void
-hash_stats()
+obj_hash_stats()
 {
 	int table[MAXLIST+1];
 	int i, list_len;
