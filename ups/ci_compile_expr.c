@@ -977,7 +977,7 @@ expr_context_t context;
 	bytes_to_pop = tx->tx_sp - save_sp;
 
 	if (bytes_to_pop != 0) {
-		if (bytes_to_pop == 4)
+		if (bytes_to_pop == sizeof(stackword_t))
 			ci_code_opcode(tx, OC_POP);
 		else {
 			ci_code_generic_opcode(tx, OC_POPMANY_B, bytes_to_pop);
