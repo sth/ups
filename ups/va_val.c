@@ -483,7 +483,7 @@ int is_signed;
 	nbits = sizeof(uvlong) * 8;
 
 	if (bits_big_endian)
-		shift = nbits - (bf->bf_offset + bf->bf_width);
+		shift = (bf->bf_type->ty_size * 8) - (bf->bf_offset + bf->bf_width);
 	else
 		shift = bf->bf_offset;
 
