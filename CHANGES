@@ -32,9 +32,13 @@ o  Support for wheel-mice and mice with more than 3 buttons.
 
 o  Improve support for bitfields, including 64 bits wide.
 
-o  Various fixes for DWARF support.
+o  Various fixes for DWARF 2 support.
 
-o  Import latest 'libdwarf'.
+o  Import latest 'libdwarf' (libdwarf2003Apr06.tar.gz).
+
+o  Updated the GNU name demangler to the version from the gcc 3.3 release.
+
+o  Fix memory leaks.
 
 Changes from Ian Edwards <ian@concerto.demon.co.uk>:
 
@@ -43,6 +47,8 @@ o  Initial support for C++ with DWARF 2.
 o  Command line option -[no]findtypes controls whether UPS tries to find
    class definitions using their names if the debugging information is
    not sufficient.  DWARF only.  Default is enabled.
+
+o  -e <entryfunc> option to 'cg' fixed.
 
 From Tom Hughes <thh@cyberscience.com>:
 
