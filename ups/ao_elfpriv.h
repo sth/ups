@@ -76,6 +76,8 @@ struct Elfinfo {
 	Elf_Shdr *indexstrsh;
 
 	Elf_Shdr *pltsh;
+
+	struct Elfinfo *debugel;
 };
 
 typedef int (*Elfread)PROTO((void *handle, taddr_t addr, void *buf, size_t nbytes));

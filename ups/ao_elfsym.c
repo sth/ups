@@ -979,7 +979,7 @@ bool reattach_with_rescan;
 	
 #if WANT_DWARF
 	if (st_is == ST_DWARF) {
-		if ((rv = dwarf_init(fd, DW_DLC_READ, NULL, NULL,
+		if ((rv = dwarf_init(el->debugel->fd, DW_DLC_READ, NULL, NULL,
 				     &dw_dbg, &dw_err) == DW_DLV_ERROR)) {
 			dwf_fatal_error("dwarf_init", rv, NULL, dw_err);
 			free_elfinfo(el);
