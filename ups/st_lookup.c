@@ -110,14 +110,15 @@ static void dupf_mesg PROTO((const char *name,
 static bool modname_matches PROTO((Module *m, const char *name, 
                                    size_t namelen));
 static void add_func_to_global_list PROTO((global_list_t **p_glhead, func_t *f, 
-                                           Module *module,
-					   const char *st_name));
+                                           Module *module, const char *st_name,
+					   bool use_demangled_name));
 static void add_to_global_list PROTO((global_list_t **p_glhead, 
                                       const char *name, taddr_t addr, 
                                       fil_t *fil, Module *module,
 				      const char *st_name));
 static bool have_exact_match PROTO((global_list_t *glhead, const char *name));
 static int flcmp PROTO((func_bp_list_t *fl1, func_bp_list_t *fl2));
+static int funcname_cmp PROTO((const char *name1, const char *name2));
 
 
 GENERIC_MERGE_SORT(static,sort_global_list,global_list_t,gl_next)
@@ -228,13 +229,15 @@ bool use_demangled_name;
 				      f->fu_name, funcpat)) {
 				add_func_to_global_list(p_glhead, f,
 							(Module *)NULL,
-							st->st_path);
+							st->st_path,
+							use_demangled_name);
 			} else if (use_demangled_name
 				    && f->fu_fil && IS_FORTRAN(f->fu_fil->fi_language)
 				    && arg_match(f->fu_name, funcpat)) {
 				add_func_to_global_list(p_glhead, f,
 							(Module *)NULL,
-							st->st_path);
+							st->st_path,
+							use_demangled_name);
 			}
 		}
 	}
@@ -253,7 +256,8 @@ bool use_demangled_name;
 					      fl->fl_func->fu_name, funcpat)) {
 					add_func_to_global_list(p_glhead,
 								fl->fl_func, m,
-								st->st_path);
+								st->st_path,
+								use_demangled_name);
 				}
 			}
 		}
@@ -360,10 +364,10 @@ symtab_t *st;
 }
 
 func_t *
-name_and_fil_to_func(name, flist, demangled_name)
+name_and_fil_to_func(name, flist, use_demangled_name)
 const char *name;
 fil_t *flist;
-bool demangled_name;
+bool use_demangled_name;
 {
 	funclist_t *fl;
 	fil_t *fil;
@@ -372,7 +376,7 @@ bool demangled_name;
 	{
 	  for (fl = fil->fi_funclist; fl != NULL; fl = fl->fl_next)
 	  {
-	    if (demangled_name)
+	    if (use_demangled_name)
 	    {
 	      if (strcmp(fl->fl_func->fu_demangled_name, name) == 0)
 		return fl->fl_func;
@@ -576,14 +580,16 @@ const char *st_name;
 }
 
 static void
-add_func_to_global_list(p_glhead, f, module, st_name)
+add_func_to_global_list(p_glhead, f, module, st_name, use_demangled_name)
 global_list_t **p_glhead;
 func_t *f;
 Module *module;
 const char *st_name;
+bool use_demangled_name;
 {
-	add_to_global_list(p_glhead, f->fu_demangled_name, f->fu_addr,
-			   f->fu_fil, module, st_name);
+	add_to_global_list(p_glhead,
+			   (use_demangled_name ? f->fu_demangled_name : f->fu_name),
+			   f->fu_addr, f->fu_fil, module, st_name);
 	(*p_glhead)->gl_func = f;
 }
 
@@ -681,6 +687,34 @@ const char *name;
 	}
 
 	return FALSE;
+}
+
+/*
+ * Compare two function names ignoring any parameter definitions.
+ * Return 0 if they match.
+ */
+static int
+funcname_cmp(name1, name2)
+const char *name1;
+const char *name2;
+{
+    char *p1, *p2;
+    int l1, l2;
+    p1 = strchr(name1, '(');
+    p2 = strchr(name2, '(');
+    if ((p1 == NULL) && (p2 == NULL))
+	return strcmp(name1, name2);
+    if (p1 == NULL)
+	l1 = strlen(name1);
+    else
+	l1 = p1 - name1;
+    if (p2 == NULL)
+	l2 = strlen(name2);
+    else
+	l2 = p2 - name2;
+    if (l1 != l2)
+	return strcmp(name1, name2);
+    return strncmp(name1, name2, l1);
 }
 
 static void
@@ -908,7 +942,7 @@ bool use_demangled_name;
 		    (prev->gl_func != NULL) == (gl->gl_func != NULL))
 			continue;
 		
-		if (strcmp(gl->gl_name, funcname) == 0) {
+		if (funcname_cmp(gl->gl_name, funcname) == 0) {
 			if ((gl->gl_func != NULL) ?
 				      (gl->gl_func->fu_flags & FU_STATIC) == 0 :
 				      gl->gl_var->va_class == CL_EXT) {
