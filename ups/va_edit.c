@@ -786,15 +786,19 @@ bool bits_big_endian;
 vlong *p_word, value;
 bitfield_t *bf;
 {
+	int nbits;
 	int shift;
-	unsigned int mask;
+	uvlong mask;
+
+	nbits = sizeof(uvlong) * 8;
 
 	if (bits_big_endian)
 		shift = 32 - (bf->bf_offset + bf->bf_width);
 	else
 		shift = bf->bf_offset;
 
-	mask = (~(unsigned)0 >> (32 - bf->bf_width)) << shift;
+	mask = 0;
+	mask = (~mask >> (nbits - bf->bf_width)) << shift;
 	value <<= shift;
 	
 	*p_word = (*p_word & ~mask) | (value & mask);
