@@ -378,6 +378,7 @@ Dwarf_Global *globals;
      */
     ap = st->st_apool;
     dbg = stf->stf_dw_dbg;
+    die = (Dwarf_Die)0;
 
     /*
      * Look for globals that are in this CU.
@@ -495,6 +496,7 @@ int recursed;		/* Recursion level, 0 = top. */
 	 */
 	ok = FALSE;
 	descend = FALSE;
+	dt = NULL;
 	tag = dwf_get_tag(dbg, die);
 	switch (tag) {
 

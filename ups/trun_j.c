@@ -161,6 +161,7 @@ stopres_t *p_stopres;
 					xp_cancel_lastsig(xp);
 					cont_type = CT_STEP;
 					check_wps = TRUE;
+					stop = FALSE; /* to satisfy gcc */
 					continue;
 				}
 			}
@@ -196,7 +197,7 @@ stopres_t *p_stopres;
 			break;
 		default:
 			panic("stopres botch in ct");
-			stop = 0; /* to satisfy gcc */
+			stop = FALSE; /* to satisfy gcc */
 		}
 
 		if (check_wps) {

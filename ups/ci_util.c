@@ -819,6 +819,8 @@ int size;
       bool_type = TY_USHORT;break;
    case 4:
       bool_type = TY_ULONG;break;
+   default:
+      bool_type = TY_VOID;break;
    }
    if ( effective_bool_type != TY_VOID
       && effective_bool_type != bool_type

@@ -780,14 +780,17 @@ int signo;
 			}
 			else {
 				panic("Can't parse process status file");
+				res = SGH_DEFAULT; /* to satisfy gcc */
 			}
 		}
 		else {
 			panic("Can't read process status file");
+			res = SGH_DEFAULT; /* to satisfy gcc */
 		}
 	}
 	else {
-		panic("Can't open process status file");
+	   panic("Can't open process status file");
+	   res = SGH_DEFAULT; /* to satisfy gcc */
 	}
 
 	return res;

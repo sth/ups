@@ -366,6 +366,8 @@ Ftype **p_ft;
 			    ft = note_def_pos(stf->stf_fmap[fnum]->hf_stf,
 					  tnum, symno, matchpos - base,
 					  is_undef_tag);
+			else
+			    ft = NULL; /* to satisfy gcc */
 			
 			if (tnum == match_tnum && fnum == stf->stf_fnum) {
 				/*  Found the type.  We don't return

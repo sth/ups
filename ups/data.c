@@ -171,6 +171,9 @@ int num_bytes;
 		    d = vl.vl_longdouble;
 		    break;
 #endif
+		default:
+		    d = 0; /* to satisfy gcc */
+		    break;
 	    }
 	}
 	else

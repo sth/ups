@@ -64,8 +64,10 @@ static bool dump_block PROTO((FILE *fp, int level, language_t language,
 static bool dump_func_syms PROTO((FILE *fp, int level, func_t *f));
 static bool dump_all_syms PROTO((target_t *xp, FILE *fp));
 static const char *get_fil_name PROTO((fil_t *fil));
+#if WANT_DEBUG
 static const char *st_dt_is_str PROTO((dt_is_t dt_is));
 static const char *st_class_str PROTO((class_t class));
+#endif
 
 enum { ISPACES = 4 };
 

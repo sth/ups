@@ -371,7 +371,7 @@ bool is_definition;
 {
 	const char *tag;
 	block_t *bl;
-	aggr_or_enum_def_t *ae;
+	aggr_or_enum_def_t *ae = NULL;
 
 	tag = (id == NULL) ? NULL : id->id_name;
 	if (tag != NULL) {
@@ -383,7 +383,6 @@ bool is_definition;
 		}
 	}
 	else {
-		ae = NULL;
 		bl = NULL;	/* to satisfy gcc */
 	}
 

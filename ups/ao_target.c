@@ -942,6 +942,9 @@ prot_type_t ptype;
 	case PT_ALL:
 		prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 		break;
+        default:
+		prot = 0; /* to satisfy gcc */
+		break;
 	}
 
 	args[0] = addr;

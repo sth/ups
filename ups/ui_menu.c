@@ -2676,6 +2676,7 @@ int attached;
 	default:
 		panic("unknown target state");
 		enabled = 0;	/* to satisfy gcc */
+		start_menu = 0;	/* to satisfy gcc */
 	}
 	
 	have_stack = tstate != TS_NOTR;

@@ -1078,10 +1078,11 @@ dtype_t *dt;
     class_t class;
 
     switch (dt->dt_type->ty_code) {
-    case TY_ENUM:	break;
+    case TY_ENUM:	class = CL_MOE; break; /* to satisfy gcc */
     case TY_STRUCT:	class = CL_MOS; break;
     case TY_UNION:	class = CL_MOU; break;
     default:		panic("botch in dwf_finish_aggregate()");
+			class = CL_NOCLASS; break; /* to satisfy gcc */
     }
     ae = dt->dt_type->ty_aggr_or_enum;
 

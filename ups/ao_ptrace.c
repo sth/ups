@@ -891,6 +891,10 @@ size_t size;
 	case 4:
 		flags = DR_LEN_4 | DR_RW_WRITE;
 		break;
+	default:
+		panic("invalid watchpoint size");
+		flags = 0; /* to satisfy gcc */
+		break;
 	}
 
 	control &= ~(0xf << (DR_CONTROL_SHIFT + DR_CONTROL_SIZE * i));
@@ -949,6 +953,10 @@ int watchnum;
 		break;
 	case 4:
 		flags = DR_LEN_4 | DR_RW_WRITE;
+		break;
+	default:
+		panic("invalid watchpoint size");
+		flags = 0; /* to satisfy gcc */
 		break;
 	}
 
