@@ -1595,9 +1595,12 @@ const void *addr1p, *addr2p;
   const addr_t *addr1 = addr1p;
   const addr_t *addr2 = addr2p;
    
-  if (!addr1 || !addr2)
+  if ( addr1->addr < addr2->addr )
     return 1;
-  return addr1->addr < addr2->addr;
+  else if ( addr1->addr > addr2->addr )
+    return -1;
+  else
+    return 0;
 }
 
 char *
