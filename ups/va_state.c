@@ -1132,7 +1132,7 @@ int *p_lnum;
 		fil_t *fil;
 		
 		if ((fil = name_to_fil(filename)) == NULL ||
-		    (f = name_and_fil_to_func(funcname, fil, TRUE)) == NULL) {
+		    (f = name_and_fil_to_func(funcname, fil, FALSE)) == NULL) {
 			/*  Function may have moved to another file.
 			 */
 			if (find_func_by_name(funcname, &f, &f1, FALSE) != 0)
