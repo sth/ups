@@ -77,6 +77,7 @@ char ups_ao_stack_c_rcsid[] = "$Id$";
 #include "target.h"
 #include "data.h"
 #include "st.h"
+#include "mreg.h"
 #include "ao_syms.h"
 #include "ao_target.h"
 #include "ao_ptrace.h"

@@ -59,18 +59,15 @@ char ups_target_c_rcsid[] = "$Id$";
 #include "ao_shlib.h"
 #endif
 #include "st.h"
+#include "mreg.h"
 #include "srcwin.h"
 #include "obj_bpt.h"
 #include "obj_misc.h"
 #include "ao_target.h"
 #include "ao_syms.h"
 #include "ao_text.h"
-#if AO_USE_PROCFS
 #include "ao_procfs.h"
-#endif
-#if AO_USE_PTRACE
 #include "ao_ptrace.h"
-#endif
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
