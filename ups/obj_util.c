@@ -410,10 +410,10 @@ const char **p_display_string;
 	     */
 	    edit_redraw_display(fe->display);
 	  }
-	  free(text);
 	  if (eb)
 	    ebuf_free(eb);
 	}
+	free(text);
 	return ok;
 }
 

@@ -830,6 +830,7 @@ objid_t obj;
 	free((char *)get_field_value(obj, FN_VAR_DECL));
 	free((char *)get_field_value(obj, FN_VAR_VALUE));
 	free_ilist_list(((dvar_t *)obj)->dv_ilist);
+	free(((dvar_t *)obj)->dv_va_name);
 	free_dvar((dvar_t *)obj);
 }
 
