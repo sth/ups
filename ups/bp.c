@@ -293,18 +293,15 @@ target_t *xp;
 	breakpoint_t *bp;
 
 	for (bp = Bphead.bp_next; bp != &Bphead; bp = bp->bp_next) {
-		if (bp->bp_xp == 0)
-		{
-		  if (xp_tswap(xp, bp->bp_addr, (xp_opcode_t)0,
-			       &bp->bp_code) != 0) 
+	    if (bp->bp_xp == 0) {
+		if (xp_tswap(xp, bp->bp_addr, (xp_opcode_t)0, &bp->bp_code) != 0) {
 		    return FALSE;
+		} else {
+		    /* uninstall */
+		    if (xp_tswap(xp, bp->bp_addr, bp->bp_code, (xp_opcode_t *)NULL) != 0) 
+			errf("Can't test uninstall breakpoint: %s", get_errno_str());
 		}
-		else
-		{		/* uninstall */
-		  if (xp_tswap(xp, bp->bp_addr, bp->bp_code,
-			       (xp_opcode_t *)NULL) != 0) 
-		    errf("Can't test uninstall breakpoint: %s", get_errno_str());
-		}
+	    }
 	}
 	
 	return TRUE;
