@@ -20,7 +20,6 @@
  *  Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 /* @(#)ao_symparse.c	1.7 04 Jun 1995 (UKC) */
 char ups_ao_symparse_c_rcsid[] = "$Id$";
 
@@ -858,7 +857,7 @@ stf_t *stf;
 Symrec *sr;
 const char **p_s;
 {
-	int res;
+	int res = -1;
 
 	if (!parse_number(stf, sr, p_s, &res))
 		panic("bad number in parse_num");
@@ -1844,6 +1843,7 @@ type_t *type;
 	Compiler_type compiler = CT_CC;
 	bool terminate = FALSE;
 	bool sun_pro =FALSE;
+	bool sun_pro5 =FALSE;
 
 	if (stf->stf_compiler_type == CT_UNKNOWN)
 	  compiler = ao_compiler(NULL, FALSE, CT_UNKNOWN);
@@ -1860,6 +1860,7 @@ type_t *type;
 	if (is_struct == 2 || *(*p_s - 2) == 'Y') /* RGA SC3 class or struct */
 	{
 	  sun_pro = TRUE;
+	  sun_pro5 = *(*p_s - 2) == 'Y';
 	  field_scheck(sr, &s, ';');
           members = SunProBaseClass(stf,sr,&s, eval, compiler);
 	} else if ( *s == '!')
@@ -1887,6 +1888,15 @@ type_t *type;
 		if (*s != ':' && *s != '?' && !isalpha(*s) && *s != '_' &&
 		    *s != '$' && *s != '.' && *s != '!')
 		  break;
+
+		/* Somewhere between SC5.0 and SC5.3 (Forte 6) the
+		 * <ppp-char><mangle> form apparently became 
+		 * <ppp-char><two undocumented><unmangled>
+		 * The former is handled in demangle_name() FMA */
+		if (sun_pro5 && strlen(s) > 3 && 
+		    (s[0] == 'A' || s[0] == 'B' || s[0] == 'C') &&
+		    !(s[1] == '_' && s[2] == '_'))
+		  s += 3;
 		  
 		members = Field(stf, sr, &s, is_struct, members,
 				eval, compiler, &terminate);
