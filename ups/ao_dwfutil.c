@@ -408,7 +408,7 @@ stf_t *stf;
 	    hf_stf->stf_cu_hdr_offset = stf->stf_cu_hdr_offset;
 	    hf_stf->stf_compiler_type = stf->stf_compiler_type;
 	    hf_stf->stf_parent = stf;
-	    hf_stf->stf_fil = ao_make_fil(hf_stf, (block_t *)NULL, NULL, (fil_t *)NULL);
+	    hf_stf->stf_fil = ao_make_fil(hf_stf, (block_t *)NULL, comp_dir, (fil_t *)NULL);
 	}
 	hf_stf->stf_fnum = i + 1;	/* numbers start at 1 */
 
