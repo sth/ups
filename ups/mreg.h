@@ -125,7 +125,7 @@ typedef struct uregst {
 #include <sys/user.h>
 #endif
 
-#ifndef OS_SUNOS_4
+#ifndef OS_SUNOS
 typedef struct ptraceregst {
 #if HAVE_MACHINE_REG_H
 	struct reg regs;
@@ -138,8 +138,8 @@ typedef struct ptraceregst {
 #if AO_HAS_PTRACE_DREGS
 	struct dbreg dbregs;
 #endif
-#endif
 } ptrace_regs_t;
+#endif
 #endif /*AO_HAS_PTRACE_REGS*/ 
 
 
