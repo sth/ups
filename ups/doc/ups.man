@@ -3346,7 +3346,7 @@ menu invoked from the target line.
 .TP
 .B <text caption>Foreground,  <text caption>Background
 The text and background colors for a menu item with a specific text caption: 
-for example "Add breakpointForeground". Note that imbedded spaces are allowed.
+for example "Add breakpointForeground". Note that embedded spaces are allowed.
 .TP
 .B AsteriskForeground, AsteriskBackground
 The text and background colors of the "*" menu caption that appears
@@ -3472,7 +3472,7 @@ if and when it is added.
 The default is 10 (which actually means a tenth of the total \-
 see the note about
 .B SrcwinPercent
-above.
+above).
 .TP
 .B ReverseArrows
 If this is set to `yes' then
