@@ -1,6 +1,6 @@
 # $Id$
 
-Updated : 29/Aug/2003
+Updated : 30/Aug/2003
 
 KNOWN BUGS IN UPS
 =================
@@ -53,6 +53,20 @@ GENERAL
 
  o  Bitfields in structures do not display properly on some systems if not
     32 bits long.  Fixed in UPS 3.38-beta2
+
+ o  If UPS crashes with the message
+
+	Fatal internal error: dwf_do_cu_lines: Already done lnos (aborting) ...
+
+    In ups/ao_elfsym.c try changing
+
+	if (st_is == ST_DWARF) {
+		set_function_addresses(el, st, &flist);
+	} else {
+    to
+	if (st_is == ST_DWARF) {
+		/* set_function_addresses(el, st, &flist); */
+	} else {
 
  o  On RedHat Linux 7.1 with gcc-2.96 UPS crashes with the message
 
