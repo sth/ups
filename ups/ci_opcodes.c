@@ -130,7 +130,7 @@ ci_code_quad(tx, q)
 text_t *tx;
 long q;
 {
-#if SIZEOF_LONG > 8
+#if SIZEOF_LONG > 4
 	ci_code_long(tx, q & 0xffffffff);
 	ci_code_long(tx, (q >> 32) & 0xffffffff);
 #else
