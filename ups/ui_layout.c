@@ -70,8 +70,8 @@ char ups_ui_layout_c_rcsid[] = "$Id$";
 #include "va.h"
 #include "sccsdata.h"
 #include "util.h"
-#include "st.h"
 #include "target.h"
+#include "st.h"
 #include "exec.h"
 #ifdef AO_ELF
 #include "ao_elflib.h"
