@@ -34,6 +34,7 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <limits.h>
 
 #include "ups.h"

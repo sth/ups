@@ -28,6 +28,7 @@ char ups_ao_dwftext_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <local/wn.h>
 
 #include "ups.h"
