@@ -507,7 +507,7 @@ Usage: ups -V\n\
 	       [-noconfig] [-noloadconfig] [-nosaveconfig]  [-nosavesigs]\n\
 	       [-statedir dir] [-nodemangle] [-[no]install]\n\
 	       [-[no]split[:num]] [-[no]splitoutwin[:num]]\n\
-	       [-[no]mousehole] [-[no]logging]\n \
+	       [-[no]mousehole] [-[no]logging] [-[no]findtypes]\n \
 	       [-[no]raise_on_break] [-[no]lower_on_run] [-[no]iconify_on_run]\n \
 	       [-replay path] [-record path]\n\
                [-nowindow] [-replayidstr str]\n\
@@ -726,6 +726,12 @@ Usage: ups -V\n\
 		else if (strcmp(*argv, "-nodemangle") == 0) {
 			demangling_enabled(0, 1); /* reset */
 		}
+		else if (strcmp(*argv, "-nofindtypes") == 0) {
+			set_find_types_by_name(0);
+		}
+		else if (strcmp(*argv, "-findtypes") == 0) {
+			set_find_types_by_name(1);
+		}
 		else if (strcmp(*argv, "-statedir") == 0) {
 			state_dir = checkarg(++argv);
 		}
@@ -768,8 +774,6 @@ Usage: ups -V\n\
 			const char *wantmsgstr;
 
 			wantmsgstr = wn_get_default("WantStartupMessage");
-/*			want_startup_message = wantmsgstr == NULL ||*/
-/* RGA SLB only */
 			want_startup_message = wantmsgstr != NULL &&
 					       strcmp(wantmsgstr, "no") != 0;
 		}
@@ -784,7 +788,7 @@ Usage: ups -V\n\
 
 	if (want_startup_message) {
 		puts(ups__sccsdata[0]);
-		fputs("Copyright 1994 Mark Russell, ", stdout);
+		fputs("Copyright 1994-2002 Mark Russell, ", stdout);
 		puts("University of Kent at Canterbury.");
 
 		show_target_driver_info(FALSE);
