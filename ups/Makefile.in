@@ -74,14 +74,19 @@ CX_BINARY	= cx
 XC_BINARY	= xc
 CG_BINARY	= cg
 CI_LIBRARY	= libci.a
-DEF_BINARY	= @DEF_BINARY@
 
-BINARIES	= ${DEF_BINARY} ${CX_BINARY} ${XC_BINARY} ${CG_BINARY}
+UPS_TARGET	= ups-native
+UDB_TARGET	= ups-gdb
+DEF_TARGET	= @DEF_TARGET@
+
+BINARIES	= ${DEF_TARGET} ${CX_BINARY} ${XC_BINARY} ${CG_BINARY}
 LIBRARIES	= ${CI_LIBRARY}
 
-default_target: ${DEF_BINARY}
+default: ${DEF_TARGET}
 
 all: ${BINARIES} ${LIBRARIES}
+
+ups-native: ${UPS_BINARY}
 
 LIBOBJ		= ../lib
 
@@ -386,15 +391,17 @@ sccsfile:
 install:
 	@echo You must run 'make install' in the directory above this one. 1>&2
 
-install_ups: ${BINDIR}/ups ${MANDIR}/ups.${MANSUFFIX}
+install-ups-native: ${BINDIR}/ups ${MANDIR}/ups.${MANSUFFIX}
 
-install_interpreter: ${BINDIR}/cx ${BINDIR}/xc ${BINDIR}/cg
+install-ups-gdb: ${BINDIR}/ups-gdb ${MANDIR}/ups.${MANSUFFIX}
+
+install-interpreter: ${BINDIR}/cx ${BINDIR}/xc ${BINDIR}/cg
  
-install_cx: ${BINDIR}/cx
+install-cx: ${BINDIR}/cx
 
-install_xc: ${BINDIR}/xc
+install-xc: ${BINDIR}/xc
 
-install_cg: ${BINDIR}/cg
+install-cg: ${BINDIR}/cg
 
 ${BINDIR}/ups: ups
 	test -d ${BINDIR} || ${INSTALL} -d ${BINDIR}

@@ -926,12 +926,12 @@ if test "${with_gdb+set}" = set; then
   :
 fi
 
-DEF_BINARY='${UPS_BINARY}'
+DEF_TARGET='${UPS_TARGET}'
 GDB_DIR=
 case "$with_gdb" in
     no|'')
 	cat >> confdefs.h <<\EOF
-#define DEF_BINARY "${UPS_BINARY}"
+#define DEF_TARGET "${UPS_TARGET}"
 EOF
 
 	with_gdb=no
@@ -957,7 +957,7 @@ EOF
 #define WANT_GDB 1
 EOF
 
-	DEF_BINARY='${UDB_BINARY}'
+	DEF_TARGET='${UDB_TARGET}'
 	;;
 esac
 
@@ -7260,7 +7260,7 @@ s%@host_cpu@%$host_cpu%g
 s%@host_vendor@%$host_vendor%g
 s%@host_os@%$host_os%g
 s%@CI_PARSE@%$CI_PARSE%g
-s%@DEF_BINARY@%$DEF_BINARY%g
+s%@DEF_TARGET@%$DEF_TARGET%g
 s%@GDB_DIR@%$GDB_DIR%g
 s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
 s%@INSTALL_SCRIPT@%$INSTALL_SCRIPT%g

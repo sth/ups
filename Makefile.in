@@ -75,13 +75,9 @@ LIBS		= @LIBS@
 RANLIB		= @RANLIB@
 LN_S		= @LN_S@
 
-UPS_BINARY	= ups
-UDB_BINARY	= ups-gdb
-CX_BINARY	= cx
-XC_BINARY	= xc
-CG_BINARY	= cg
-CI_LIBRARY	= libci.a
-DEF_BINARY	= @DEF_BINARY@
+UPS_TARGET	= ups-native
+UDB_TARGET	= ups-gdb
+DEF_TARGET	= @DEF_TARGET@
 
 SUBMAKEFLAGS	= ${EXTRA_SUBMAKEFLAGS}
 
@@ -105,15 +101,17 @@ SUBDIRS		= ${LIBDIRS} ${BINDIRS}
 # which is what you get if you say `${MAKE} -${MAKEFLAGS} when MAKEFLAGS
 # is not set to anything.
 
-default: ${DEF_BINARY}
+default: ${DEF_TARGET}
 
-all: ${DEF_BINARY} interpreter
+all: ${DEF_TARGET} interpreter
+
+ups: ups-native
 
 interpreter: cx xc cg libci.a
 
-install: install_${DEF_BINARY}
+install: install-${DEF_TARGET}
 
-ups ups-gdb cx xc cg libci.a: ${COMMONLIBS}
+ups-native ups-gdb cx xc cg libci.a: ${COMMONLIBS}
 	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
 
 med3: libx11wn libMen3
@@ -136,19 +134,19 @@ tests: testprogs
 testprogs:
 	cd tests && ${MAKE} ${MFLAGS} $@
 
-install_ups: ups
+install-ups-native: ups-native
 	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
 			BINDIR=${BINDIR} \
 			INCDIR=${INCDIR} \
 			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@
 
-install_med3: med3
+install-med3: med3
 	cd med3 && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
 			BINDIR=${BINDIR} \
 			INCDIR=${INCDIR} \
 			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@
 
-install_interpreter: cx xc cg libci.a
+install-interpreter: cx xc cg libci.a
 	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
 			BINDIR=${BINDIR} \
 			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@

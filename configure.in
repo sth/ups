@@ -106,11 +106,11 @@ dnl ---------------------------------------------------------------------------
 AC_MSG_CHECKING(if using GDB back end)
 AC_ARG_WITH(gdb,
 [  --with-gdb=DIR          build UPS as an interface to GDB [n/a] ])
-DEF_BINARY='${UPS_BINARY}'
+DEF_TARGET='${UPS_TARGET}'
 GDB_DIR=
 case "$with_gdb" in
     no|'')
-	AC_DEFINE(DEF_BINARY, "${UPS_BINARY}")
+	AC_DEFINE(DEF_TARGET, "${UPS_TARGET}")
 	with_gdb=no
 	;;
     yes)
@@ -131,10 +131,10 @@ case "$with_gdb" in
 	    exit 1
 	fi
 	AC_DEFINE(WANT_GDB)
-	DEF_BINARY='${UDB_BINARY}'
+	DEF_TARGET='${UDB_TARGET}'
 	;;
 esac
-AC_SUBST(DEF_BINARY)
+AC_SUBST(DEF_TARGET)
 AC_SUBST(GDB_DIR)
 AC_MSG_RESULT(${with_gdb})
 
