@@ -240,7 +240,7 @@ Dwarf_Die die;		/* DIE holding routine instance details. */
 Dwarf_Die spec_die;	/* DIE holding routine specification. */
 {
     Dwarf_Debug dbg;
-    Dwarf_Die addr_die, defn_die;
+    Dwarf_Die addr_die, decl_die;
     fsyminfo_t *fs;
     stf_t *hstf;
     fil_t *fil = NULL;
@@ -256,17 +256,15 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
 	addr_die = die;
     else
 	addr_die = spec_die;
-    if (dwf_has_attribute(dbg, die, DW_AT_decl_file))
-	defn_die = die;
-    else
-	defn_die = spec_die;
+    if ((decl_die = dwf_find_decl_die(dbg, die)) == (Dwarf_Die)0)
+	decl_die = die;
 
     /*
      * Find the file where the routine is defined so it can
      * be added to its list of routines.  Artificial routines
      * will not have a file.
      */
-    if ((hstf = dwf_lookup_file_by_die(stf, defn_die)) != NULL)
+    if ((hstf = dwf_lookup_file_by_die(stf, decl_die)) != NULL)
 	fil = hstf->stf_fil;
 
     fs = make_fsyminfo(st->st_apool, 0);
@@ -282,7 +280,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     f = ci_make_func(st->st_apool, name, addr, st, fil, *p_flist);
     f->fu_symdata = (char *)fs;
     f->fu_max_lnum = 0;
-    f->fu_lexinfo = dwf_make_lexinfo(dbg, defn_die, st->st_apool, stf);
+    f->fu_lexinfo = dwf_make_lexinfo(dbg, decl_die, st->st_apool, stf);
     if (is_static)
 	f->fu_flags |= FU_STATIC;
 
@@ -509,6 +507,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * Top level function
 		 */
 		f = dwf_tag_subprogram(dbg, die, dw_level, st, stf, p_flist);
+
 	    } else if ((dw_level > 1) && (dw_what & DWL_NESTED_FUNCS)) {
 		/*
 		 * dwarfTODO: nested functions ??
