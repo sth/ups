@@ -349,8 +349,8 @@ aggr_or_enum_def_t *ae;
 
 /*
  * Make a 'var_t' to hold details of a variable (hint = CL_AUTO).
- * Also used for struct members (CL_MOS), union members (CL_MOU)
- * and procedure (CL_ARG)
+ * Also used for struct members (CL_MOS), union members (CL_MOU),
+ * and routine parameters (CL_ARG).
  */
 var_t *
 dwf_make_variable(dbg, die, ap, stf, p_vars, dw_level, class_hint)
@@ -924,14 +924,15 @@ int recursed;
      * First resolve base types and fixup dummy types.
      */
     while (dt != NULL) {
-	if (dwf_fixup_type(dt) == NULL) {
+	dwf_fixup_type(dt);
+	if (dt->dt_base_offset != (off_t)0) {
 	    incomplete++;
-	    if (recursed == 0)
+	    if (recursed == 0) {
 		errf("\bDWARF type incomplete, offset <%ld>", (long)dt->dt_base_offset);
 #if WANT_DEBUG
-if (recursed == 0)
-fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
+		fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->dt_base_offset);
 #endif
+	    }
 	}
 	dt = dt->dt_next;
     }
@@ -971,12 +972,16 @@ fprintf(stderr, "level %d incomplete type, offset <%ld>\n", recursed, (long)dt->
     }
 
 #if WANT_DEBUG
-if (recursed == 0)
-fprintf(stderr, "recursed %d - %d incomplete type, %d bad type\n", recursed, incomplete, bad_dummy);
+if (recursed == 0 && (incomplete + bad_dummy) > 0)
+fprintf(stderr, "level %d - %d incomplete type(s), %d bad type(s)\n", recursed, incomplete, bad_dummy);
 #endif
     return incomplete + bad_dummy;
 }
 
+/*
+ * Fixup type information in a single 'dtype_t' entry.
+ * If the type information was resolved OK then return a pointer to the type.
+ */
 static type_t *
 dwf_fixup_type(dt)
 dtype_t *dt;
@@ -1001,7 +1006,7 @@ dtype_t *dt;
 	     */
 	    if ((base = dwf_fixup_type(dbase)) != NULL) {
 		*(dt->dt_p_type) = base;
-		dt->dt_base_offset = (off_t)0;
+		dt->dt_base_offset = (off_t)0; /* mark it done */
 	    }
 	}
     }
