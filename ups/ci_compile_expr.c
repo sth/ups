@@ -886,19 +886,19 @@ expr_context_t context;
 			long nbytes;
 
 			/*  DUBIOUS: we round the type size up to a multiple
-			 *           of four (the size of a stack slot).
+			 *           of four or eight (the size of a stack slot).
 			 *	     This means we copy some extra bytes.
 			 *	     If we had memory protection at byte rather
 			 *	     than word granularity this could bite us.
 			 */
 			nbytes = ci_typesize(expr->ex_lexinfo, type);
-			if ((nbytes % 4) != 0)
-				nbytes += 4 - nbytes % 4;
+			if ((nbytes % sizeof(stackword_t)) != 0)
+				nbytes += sizeof(stackword_t) - nbytes % sizeof(stackword_t);
 
 			if (expr->ex_exprtype == ET_FUNC_CALL) {
 				ci_code_opcode(tx, OC_RESERVE_BYTES);
 				ci_code_long(tx, nbytes);
-				tx->tx_sp += nbytes + 4;
+				tx->tx_sp += nbytes + sizeof(stackword_t);
 				ci_compile_expression(tx, expr, EC_ADDRESS);
 				ci_code_opcode(tx, OC_POP);  /* lose address */
 			}
@@ -913,9 +913,9 @@ expr_context_t context;
 					ci_code_opcode(tx, OC_PROC_PUSH_BYTES);
 
 				ci_code_long(tx, nbytes);
-				tx->tx_sp += nbytes - 4;
+				tx->tx_sp += nbytes - sizeof(stackword_t);
 			}
-			excess_slots += nbytes / 4 - 1;
+			excess_slots += nbytes / sizeof(stackword_t) - 1;
 		}
 		else {
 			ci_compile_expression(tx, expr, EC_VALUE);
@@ -962,13 +962,15 @@ expr_context_t context;
 	if ((nargs+excess_slots) * sizeof(stackword_t) != tx->tx_sp - before_args_sp)
 		ci_panic("args botch in cfc");
 
-	if (is_direct_call)
-		ci_code_generic_opcode(tx, OC_CALL_B, (stackword_t)func_index);
+	if (is_direct_call) {
+		ci_code_generic_opcode(tx, OC_CALL_L, (stackword_t)func_index);
+		ci_code_long(tx, nargs + excess_slots);
+	}
 	else {
 		ci_compile_expression(tx, fce->fce_func, EC_VALUE);
 		ci_code_opcode(tx, OC_CALL_INDIRECT);
+		ci_code_byte(tx, nargs + excess_slots);
 	}
-	ci_code_byte(tx, nargs + excess_slots);
 
 #if WANT_TYPE_PUSHED
 	ci_code_byte(tx, typecode);
