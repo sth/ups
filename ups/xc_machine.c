@@ -1818,7 +1818,7 @@ proc_memcpy:
 			POP_LDOUBLE(d0, sp);
 			addr = POP(sp);
 			PUT_LDOUBLE(d0, (stackword_t *)addr);
-			PUSH_LOUBLE(d0, sp);
+			PUSH_LDOUBLE(d0, sp);
 			BREAK; }
 #endif
 
@@ -3176,7 +3176,7 @@ proc_memcpy:
 			PUSH(d0.d_longdouble <= d1.d_longdouble, sp);
 			BREAK;
 		CASE OC_LONG_DOUBLE_GREATER_OR_EQUAL:
-			POP_lDOUBLE(d1, sp);
+			POP_LDOUBLE(d1, sp);
 			POP_LDOUBLE(d0, sp);
 			PUSH(d0.d_longdouble >= d1.d_longdouble, sp);
 			BREAK;
@@ -3266,6 +3266,13 @@ proc_memcpy:
 			PUSH(d0.d_longlong != 0.0, sp);
 			BREAK;
 
+#if WANT_LDBL
+		CASE OC_CVT_LONG_DOUBLE_TO_LONG_LONG:
+			POP_LDOUBLE(d0, sp);
+			d1.d_longlong = d0.d_longdouble;
+			PUSH_LONGLONG(d1, sp);
+			BREAK;
+#endif
 		CASE OC_CVT_DOUBLE_TO_LONG_LONG:
 			POP_DOUBLE(d0, sp);
 			d1.d_longlong = d0.d_double;
