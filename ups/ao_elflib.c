@@ -1434,7 +1434,7 @@ Solib_addr **p_solib_addrs;
 
     while (fgets(buf, sizeof(buf), fp) != NULL)
     {
-	if (sscanf(buf, "%lx-%*x %*s %*x %*d:%*d %*d %s", &addr, name) == 2)
+	if (sscanf(buf, "%lx-%*x %*s %*x %*s %*d %s", &addr, name) == 2)
 	{
 	    if (strcmp(name, lastname) == 0) continue;
 	   
