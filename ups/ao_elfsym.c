@@ -499,22 +499,13 @@ scan_dot_o_file_symtab(stf_t *stf)
 	if (!ok) {
 		if (fd != -1)
 			close(fd);
-/*		free(name);   see below */
 	}
 	
 	errf_set_ofunc(old_ofunc);
 
 	if (Had_error) {
-		const char *namestr;
-		
-		namestr = strrchr(path, '/');
-		if (name == NULL || name[1] == '\0')
-			namestr = path;
-		else
-			++namestr;
-			
 		errf("\bError loading symbols from %s - see output window",
-		     namestr);
+		     base_name(path));
 	}
 	if (!ok)		/* RGA for purify */
 		free(name);
@@ -809,16 +800,10 @@ make_fil_hash(alloc_pool_t *ap, fil_t *sfiles)
 	ht = hash_create_tab(ap, nfiles);
 
 	for (fil = sfiles; fil != NULL; fil = fil->fi_next) {
-		const char *basename;
+		const char *filename;
 
-		basename = strrchr(fil->fi_name, '/');
-
-		if (basename == NULL || basename[1] == '\0')
-			basename = fil->fi_name;
-		else
-			++basename;
-
-		hash_enter(ht, basename, strlen(basename), (hash_value_t)fil);
+		filename = base_name(fil->fi_name);
+		hash_enter(ht, filename, strlen(filename), (hash_value_t)fil);
 	}
 
 	return ht;
@@ -971,15 +956,14 @@ bool reattach_with_rescan;
 	func_t *flist;
 	Elfinfo *el;
 	symtab_type_t st_is;
-#if WANT_DWARF
 	Dwarf_Debug dw_dbg;
 	Dwarf_Error dw_err;
 	int rv;
-#endif
 
 	if (!elf_get_exec_info(textpath, fd, libdep, &eibuf, &el, &st_is))
 		return FALSE;
 
+#if WANT_DWARF
 	if (st_is == ST_DWARF) {
 		if ((rv = dwarf_init(fd, DW_DLC_READ, NULL, NULL,
 				     &dw_dbg, &dw_err) == DW_DLV_ERROR)) {
@@ -996,6 +980,7 @@ bool reattach_with_rescan;
 			return FALSE;
 		}
 	}
+#endif
 
 	if (p_entryaddr)
 		*p_entryaddr = eibuf.entry_addr;
@@ -1017,7 +1002,7 @@ bool reattach_with_rescan;
 	} else {
 		scan_stab_index(st, el, &st->st_sfiles, &flist, p_mainfunc_name);
 	}
-        
+
 	set_function_addresses(el, st, &flist);
 
 	if (el->pltsh) {
