@@ -288,7 +288,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
 
     if (addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
 	if (strcmp(f->fu_name, name) != 0)
-	    panic("Name mismatch");
+	    f->fu_name = name;
 
 	if (f->fu_symtab != st)
 	    panic("Symbol table mismatch");
