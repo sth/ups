@@ -144,6 +144,8 @@ typedef struct ao_stdata_t {
 
 #if WANT_DWARF
 	hashtab_t *st_type_names;	/* Type name -> DIE. */
+	Dwarf_Debug st_dw_dbg;		/* Handle for libdwarf calls */
+	bool st_dw_scanned;		/* Dwarf symbols scanned? */
 #endif
 
 #if WANT_ELF

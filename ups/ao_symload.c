@@ -1607,6 +1607,20 @@ int *p_start, *p_lim;
 	}
 }
 
+func_t *
+ao_ensure_fu(f)
+func_t *f;
+{
+	return f;
+}
+
+fil_t *
+ao_get_fi(st)
+symtab_t *st;
+{
+	return st->st_sfiles;
+}
+
 lno_t *
 ao_get_fu_lnos(f)
 func_t *f;

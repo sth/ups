@@ -31,6 +31,7 @@ char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 #include <mtrprog/hash.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -49,6 +50,7 @@ char ups_ao_dwfsyms_c_rcsid[] = "$Id$";
 #include "st_debug.h"
 #endif
 
+#define DWF_STOP_CHECK_INTERVAL 1
 
 static lno_t *
 penultimate_lno PROTO((lno_t *lno));
@@ -67,6 +69,8 @@ dwf_load_from_die PROTO((symtab_t *st, stf_t *stf, func_t **p_flist, func_t *f,
 			 block_t **p_blocklist, block_t *parent_bl,
 			 dtype_t *parent_dt, Dwarf_Die parent_die,
 			 dwload_t dw_what, int dw_level, int recursed));
+
+static time_t dwf_next_stop_check = (time_t)-1;
 
 /*
  * Find last but one 'lno' in the list.
@@ -142,8 +146,8 @@ stf_t *stf;
 		 (long)addr, (long)prev_addr);
 	prev_addr = addr;
 
-	if ((f = dwf_lookup_func_by_addr(stf, addr)) == NULL) {
-	    errf("\bAddress 0x%lx not found in %s", (long)addr, name);
+	if ((f = dwf_lookup_func_by_addr(stf, addr + stf->stf_addr)) == NULL) {
+	    errf("\bAddress 0x%lx not found in %s", (long)addr + stf->stf_addr, name);
 	    dwarf_dealloc(dbg, name, DW_DLA_STRING);
 	    dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
 	    lines[i] = (Dwarf_Line)0;
@@ -276,13 +280,32 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fs->fs_symlim = 0;
     fs->fs_initial_lno_fil = fil;
     /* These used to process line number data later. */
-    fs->fs_low_pc = dwf_get_address(dbg, addr_die, DW_AT_low_pc);
-    fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc);
+    fs->fs_low_pc = dwf_get_address(dbg, addr_die, DW_AT_low_pc) + stf->stf_addr;
+    fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc) + stf->stf_addr;
     fs->fs_die_offset = dwf_offset_of_die(dbg, addr_die);
 
     addr = fs->fs_low_pc;
 
+    if (addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
+	if (strcmp(f->fu_name, name) != 0)
+	    panic("Name mismatch");
+
+	if (f->fu_symtab != st)
+	    panic("Symbol table mismatch");
+
+	if (f->fu_fil == NULL) {
+	    f->fu_fil = fil;
+	    f->fu_language = fil->fi_language;
+	}
+	else if (f->fu_fil != fil)
+	    panic("File mismatch");
+	
+	f->fu_flags &= ~(FU_NOSYM | FU_DONE_BLOCKS | FU_DONE_LNOS);
+    }
+    else {
     f = ci_make_func(st->st_apool, name, addr, st, fil, *p_flist);
+    }
+    
     f->fu_symdata = (char *)fs;
     f->fu_max_lnum = 0;
     f->fu_lexinfo = dwf_make_lexinfo(dbg, decl_die, st->st_apool, stf);
@@ -479,7 +502,6 @@ int recursed;		/* Recursion level, 0 = top. */
     type_t *type;
     bool is_static;
     char *name;
-    int count = 0;
     dwload_t dw_what_next;
     bool ok;
     bool descend;
@@ -496,11 +518,11 @@ int recursed;		/* Recursion level, 0 = top. */
     die = dwf_child_die(dbg, parent_die);
     while (die != (Dwarf_Die)0) {
 
-	/* dwarfTODO: Allow user to stop this. */
-	count++;
-	if ((count % 100) == 0) {
+	if (dwf_next_stop_check != (time_t)-1 &&
+	    dwf_next_stop_check < time(NULL)) {
 	    if (!stop_pressed(0, 0) && user_wants_stop(TRUE))
 		stop_pressed(1, 0);	/* set */
+	    dwf_next_stop_check = time(NULL) + DWF_STOP_CHECK_INTERVAL;
 	}
 
 	/* Offset in CU is very useful when debugging. */
@@ -1228,7 +1250,7 @@ Dwarf_Debug dbg;
 {
     int rv;
     Dwarf_Global *globals = NULL;
-    Dwarf_Signed global_count;
+    Dwarf_Signed global_count = 0;
     Dwarf_Error err;
     Dwarf_Die cu_die;
     Dwarf_Off cu_hdr_offset = 0;
@@ -1240,9 +1262,7 @@ Dwarf_Debug dbg;
     block_t *rootblock;
     ao_stdata_t *ast;
     func_t *flist = NULL;
-    hf_t **fmap;
     alloc_pool_t *ap;
-    int max_mapsize;
 
     char *cu_name;
     char *comp_dir;
@@ -1257,8 +1277,10 @@ Dwarf_Debug dbg;
     rootblock = get_rootblock();
     ap = st->st_apool;
 
-    max_mapsize = 32;
-    fmap = (hf_t **) e_malloc(max_mapsize * sizeof(hf_t *));
+    /*
+     * Enable checking for user stop requests
+     */
+    dwf_next_stop_check = time(NULL) + DWF_STOP_CHECK_INTERVAL;
 
     /* dwarfTODO:
      * A later enhancement may be to get the debugging info in three stages:
@@ -1267,7 +1289,7 @@ Dwarf_Debug dbg;
      * 3) load other info as required (as now)
      */
     if (only_globals) {
-	if ((rv = dwarf_get_globals(dbg, &globals, &global_count, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_get_globals(dbg, &globals, &global_count, &err)) == DW_DLV_ERROR)
 	    dwf_fatal_error("dwarf_get_globals", rv, NULL, err);
     }
 
@@ -1300,7 +1322,7 @@ Dwarf_Debug dbg;
 	/*
 	 * Start a new 'stf'.
 	 */
-	stf = make_stf(ap, cu_name, st, 0, lang, 0);
+	stf = make_stf(ap, cu_name, st, 0, lang, ast->st_base_address);
 	stf->stf_symlim = -1;
 	stf->stf_fnum = -1;
 	stf->stf_dw_dbg = dbg;
@@ -1336,10 +1358,13 @@ Dwarf_Debug dbg;
 
     } /* while another CU */
 
+    /*
+     * Disable checking for user stop requests
+     */
+    dwf_next_stop_check = (time_t)-1;
+
     if (globals != NULL)
 	dwarf_dealloc(dbg, globals, DW_DLA_LIST);
-
-    free((char *)fmap);
 
     *p_flist = flist;
 

@@ -347,7 +347,7 @@ const char *name;
 	addrlist_t *al;
 
 	for (al = addrlist; al != NULL; al = al->al_next)
-		if (strcmp(al->al_name, name) == 0)
+		if (arg_match(al->al_name, name))
 			return al->al_addr;
 
 	return 0;
@@ -447,8 +447,9 @@ char *data;
 	st->st_sfiles = sfiles;
 	st->st_cblist = NULL;
 	st->st_modules = NULL;
-	st->st_funclist = funclist;
+	st->st_functab = NULL;
 	st->st_addrlist = NULL;
+	st->st_funclist = funclist;
 	st->st_data = data;
 	st->st_ops = ops;
 	st->st_modtime = 0;

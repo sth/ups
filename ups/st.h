@@ -65,6 +65,8 @@ typedef struct st_ops_s {
 	var_t *(*so_read_cblock_vars)PROTO((symtab_t *st, char *data,
 								taddr_t addr));
 
+	func_t *(*so_ensure_fu)PROTO((func_t *f));
+	fil_t *(*so_get_fi)PROTO((symtab_t *st));
 	lno_t *(*so_get_fu_lnos)PROTO((func_t *f));
 	block_t *(*so_get_fu_blocks)PROTO((func_t *f));
 	var_t *(*so_get_fi_vars)PROTO((fil_t *fil));
@@ -107,6 +109,10 @@ typedef struct st_ops_s {
 	(cb->cb_symtab->st_ops->so_read_cblock_vars)(cb->cb_symtab, \
 						     cb->cb_data, cb->cb_addr)
 
+#define st_ensure_fu(f) \
+	(f->fu_symtab->st_ops->so_ensure_fu)(f)
+#define st_get_fi(st) \
+	(st->st_ops->so_get_fi)(st)
 #define st_get_fu_lnos(f) \
 	(f->fu_symtab->st_ops->so_get_fu_lnos)(f)
 #define st_get_fu_blocks(f) \

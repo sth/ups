@@ -192,6 +192,8 @@ const char **p_mainfunc_name;
 		ao_cblock_has_var,
 		ao_get_cblock_vars,
 
+		ao_ensure_fu,
+		ao_get_fi,
 		ao_get_fu_lnos,
 		ao_get_fu_blocks,
 		ao_get_fi_vars,
@@ -218,6 +220,8 @@ const char **p_mainfunc_name;
 		dw_cblock_has_var,
 		dw_get_cblock_vars,
 
+		dw_ensure_fu,
+		dw_get_fi,
 		dw_get_fu_lnos,
 		dw_get_fu_blocks,
 		dw_get_fi_vars,
@@ -245,9 +249,13 @@ const char **p_mainfunc_name;
 
 #if WANT_DWARF
 	ast->st_type_names = NULL;
-	if (st_is == ST_DWARF)
+	ast->st_dw_dbg = 0;
+	ast->st_dw_scanned = FALSE;
+	if (st_is == ST_DWARF) {
+	    ast->st_dw_dbg = dw_dbg;
 	    st = make_symtab(ap, textpath, (fil_t *)NULL, (func_t *)NULL,
 			     &dwarf_ops, (char *)ast);
+	}
 	else
 #endif
 	    st = make_symtab(ap, textpath, (fil_t *)NULL, (func_t *)NULL,
@@ -266,8 +274,7 @@ const char **p_mainfunc_name;
 #if WANT_DWARF
 	if (st_is == ST_DWARF) {
 		ast->st_text_symio = NULL;
-		dwf_scan_symtab(st, textpath, (stf_t *)NULL, &flist,
-				p_mainfunc_name, dw_dbg);
+		flist = NULL;
 	} else
 #endif
 		if (ei->nsyms == 0) {

@@ -30,6 +30,8 @@ bool ao_fil_may_have_matching_globals PROTO((fil_t *fil, const char *pat,
 var_t *ao_get_fi_vars PROTO((fil_t *fil));
 macro_t *ao_get_fi_macros PROTO((fil_t *fil));
 block_t *ao_get_fu_blocks PROTO((func_t *f));
+func_t *ao_ensure_fu PROTO((func_t *f));
+fil_t *ao_get_fi PROTO((symtab_t *st));
 lno_t *ao_get_fu_lnos PROTO((func_t *f));
 Compiler_type ao_compiler PROTO((fil_t *fil, bool compiler_found,
 				 Compiler_type compiler));

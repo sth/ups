@@ -91,6 +91,7 @@ static void build_symset PROTO((char *aout_symset, char *ofile_symset));
 static bool is_fortran_void PROTO((const char *cptr));
 static void demangle_g77_name PROTO((char *name, int func));
 static void adjust_fil_vars_addr_base PROTO((fil_t *flist, long delta));
+static void adjust_funcs_addr_base PROTO((func_t *funclist, long delta));
 static fil_t *add_sol_fil PROTO((stf_t *stf, alloc_pool_t *ap, fil_t *sfiles,
 				 fil_t *sofil, const char *name));
 #ifdef AO_ELF
@@ -1957,6 +1958,27 @@ long delta;
 	}
 }
 
+/*  Adjust the addresses of all the functions in funclist.  Called when
+ *  a shared library mapping address changes across runs of the target.
+ */
+static void
+adjust_funcs_addr_base(funclist, delta)
+func_t *funclist;
+long delta;
+{
+	func_t *f;
+	fsyminfo_t *fs;
+   
+	for (f = funclist; f; f = f->fu_next) {
+		fs = AO_FSYMDATA(f);
+	   
+#if WANT_DWARF
+		fs->fs_low_pc += delta;
+		fs->fs_high_pc += delta;
+#endif
+	}
+}
+
 /*  Deal with a change in the text offset of a symbol table.  This may
  *  be necessary when re-running the target as shared libraries may be
  *  mapped at different addresses.  It's also necessary when we have
@@ -1988,6 +2010,7 @@ taddr_t new_addr;
 		adjust_functab_text_addr_base(st->st_functab,
 					      st->st_funclist, delta);
 		adjust_fil_vars_addr_base(st->st_sfiles, delta);
+		adjust_funcs_addr_base(st->st_funclist, delta);
 		ast->st_base_address = new_addr;
 	}
 }

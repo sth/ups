@@ -888,6 +888,8 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 			break;
 			
 		case STT_OBJECT:
+			if (sym->st_shndx == SHN_UNDEF)
+				break;
 			insert_global_addr(st->st_apool, &st->st_addrlist,
 					   alloc_strdup(st->st_apool, name),
 					   value);
@@ -1027,6 +1029,10 @@ dump_trailer();
 }
 #endif
 
+	initfunc_name = "_init"; /* RGA temp */
+	do_ao_postscan_stuff(st, flist, &eibuf, p_mainfunc, mainfunc_name,
+			     p_initfunc, initfunc_name);
+
 	if (!add_solib_entry(target_ap, st, flist, el, p_solibs)) {
 		free_elfinfo(el);
 		alloc_free_pool(st->st_apool);
@@ -1035,9 +1041,6 @@ dump_trailer();
 	
 	free_elfinfo(el);
 
-	initfunc_name = "_init"; /* RGA temp */
-	do_ao_postscan_stuff(st, flist, &eibuf, p_mainfunc, mainfunc_name,
-			     p_initfunc, initfunc_name);
 	return TRUE;
 }
 

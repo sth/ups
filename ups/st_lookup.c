@@ -356,7 +356,7 @@ symtab_t *st;
 {
 	fil_t *fil;
 
-	for (fil = st->st_sfiles; fil != NULL; fil = fil->fi_next) {
+	for (fil = st_get_fi(st); fil != NULL; fil = fil->fi_next) {
 		if (strcmp(fil->fi_name_only, name) == 0) /* RGA */
 			return fil;
 	}
@@ -474,6 +474,9 @@ global_list_t **p_glhead;
 	       xp_next_symtab(xp, st, !have_exact_match(*p_glhead, varname), &st)) {
 		fil_t *fil;
 		
+		if (lookup_global_addr(st, varpat))
+			st_get_fi(st);
+                
 		for (fil = st->st_sfiles;
 		     fil != NULL && !wants_stop; fil = fil->fi_next) {
 			var_t *v;
@@ -588,6 +591,7 @@ Module *module;
 const char *st_name;
 bool use_demangled_name;
 {
+	st_ensure_fu(f);
 	add_to_global_list(p_glhead,
 			   (use_demangled_name ? f->fu_demangled_name : f->fu_name),
 			   f->fu_addr, f->fu_fil, module, st_name);
@@ -1215,7 +1219,7 @@ taddr_t addr;
 	
 	while (xp_next_symtab(xp, st, TRUE, &st)) {
 		if (addr_and_functab_to_func(st->st_functab, addr, &f))
-			return f;
+			return st_ensure_fu(f);
 	}
 	
 	return NULL;

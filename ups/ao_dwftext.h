@@ -34,6 +34,8 @@ void dw_free_cblock_data PROTO((char *data));
 bool dw_cblock_has_var PROTO((char *data, const char *name));
 var_t * dw_get_cblock_vars PROTO((symtab_t *st, char *data, taddr_t addr));
 
+func_t * dw_ensure_fu PROTO((func_t *f));
+fil_t * dw_get_fi PROTO((symtab_t *st));
 lno_t * dw_get_fu_lnos PROTO((func_t *f));
 block_t * dw_get_fu_blocks PROTO((func_t *f));
 var_t * dw_get_fi_vars PROTO((fil_t *fil));
