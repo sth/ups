@@ -12,7 +12,9 @@ dnl  UPS runs before doing 'make'.
 dnl ---------------------------------------------------------------------------
 dnl  Initialisation.
 dnl ---------------------------------------------------------------------------
-AC_INIT(assertion.c)
+AC_INIT(ups,3.38)
+AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_SRCDIR(assertion.c)
 AC_REVISION($Id$)dnl
 
 
@@ -70,23 +72,35 @@ AC_MSG_RESULT(${pipe})
 dnl ---------------------------------------------------------------------------
 dnl  Checks for Fortran compiler
 dnl ---------------------------------------------------------------------------
-# Set F77 to 'g77' or 'f77' if found, otherwise set it to 'echo'
-AC_CHECK_PROGS(F77, [g77 f77], echo)
 
-AC_MSG_CHECKING(how to pre-process Fortran)
+dnl # Set F77 to 'g77' or 'f77' if found, otherwise set it to 'echo'
+dnl AC_CHECK_PROGS(F77, [g77 f77], echo)
+
+# Set F77 to e.g. 'g77' or 'f77' if found, otherwise set it to ''
+AC_PROG_F77()
+
+dnl Run following tests as Fortran
+AC_LANG_PUSH(Fortran 77)
+
+AC_MSG_CHECKING(how to run the Fortran preprocessor)
 preproc=no
 case "$F77" in
+    '')	;;
     echo)	;;
     *)		oldFPPFLAGS="$FPPFLAGS"
 		FPPFLAGS="-x f77-cpp-input $FPPFLAGS"
-		AC_TRY_LINK([#define TRUE 1], [ ],preproc='-x f77-cpp-input')
+		AC_TRY_LINK(,[#define TRUE 1
+		end],preproc='-x f77-cpp-input')
 		if test "$preproc" != '-x f77-cpp-input' ; then
 		    FPPFLAGS="$oldFPPFLAGS"
 		fi
 		;;
 esac
-AC_MSG_RESULT(${preproc})
+AC_MSG_RESULT($F77 ${preproc})
 AC_SUBST(FPPFLAGS)
+
+dnl Revert to previous
+AC_LANG_POP(Fortran 77)
 
 
 dnl ---------------------------------------------------------------------------
@@ -106,9 +120,10 @@ AC_PATH_XTRA
 dnl ---------------------------------------------------------------------------
 dnl  Output header and convert these files...
 dnl ---------------------------------------------------------------------------
-AC_OUTPUT(
+AC_CONFIG_FILES(
     Makefile2
 )
+AC_OUTPUT
 
 
 dnl ---------------------------------------------------------------------------
