@@ -393,7 +393,11 @@ open_debug_file(const char *debugpath)
 	int fd;
 	const Elfops *elops;
 	Elf_Ehdr *hdr;
+	Elf_Phdr *phtab;
 	Elfinfo *el;
+	taddr_t text_mem_addr;
+	size_t text_size;
+	off_t addr_to_fpos_offset;
 
 	if ((fd = open(debugpath, O_RDONLY)) < 0)
 		return NULL;
@@ -408,6 +412,21 @@ open_debug_file(const char *debugpath)
 		free(hdr);
 		return NULL;
 	}
+
+	phtab = e_malloc(elf_header_phsize(elops, hdr));
+	if (!read_chunk(debugpath, Elfwhat, fd, "debug program header table",
+			elf_header_phoff(elops, hdr),
+			phtab, elf_header_phsize(elops, hdr)) ||
+	    !get_load_addrs(debugpath, elops, phtab, elf_header_phnum(elops, hdr),
+			    &text_mem_addr, &text_size,
+			    &addr_to_fpos_offset,
+			    &el->min_file_vaddr)) {
+		free(phtab);
+		free(hdr);
+		free_elfinfo(el);
+		return FALSE;
+	}
+	free(phtab);
 
 	free(hdr);
 
@@ -561,6 +580,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	el->indexstrsh = indexstrsh;
 
 	ex->text_addr_delta = 0;
+	ex->debug_addr_delta = el->min_file_vaddr - el->debugel->min_file_vaddr;
 	ex->dynamic = FALSE;
 	ex->entry_addr = elf_header_entry(elops, hdr);
 

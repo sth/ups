@@ -29,7 +29,8 @@ typedef struct {
 	taddr_t text_mem_addr;	/* Start addr in memory where text is loaded */
 	size_t text_size;	/* #bytes of text */
 	off_t text_addr_delta;	/* What to add to fu_addr etc to get mem addr */
-	
+	off_t debug_addr_delta; /* Delta from debug addresses to real addresses */
+
 	off_t addr_to_fpos_offset; /* Delta from mem addr to file offset  */
 	
 	off_t file_syms_offset;

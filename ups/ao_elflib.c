@@ -395,14 +395,6 @@ set_base_address(Solib *so, off_t offset, taddr_t vaddr, size_t pagesize)
 	}
 		
 	change_base_address(so->symtab, base_address);
-
-#if WANT_DWARF
-	if (base_address != 0) {
-		ao_stdata_t *ast = AO_STDATA(so->symtab);
-
-		ast->st_dw_base_address = base_address;
-	}
-#endif
 }
 
 static bool

@@ -2013,6 +2013,9 @@ taddr_t new_addr;
 		adjust_fil_vars_addr_base(st->st_sfiles, delta);
 		adjust_funcs_addr_base(st->st_funclist, delta);
 		ast->st_base_address = new_addr;
+#if WANT_DWARF
+		ast->st_dw_base_address = ast->st_dw_base_address + delta;
+#endif
 	}
 }
 
