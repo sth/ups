@@ -230,8 +230,10 @@ get_note_info(alloc_pool_t *ap, const char *path, int fd,
 #endif
 
 #ifdef NT_TASKSTRUCT
+#if !defined(NT_PRXREG) || NT_PRXREG != NT_TASKSTRUCT
 		case NT_TASKSTRUCT:
 		  break;
+#endif
 #endif
 #ifdef NT_GWINDOWS
 		case NT_GWINDOWS:
