@@ -1002,6 +1002,10 @@ prot_type_t ptype;
 #define N_REG_ARGS	2
 #endif
 
+#ifdef ARCH_386_64
+#define N_REG_ARGS	6
+#endif
+
 #ifdef ARCH_SUN4
 #define N_REG_ARGS	6
 #define RETURN_REGNO	8	/* %o0 */
@@ -1018,6 +1022,10 @@ prot_type_t ptype;
 
 #ifndef ALIGN_STACK
 #define ALIGN_STACK(n)	((n) & ~03)
+#endif
+
+#ifdef ARCH_386_64
+static const int argregs[N_REG_ARGS] = { 5, 4, 1, 2, 8, 9 };
 #endif
 
 /*  Call a function in the target.
@@ -1075,6 +1083,7 @@ const char **p_mesg;
 #endif
 	breakpoint_t *bp;
 	taddr_t realargs[40];
+	int wordsize;
 	
 	if (nargs > sizeof realargs / sizeof *realargs)
 		panic("nargs too large in ao_call_func");
@@ -1082,6 +1091,7 @@ const char **p_mesg;
 	*p_mesg = NULL;
 
 	ip = GET_IPROC(xp);
+	wordsize = xp_get_addrsize(xp) / 8;
 
 #if defined(ARCH_SUN4) && !defined(OS_SUNOS_5)
 	/*  We can only call a target function if we are currently stopped
@@ -1240,11 +1250,11 @@ const char **p_mesg;
 	 *  (after the 0x5c subtraction below.
 	 */
 	if (nargs < N_REG_ARGS || nargs % 2 == 0)
-		sp -= 4;
+		sp -= wordsize;
 #endif
 	for (i = nargs - 1; i >= N_REG_ARGS; --i) {
-		sp -= 4;
-		if (ps_write_data(ip, sp, (char *)&realargs[i], 4) != 0) {
+		sp -= wordsize;
+		if (ps_write_data(ip, sp, (char *)&realargs[i], wordsize) != 0) {
 			*p_mesg = "Can't write argument to the stack";
 			return -1;
 		}
@@ -1259,7 +1269,7 @@ const char **p_mesg;
 #ifdef ARCH_VAX
 	/*  Push the arg count.
 	 */
-	sp -= 4;
+	sp -= wordsize;
 	if (ps_write_data(ip, sp, (char *)&nargs, sizeof(nargs)) != 0) {
 		*p_mesg = "Can't write the arg count to the stack";
 		return -1;
@@ -1274,8 +1284,8 @@ const char **p_mesg;
 			taddr_t regval;
 
 			regval = xp_getreg(xp, i);
-			sp -= 4;
-			if (ps_write_data(ip, sp, (char *)&regval, 4) != 0) {
+			sp -= wordsize;
+			if (ps_write_data(ip, sp, (char *)&regval, wordsize) != 0) {
 				*p_mesg = "Can't push register value";
 				return -1;
 			}
@@ -1302,9 +1312,8 @@ const char **p_mesg;
 		return -1;
 	}
 #endif /* ARCH_VAX */
-#if defined(ARCH_SUN3) || defined(ARCH_CLIPPER) || \
-    defined(ARCH_BSDI386) || defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
-	sp -= 4;
+#if defined(ARCH_386) || defined(ARCH_CLIPPER)
+	sp -= wordsize;
 	if (ps_write_data(ip, sp, (char *)&retpc, sizeof(retpc)) != 0) {
 		*p_mesg = "Can't push return address";
 		return -1;
@@ -1336,9 +1345,20 @@ const char **p_mesg;
 	ps_setreg(ip, UPSREG_FP, fp);
 	ps_setreg(ip, UPSREG_SP, sp);
 #endif /* ARCH_VAX */
-#if defined(ARCH_SUN3) || defined(ARCH_BSDI386) || \
-    defined(ARCH_LINUX386) || defined(ARCH_SOLARIS386)
+#if defined(ARCH_386)
 	ps_setreg(ip, UPSREG_SP, sp);
+#endif
+#ifdef ARCH_386_64
+	/*  The first six integer argument go in registers, with no
+	 *  space allocated for them on the stack.
+	 *
+	 *  BUG: we assume that all the arguments are integer (not
+	 *       floating point).
+	 */
+	for (i = 0; i < nargs && i < N_REG_ARGS; ++i) {
+		if (ps_setreg(ip, argregs[i], realargs[i]) != 0)
+			panic("regno write failed in cf");
+	}
 #endif
 #ifdef ARCH_MIPS
 	/*  The first four integer arguments go in registers, but there
@@ -1347,7 +1367,7 @@ const char **p_mesg;
 	 *  BUG: we assume that all the arguments are integer (not
 	 *       floating point).
 	 */
-	sp -= N_REG_ARGS * 4;
+	sp -= N_REG_ARGS * wordsize;
 	if (ps_setreg(ip, MIPS_SP_REGNO, sp) != 0) {
 		*p_mesg = "Can't set stack pointer for target function call";
 		return -1;
@@ -1409,7 +1429,7 @@ const char **p_mesg;
 		return -1;
 
 	*p_res = xp_getreg(xp, RETURN_REGNO);
-#ifdef ARCH_386
+#if defined(ARCH_386) && !defined(ARCH_386_64)
 	if (restype == TY_LONGLONG || restype == TY_ULONGLONG)
 		p_res[1] = xp_getreg(xp, 2);
 #endif
