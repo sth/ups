@@ -1540,8 +1540,9 @@ Solib_addr **p_solib_addrs;
 		*pos = '\0';
 	pos = buf;
 	addr = 0;
-	if ((sscanf(buf, "%*s => %s (%lx)", name, &addr) == 2)
-		|| (sscanf(buf, "%*s => %s", name) == 1))
+	if (sscanf(buf, "%*s => %s (%lx)", name, &addr) == 2 ||
+            (sscanf(buf, "%*s => (%lx)", &addr) == 0 &&
+             sscanf(buf, "%*s => %s", name) == 1))
 	{
 	    if (stat(name, &stbuf) != 0)
 	    {
