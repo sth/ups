@@ -1092,7 +1092,8 @@ const char **p_mainfunc_name;
 		    oldf = errf_set_ofunc(display_message);
 		    errf("unmatched N_BINCL symbol in %s (%s)", path, name);
 		    errf_set_ofunc(oldf);
-		    isp = 0;
+		    while (isp > 0)
+			    istack[--isp]->hf_stf->stf_symlim = symno;
 	    }
 
 	    stf->stf_fnum = 0;
