@@ -476,6 +476,7 @@ target_t *xp;
 
 		stk = make_stk(f, pc, fil, lnum, last);
 
+                stk->stk_fp = stk->stk_ap = fp;
 		stk->stk_sp = sp;
 
 		if (!get_preamble(f, (ao_preamble_t **)NULL))
@@ -485,7 +486,6 @@ target_t *xp;
 		 */
 
 		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &pc)) {
-			stk->stk_fp = stk->stk_ap = fp;
 		}
 		else if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {
 			ao_preamble_t *pr;
@@ -640,14 +640,11 @@ target_t *xp;
 				}
 			}
 
-			stk->stk_fp = sp + offset;
+			stk->stk_fp = stk->stk_ap = sp + offset;
 			stk->stk_sp = sp;
 
 			sp = sp + offset + 4;
 		} else {
-			stk->stk_fp = stk->stk_ap = fp;
-			stk->stk_sp = sp;
-
 			if (dread_addrval(xp, stk->stk_fp, &fp) != 0)
 				break;
 			if (dread_addrval(xp, stk->stk_fp + wordsize, &pc) != 0)
