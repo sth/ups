@@ -8,6 +8,10 @@
 
 #include <string.h>
 
+void one (int a);
+void two (int b);
+void three (int c);
+
 void
 three (int c)
 {

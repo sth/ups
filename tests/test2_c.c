@@ -6,7 +6,8 @@
  *	appended to the name.
  */
 #define b_r(x) b_r__(x)
-void main ()
+
+int main ()
 {
     int i = 98;
     b_r(&i);

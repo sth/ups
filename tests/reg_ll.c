@@ -10,6 +10,7 @@ for version 3.33.  I got the same results compiling with gcc and SC4.
 
 =============        reg_ll.c    =================
 #endif
+
 /*  Observed problems with display of long longs when they
 **  were declared register
 **
@@ -20,16 +21,21 @@ typedef struct TwoLongs
    long l1;
    long l2;
 } TwoLongs;
+
+void ptwolongs(TwoLongs tl);
+void plonglong(unsigned long long ll);
+
 void ptwolongs(TwoLongs tl)
 {
-    printf("TwoLongs: %x %x\n", tl.l1,tl.l2);  /* tl displays OK here */
+    printf("TwoLongs: %lx %lx\n", tl.l1,tl.l2);  /* tl displays OK here */
 }
 
-void plonglong( unsigned long long ll)
+void plonglong(unsigned long long ll)
 {
     printf("long long is %qx\n", ll);        /* ll displays OK here */
 }
-main()
+
+int main()
 {
     register unsigned long long ll = 0;
     register TwoLongs twolongs;
@@ -49,4 +55,5 @@ main()
     twolongs.l2 = 0x2468ace0;		     /* twolongs displays OK here */
     ptwolongs(twolongs);
 
+    exit(0);
 }

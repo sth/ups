@@ -12,6 +12,7 @@
 typedef enum { INDIVIDUAL = 0x0001, 
 	       BURST      = 0x0002, 
 	       CHAIN      = 0x0004} Pat_execution_mode;
+int
 main()
 {
     Pat_execution_mode p;
@@ -20,6 +21,7 @@ main()
     p = BURST;
     p = CHAIN;
     p = 0;
+    exit (0);
 }
 
 /*

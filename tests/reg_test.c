@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+int one (int n, int a, int b);
+
 int one (int n, int a, int b)
 {
     register unsigned int d, e, f, g, h, i;
