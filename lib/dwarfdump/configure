@@ -2446,11 +2446,17 @@ fi
 
 
 
+
+
+
+
 echo "$as_me:$LINENO: checking how to include libelf headers" >&5
 echo $ECHO_N "checking how to include libelf headers... $ECHO_C" >&6
 xtraCPPFLAGS=
 set -vx
 if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
+    xtraCPPFLAGS="-Idevelhdrs"
+elif test -d ../libelf/lib; then
     xtraCPPFLAGS="-Idevelhdrs"
 else
     if test "x$prefix" != "xNONE"; then
@@ -2476,14 +2482,17 @@ set -vx
 if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
     msg="../libelf"
     ELFLIB='../libelf/lib/libelf.a'
+elif test -d ../libelf/lib; then
+    msg="../libelf"
+    ELFLIB='../libelf/lib/libelf.a'
 else
-    if test "x$prefix" != "xNONE"; then
+    if test "x$exec_prefix" != "xNONE"; then
        eval xtraLDFLAGS="-L${libdir}"
        msg=$xtraLDFLAGS
     else
-       prefix=$ac_default_prefix
+       exec_prefix=$ac_default_prefix
        eval xtraLDFLAGS="-L${libdir}"
-       prefix=NONE
+       exec_prefix=NONE
        msg=$xtraLDFLAGS
     fi
     ELFLIB="$xtraLDFLAGS -lelf"
