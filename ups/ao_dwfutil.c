@@ -518,6 +518,12 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     */
 	    vaddr->v_op = OP_REGISTER;
 	    vaddr->v_register = op - DW_OP_reg0;
+	} else if (op == DW_OP_regx) {
+	    /*
+	     * Register
+	     */
+	    vaddr->v_op = OP_REGISTER;
+	    vaddr->v_register = loclist[i].ld_s->lr_number;
 	} else if (op == DW_OP_plus_uconst) {
 	    /*
 	     * Unsigned offset.
