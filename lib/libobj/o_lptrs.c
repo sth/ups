@@ -25,6 +25,7 @@
 char obj_lptrs_rcsid[] = "$Id$";
 
 #include <local/wn.h>
+#include <stdlib.h>
 
 #include <local/ukcprog.h>
 #include <mtrprog/alloc.h>
@@ -230,6 +231,8 @@ int indent, no_skip;
 			prevobj->ob_flags &= ~OB_UPDATE_LPTRS;
 		}
 	}
+	for (i = 0; i < MAX_OBJTYPES; i++)
+		free(sizetab[i]);
 	return lptr;
 }
 

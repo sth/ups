@@ -3172,6 +3172,8 @@ char *line;
 	outwin_insert(ow, line, strlen(line));
 	outwin_insert(ow, "\n", 1);
 
+	free(line);
+        
 	return 0;
 }
 
