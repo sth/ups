@@ -910,7 +910,7 @@ elf_get_dynamic_shlib_info(alloc_pool_t *ap, Libdep *ld, const char *textpath,
 		 *  rather than a shared library.
 		 */
 		if (elf_link_map_prev(so->elops, lmap) == TADDR_NULL ||
-		    elf_link_map_name(so->elops, lmap) != TADDR_NULL)
+		    elf_link_map_name(so->elops, lmap) == TADDR_NULL)
 			continue;
 		
 		if (dgets(xp, elf_link_map_name(so->elops, lmap),
