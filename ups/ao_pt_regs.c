@@ -310,8 +310,12 @@ taddr_t val;
 	}
 
 	errno = 0;
-	e_ptrace(PTRACE_SETREGS, pid, (char *)pr, 0);
-	if (errno != 0)
+#ifdef OS_LINUX
+	e_ptrace(PTRACE_SETREGS, pid, 0, (int)&pr->regs);
+#else
+	e_ptrace(PTRACE_SETREGS, pid, (char *)&pr->regs, 0);
+#endif
+        if (errno != 0)
 		return -1;
 
 	return 0;
@@ -398,11 +402,13 @@ ptrace_set_all_regs(ip, sr)
 iproc_t *ip;
 sunregs_t *sr;
 {
-	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid,
-		       (char *)&sr->sr_regs, 0) != 0) {
+#ifdef OS_LINUX
+	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, (char *)&sr->sr_regs, 0) != 0) {
+#else
+	if (std_ptrace(PTRACE_SETREGS, ip->ip_pid, 0, (char *)&sr->sr_regs) != 0) {
+#endif
 		return FALSE;
 	}
-
 	ip->ip_ptrace_info->sunregs = *sr;
 	return TRUE;
 }
