@@ -23,6 +23,8 @@
 
 /* @(#)ao_procfs.h	1.1 24/5/95 (UKC) */
 
+#if AO_USE_PROCFS
+
 int procfs_setreg PROTO((iproc_t *ip, int regno, taddr_t value));
 int procfs_create_child PROTO((target_t *xp, 
                                const char **argv, const char **envp, 
@@ -59,3 +61,6 @@ void procfs_init PROTO((iproc_t *ip));
 int procfs_get_last_attach_pid PROTO((void));
 bool procfs_new_dynamic_libs PROTO((target_t *xp));
 bool procfs_load_mmap_info PROTO((target_t *xp, bool attached));
+
+#endif /* AO_USE_PROCFS */
+
