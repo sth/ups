@@ -793,7 +793,7 @@ bitfield_t *bf;
 	nbits = sizeof(uvlong) * 8;
 
 	if (bits_big_endian)
-		shift = 32 - (bf->bf_offset + bf->bf_width);
+		shift = nbits - (bf->bf_offset + bf->bf_width);
 	else
 		shift = bf->bf_offset;
 
