@@ -48,6 +48,7 @@ char ups_ao_text_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 
 #include "ups.h"
 #include "symtab.h"
@@ -244,6 +245,7 @@ const char **p_mainfunc_name;
 #endif
 	
 #if WANT_DWARF
+	ast->st_type_names = NULL;
 	if (st_is == ST_DWARF)
 	    st = make_symtab(ap, textpath, (fil_t *)NULL, (func_t *)NULL,
 			     &dwarf_ops, (char *)ast);

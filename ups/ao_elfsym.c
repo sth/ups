@@ -633,12 +633,23 @@ elf_handle_optsym(alloc_pool_t *ap, const char *opts, language_t* language,
 			     const char* langString = strstr(opt,"C++");
 			     if ( langString )
 			     {
+#if 1
+     if (langString < nextopt || nextopt==NULL)
+     {
+         /* Treat C put through a C++ compiler as C++ */
+         compiler_type = CT_CC;
+         if (language &&
+                 ((*language == LANG_UNKNOWN) || (*language == LANG_C)))
+             *language = LANG_CC;
+     }
+#else
 				 if (langString < nextopt || nextopt==NULL)
 			         {
 				     compiler_type = CT_CC;
 				     if (language && *language == LANG_UNKNOWN)
 				         *language = LANG_CC;
 			         }
+#endif
 			     } else
 			     {
 				 langString = strstr(opt," C ");

@@ -44,6 +44,7 @@ char ups_ao_symcb_c_rcsid[] = "$Id$";
 #endif
 
 #include <local/ukcprog.h>
+#include <mtrprog/hash.h>
 
 #include "ups.h"
 #include "symtab.h"

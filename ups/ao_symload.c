@@ -47,6 +47,7 @@ char ups_ao_symload_c_rcsid[] = "$Id$";
 #include <local/wn.h>
 #include <local/ukcprog.h>
 #include <mtrprog/strcache.h>
+#include <mtrprog/hash.h>
 #include <local/edit/edit.h>
 
 #include "ups.h"

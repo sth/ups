@@ -32,6 +32,7 @@ char ups_st_debug_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 
 #include "ups.h"
 #include "symtab.h"
