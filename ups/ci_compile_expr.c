@@ -962,15 +962,13 @@ expr_context_t context;
 	if ((nargs+excess_slots) * sizeof(stackword_t) != tx->tx_sp - before_args_sp)
 		ci_panic("args botch in cfc");
 
-	if (is_direct_call) {
-		ci_code_generic_opcode(tx, OC_CALL_L, (stackword_t)func_index);
-		ci_code_long(tx, nargs + excess_slots);
-	}
+	if (is_direct_call)
+		ci_code_generic_opcode(tx, OC_CALL_B, (stackword_t)func_index);
 	else {
 		ci_compile_expression(tx, fce->fce_func, EC_VALUE);
 		ci_code_opcode(tx, OC_CALL_INDIRECT);
-		ci_code_byte(tx, nargs + excess_slots);
 	}
+	ci_code_byte(tx, nargs + excess_slots);
 
 #if WANT_TYPE_PUSHED
 	ci_code_byte(tx, typecode);
