@@ -29,6 +29,8 @@ bool ao_fil_may_have_matching_globals PROTO((fil_t *fil, const char *pat,
                                              matchfunc_t matchf));
 var_t *ao_get_fi_vars PROTO((fil_t *fil));
 macro_t *ao_get_fi_macros PROTO((fil_t *fil));
+bool ao_unwind PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
+                      taddr_t *sp, taddr_t *pc));
 block_t *ao_get_fu_blocks PROTO((func_t *f));
 func_t *ao_ensure_fu PROTO((func_t *f));
 fil_t *ao_get_fi PROTO((symtab_t *st));

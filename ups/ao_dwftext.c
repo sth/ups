@@ -40,6 +40,7 @@ char ups_ao_dwftext_c_rcsid[] = "$Id$";
 #include "ao_symscan.h"
 #include "ao_dwfsyms.h"
 #include "ao_dwftext.h"
+#include "ao_dwfutil.h"
 #include "ao_symcb.h"
 #include "cursors.h"
 #include "ui.h"
@@ -385,6 +386,26 @@ fil_t *fil;
     return fil->fi_macros;
 }
 
+/*
+ * Unwind a stack frame.
+ */
+bool
+dw_unwind(xp, st, fp, sp, pc)
+target_t *xp;
+symtab_t *st;
+taddr_t *fp;
+taddr_t *sp;
+taddr_t *pc;
+{
+    ao_stdata_t *ast = AO_STDATA(st);
+    taddr_t adjusted_pc = *pc - ast->st_base_address;
+    
+    if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc)) {
+	*pc = adjusted_pc;
+	return TRUE;
+    }
+
+    return FALSE;
+}
 
 #endif /* WANT_DWARF */
-

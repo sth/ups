@@ -134,7 +134,7 @@ typedef struct watchpoint_s watchpoint_t;
 
 typedef struct stack_s Stack;
 
-typedef struct {
+typedef struct target_s {
 	/*  These fields are set by make_target()
 	 */
 	alloc_pool_t *xp_apool;

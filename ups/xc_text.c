@@ -105,6 +105,8 @@ static taddr_t xc_get_addr_lim PROTO((func_t *f));
 static void xc_close_symtab_data PROTO((symtab_t *st));
 static var_t *xc_get_fi_vars PROTO((fil_t *fil));
 static macro_t *xc_get_fi_macros PROTO((fil_t *fil));
+static bool xc_unwind PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
+                             taddr_t *sp, taddr_t *pc));
 static func_t *xc_ensure_fu PROTO((func_t *f));
 static fil_t *xc_get_fi PROTO((symtab_t *st));
 static block_t *xc_get_fu_blocks PROTO((func_t *f));
@@ -1101,6 +1103,8 @@ func_t *funcs;
 		xc_get_fi_vars,
 		xc_get_fi_macros,
 
+		xc_unwind,
+
 		xc_disassemble_instruction,
 		xc_get_jumps,
 	};
@@ -1332,6 +1336,17 @@ fil_t *fil;
 	fil->fi_flags |= FI_DONE_MACROS;
 
 	return fil->fi_macros;
+}
+
+static bool
+xc_unwind(xp, st, fp, sp, pc)
+target_t *xp;
+symtab_t *st;
+taddr_t *fp;
+taddr_t *sp;
+taddr_t *pc;
+{
+	return FALSE;
 }
 
 static func_t *

@@ -36,6 +36,7 @@ char ups_ao_dwfutil_c_rcsid[] = "$Id$";
 #include "symtab.h"
 #include "ci.h"
 #include "st.h"
+#include "data.h"
 #include "ao_dwarf.h"
 #include "ao_syms.h"
 #include "ao_symscan.h"
@@ -545,5 +546,115 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     return head;
 }
 
-#endif /* WANT_DWARF */
+#if defined(ARCH_386_64)
+#define CFA_COL DW_FRAME_CFA_COL
+#define FP_COL 6
+#define SP_COL 7
+#define RA_COL 16
+#elif defined(ARCH_386)
+#define CFA_COL DW_FRAME_CFA_COL
+#define FP_COL 5
+#define SP_COL 4
+#define RA_COL 8
+#endif
 
+#if defined(ARCH_386)
+
+/*
+ * Unwind the value of a specified register.
+ */
+static bool
+dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
+               taddr_t pc, int regnum, taddr_t *regval)
+{
+    int rv;
+    Dwarf_Error err;
+    Dwarf_Signed offset_relevant;
+    Dwarf_Signed register_num;
+    Dwarf_Signed offset;
+
+    if ((rv = dwarf_get_fde_info_for_reg(fde, regnum, pc, &offset_relevant,
+					 &register_num, &offset, NULL,
+					 &err)) == DW_DLV_OK) {
+	if (register_num == CFA_COL)
+	    *regval = cfa;
+	else if (register_num == FP_COL)
+	    *regval = fp;
+	else if (register_num == SP_COL)
+	    *regval = sp;
+	else
+	    rv = DW_DLV_ERROR;
+
+	if (rv == DW_DLV_OK && offset_relevant)
+	    *regval += offset;
+
+	if (rv == DW_DLV_OK && register_num == CFA_COL)
+	    dread_addrval(xp, *regval, regval);
+    }
+
+    return rv == DW_DLV_OK;
+}
+
+/*
+ * Unwind a stack frame.
+ */
+bool
+dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
+{
+    int rv;
+    Dwarf_Error err;
+    Dwarf_Cie *cie_data;
+    Dwarf_Signed cie_count;
+    Dwarf_Fde *fde_data;
+    Dwarf_Signed fde_count;
+    
+    if ((rv = dwarf_get_fde_list(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK) {
+	Dwarf_Cie *ciep;
+	Dwarf_Fde *fdep;
+	Dwarf_Fde fde;
+       
+	if ((rv = dwarf_get_fde_at_pc(fde_data, *pc, &fde, NULL, NULL, &err)) == DW_DLV_OK) {
+	    taddr_t cfa;
+	    taddr_t new_fp;
+	    taddr_t new_sp;
+	    taddr_t new_pc;
+	    
+	    if (dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, CFA_COL, &cfa) &&
+		dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, RA_COL, &new_pc)) {
+		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, FP_COL, &new_fp))
+		    *fp = cfa - 16;
+		
+		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, SP_COL, &new_sp))
+		    *sp = cfa;
+
+		*pc = new_pc;
+	    }
+	}
+
+	for (ciep = cie_data; ciep < cie_data + cie_count; ciep++)
+	    dwarf_dealloc(dbg, *ciep, DW_DLA_CIE);
+
+	for (fdep = fde_data; fdep < fde_data + fde_count; fdep++)
+	    dwarf_dealloc(dbg, *fdep, DW_DLA_FDE);
+
+	dwarf_dealloc(dbg, cie_data, DW_DLA_LIST);
+	dwarf_dealloc(dbg, fde_data, DW_DLA_LIST);
+    }
+
+    return rv == DW_DLV_OK;
+}
+
+#else /* ARCH_386 */
+
+/*
+ * Unwind a stack frame.
+ */
+bool
+dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
+{
+    return FALSE;
+}
+   
+#endif /* ARCH_386 */
+
+#endif /* WANT_DWARF */

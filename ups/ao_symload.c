@@ -809,6 +809,17 @@ fil_t *fil;
 	return fil->fi_macros;
 }
 
+bool
+ao_unwind(xp, st, fp, sp, pc)
+target_t *xp;
+symtab_t *st;
+taddr_t *fp;
+taddr_t *sp;
+taddr_t *pc;
+{
+	return FALSE;
+}
+
 /*  Many compilers give you two seperate symbol table entries for a
  *  register parameter - one for the stack copy of the parameter, one
  *  for the register.  Go through the vars of f zapping the stack

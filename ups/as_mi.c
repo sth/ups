@@ -38,9 +38,9 @@ char ups_as_mi_c_rcsid[] = "$Id$";
 
 #include "ups.h"
 #include "symtab.h"
+#include "target.h"
 #include "st.h"
 #include "trun.h"
-#include "target.h"
 #include "as.h"
 #include "debug.h"
 #include "state.h"

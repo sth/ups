@@ -476,13 +476,18 @@ target_t *xp;
 
 		stk = make_stk(f, pc, fil, lnum, last);
 
+		stk->stk_sp = sp;
+
 		if (!get_preamble(f, (ao_preamble_t **)NULL))
 			break;
 
 		/*  Get the next stack frame
 		 */
 
-		if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {
+		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &pc)) {
+			stk->stk_fp = stk->stk_ap = fp;
+		}
+		else if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {
 			ao_preamble_t *pr;
 			int offset;
 			int offsetlim;

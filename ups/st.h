@@ -40,6 +40,10 @@
  */
 
 #define ST_H_INCLUDED
+                                                                                
+#ifndef TARGET_H_INCLUDED
+typedef struct target_s target_t;
+#endif
 
 typedef int (*matchfunc_t)PROTO((const char *name, const char *pat));
 
@@ -71,6 +75,9 @@ typedef struct st_ops_s {
 	block_t *(*so_get_fu_blocks)PROTO((func_t *f));
 	var_t *(*so_get_fi_vars)PROTO((fil_t *fil));
 	macro_t *(*so_get_fi_macros)PROTO((fil_t *fil));
+
+	bool (*so_unwind)PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
+                                taddr_t *sp, taddr_t *pc));
 
 	const char *(*so_disassemble_instruction)PROTO((func_t *f, taddr_t addr,
 						        const char *text,
@@ -121,6 +128,9 @@ typedef struct st_ops_s {
 	(fil->fi_symtab->st_ops->so_get_fi_vars)(fil)
 #define st_get_fi_macros(fil) \
 	(fil->fi_symtab->st_ops->so_get_fi_macros)(fil)
+
+#define st_unwind(xp, st, fp, sp, pc) \
+	(st->st_ops->so_unwind)(xp, st, fp, sp, pc)
 
 #define st_disassemble_instruction(f, addr, text, len) \
 	(f->fu_symtab->st_ops->so_disassemble_instruction)(f, addr, text, len)
