@@ -575,7 +575,7 @@ stopres_t *p_stopres;
                         breakpoint_t *alt_bp;
                         
                         bp = dx_add_breakpoint(xp, bpt_addr);
-			if (install_breakpoint(bp, xp) != 0) {
+			if (install_breakpoint(bp, xp, FALSE) != 0) {
 				stopres = SR_FAILED;
 				break;
 			}
@@ -595,7 +595,7 @@ stopres_t *p_stopres;
                         else {
                                 alt_bp = dx_add_breakpoint(xp, alt_addr);
 
-                                if (install_breakpoint(alt_bp, xp) != 0) {
+                                if (install_breakpoint(alt_bp, xp, FALSE) != 0) {
                                         stopres = SR_FAILED;
                                         break;
                                 }
@@ -767,7 +767,7 @@ stopres_t *p_stopres;
 							       call_bpt_addr);
 					tmp_bp = bp;
 				}
-				if (install_breakpoint(bp, xp) != 0)
+				if (install_breakpoint(bp, xp, FALSE) != 0)
 					break;
 				stopres = xp_restart_child(xp, 0, CT_CONT);
 				if (tmp_bp != 0 && xp_remove_breakpoint(xp, tmp_bp) != 0)
@@ -1001,7 +1001,7 @@ retry:
 			      /* install a bpt at next line in case the f_step
 				 is not called */
 			      tmp_bp1 = dx_add_breakpoint(xp, bpt_addr1);
-			      if (install_breakpoint(tmp_bp1, xp) != 0) {
+			      if (install_breakpoint(tmp_bp1, xp, FALSE) != 0) {
 				stopres = SR_FAILED;
 				break;
 			      }
@@ -1038,7 +1038,7 @@ retry:
                         breakpoint_t *alt_bp;
                         
                         bp = dx_add_breakpoint(xp, bpt_addr);
-			if (install_breakpoint(bp, xp) != 0) {
+			if (install_breakpoint(bp, xp, FALSE) != 0) {
 				stopres = SR_FAILED;
 				break;
 			}
@@ -1058,7 +1058,7 @@ retry:
                         else {
                                 alt_bp = dx_add_breakpoint(xp, alt_addr);
 
-                                if (install_breakpoint(alt_bp, xp) != 0) {
+                                if (install_breakpoint(alt_bp, xp, FALSE) != 0) {
                                         stopres = SR_FAILED;
                                         break;
                                 }
@@ -1252,7 +1252,7 @@ set_bpt:
 					if (!do_step_into)
 					  tmp_bp1 = 0;
 				}
-				if (install_breakpoint(bp, xp) != 0)
+				if (install_breakpoint(bp, xp, FALSE) != 0)
 					break;
 				stopres = xp_restart_child(xp, 0, CT_CONT);
 				if (tmp_bp1 != 0)

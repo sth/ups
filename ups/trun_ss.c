@@ -110,7 +110,7 @@ rtype_t rtype;
 					stop_bp = tmp_bp;
 				}
 				if (!breakpoint_is_installed(stop_bp)) {
-					if (install_breakpoint(stop_bp, xp) != 0)
+					if (install_breakpoint(stop_bp, xp, TRUE) != 0)
 /*	RGA					panic("can't install stop_bp");*/
 						errf("can't install stop_bp");
 				}
@@ -414,7 +414,7 @@ rtype_t rtype;
 				stop_bp = tmp_bp;
 			}
 			if (!breakpoint_is_installed(stop_bp)) {
-				if (install_breakpoint(stop_bp, xp) != 0)
+				if (install_breakpoint(stop_bp, xp, TRUE) != 0)
 /*	RGA				panic("can't install stop_bp");*/
 					errf("can't install stop_bp");
 			}

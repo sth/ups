@@ -519,7 +519,7 @@ cont_type_t ctype;
 		if (single_step_machine(ma) != CI_ER_TRAP)
 			panic("ssm botch");
 
-		if (install_breakpoint(bp, xp) != 0)
+		if (install_breakpoint(bp, xp, FALSE) != 0)
 			panic("ib failed");
 
 		if (ctype == CT_STEP)

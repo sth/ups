@@ -389,7 +389,7 @@ cont_type_t ctype;
 
 		ps_single_step(xp, sig);
 		
-		if (install_breakpoint(bp, xp) != 0)
+		if (install_breakpoint(bp, xp, FALSE) != 0)
 			panic("can't install breakpoint in ao_cont");
 		
 		if (ip->ip_stopres != SR_SSTEP || ctype == CT_STEP)
@@ -1297,7 +1297,7 @@ const char **p_mesg;
 	}
 	else {
 		bp = dx_add_breakpoint(xp, retpc);
-		if (install_breakpoint(bp, xp) != 0) {
+		if (install_breakpoint(bp, xp, FALSE) != 0) {
 			*p_mesg = "Can't insert breakpoint at return address";
 			return -1;
 		}

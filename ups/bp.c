@@ -123,11 +123,12 @@ breakpoint_t *bp;
 /*  Install a breakpoint (e.g. write TRAP opcode into target).
  */
 int
-install_breakpoint(bp, xp)
+install_breakpoint(bp, xp, force)
 breakpoint_t *bp;
 target_t *xp;
+bool force;
 {
-	if (bp->bp_user_data && breakpoint_is_disabled(bp->bp_user_data))
+	if (!force && bp->bp_user_data && breakpoint_is_disabled(bp->bp_user_data))
 	  return 0;
 
 	if (bp->bp_enabled)
@@ -207,7 +208,7 @@ bool enabled;
 			bp->bp_enabled = TRUE;
 
 			if (bp->bp_xp == 0 && bp->bp_installed) {
-				if (install_breakpoint(bp, xp) != 0)
+				if (install_breakpoint(bp, xp, FALSE) != 0)
 					return -1;
 			}
 		}
@@ -240,7 +241,7 @@ target_t *xp;
 	for (bp = Bphead.bp_next; bp != &Bphead; bp = bp->bp_next) {
 		if (bp->bp_solib_event == TRUE && bp->bp_installed == FALSE)
 		{
-		  install_breakpoint(bp, xp);
+		  install_breakpoint(bp, xp, FALSE);
 		  return;
 		}
 	}
@@ -276,8 +277,8 @@ target_t *xp;
 
 	for (bp = Bphead.bp_next; bp != &Bphead; bp = bp->bp_next) {
 		if (bp->bp_xp == 0)
-			install_breakpoint(bp, xp);
-/* RGA			if (install_breakpoint(bp, xp))*/
+			install_breakpoint(bp, xp, FALSE);
+/* RGA			if (install_breakpoint(bp, xp, FALSE))*/
 /*				return -1;*/
 	}
 	

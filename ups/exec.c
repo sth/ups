@@ -698,7 +698,7 @@ taddr_t addr;
 
 	bp = xp_add_breakpoint(xp, addr);
 
-	if (install_breakpoint(bp, xp) != 0) {
+	if (install_breakpoint(bp, xp, FALSE) != 0) {
 		failmesg("Can't install initial breakpoint in", "object file",
 			 path);
 

@@ -869,7 +869,7 @@ elf_get_dynamic_shlib_info(alloc_pool_t *ap, Libdep *ld, const char *textpath,
 	if (debug.r_brk && dl_bp_installed == FALSE)
 	{
 	  bp = xp_add_breakpoint(xp, (taddr_t)debug.r_brk);
-	  if (install_breakpoint(bp, xp) != 0)
+	  if (install_breakpoint(bp, xp, FALSE) != 0)
 	    errf("can't install breakpoint in dynamic linker");
 	  else
 	  {

@@ -30,7 +30,7 @@
 int breakpoint_is_installed PROTO((breakpoint_t *bp));
 void set_breakpoint_data PROTO((breakpoint_t *breakpoint, long));
 long get_breakpoint_data PROTO((breakpoint_t *breakpoint));
-int install_breakpoint PROTO((breakpoint_t *bp, target_t *xp));
+int install_breakpoint PROTO((breakpoint_t *bp, target_t *xp, bool force));
 int uninstall_breakpoint PROTO((breakpoint_t *bp));
 int install_all_breakpoints PROTO((target_t *xp));
 bool can_install_all_breakpoints PROTO((target_t *xp));
