@@ -36,6 +36,7 @@ char ups_obj_stack_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/alloc.h>
+#include <mtrprog/hash.h>
 
 #include <local/wn.h>
 #include <local/obj/obj.h>

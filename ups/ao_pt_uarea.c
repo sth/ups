@@ -92,6 +92,7 @@ char ups_ao_pt_uarea_c_rcsid[] = "$Id$";
 #endif
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <local/arg.h>
 
 #ifdef ARCH_MIPS

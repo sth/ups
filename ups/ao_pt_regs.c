@@ -45,6 +45,7 @@ char ups_ao_pt_regs_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <local/arg.h>
 
 #include "ups.h"

@@ -34,6 +34,7 @@ char ups_va_menu_c_rcsid[] = "$Id$";
 #include <local/obj/obj.h>
 #include <local/ukcprog.h>
 #include <mtrprog/alloc.h>
+#include <mtrprog/hash.h>
 
 #include "objtypes.h"
 #include "ups.h"

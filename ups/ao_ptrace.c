@@ -46,6 +46,7 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 #include <setjmp.h>
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 #include <local/arg.h>
 #include <errno.h>
 

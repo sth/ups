@@ -56,6 +56,7 @@ char ups_ao_target_c_rcsid[] = "$Id$";
 
 #include <local/ukcprog.h>
 #include <mtrprog/utils.h>
+#include <mtrprog/hash.h>
 
 #include "ups.h"
 #include "ci.h"
