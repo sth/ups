@@ -22,11 +22,10 @@
 
 /* $Id$ */
 
-#if WANT_DWARF
-
 int		find_types_by_name PROTO((void));
-
 int		set_find_types_by_name PROTO((int val));
+
+#if WANT_DWARF
 
 #ifdef DWARF_DEBUG_TYPEDEFED
 
