@@ -1277,6 +1277,9 @@ bool attach;
 		res = save_state(state_dir, state_path, want_save_sigs);
 	}
 
+	free(state_path);
+	free(user_path);
+
 	/*  Make sure the target is dead or detached before exiting.
 	 */
 	if (target_process_exists(xp))
