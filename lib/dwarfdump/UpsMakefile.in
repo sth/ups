@@ -2,10 +2,10 @@
 # Holds UPS specific targets
 
 HDRS	= \
-	dwarf_names.h makename.h globals.h
+	makename.h globals.h
 
 SOURCE	= \
-	print_sections.c dwarfdump.c dwarf_names.c makename.c \
+	print_sections.c dwarfdump.c makename.c \
 	print_reloc.c print_die.c tag_attr.c tag_tree.c
 
 # Files needed by AutoConf and configure
