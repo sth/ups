@@ -41,12 +41,12 @@ MAKE_LIBRARY	= ar cq
 SCCS = sccs
 SCCS_CHECK = ${SCCS} check
 
-OBJS =	alloc.o e_malloc.o e_realloc.o errf.o \
+OBJS =	alloc.o basename.o e_malloc.o e_realloc.o errf.o \
 	formf.o panic.o ssplit.o strf.o strnf.o strsave.o \
 	fpgetline.o strtol.o config.o ip.o ebuf.o logf.o \
 	sccsdata.o
 
-SRCS =	alloc.c e_malloc.c e_realloc.c errf.c \
+SRCS =	alloc.c basename.c e_malloc.c e_realloc.c errf.c \
 	formf.c panic.c ssplit.c strf.c strnf.c strsave.c \
 	fpgetline.c strtol.c config.c ip.c ebuf.c logf.c
 
@@ -102,6 +102,8 @@ count:
 
 alloc.o: alloc.c ukcprog.h 
 	${CCLINE}alloc.c
+basename.o: basename.c ukcprog.h 
+	${CCLINE}basename.c
 e_malloc.o: e_malloc.c ukcprog.h 
 	${CCLINE}e_malloc.c
 e_realloc.o: e_realloc.c ukcprog.h 

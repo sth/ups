@@ -224,6 +224,9 @@ bool alloc_set_debug_flag PROTO((alloc_pool_t *ap, bool val));
 alloc_mark_t *alloc_mark PROTO((alloc_pool_t *ap));
 void alloc_release PROTO((alloc_pool_t *ap, alloc_mark_t *am));
 
+/* from basename.c */
+
+const char *base_name PROTO((const char *path));
 
 /* from ssplit.c */
 
