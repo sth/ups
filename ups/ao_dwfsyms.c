@@ -538,7 +538,6 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * the children of this DIE looking for those type
 		 * definitions.
 		 */
-		dw_what_next = DWL_ANY_TYPES;
 		descend = TRUE;
 	    }
 	    break;
@@ -565,6 +564,14 @@ int recursed;		/* Recursion level, 0 = top. */
 		bl_head = bl;
 
 		parent_bl = bl_head;
+		descend = TRUE;
+	    } else if (dw_what & DWL_ANY_TYPES) {
+		/*
+		 * As GCC 3.2.2 sometimes hides type definitions
+		 * inside a lexical block we need to process the
+		 * children of this DIE looking for those type
+		 * definitions.
+		 */
 		descend = TRUE;
 	    }
 	    break;
@@ -873,8 +880,10 @@ int recursed;		/* Recursion level, 0 = top. */
 		/*
 		 * Union type.
 		 * Determine which child DIEs we need to process.
+		 * As gcc sometimes embeds types in unions we load
+		 * the types as well as the members.
 		 */
-		dw_what_next = DWL_STRUCT_MEMBERS;
+		dw_what_next = DWL_STRUCT_MEMBERS | DWL_ANY_TYPES;
 		descend = TRUE;
 
 		dt = dwf_make_ae_type(dbg, die, ap, stf, TY_UNION, parent_bl);
