@@ -402,6 +402,29 @@ target_t *xp;
 #define EBXMASK (1u << EBX)
 #define EBPMASK (1u << EBP)
 
+#if defined(ARCH_LINUX386)
+
+static bool ebx_valid  PROTO((target_t *xp, taddr_t ebx));
+
+static bool
+ebx_valid(xp, ebx)
+target_t *xp;
+taddr_t ebx;
+{
+	unsigned char ebx_buf[16];
+	func_t *f;
+
+	if (dread(xp, ebx, ebx_buf, sizeof(ebx_buf)) != 0) return FALSE;
+
+	f = addr_to_func(*(taddr_t *)(ebx_buf + 8));
+
+	if (f && strcmp(f->fu_name, "_dl_runtime_resolve") == 0) return TRUE;
+
+	return FALSE;
+}
+
+#endif
+
 /* ARCH_386 */
 Stack *
 ao_get_stack_trace(xp)
@@ -521,6 +544,16 @@ target_t *xp;
 					else
 						ebx = xp_getreg(xp, 3);
 
+#if defined(ARCH_LINUX386)
+                                        if (!ebx_valid(xp, ebx)) {
+						int i;
+
+						for (i = offset; i > offset - 20; i -= 4)
+							if (dread(xp, sp + i, (char *)&ebx, sizeof(ebx)) == 0 && ebx_valid(xp, ebx))
+								break;
+                                        }
+#endif
+                                        
 					if (ebpoffset) {
 						if (dread(xp, sp + offset + ebpoffset, (char *)&fp, sizeof(fp)) != 0 || !fp)
 							fp = (taddr_t)-1;
