@@ -188,10 +188,18 @@ int e_ptrace PROTO((ptracereq_t req, int pid, char *addr, int data));
 int x86_gcc_register PROTO((int regno));
 
 
-#ifdef OS_SUNOS_4
+#if defined(OS_SUNOS)
 int ptrace_set_all_regs PROTO((iproc_t *ip, sunregs_t *regtab));
 void ptrace_get_regtab PROTO((iproc_t *ip, sunregs_t *regtab));
+#else
+int ptrace_set_all_regs PROTO((iproc_t *ip, ptrace_regs_t *pr));
+void ptrace_get_regtab PROTO((iproc_t *ip, ptrace_regs_t *pr));
 #endif
+
+#if AO_HAS_PTRACE_DREGS
+int ptrace_set_dregs PROTO((iproc_t *ip));
+#endif
+
 int ptrace_get_last_attach_pid PROTO((void));
 
 #ifdef PTRACE_DEBUG

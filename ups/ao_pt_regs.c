@@ -138,6 +138,16 @@ static void convert_68881_reg PROTO((unsigned *rwords, bool is_double,
 
 #if AO_HAS_PTRACE_REGS
 
+static taddr_t get_ptrace_reg PROTO((ptrace_regs_t *pr, int pid, int regno));
+static int set_ptrace_reg PROTO((ptrace_regs_t *pr, int pid, int regno, taddr_t val));
+static int ptrace_update_pt_regs PROTO((target_t *xp));
+static int ptrace_update_pt_dregs PROTO((target_t *xp));
+
+#if AO_HAS_PTRACE_DREGS
+static taddr_t get_ptrace_dreg PROTO((ptrace_regs_t *pr, int pid, int regno));
+static int set_ptrace_dreg PROTO((ptrace_regs_t *pr, int pid, int regno, taddr_t val));
+#endif
+
 #ifdef OS_SUNOS
 /*  Return the current value of Sun register regno.
  *  regno is a machine independent register number.
@@ -254,7 +264,7 @@ taddr_t val;
  *  Return the current value of ptrace'd register 'regno', which is a
  *  machine independent register number.
  */
-taddr_t
+static taddr_t
 get_ptrace_reg(pr, pid, regno)
 ptrace_regs_t *pr;
 int pid, regno;
