@@ -379,8 +379,9 @@ linkinfo_t *li;
 		lim = sf->sf_letab + sf->sf_letab_size;
 		fprintf(fp, "\t%4s  %5s %6s\n", "", "lnum", "addr");
 		for (le = sf->sf_letab; le < lim; ++le) {
-			fprintf(fp, "\t%4ld: %5d %6ld\n", le - sf->sf_letab,
-						  le->le_lnum, le->le_addr);
+			fprintf(fp, "\t%4ld: %5d %6ld\n",
+				(long)(le - sf->sf_letab),
+				le->le_lnum, le->le_addr);
 		}
 	}
 	fputc('\n', fp);
@@ -420,7 +421,7 @@ size_t count;
 		int i;
 		unsigned char buf[NPERLINE];
 
-		fprintf(fp, "  %06lx   ", cp - data);
+		fprintf(fp, "  %06lx   ", (long)(cp - data));
 		
 		for (i = 0; i < NPERLINE; ++i) {
 			if (cp < lim) {
@@ -591,7 +592,7 @@ size_t textsize, entry_point;
 	symfunc_t *sf;
 	so_t *so;
 	bool source_ok;
-#define JUMPDEST(pc, text)		((pc + (short)GETWORD(pc)) - text)
+#define JUMPDEST(pc, text)	((long)((pc + (short)GETWORD(pc)) - text))
 
 	pc = text; 
 	sf = NULL;

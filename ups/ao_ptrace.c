@@ -1039,7 +1039,11 @@ int data;
 #ifdef ARCH_LINUX386
 	if (req == PTRACE_CONT || req == PTRACE_SINGLESTEP) {
 		if (addr != (char *) 1) {
+#ifdef ARCH_LINUX386_64
 			std_ptrace(PTRACE_POKEUSER, pid, WORDSIZE*RIP, addr);
+#else
+			std_ptrace(PTRACE_POKEUSER, pid, WORDSIZE*EIP, addr);
+#endif
 			addr = (char *) 1;
 		}
 	}

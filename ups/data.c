@@ -211,13 +211,13 @@ int num_bytes;
 #if HAVE_LONG_DOUBLE
 		case sizeof(int)*3:
 		    sprintf(buf, "<illegal long double %lu bytes %s [0]0x%08x [1]0x%08x [2]0x%08x>",
-			    sizeof(long double),
+			    (unsigned long)sizeof(long double),
 			    (words_big_endian ? "1st word on left" : "1st word on right"),
 			    vl.vl_ints[0], vl.vl_ints[1], vl.vl_ints[2]);
 		    break;
 		case sizeof(int)*4:
 		    sprintf(buf, "<illegal long double %lu bytes %s [0]0x%08x [1]0x%08x [2]0x%08x [3]0x%08x>",
-			    sizeof(long double),
+			    (unsigned long)sizeof(long double),
 			    (words_big_endian ? "1st word on left" : "1st word on right"),
 			    vl.vl_ints[0], vl.vl_ints[1], vl.vl_ints[2], vl.vl_ints[3]);
 		    break;
