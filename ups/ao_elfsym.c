@@ -70,6 +70,7 @@ char ups_ao_elfsym_c_rcsid[] = "$Id$";
 #include "srcpath.h"
 #include "util.h"
 #include "va.h"
+#include "ci.h"
 #if WANT_DEBUG
 #include "st_debug.h"
 #endif
@@ -878,6 +879,7 @@ set_function_addresses(Elfinfo *el, symtab_t *st, func_t **p_flist)
 						       fil, (fil_t *)NULL,
 						       bind == STB_LOCAL, FALSE,
 						       0, value);
+				(*p_flist)->fu_type = ci_code_to_type(TY_INT_ASSUMED);
 
 				if (bind == STB_WEAK)
 					(*p_flist)->fu_flags |= FU_WEAK;
