@@ -1,6 +1,6 @@
 # $Id$
 
-Updated : 25/Sep/2002
+Updated : 29/Aug/2003
 
 KNOWN BUGS IN UPS
 =================
@@ -18,6 +18,8 @@ If you are trying to debug UPS build it with :
 BUILD
 -----
  o  'gcc' produces warnings about certain routines being unsafe.
+
+ o  The libdwarf/dwarfdump source causes some compiler warnings.
 
  o  Sun SparCompiler produces warnings about "argument #n is incompatible
     with prototype ...".
@@ -47,6 +49,10 @@ GENERAL
  o  If you are using GCC 3.1 (or later) and no source is displayed when
     you start UPS even when you have built the program with the '-g' flag
     then try building the program with '-gstabs' instead.
+    This is fixed in UPS 3.38 which supports DWARF debugging info.
+
+ o  Bitfields in structures do not display properly on some systems if not
+    32 bits long.  Fixed in UPS 3.38-beta2
 
  o  On RedHat Linux 7.1 with gcc-2.96 UPS crashes with the message
 
@@ -59,9 +65,11 @@ GENERAL
 
     These probably affect any Linux system with gcc-2.96 or later.
     Patch is available on the UPS web site.
+    Fixed in UPS 3.35beta3.
 
  o  <Bad format hint> when displaying a variable in a C++ program
     has a patch on the web site.
+    Fixed in UPS 3.35beta3.
     
  o  From Panagiotis Tsirigotis <pgttso@best.com> :
 

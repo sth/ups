@@ -82,15 +82,31 @@ dwarf-05 aka 3.38beta1
 Code in header files should be handled.
 Some support for C++.
 
-known bugs
-----------
+3.38beta2
+---------------
+For C++ if DWARF only provides a type declaration we attempt to find the
+definition using a list of type names skimmed on startup.
+Various fixes and enhancements from Tom Hughes.
+
+after 3.38beta2
+---------------
+
+
+KNOWN BUGS
+==========
 - Incorrectly steps onto the closing "}" in a function with a "return()".
-- C++ support is *very* unstable.
+- C++ support is not to the same standard as for STABS.
+- If libstdc++ is statically linked in to your program then 'type lookup
+  by name' may process its type information at some point.  This takes some
+  time and generates warning messages.
+
+
+INFO FOR DEVELOPERS
+===================
 
 data stored but not used by UPS
 -------------------------------
 - Declaration file and line for types and variables saved to 'lexinfo_t'
   structures which were previously only set by the 'C' interpreter.
 - Any type, not just a basic type, can have a name (type_t.ty_name).
-  Probably only of use in languages other than C/C++.
 ______________________________________________________________________________

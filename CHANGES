@@ -12,8 +12,11 @@ can be found, supported architectures, a history of changes
 between versions, and other information.
 
 
-Changes after 3.38beta1
+Changes after 3.38beta2
 -----------------------
+
+Changes between 3.38beta1 and 3.38beta2
+---------------------------------------
 
 Fixes from Flemming Madsen <fma@ccieurope.com>:
 
@@ -26,6 +29,12 @@ o  Automatic variables in files with '.c' extension put through a C++
 Enhancements from Tom Hughes <thh@cyberscience.com>:
 
 o  Support for wheel-mice and mice with more than 3 buttons.
+
+o  Improve support for bitfields, including 64 bits wide.
+
+o  Various fixes for DWARF support.
+
+o  Import latest 'libdwarf'.
 
 Changes from Ian Edwards <ian@concerto.demon.co.uk>:
 
