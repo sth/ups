@@ -757,7 +757,7 @@ bool follow;
 		level*4, level*4, "....",
 		dt, (long)dt->dt_offset, st_dt_is_str(dt->dt_is));
 	if (dt->dt_base_offset != (off_t)0)
-	    fprintf(stderr, "  *** INCOMPLETE *** <%ld>\n", dt->dt_base_offset);
+	    fprintf(stderr, "  *** INCOMPLETE *** <%ld>\n", (long)dt->dt_base_offset);
 	else
 	    fprintf(stderr, "\n");
 #if 0
