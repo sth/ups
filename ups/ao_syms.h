@@ -202,10 +202,10 @@ typedef struct Dataspace {
 } Addr_range;
 #endif
 
-#if WANT_DWARF
 /*
  * Used to keep track of type etc. information gathered from each
  * compilation unit (CU).
+ * Currently only used for DWARF.
  */
 typedef enum {
     DT_IS_TYPE,
@@ -226,6 +226,7 @@ typedef struct dtype_s {
 /*
  * Type information saved on initial skim through compilation units.
  * Currently only C++ classes are recorded.
+ * Currently only used for DWARF.
  */
 typedef struct typename_s {
 	char *tn_name;		/* Name. */
@@ -234,6 +235,7 @@ typedef struct typename_s {
 	struct typename_s *tn_next;	/* Next with the same name. */
 } typename_t;
 
+#if WANT_DWARF
 /*
  * Extended address description, abstracted from DWARF location description.
  *
