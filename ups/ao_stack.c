@@ -1254,6 +1254,14 @@ int reg;
 		return 0;
 	}
 #endif
+#ifdef ARCH_386_64
+	/* Registers 17 to 32 are the SSE XMM registers which are
+	 * used for fp values on x86-64 architectures.
+	 */
+	if (reg >= 17 && reg <= 32) {
+		return 0;
+	}
+#endif
 #ifdef ARCH_386
 	reg = x86_gcc_register(reg);
 #endif

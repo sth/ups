@@ -691,7 +691,7 @@ int regno;
 int num_bytes;
 fpval_t *p_val;
 {
-#ifdef ARCH_SUN3
+#if defined(ARCH_SUN3)
 	sunregs_t *sr;
 
 	/*  The f68881 has eight registers, which are numbered 18..25 in
@@ -709,7 +709,32 @@ fpval_t *p_val;
 	}
 
 	convert_68881_reg((unsigned *)sr->sr_fpu.f_fpstatus.fps_regs[regno].fp,
-						(num_bytes == sizeof(double), p_val);
+			  (num_bytes == sizeof(double)), p_val);
+	return 0;
+#elif defined(ARCH_386_64)
+	ptrace_regs_t *pr = &ip->ip_ptrace_info->ptrace_regs;
+
+	regno -= 17;
+	if (regno < 0 || regno > 15)
+		panic("bad regno in rf");
+
+	if (pr->need_fpregs) {
+		e_ptrace(PTRACE_GETFPREGS, ip->ip_pid, NULL, (long)&pr->fpregs);
+		pr->need_fpregs = FALSE;
+	}
+
+	switch (num_bytes) {
+	    case sizeof(float):
+		p_val->f = ((float *)pr->fpregs.xmm_space)[regno * 4];
+		break;
+	    case sizeof(double):
+		p_val->d = ((double *)pr->fpregs.xmm_space)[regno * 2];
+		break;
+ 	    default:
+ 		panic("cannot get this size floating point from register");
+ 		break;
+	}
+
 	return 0;
 #else
  	switch (num_bytes) {
