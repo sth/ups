@@ -1,0 +1,113 @@
+# $Id$
+
+			NOTES FOR MAINTAINERS
+			=====================
+
+CONFIGURE AND BUILD PROCESS
+===========================
+
+UPS is now configured through GNU Autoconf.  This reads "configure.in" and
+writes the "configure"  script.  When "configure" is run by someone building
+UPS it creates "Makefile", "ifdefs.h", etc. from the templates "Makefile.in",
+"ifdefs.h.in", etc.
+
+You need to install GNU Autoconf only if you need to change "configure.in"
+and generate a new "configure" script".  This would be necessary if you
+wanted to add a new check for a header file or library routine.
+
+
+Debugging and testing
+---------------------
+By default the "configure" script sets CFLAGS to "-g -O2" for 'gcc'.  You
+can stop this with the '--enable-debug'.  This may be required if you want
+to debug UPS using UPS on Intel x86 where there are problems with reading
+registers, and for the test programs where 'gcc' optimises away variables.
+This should do it :
+
+    ./configure  --enable-debug ; make
+
+
+Testing with different compilers
+--------------------------------
+You must run the "configure" script again to change to a different compiler.
+This should do it :
+
+    rm config.cache ; make clean ; CC=gcc ./configure ; make
+
+
+Configuration files
+--------------------
+configure.in		- input to Autoconf
+configure		- the generated script
+config.guess		- used by 'configure'
+config.sub		- used by 'configure'
+install-sh		- alternative to standard 'install' program which will
+			  be used if the standard program is not suitable
+
+Makefile.in		- template for Makefile
+Makefile.conf.in	- 
+ups/Makefile.in		- template for ups/Makefile
+med3/Makefile.in	- template for med3/Makefile
+
+ifdefs.h.in		- template for ifdefs.h, the Makefile will copy it to
+			  its expected location when invoked.
+
+
+Other files
+-----------
+config.cache		- holds results of tests done by 'configure'.
+config.status		- recreates Makefile, ifdefs.h etc. using the last
+			  results of 'configure' (i.e. from config.cache).
+
+
+Creating a TAR file for release
+-------------------------------
+The standard way is to do 'make testrelese' with $RELTAG set, e.g.
+
+    RELTAG=3.35  make testrelease
+
+This will create releases/ups-3.35.tar.gz and releases/ups-3.35.md5.
+
+
+Creating an RPM
+---------------
+Copy the TAR file to the SOURCES directory, probably /usr/src/redhat/SOURCES.
+Create the RPM specification file with
+
+    RELTAG=3.35 make rpmspec
+
+and copy it to the SPECS
+directory.  Change to the SPECS directory, su to 'root' and build the RPM
+with 'rpm -ba <spec_file>'.  This will create a binary RPM and source SRPM.
+
+Currently the binary RPM only includes 'ups', the manual page and the BUGS,
+CHANGES and README files.  The stand-alone interpreter will get its own RPM
+at some point.
+
+
+IMPORTED SOURCE CODE
+====================
+
+libelf
+------
+The home page for this is : http://freshmeat.net/projects/libelf/
+The version used was : libelf-0.8.2.tar.gz
+Where files were changed the original version has ".elflib" added.
+
+libdwarf
+--------
+The home page for this is http://reality.sgiweb.org/davea/
+The version used was : libdwarf2002April28.tar.gz
+Where files were changed the original version has ".dwarflib" added.
+
+libgnu
+------
+This contains the function name demangler for GCC from the GNU 'libiberty'
+library.  The complete source code for the GNU 'libiberty' library is
+available from http://gcc.gnu.org/ and various GNU mirrors.
+
+_______________________________________________________________________________
+
+Ian Edwards <ian@panorama.com>
+Written : 15th February 1999
+Updated : 28th September 2002

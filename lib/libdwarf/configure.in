@@ -1,0 +1,82 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(libdwarf.h)
+AC_CONFIG_HEADER(config.h)
+
+
+dnl (IDE......................................................................)
+dnl (IDE) Must be an neater way to do this
+AC_MSG_CHECKING(how to include libelf headers)
+xtraCPPFLAGS=
+set -vx
+if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
+    xtraCPPFLAGS="-Idevelhdrs"
+else
+    if test "x$prefix" != "xNONE"; then
+       eval xtraCPPFLAGS="-I${includedir}"
+    else
+       prefix=$ac_default_prefix
+       eval xtraCPPFLAGS="-I${includedir}"
+       prefix=NONE
+    fi
+fi
+CPPFLAGS="${CPPFLAGS} ${xtraCPPFLAGS}"
+set +vx
+AC_MSG_RESULT($xtraCPPFLAGS)
+unset xtraCPPFLAGS
+
+AC_MSG_CHECKING(where libelf is)
+xtraLDFLAGS=
+ELFLIB=-lelf
+msg=
+set -vx
+if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
+    msg="../libelf"
+    ELFLIB='$(topdir)/lib/elflib/lib/libelf.a'
+else
+    if test "x$prefix" != "xNONE"; then
+       eval xtraLDFLAGS="-L${libdir}"
+       msg=$xtraLDFLAGS
+    else
+       prefix=$ac_default_prefix
+       eval xtraLDFLAGS="-L${libdir}"
+       prefix=NONE
+       msg=$xtraLDFLAGS
+    fi
+    ELFLIB="$xtraLDFLAGS -lelf"
+    LDFLAGS="${LDFLAGS} ${xtraLDFLAGS}"
+fi
+set +xv
+AC_MSG_RESULT($msg)
+AC_SUBST(ELFLIB)
+dnl (IDE......................................................................)
+
+
+dnl the endian one is temporary till endianness issues fixed
+AC_C_BIGENDIAN
+AC_PROG_CC
+AC_GCC_TRADITIONAL
+AC_PROG_INSTALL
+AC_CHECK_TOOL(RANLIB, ranlib, :)
+AC_CHECK_TOOL(AR, ar)
+
+dnl AC_ARFLAGS
+
+AC_HEADER_STDC
+AC_CHECK_HEADERS(alloca.h bstring.h elf.h elfaccess.h libelf.h libelf/libelf.h sgidefs.h sys/types.h sys/ia64/elf.h)
+
+AC_CHECK_LIB(elf,elf64_getehdr,AC_DEFINE(HAVE_ELF64_GETEHDR))
+AC_CHECK_LIB(elf,elf64_getshdr,AC_DEFINE(HAVE_ELF64_GETSHDR))
+AC_TRY_COMPILE( ,  __uint32_t p; p = 3; ,AC_DEFINE(HAVE___UINT32_T))
+AC_TRY_COMPILE( ,  __uint64_t p; p = 3; ,AC_DEFINE(HAVE___UINT64_T))
+AC_TRY_COMPILE([#include <sys/types.h>],[  __uint32_t p; p = 3;] ,AC_DEFINE(HAVE___UINT32_T_IN_SYS_TYPES_H))
+dnl checking for ia 64 types, which might be enums, using HAVE_R_IA_64_DIR32LSB
+dnl to stand in for a small set.
+AC_TRY_COMPILE([#include <elf.h>],[  int p; p = R_IA_64_DIR32LSB;] ,AC_DEFINE(HAVE_R_IA_64_DIR32LSB))
+
+dnl Lets just assume, if ia64, compatibility with cygnus before
+dnl HAVE_DWARF2_99_EXTENSION defined.
+dnl Only applies to producer code, as consumer adapts itself.
+dnl This is not the right test, really.
+AC_TRY_COMPILE([#include <elf.h>],[  int p; p = R_IA_64_DIR32LSB;] ,AC_DEFINE(HAVE_OLD_DWARF2_32BIT_OFFSET))
+
+AC_OUTPUT(Makefile)

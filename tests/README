@@ -1,0 +1,22 @@
+$Id$
+
+README for ups tests
+--------------------
+
+By default only C test programs are built when you type 'make tests' in the
+top-level directory.  To build the C++ or Fortran programs use "make cxx" or
+"make fortran" in the 'tests' directory.
+
+Information about the tests is contained in the source code.  Just run 'ups'
+on the test program and the information should be displayed as a comment in
+the source 'ups' has displayed, or at the top of the file.
+
+Tests contributed by :
+    Russell Browne <russ@amc.com> : 'register long long' and C++ template
+    Michele Ferlauto <ferlauto@athena.polito.it> : Fortran "pippo2"
+
+g77-u77-test.f is a test program provided with GNU 'g77'
+
+Ian Edwards
+11 Nov 1999
+

@@ -1,0 +1,132 @@
+# $Id$
+# @(#)Makefile	1.17 04 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Makefile for the GNU derived demangling library
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+YACC		= @YACC@
+RANLIB		= @RANLIB@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+
+# -----------------------------------------------------------------------------
+
+LIB_HEADERS	= -I${srcdir}
+LIB_CFLAGS	= ${CFLAGS} ${LIB_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${LIB_CFLAGS} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${LIB_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${LIBS}
+
+MAKE_LIBRARY	= ar cq
+
+# -----------------------------------------------------------------------------
+
+LIBNAME = dmangl
+HDRNAME = dmangl
+LIBDIRNAME = dmangl
+LINTLIBS = 
+
+LIBOBJS = cp-demangle.o cplus-dem.o dyn-string.o safe-ctype.o ups-if.o
+LIBSRCS = cp-demangle.c cplus-dem.c dyn-string.c safe-ctype.c ups-if.c
+
+HDRS = ansidecl.h config.h demangle.h dyn-string.h libiberty.h safe-ctype.h
+
+DOCS = 
+
+SCCSCHECK_DIRS =
+
+# Begin common part of Makefile
+target: lib${LIBNAME}.a
+
+OBJS = ${LIBOBJS}
+SRCS = ${LIBSRCS}
+FILES = ${SRCS} ${HDRS} ${DOCS} Makefile.in
+
+test${LIBNAME}: lib${LIBNAME}.a test${LIBNAME}.o ${TESTLIBDEPS}
+	${CC} ${CFLAGS} ${LINKFLAGS} -o test${LIBNAME} test${LIBNAME}.o lib${LIBNAME}.a ${TESTLIBS}
+
+lib${LIBNAME}.a: ${OBJS}
+	rm -f $@
+	${MAKE_LIBRARY} $@ ${OBJS}
+	${IN_OBJDIR}${RANLIB} lib${LIBNAME}.a
+
+all: lib${LIBNAME}.a
+
+tags: ${SRCS}
+	ctags -tw ${SRCS} ${HDRS}
+
+list:
+	@echo README COPYING.LIB ${FILES} | tr ' ' '\012'
+
+count:
+	wc ${HDRS} ${SRCS}
+
+SCCS_CHECK = sccsinfo ${SCCSCHECK_DIRS} ${FILES} && newer sccsdata.c ${FILES}
+
+sccs_check:
+	@${SCCS_CHECK}
+
+sccssnapshot:
+	@mksccs -changefile CHANGES -wh -c t_snapshot.c -h t_snapshot.h ${BINNAME} ${FILES}
+
+sccsfile:
+	@sccsinfo ${SCCSCHECK_DIRS} ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@sccs edit sccsdata.c
+	@mksccs -changefile CHANGES -wh ${BINNAME} ${FILES}
+	@sccs delget sccsdata.c
+
+install:
+	@echo Nothing to install. 1>&2
+
+clean:
+	rm -f ${OBJS} lib${LIBNAME}.a llib-l${LIBNAME}.ln core
+
+veryclean: clean
+	rm -f tags
+	sccs clean
+
+lintf:
+	lint ${LINTFLAGS} ${ARCH_CFLAGS} ${SRCS} ${LINTLIBS} | .lintf > t_lintf
+
+llib: llib-l${LIBNAME}.ln
+
+llib-l${LIBNAME}.ln: ${LIBSRCS}
+	lint -C${LIBNAME} ${ARCH_CFLAGS} ${LIBSRCS}
+	mv llib-l${LIBNAME}.ln $@
+
+deps: ${SRCS} sccsdata.c
+	@deps ${LIB_HEADERS} ${SRCS} sccsdata.c
+
+# End common part of Makefile
+
+# .o header dependencies
+cp-demangle.o: cp-demangle.c config.h safe-ctype.h libiberty.h demangle.h \
+		dyn-string.h ansidecl.h
+	${CCLINE}cp-demangle.c
+cplus-dem.o: cplus-dem.c config.h safe-ctype.h libiberty.h demangle.h
+	${CCLINE}cplus-dem.c
+dyn-string.o: dyn-string.c libiberty.h dyn-string.h
+	${CCLINE}dyn-string.c
+safe-ctype.o: safe-ctype.c ansidecl.h safe-ctype.h
+	${CCLINE}safe-ctype.c
+ups-if.o: demangle.h
+	${CCLINE}ups-if.c

@@ -1,0 +1,434 @@
+# $Id$
+
+This directory contains the source code of the Ups debugger.
+This file describes what ups is, what it runs on and how to build
+and install it.  The file CHANGES in this directory summarises
+the changes between this release and previous public releases.
+
+
+WHAT IS UPS ?
+=============
+
+Ups is a source level C and C++ debugger that runs under X11
+or SunView.  Fortran is also supported on some systems.
+It runs in a window with two major regions: one showing the
+current state of the target program data and the other showing
+the currently executing source code.  A key feature of ups is
+that the variables display is persistent: when you add a variable
+to the display it stays there as you step through the code.  The
+current stack trace (which function called which) is always visible.
+
+Ups includes a C interpreter which allows you to add fragments
+of code simply by editing them into the source window (the source
+file itself is not modified).  This lets you add debugging printf
+calls without recompiling, relinking (or even restarting) the
+target program.  You can also add conditional breakpoints in a
+natural way - you just add a statement like "if (i == 73) #stop"
+at the appropriate place in the source window.
+
+Some things you can do with ups:
+
+   + Add variables to the display by simply clicking on them
+     in the source window.
+
+   + Expand (recursively) structures and unions to show their
+     members.
+	
+   + Assign to variables by editing the displayed value.
+
+   + Add breakpoints by pointing with the mouse at the line
+     where you want execution to stop.
+	
+   + Add interpreted code at any breakpoint, including code that
+     calls compiled functions and assigns to variables.
+
+It's hard to describe an interactive application in a few paragraphs of
+text - the best way to see what ups is like grab a copy and try it.
+There's a walkthrough debugging session in the manual page: if you work
+through this and aren't hooked at the end of it then I'll give you
+your money back :-)
+
+
+HOW UPS DIFFERS FROM XXGDB, XDBX AND DBXTOOL
+============================================
+
+The key implementation difference between ups and the various X front
+ends for dbx and gdb is that ups is not a front end for a command based
+debugger.  Xdbx and xgdb give you a convenient way to invoke the
+underlying debugger's commands, but it is fairly clear in both that
+you are talking to a text based debugger.  Ups in the other hand is
+a complete native debugger implementation; there is no underlying
+command language.
+
+An example: to print the value of a variable in xgdb you select (by
+dragging) a variable name and then click on `print' in the menu.  Xgdb
+passes the print command with the selection to gdb and displays the
+result.  By contrast in ups you click the mouse over a variable name
+and it is added to the display.  Once the variable is added to the
+display it stays there, so you can watch it change as you step through
+the code.  If the variable happens to be a structure or a pointer to a
+structure you can `expand' it to show its members.  Again, the
+structure members thus added remain in the display until you get rid of
+them so you can watch their values change as you execute the code.
+
+Of course there is a downside to not talking to an existing debugger: you
+lose portability.  Ups is machine dependent - a port to a new architecture
+is a significant effort.  I think the benefits outweigh the cost.
+
+
+SUPPORTED CONFIGURATIONS
+========================
+
+The current list of supported configurations is:
+
+	Architecture		OS version		
+	------------		----------		
+	SPARC			Solaris 2.X, Solaris 7, Solaris 8
+	SPARC			SunOS 4.X
+	Intel x86		FreeBSD 3.x, 4.x (ELF)
+	Intel x86		Linux 2.2.x (ELF)
+
+These older configuration should still build and run:
+
+	Architecture		OS version		
+	------------		----------		
+	Intel x86		FreeBSD 2.2.x (a.out)
+	Intel x86		FreeBSD 3.x (a.out)
+	Intel x86		Linux 2.0.x (ELF)
+
+Ups also contains code for the following configurations, but they are
+unlikely to build or run without some work:
+
+	Architecture		OS version		
+	------------		----------		
+	Sun 3			SunOS 4.X		
+	Sun 386i		SunOS 4.0.X		
+	DECstation		Ultrix 3.X and 4.2	
+	Intel 386		BSDI BSD/386 0.9 Gamma	
+	Sony NEWS (MIPS)	?
+	MIPS Magnum 3000	RISC/OS
+
+Ups has also been ported to the Sony NEWS (MIPS) workstation (by Nobuyuki
+Hikichi) and to the MIPS Magnum 3000 (by Hal R. Brand and Conor Doherty).
+I have folded these changes into the code but I don't have access to the
+machines to test them directly.
+
+Frank Gifford <giff@eng.us.uu.net> has been working on porting ups to 
+BSD/OS.  The last ups port was around BSD/OS 1, this is for 4.0.1.  
+Currently it works for Intels, and he is in the process of getting it to 
+work for Sparcs.  To get the README.uunet file for information and mailing
+list details specific to ups on BSD/OS, see ftp://ftp.eng.us.uu.net/pub/ups
+
+Back in ups version 3.14 one could optionally build ups using a modified
+version of gdb (version 4.13 - see README.gdb for details).  This is now
+broken - any volunteers to fix it ?
+
+
+SUN SPARCompiler SC 4.0 and 5.0 SUPPORT
+---------------------------------------
+(contributed by Russ Browne)
+
+For best results on Solaris, compile UPS with the SC4 C compiler, or the SC5
+C compiler if you have it.  If you later upgrade to the SC5 C and C++
+compilers, re-run the configure script and rebuild UPS with the new compiler.
+This allows UPS to use the demangling libraries supplied with the compiler.
+Choice of compiler has no effect on support for gnu or centerline compiled
+code, or on C code compiled with SC4/5.
+
+
+FreeBSD 3.x a.out SUPPORT
+-------------------------
+
+The simplest way is to build an UPS which can debug 'a.out' executables
+using
+    ./configure --enable-aout
+
+To build an 'a.out' format UPS executable is more involved :
+1) Put copies of crt0.o and libgcc.a from 2.2.8 in /usr/lib/aout
+2) Run
+    OBJFORMAT=aout CFLAGS='-L/usr/lib/compat/aout -L/usr/X11R6/lib/aout' \
+	./configure
+3) Run
+    OBJFORMAT=aout make
+4) Use 'ldd' to check UPS will pick use libraries from "aout" directories.
+
+Both methods worked with FreeBSD 3.2, but the first is much simpler.
+
+
+FORTRAN
+=======
+
+Ups has Fortran support on the Sun 3, SPARC and Intel x86, but this is not
+as stable or complete as the C support.  GNU Fortran (g77) is supported, with
+some restrictions.  Similarly, 'f77' calling 'f2c' (e.g. on FreeBSD 2.x).
+See the file BUGS for known problems and work-rounds.
+
+
+INSTALLATION
+============
+
+Ups should be reasonably simple to install.  It has no library files,
+just a binary and manual page.  You can put the binary and manual
+pages where you like.  There is no need to be root to do any part of
+the installation (although you must obviously have permission to
+create files in the directories where you put the binary and manual page).
+
+When building with gcc on Solaris, make sure the gcc version is 2.8.0 or
+higher.
+
+If you want to build ups for more than one architecture, compiler or
+operating system from a single source tree unpack the distribution
+as described in step 1 below then read the file README.multiarch for
+instructions.
+
+To build the native version, follow these steps:
+
+1)  Unpack the distribution. You should have a compressed tar file called
+    ups-3.XX.tar.gz (where 3.XX is the version number of the release).
+    Change directory to a disk with a three or more megabytes of free
+    space and say:
+ 
+        gzip -dc ups-3.XX.tar.gz  |  tar xfp -
+ 
+    If you have GNU tar say:
+
+	tar zxfp ups-3.XX.tar.gz
+
+    If the 'p' flag produces errors then don't use it.
+    This will create a directory tree called ups-3.XX.  Change directory
+    into it.
+ 
+2)  Run the 'configure' script:
+
+	./configure
+
+    Please see INSTALL for details on the 'configure' script and the
+    options it can take.
+
+    NOTE - if you have several compilers on your system you can ensure
+    the appropriate one is used by setting the CC variable in the shell,
+    e.g. to use the SunPro ANSI compiler on SunOS 4 type:
+
+	CC=acc ./configure
+
+    The ups specific options to configure, and their defaults. are listed
+    below.  You would not normally need to use them.  Disabling multi-screen
+    support may speed up redrawing the ups window on some systems.
+    The 'gets()' routine is a security risk so the interpreter omits it as a
+    hint you should rewrite your code to use 'fgets()'.
+    The '--enable-aout' and '--enable-elf' options are only of use on FreeBSD
+    systems that support both formats.
+
+      --enable-multiscreen    allows the '-split' option to put each window
+				 on a different X screen [yes] 
+      --enable-clibrary       C library routines in the C interpreter [yes] 
+      --enable-gets           gets() routine in the C interpreter [no]
+      --enable-math           math library routines in the C interpreter [no] 
+      --enable-longlong       allow 'long long' in the C interpreter [no] 
+      --enable-longdouble     allow 'long double' in the C interpreter [no] 
+      --enable-aout           debug 'aout' executables [guessed] 
+      --enable-elf            debug ELF executables [guessed] 
+      --enable-debug          [no] 
+
+3)  Check the files created by 'configure' in this root directory :
+	Makefile  ifdefs.h
+
+    In the Makefile check, and edit if required :-
+    
+    - "X11_INC = ..." line includes the directory for the X header files
+    - "X11_LIB = ..." line is correct for your X libraries
+
+    - On Solaris 2, if you are using SPARCcompiler C 2.0.1 or less,
+      the line "CFLAGS = ..." should include "-g -DSVR4"
+
+    - If you are using a MIPS RISC/os machine, uncomment the SUBMAKEFLAGS
+      line for RISC/os.
+
+    You might also want to edit the Makefile if you want to change
+    the default locations of the installed binary and manual page,
+    or special flags to to compiler.  However this is best done by
+    giving options to the 'configure' script.  These are described in
+    the INSTALL file.
+
+4)  Just type:
+
+	make  ups
+
+    If all goes well this should build you a binary called ups/ups.
+
+    If you want you can experiment with ups at this point.  The manual
+    page (in ups/doc/ups.man) has a "GETTING STARTED" section which
+    should get you going.
+
+5)  To install ups and the manual page type:
+
+	make install
+
+    By default this will install the program as /usr/local/bin/ups and
+    the manual page as /usr/local/man/man1/ups.1.  On Solaris the files
+    will usually be /opt/bin/ups and /opt/man/man1/ups.1.
+
+    If you want to set the owner and/or mode of the files then set shell
+    variables BINARY_OWNER, HEADER_OWNER or MANPAGE_OWNER to the required
+    parameters for the (BSD) install program, e.g.:
+
+	BINARY_OWNER='-o root -g wheel -m 444'  make install
+ 
+    If you don't wish to run "make install" (or it fails) you can install
+    ups simply by copying the binary and manual page into place.
+
+6)  Optionally copy the Ups resource file to the 'app-defaults' directory.
+    In X11R6 this is usually /usr/X11R6/lib/X11/app-defaults; for Solaris
+    CDE systems, it is usually /usr/openwin/lib/app-defaults. In earlier
+    X releases it is /usr/lib/X11/app-defaults.  You can also
+    set the shell variable XAPPLRESDIR to point to your own 'app-defaults'
+    directory.  Alternatively just use the values in your own resource file.
+
+7)  If you want to build the stand-alone C interpreter type:
+
+	make  interpreter
+
+    If you want to build the med3 menu editor (edits ups menus) type:
+
+	make  med3
+
+    There are some simple programs to test ups with, type:
+
+	make  tests
+
+    and look at tests/README
+
+8)  If you want to rebuild with a different compiler, such as clcc, go to
+    main directory and type:
+
+	rm config.cache ; make clean ; CC="clcc -Xa" ./configure ; make
+
+    An alternative method is to build into a different location, see
+    README.multiarch for details.
+
+
+DOCUMENTATION
+=============
+
+The following files and directories contain documentation on ups:
+
+	ups/doc/ups.man     The user manual page
+
+	ups/doc/porting.ms  A guide to porting ups to a new architecture.
+
+	lib/*/README	    Brief overviews of the various libraries
+			    used to build ups.  Some have pointers to
+			    more documentation.
+				
+	med3/doc/           Documentation on the med3 menu editor.
+
+	interpreter/docs    Documentation on the C interpreter.
+
+
+COPYING THE CODE
+================
+
+lib/libgnu
+----------
+This directory contains code released under GNU Lesser General Public License.
+See the README and COPYING.LIB in that directory.
+
+lib/libelf
+----------
+This directory contains code released under GNU Library General Public License.
+See the README and COPYING.LIB in that directory.
+Original sources available from http://freshmeat.net/projects/libelf/
+
+lib/libdwarf and lib/dwarfdump
+------------------------------
+This code is copyright SGI Inc. and is released under GNU Lesser General
+Public License.  See the README and COPYING files in each directory.
+Original sources available from http://reality.sgiweb.org/davea/
+
+the rest...
+-----------
+  UPS is free software; you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation; either version 2 of the License, or (at your option) any later
+  version.
+
+  UPS is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+  details.
+
+The GNU General Public License is in the COPYING file in the top directory.
+
+
+USEFUL BITS
+===========
+
+Things you might find useful (despite the lack of documentation):
+
+ups/ci_*.[cy]	A reasonably complete ANSI C interpreter.  There are many
+		details that it gets wrong (e.g. the exact type of integer
+		constants and the subtler aspects of typedefs).  There is
+		a test driver in ups/cx.c.  The grammar is in ups/ci_parse.y.
+		This was derived from the grammar at the back of K&R2.
+
+ups/as_*.c	Disassemblers for the 68020, SPARC, VAX and MIPS chips.
+
+lib/libmtrprog/genmergesort.h
+		A macro to implement a merge sort function for any linked list.
+
+lib/libukcprog
+		Various low level routines that aren't in the standard
+		C library.
+
+lib/libarg	General purpose command line parsing, including filename
+		globbing and I/O redirection.
+
+lib/libedit	Emacs style editing in an X window
+
+One day I might get round to documenting all this stuff ...
+
+
+RE Y2K ISSUES
+=============
+
+Ups makes very minor use of file dates, using the fstat(), localtime(), and 
+asctime(() calls. These calls are Y2K compliant as long as the SunOS/Solaris 
+Y2K patches are installed.
+
+Russell Browne reported:
+  While doing Y2K testing on one of our commercial products
+  I put UPS through the same tests and uncovered no problems.
+ 
+This does not constitute a certification that UPS is Y2K compliant in
+any legal sense.  As is customary with free software, UPS is distributed
+without warranty of any kind.
+
+
+FEEDBACK
+========
+
+I hope you find ups a useful tool.  If you have problems building
+or using it, find bugs or have suggestions for improvements please
+send mail to the mailing list.  I also appreciate paeans of praise
+describing how wonderful ups is :-)
+
+There is a mailing list for discussion of ups and for announcements
+of bug fixes and new features.  The list is ups-users@ukc.ac.uk -
+send requests to be added to the list to ups-users-request@ukc.ac.uk.
+
+A personal note: I have benefited enormously from free software
+that others have contributed (things like emacs, perl, gcc, X and BSD).
+Ups is my attempt to give something back.  Long live free software.
+
+Mark Russell
+
+
+17 June 1998
+------------
+Mark Russell has decided to let the "RGA" contrib release become the 
+"official" release, as he is unlikely to be able to work on ups in 
+future.  Consequently, I've dropped the `RGA' suffix in this version.
+
+Rod Armstrong
+rod@san-jose.tt.slb.com
+

@@ -1,0 +1,4223 @@
+.\" $Id$
+.\" @(#)ups.man	3.37 May 2002
+.de Id
+.ds Rv \\$3
+.ds Dt \\$4
+..
+.Id $Id$
+.\"
+.\" A sequence to switch into the font for example text
+.if t .ds Cb \f(CB
+.if n .ds Cb \fB
+.if t .ds Cr \f(CR
+.if n .ds Cr \fB
+.\" 
+.\"
+.\" ####################################
+.\" .Sc - print the argument in small caps
+.de Sc
+\s-2\\$1\s0\\$2
+..
+.\" ####################################
+.\"
+.\" ####################################
+.\" .Cm - print a menu command caption
+.de Cm
+\\$3\&\fB\\$1\fP\\$2
+..
+.\" ####################################
+.\" .Ob - print the name of a display area object
+.de Ob
+\\$3\&\fB\\$1\fP\\$2
+..
+.\" ####################################
+.\"
+.\" ####################################
+.\" .fX - print the argument in a fixed font
+.de fX
+\\$3\&\*(Cr\\$1\fP\\$2
+..
+.\" ####################################
+.\"
+.\" .En - .IP with Courier heading
+.de En
+.IP "\*(Cr\\$1\fP \fI\\$2\fP" 20
+..
+.\" ####################################
+.\" .Vs - start example
+.de Vs
+.in +4m
+\*(Cr
+.nf
+..
+.\" ####################################
+.\"
+.\"
+.\"
+.\"
+.\" ####################################
+.\" .Ve - end example
+.de Ve
+.fi
+.ft P
+.in -4m
+.sp 0.3v
+..
+.\" ####################################
+.\"
+.\"
+.\" ####################################
+.\" String register .Bo - outdented bullet
+.ds Bo \h'-1.3n'\(bu
+.\"
+.\"
+.TH UPS 1 \*(Dt Local
+.tr *\(** \" make asterisks level with the base line
+.SH NAME
+ups \- X11 and SunView based source level C debugger
+.SH SYNOPSIS
+\fBups\fP \fItarget\fP [\fIcorefile\fP|\fIpid\fP] [[:]\fIsrcdir\fP[:\fIsrcdir\fP]]
+[\fB-a\fP \fItarget-args\fP]
+.SH DESCRIPTION
+.I Ups
+is a X based source level debugger for the C, C++ and Fortran
+programming languages.
+It supports both run time debugging with breakpoints and post-mortem
+debugging from a core file.
+On Suns you can attach
+.I ups
+to a running process.
+.I Ups
+runs in its own window,
+thus not interfering with the target program's I/O.
+The
+.I ups
+window has two major areas \- one showing a structured
+document representing the target state, the other showing the source
+that is being executed.
+.LP
+.I Ups
+makes heavy use of direct manipulation and feedback.
+When you add a breakpoint it is shown as a pseudo C statement 
+.fX #stop ) (
+in the source display.
+The current point of execution is highlighted in the source display
+and you can watch it move as you step through loops and function calls.
+You can edit in fragments of interpreted C code (including assignments
+to variables and calls to target functions).
+There are powerful facilities for exploring linked data structures \-
+you can recursively expand and collapse structures to follow links.
+.LP
+.I Ups
+is primarily a C debugger,
+but it also has support for debugging Fortran 77 and Fortran 90 code.
+See the section
+.Sc "DEBUGGING FORTRAN CODE"
+(near the end of this manual page) for information on Fortran specific
+features.
+.LP
+.I Ups
+has reasonable support of C++. See the section
+.Sc "SUPPORT FOR C++"
+after the Fortran section for information on on this.
+.LP
+The URL for the 
+.I ups
+web site is:
+.LP
+.fX "      http://www.concerto.demon.co.uk/UPS/"
+.LP
+It is maintained by Ian Edwards (ian@concerto.demon.co.uk).
+It includes a FAQ, html man pages, site listings where ups
+can be found, supported architectures, a history of changes 
+between versions and other information.
+.SH "GETTING STARTED"
+This section gives step by step instructions on how to use
+.I ups
+on a small example C program.
+The idea is to get a feel for how to use
+.I ups
+without getting bogged down in details.
+After following the instructions here you should be able to explore
+a little on your own and then be ready to have a look at the reference 
+material that follows.
+.LP
+Here is the sample source code:
+.Vs
+.ps -2
+.vs -2
+struct argst { char *a_name; struct argst *a_next; };
+struct argst *listhead = 0;
+
+void stash(name)
+char *name;
+{
+	struct argst *a;
+	char *malloc();
+
+	a = (struct argst *)malloc(sizeof(struct argst));
+	a->a_name = name;
+	a->a_next = listhead;
+	listhead = a;
+}
+
+int main()
+{
+	stash("foo");
+	stash("bar");
+}
+.ps +2
+.vs +2
+.Ve
+We skip error checking code here in the interests of brevity.
+Put a copy of the code above into a .c file (e.g. sample.c) 
+by cut-and-paste or by snarfing the lines from the file
+that contains this manual page.
+If you have the source directory of ups around you will find this
+code below there in the file
+.fX ups/doc/sample.c .
+.LP
+Assuming you have a copy of the above code in a file and you are sitting
+at a workstation or X terminal and have
+an X or Sunview session running, here is what you do:
+.LP
+\*(Bo Compile and link the code with the -g flag to
+.IR cc (1)
+or
+.IR gcc (1).
+.IP
+The
+.B -g
+flag directs the compilers to include extra symbol table information
+in the object file that is needed by debuggers.
+.LP
+\*(Bo Give the command
+.fX "ups a.out" ' `
+(or whatever you called the object file).
+After a short pause a window will be created; the details obviously depend on
+your window manager.
+.IP
+This is the simplest way of invoking
+.IR ups .
+For a complete description of the command line flags and arguments
+see \s-2UPS COMMAND LINE ARGUMENTS\s0.
+.IP
+In the window you should see a display divided into various rectangular
+boxes and menus, with two large regions in the upper and lower halves
+of the window.
+The top region is the 
+.I "display area"
+\- it contains captions looking roughly like:
+.Vs
+\*(CrTarget a.out
+	a.out
+Signals
+Environment
+Untyped variables
+Source files
+Functions
+Breakpoints
+.ft P
+.Ve
+.IP
+In the lower region you should see the start of
+.fX main()
+displayed.
+Note: the layout of the window is explained in detail in a later section.
+.LP
+\*(Bo Move the mouse cursor over the
+.Ob Breakpoints
+caption in the upper region, and press and release the left mouse button.
+.IP
+You should see two things happen: the caption is inverted to show that
+it is selected, and a menu appears near the top of the window with the
+captions
+.Cm "Add new",
+.Cm "Remove all",
+.Cm "Restore",
+and
+.Cm "Load file".
+.IP
+All the objects in the display area (except
+.Ob Functions )
+can be selected like this and have their own menus.
+Selecting an object (or many objects) and clicking on one of the
+commands in its associated menu is the primary way of issuing
+commands to
+.IR ups .
+.LP
+\*(Bo Click (press and release) the left mouse button over the
+.Cm "Add new"
+menu caption.
+.IP
+You should see a line below the
+.Ob Breakpoints
+caption looking like:
+.Vs
+\f(CBFunction:\(sq				line:\fP0
+.Ve
+.IP
+The hollow square represents the editing cursor, which indicates where
+typed characters will appear.
+(this is actually
+displayed as a solid black rectangle on the screen).
+.LP
+\*(Bo Type
+.fX main ' `
+.IP
+You can use the delete key as you would expect to fix typos.
+There are various other useful control characters \- see the
+\s-2EDITABLE FIELDS\s0 section for details.
+.LP
+\*(Bo Press ESC (the escape key).
+.IP
+This confirms the edit.
+You should see the text
+.Vs
+#stop;
+.Ve
+appear at the start of main in the source region.
+.IP
+.I Ups
+represents breakpoints as this fragment of pseudo C.
+You can edit breakpoints to do things other than just stop (e.g. call a target
+function or only stop if a certain condition is true).
+This is covered later in this section, and described fully
+in the section \s-2ADDING INTERPRETED CODE\s0.
+.IP
+You can also add breakpoints by pointing at the appropriate line in
+the source region \- this is described later in this section.
+.LP
+\*(Bo Click the left button over the caption
+.Cm Start
+at the left hand side of the menu just below the display area.
+.IP
+This menu is the target control menu.
+Here is a brief description of what the other commands in this menu
+do (these are explained in more detail in the
+\s-2CONTROLLING TARGET EXECUTION\s0 section).
+As you have just seen
+.Cm Start
+starts the target running.
+.Cm Step
+and
+.Cm Next
+step execution over single lines of code
+.Cm Step "" (
+steps into function calls,
+.Cm Next
+doesn't).
+.Cm Cont
+makes the target process run until it hits a breakpoint or exits.
+.Cm Stop
+stops a running target process, queues a request to terminate a symbol 
+search, or breaks out of a 
+.Cm Step
+that takes a long time, and
+.Cm Attach
+prompts for a PID of a target process to attach to (for SunOS), and
+.Cm Detach
+detaches from an attached process.
+.Cm Kill
+kills off the target process, ready for another run using
+.Cm Start .
+.IP
+You should see the first line of code in
+.fX main
+highlighted.
+This means that execution has stopped just before this line.
+If you look at the display area you will also see that a new
+line has appeared under the
+.Ob Functions
+object.
+This should look like:
+.Vs
+main					sample.c:18
+.Ve
+.IP
+This shows that you are stopped at line 18 of 
+.fX sample.c
+in function
+.fX main .
+.IP
+At this point you are in the usual state for
+.IR ups :
+you have the target stopped, with the line that is about to be executed
+highlighted in the source window and your current position in the
+source file shown under the
+.Ob Functions
+object in the display area.
+.LP
+\*(Bo Click on
+.Cm Step
+in the target control menu.
+.IP
+The source display switches to function
+.fX stash ,
+which you have just stepped into.
+You will also see an extra line under
+.Ob Functions
+\- the display should look like:
+.Vs
+main				sample.c:18
+stash				sample.c:10
+.Ve
+.IP
+As you can see this is a stack trace, showing you which function called
+which starting from main and working inwards towards the function you are
+currently stopped in.
+.LP
+\*(Bo In the source region move the mouse over the `\*(Cra\fP' at the start
+of the highlighted line and click the left mouse button.
+.IP
+You should see a line added to the stack trace, making it look like:
+.Vs
+main				sample.c:18
+stash				sample.c:10
+  struct argst *<a>	0x4
+.Ve
+.IP
+This is one of the main strengths of
+.IR ups :
+to see the type and value of any variable that is visible in the
+source window you simply click on its name.
+.IP
+This is showing that
+.fX a
+is a variable of type
+.fX "struct argst *"
+with the value
+.fX 4.
+Ignore the angle brackets round the `\*(Cra\fP' for now \- they will
+be explained later.
+This is an uninitialized variable, so the value you see will probably
+be different from this.
+.IP
+You will also notice that the menu near the top of the display area
+has changed.
+Every object in the display area has an associated menu, which is
+displayed when that object is selected.
+Ignore the menu for now.
+.LP
+\*(Bo Click on
+.Cm Step
+in the target control menu.
+.IP
+The value displayed for the variable
+.fX a
+changes to whatever is returned by
+.fX malloc .
+This shows another key feature of
+.I ups 
+\- displayed variables remain in the display area as you step through the
+program code so you can watch the values change.
+.LP
+\*(Bo Now click the left mouse button over the displayed line for
+the variable
+.fX a .
+.IP
+The line will be inverted to show that it is selected and a menu will
+appear as before near the top of the display area.
+.LP
+.ne 10
+\*(Bo Click on
+.Cm Expand
+in the menu that was produced by the last step.
+.IP
+You will see an entry added for each member of the structure, giving a
+display under the
+.Ob Functions
+object that looks something like:
+.Vs
+main				sample.c:18
+stash				sample.c:11
+  struct argst <a{0}>      0x60c8
+    char <a_name{0}>         *NULL
+    struct argst *<a_next>   0x0
+.Ve
+.IP
+The member types and values are shown in the same way as the structure
+pointer
+.fX a ' `
+itself.
+As before the values are uninitialized, so the values you see will depend
+on the exact behaviour of your
+.fX malloc
+implementation.
+.LP
+\*(Bo Click on
+.Cm Next
+in the target menu.
+.IP
+The highlighting in the source window will move on to the next line,
+and the value displayed for the
+.fX a_name
+field will change.
+.IP
+This sort of interaction is typical use of
+.I ups
+\- you expand structures to see members of interest, and then step through
+the source code watching how they change.
+.LP
+\*(Bo Move the mouse over the highlighted source line, press and hold
+down the right hand mouse button then release it.
+.IP
+When you pressed the mouse button you will have seen a popup menu with
+the captions
+.Cm "Add breakpoint" ,
+.Cm "Execute to here" ,
+.Cm "Jump to here" ,
+and
+.Cm "Edit source" .
+You will also have seen an arrow to the left of the menu pointing at the
+source line you pressed the mouse over.
+.IP
+When you release the mouse button a breakpoint is added just before
+the source line.
+You will see the text
+.fX #stop;
+appear.
+.IP
+This is the simplest and most common way of adding breakpoints in
+.IR ups .
+The normal sequence of actions is:
+.RS
+.IP \(bu
+Type the name of the function you are interested in (or enough of
+it to uniquely identify it) and hit ESC (the escape key).
+The source of the function is displayed in the source window.
+.IP \(bu
+Scroll the source to make visible the line where you want to
+add a breakpoint.
+.IP \(bu
+Add a breakpoint by clicking the right mouse button over the source line.
+.RE
+.LP 
+\*(Bo Click on
+.Cm Cont
+in the target control menu.
+.IP
+The target continues until it hits a breakpoint.
+In this case the target stops in the second call of
+.fX stash
+from main.
+You will notice that in the display area the displayed value of
+.fX a_name
+has changed.
+.LP
+\*(Bo Click on
+.Cm Cont
+again.
+.IP
+The target continues to completion and exits.
+The stack trace and variables disappear from the
+display area, and all the target control menu captions except
+.Cm Start
+are greyed out to indicate that they are unavailable while the target
+is stopped.
+.LP
+We are almost at the end of this example.
+These last steps are to show how you can add 
+.fX printf
+calls (in fact any interpreted C).
+The actions we are about to cover are:
+.IP \(bu
+Editing some interpreted C into a breakpoint.
+.IP \(bu
+Scrolling the source window to show the other breakpoint and
+removing it.
+.IP \(bu
+Re-running the target to see the effect of the interpreted code.
+.LP
+\*(Bo Move the mouse over the
+.fX #stop; ' `
+text that indicates the breakpoint in the
+.fX stash
+function and click the middle mouse button.
+.IP
+You should see an editing cursor (a black rectangle) appear.
+If it is not at the end of the
+.fX #stop; ' `
+text then click the middle mouse button further to the right.
+.LP
+\*(Bo Use the delete key to delete the
+.fX #stop; ' `
+text.
+.LP
+\*(Bo Type the following text:
+\*(Cr$printf("Setting a->a_name to %s\en", a->a_name);\fP
+.IP
+.fX $printf
+is a built in
+.I ups
+function with an interface almost identical to printf except that
+it sends output to an region in the ups display.
+.LP
+\*(Bo Hit ESC (the escape key)
+.IP
+If you haven't made any errors
+.I ups
+will silently accept the line
+and the editing cursor will disappear.
+.IP
+If you have made a syntax error
+.I ups
+will beep, give you an error message and put the editing cursor
+at the point of the error.
+You can then correct the error.
+.LP
+\*(Bo Press and hold down the left mouse button in the scroll
+bar to the left of the source window, and with the mouse button
+pressed move the mouse button a few pixels towards the top of
+the window.
+.IP
+You should see the source text scrolling slowly upwards.
+The more you move the mouse from the place you first pressed it,
+the faster the source scrolls.
+.LP
+\*(Bo When you see the source of
+.Cm Main
+appear in the source window release the mouse button.
+.IP
+The scrolling will stop.
+.LP
+\*(Bo Click the middle mouse button on the
+.fX #stop
+at the start of main.
+.IP
+This displays the editing cursor as before, but if you look in the
+display are you will notice that it also selects the corresponding
+breakpoint object.
+You will see the breakpoint entry highlighted, as well
+as a menu with the captions
+.Cm Remove ,
+.Cm Source,
+.Cm "Save to file",
+.Cm Execute,
+.Cm Activate,
+and
+.Cm Inactivate
+near the top of the window.
+.LP
+\*(Bo Click on
+.Cm Remove
+in the menu
+.IP
+You will see the breakpoint entry in the display area disappear, along with
+the
+.fX #stop;
+line in the source window.
+.LP
+\*(Bo
+Click on
+.Cm Start
+in the target control menu.
+.IP
+You should see a third subregion appear in the display.
+This looks similar to the source window, with a controlling menu
+above it and a scroll bar on the left hand side.
+.IP
+This is the
+.IR "output region" .
+It is where output from the built in function
+.fX $printf
+appears.
+This region appears the first time
+.fX $printf
+is called by interpreted code.
+.IP
+You will see that the text
+.RS
+.Vs
+Setting a->a_name to foo
+Setting a->a_name to bar
+.Ve
+.RE
+.IP
+has appeared.
+This was produced by the interpreted code that you added.
+.IP
+Note that the target ran to completion without stopping.
+A breakpoint only stops the target if the pseudo C statement
+.fX #stop
+is executed.
+This lets you add conditional breakpoints simply by putting
+an
+.fX if
+statement around them.
+.IP
+One final point: you can call target functions (like
+.fX stash
+in this example) from interpreted breakpoint code.
+This is often used to call
+.fX printf
+in cases where you
+.I do
+want the debugging output interspersed with the target program's output.
+.LP
+Here endeth the example.
+It certainly hasn't covered all of the features of
+.IR ups ,
+but hopefully it has given you a feel for the way it works.
+Some basic points:
+.IP \(bu
+The two important areas in the display are the display area (top) and
+the source region (bottom).
+.IP \(bu
+The display area contains captions representing objects of different
+types.
+.IP \(bu
+You can select an object by clicking on it with the left mouse button.
+.IP \(bu
+Each different object type has an associated menu which appears near
+the top of the
+.I ups
+window when the object is selected.
+.IP \(bu
+Commands selected from these menus act on the currently selected objects.
+.IP \(bu
+The source region displays the currently executing source code,
+with the line that is about to be executed highlighted.
+.IP \(bu
+You can add any variable to the display area by clicking on an instance
+of it in the source window with the left mouse button.
+.IP \(bu
+Double clicks will alternately expand and compress the variable, if possible.
+You can add breakpoints by pointing at lines of source.
+.IP \(bu
+You can edit breakpoints to add
+.fX printf
+statements and conditional breakpoints.
+.IP \(bu
+You can expand and collapse structures to explore data structures.
+.IP \(bu
+Variables remain in the display area as you step through the code
+so you can watch the values change.
+.LP
+The rest of this manual page gives a complete description of
+.I ups .
+You should probably skim through it at first reading before playing
+with
+.I ups
+on some of your own code for a while.
+When you are more familiar with
+.I ups
+reread these sections in more detail.
+.SH "UPS COMMAND LINE ARGUMENTS"
+This section gives a complete description of the command line
+arguments accepted by
+.IR ups .
+The command line syntax is:
+.IP
+\fBups\fP \fItarget\fP [\fIcorefile\fP|\fIpid\fP] [[:]\fIsrcdir\fP[:\fIsrcdir\fP]] [\fB-a\fP \fItarget-args\fP] [\fB-nodemangle\fP] [\fB-nosavesigs\fP] [\fB-split\fP[:\fIscreen\fP]] [\fB-fullpath\fP] [\fB-install\fP]
+.LP
+.I Ups
+accepts various other flags, but these are mostly to support
+maintenance and testing, and are not of interest to the
+general user.
+You can see a full list of the
+.I ups
+flags by giving the command
+.fX "ups -fullusage" '. `
+.LP
+The only mandatory argument is the name of the executable file
+containing the program to be debugged (the target).
+.LP
+If a
+.I corefile
+argument is given it is taken to be the name of
+a core image dumped from
+.IR target .
+If no
+.I corefile
+argument is given and there is a core image file
+called
+.fX core ' `
+in the directory of the target then that is taken as
+the core file.
+Old core files, and core files which weren't dumped from the target, are
+silently ignored unless you give the name of the core file explicitly
+(in which case
+.I ups
+will use it, but give a warning message).
+.LP
+If the
+.I corefile
+argument consists solely of digits,
+it is taken to be the process id of the target.
+This allows you to attach
+.I ups
+to an already running process on machines
+with the necessary support (currently only Suns).
+If you subsequently quit \fIups\fP while still attached in this way,
+it detaches from the target, allowing the target to continue.
+.LP
+By default
+.I ups
+looks for source files in the directory of the target.
+You can specify alternative source directories by giving a list of directories
+separated by `:' characters.
+An empty initial path (i.e. a leading `:') means the directory of the
+target.
+On Suns running SunOS 4, the C compiler includes directory paths for
+source files, so
+.I ups
+will normally find source files in other
+directories even without the source path argument.
+.LP
+You can specify the arguments that the target should be invoked with by
+giving the
+.B -a
+option, followed by a single argument.
+You can give multiple arguments for the target by enclosing the list of
+arguments in single or double quotes.
+.I Ups
+will itself interpret metacharacters like
+.fX * ' `
+and
+.fX > ' `
+\- see
+.Sc "TARGET COMMAND LINE ARGUMENTS" .
+.LP
+When the `-nodemangle' argument is specified,
+\fIups\fP will do no demangling on function or variable names. This should
+result is slightly faster invocation time for pure C code. It is still
+possible to debug C++ code in this mode, although the names need some
+mental deciphering. A unique feature of this version of \fIups\fP, is that
+even when C++ names are shown mangled, you can generally still click
+on variables in the source window, and \fIups\fP will still find the name
+to display, albeit in a mangled state.
+.LP
+If you are saving state between debugging sessions by creating a
+"ups-state" directory, the command option, "-nosavesigs"
+stops UPS from saving signal state to the ups state file.
+.LP
+By default, \fIups\fP passes only the final component of the \fItarget\fP
+filename to the process as argv[0]. Sometimes, the process needs the
+full path to itself, for example,  to locate auxiliary files.  If the `-fullpath'
+argument is specified, this default behaviour is suppressed and the \fItarget\fP
+filename is passed directly from the ups command line to the process
+command line.
+.SH "ENVIRONMENT VARIABLES AFFECTING UPS"
+You can see all the symbol table names that are loaded and not loaded by doing a
+"setenv VERBOSE 1" before calling \fIups\fP. Setting VERBOSE to "NOLOAD" causes
+to list just the libraries that are not loaded.
+.LP
+Most software projects of any size develop formal or informal naming conventions
+that make it possible to specify the desired format for a variable based on the
+name and, possibly, the type, regardless of the context in which it appears.  If,
+like most software engineers, you spend much of your time debugging the same
+code, you can set up a UPS_FORMATS string in your environment to specify
+the desired formats for frequently examined variables.
+.LP
+The following is an example of a UPS_FORMATS string:
+.Vs
+.ps -2
+.vs -2
+export UPS_FORMATS="                                  \\
+     unsigned : UHEX;   /* Default unsigned to hex */ \\
+     unsigned *any_int[NTLW] : UDML;                  \\
+     char abyte: OCT;                                 \\
+     *bits* : UBIN;                                   \\
+     auto "
+.ps +2
+.vs +2
+.Ve
+.LP
+The first line of this format string causes \fIups\fP to format unsigned variables
+in hex rather than decimal.  The format string accepts C-style comments
+to allow for more readable .login or .cshrc files.
+.LP
+The second line specifies that any unsigned
+variable whose name matches the string "*any_int[NTLW]" is an exception
+and should be formatted in decimal.  Pattern matching is as in shells such
+as \fIsh\fP, \fIcsh\fP, or \fIbash\fP.
+.IP
+\*(Ob It is important that the exception come after the general rule specified
+in the first line.
+
+\*(Ob Note that in the UPS_FORMATS string, "char *foo"
+means any variable of type char whose name ends in "foo", not a variable
+named "foo" of type char*.
+.LP
+The third line specifies that any variable of type char and name "abyte"
+should be formatted in octal.
+.LP
+The forth line specifies that any variable of any basic type with the
+string "bits" in its name should be formatted in binary.
+.LP
+The last line specifies that any time the you change a format \fIups\fP should
+automatically save the change and use it as the default format for any
+variable of the same name and type.
+.LP
+The syntax of the UPS_FORMATS string is
+.Vs
+.ps -2
+.vs -2
+format_string ::= format_spec [ ; format_string] [;]
+
+format_spec ::= format_request | auto_save_request
+
+format_request ::= ["unsigned"] [type] [ pattern ]
+                     : [format]
+
+type ::= "char" | "short" | "int" | "long"
+
+pattern ::= < any C identifier with wild cards
+	        '*', '?' or "[]" >
+
+format ::=  "UHEX" | "UOCT" | "UDML" | "UBIN |
+	   | "HEX" | "OCT" | "DML" | "ASCII" | "STRING"
+
+auto_save_request ::= "auto"
+.ps +2
+.vs +2
+.Ve
+.LP
+In the format request, if the type is omitted then either all unsigned basic
+types or all basic types regardless of sign are selected.  If the pattern is
+omitted the default pattern is "*" so that all variables of the specified type
+are selected.
+.LP
+It is possible to insert pre-defined strings when editing text.
+This applies to all editing: in the typing line, in the display area, in 
+breakpoint code and in the output window. 
+The right mouse button invokes a menu of strings defined by 
+environment variables of name `UPS_F*_STR' where `*' is a number from
+1 through 12. When the cursor is over the typing line or output window,
+the mousehole shows "(menu)" for the right button as an indication
+that a custom menu may be available.
+.LP
+The UPS_F*_STR strings accept control, meta, and escape characters as follows:
+.IP
+\\n, \\r, or \\e: Enter an escape character to terminate the edit
+.IP
+^A, ^B, etc.: Enter the corresponding control character.
+.IP
+@f, @b, etc.: Enter the corresponding meta character. This allows movement
+by words.
+.IP
+\\\\ or \\^ or \\@: Override the special meaning of '\\', '^', or '@'.
+.LP
+As an example, it is often nice to have skeleton strings for `printf'
+or `cout' statements in breakpoint code, or a directive for expanding 
+linked lists for the typing line, or a string for setting breakpoints 
+on `cout' statements in C++ code. Yet another string can be used to
+call strcmp for a conditional breakpoint. The F6 string pastes in the X-windows 
+selection and the F7 string sets a breakpoint in purified code.
+
+To do this, put the following in your environment:
+.IP
+setenv UPS_F1_STR '$printf("\\\\n");'
+.IP
+setenv UPS_F2_STR 'if (strcmp(, ""))'
+.IP
+setenv UPS_F3_STR '@name .next'
+.IP
+setenv UPS_F4_STR "ostream::operator<<"
+.IP
+setenv UPS_F5_STR 'ostream::operator<<(&cout, "");'
+.IP
+setenv UPS_F6_STR "^e^u^y\\n"
+.IP
+setenv UPS_F7_STR "%b purify_stop_here\\n"
+.SH "INTERACTIVELY ADDING SEARCH PATHS"
+Search paths can be given to \fIups\fP at any time during debug by 
+selecting the `Source Files' header in the display window and
+pressing \fBAdd source path\fP. The typing line will prompt for input. It
+will display the last entry in the search path list as a default, if
+a list exists. Multiple paths may be entered at once by entering a 
+colon separated list. This is the same syntax as the \fIups\fP command line 
+arguments. This enables the paths for source files to be found without 
+the need to back out of the
+debugger and add the search path to the command line. Note that this will
+work only if the file is already an entry in the source file list, but
+cannot be listed. When this condition occurs, pressing the `path' caption
+will display the assumed path for the file, which must be in error. The 
+program may have to be statically linked to find all source file names.
+.SH "LAYOUT OF THE UPS WINDOW"
+The
+.I ups
+window is divided into a number of rectangular regions.
+This section gives a brief description of each region.
+It won't make much sense unless you are also looking at an
+.I ups
+window.
+.IP \(bu
+At the top of the window on the left is the \fItyping line\fP.
+On startup a black rectangle known as a \fIediting cursor\fP is shown.
+Typed characters appear in this region, and some
+.I ups
+commands
+use the text in this window as an argument (e.g., the command to
+search for a regular expression in a source file).
+.IP \(bu
+Below the typing line is the \fIdynamic menu area\fP.
+On startup this area is greyed out.
+See
+.Sc "THE DISPLAY AREA"
+below for a description of the dynamic menu.
+.IP \(bu
+Below the dynamic menu area is a region where messages from
+.I ups
+appear (usually with a beep).
+.IP \(bu
+To the right of the above three regions is a \fImousehole\fP.
+This has a representation of the three mouse buttons, and captions
+for each button saying what that button will do.
+The captions change as you move from region to region, reflecting
+the fact that the mouse buttons have different functions in
+different regions.
+.IP \(bu
+Below the preceding four regions is the \fIdisplay area\fP \-
+a large region used to display and investigate the current state
+of the target.
+There is a scroll bar to the left of the display area.
+See
+.Sc "THE DISPLAY AREA" .
+.IP \(bu
+Below the display area is the \fItarget menu\fP.
+This has a set of commands for controlling target execution.
+See
+.Sc "CONTROLLING TARGET EXECUTION"
+below.
+.IP \(bu
+Below the target menu is the \fIsource menu\fP, with a set of commands
+for managing the source region, which is below this menu.
+There is a scroll bar to the left of the source region.
+See
+.Sc "THE SOURCE REGION"
+below.
+.SH "THE DISPLAY AREA"
+The display area is the large region in the upper half of the
+.I ups
+window.
+Its main use is to show the state of the program when it stopped,
+though it is also used for other control functions.
+.LP
+There are a number of captions in the display area,
+like
+.Ob Signals ,
+.Ob Breakpoints
+etc.
+These are known as
+.I objects .
+To select an object, press and release the left mouse button over it.
+.LP
+Any objects that were previously selected are deselected,
+the object is inverted to show that it is selected, and a menu
+of commands applicable to that object appears 
+in the second of the three slots at the top of the window.
+At any time this region of the display either contains a menu
+corresponding to a selected object, or is empty (painted a
+uniform grey) if there are no objects selected.
+.LP
+A command selected from the menu (by pressing and releasing the
+left mouse button over the caption) is applied to the currently
+selected objects.
+It is possible to apply a command to a group of objects.
+To do this, select a group of objects
+by pressing the left mouse button over the
+first object and then dragging the mouse over the other objects
+you wish to select before releasing the button.
+You cannot select objects of different types simultaneously
+as each different type of object has its own menu.
+Once the first object has been selected, only objects of the
+same type will be selected (and highlighted) as the cursor passes
+over them.
+.LP
+The right hand mouse button is used to toggle whether an object
+is selected \- clicking it over a selected object deselects
+that object, and clicking over an object that isn't selected adds
+that object to the selection.
+As with the left mouse button, you can drag the mouse with
+the right button down to toggle a group of objects.
+.LP
+Several of the menu commands add new objects to the display.
+For example, when you expand an entry in the stack trace
+all the local variables for the function it represents
+are added to the display (see
+.Sc "EXAMINING VARIABLE VALUES"
+below).
+These new objects can be selected in the same way as the
+existing ones, and have an associated menu of commands.
+.LP
+Once a few objects have been added to the display area,
+there is usually not enough room to display all of them
+at once.
+There is a scroll bar to the left of the display area
+which lets you scroll the display area up and down.
+To scroll, press and hold down the left mouse button whilst within
+the scroll bar, and move the mouse in the direction you
+wish the display to move.
+The further you move the mouse, the faster the scrolling.
+.LP
+You can also use the left and right mouse buttons to page up and down
+through the display in the same way as with the
+.IR xterm (1)
+scroll bar.
+Clicking the left mouse button in the scroll bar pages the display
+down.
+Similarly, clicking the right button pages the display up.
+The distance paged depends on how far the cursor is from the top of
+the scroll bar.
+.LP
+The black blob in the scroll bar represents the proportion
+of the entire display that is currently visible, and the
+position of this visible part within the whole display.
+For example, if the black blob is one third the height
+of the scroll bar, and in the middle, it means that
+the total height of the objects is about three times
+the height of the display area, and the middle third
+is currently being displayed.
+.LP
+You can use the scroll bar to go directly to a given
+point in the display.
+Press and release the middle mouse button at a point in the
+scroll bar.
+The black blob is moved so that it centres around the
+point, and the display is moved correspondingly.
+.SH "THE SOURCE REGION"
+The source region is used to display the source line that the target
+is currently stopped at, or more precisely the line that is about to
+be executed.
+Like the display area, the source region has a scroll bar to the
+left of it, which behaves in the same way as the display area
+scroll bar.
+.LP
+Above and to the left of the source region is a box where the name
+of the current source file and the current line number is
+displayed. See the
+.Sc "FILE NAME BOX"
+section for details of the right button menu for this region.
+.LP
+To the right of this is the source region menu with commands
+.Cm Back ,
+.Cm Search ,
+.Cm Up
+and 
+.Cm Down .
+.LP
+The 
+.Cm Up
+and 
+.Cm Down
+commands step up and down through the target program's call stack.
+If you are looking at the source code of the currently executing
+function,
+.Cm Up
+switches the display to show the source of the function that called it.
+Repeatedly clicking on
+.Cm Up
+will take you all the way up the stack to
+.fX main
+(or
+.fX MAIN
+for Fortran programs).
+Similarly,
+.Cm Down
+steps one level down in the call stack.
+.LP
+When \fIups\fP has been attached to a target, it is possible to 
+detach without quitting the debugger by pressing
+the \fBDetach\fP caption at the bottom of the display window. 
+At a later time, \fIups\fP can then
+be attached to the same instance of the target, or to a new instance
+of the target by using the attach caption described below. 
+.LP
+On an attach, the debugger will reload any shared libraries that have 
+changed, as well as any new shared libraries that the target uses.
+If \fIups\fP has been detached from the target as described above, or if
+the target terminates for any reason, it is possible to attach
+to the same or a new invocation of the target without quitting the debugger. The
+advantage of this is that it may take several minutes for \fIups\fP to
+initially come up, but once the symbol tables have been read, the 
+time to reattach will be at most, of the order of tens of seconds,
+and often just a few seconds. All breakpoints and even breakpoint code
+will still work. After pressing \fBAttach\fP you will be prompted to 
+enter the PID number. The PID of the last attached process
+is displayed as a default. 
+If the new invocation of the target has changed,
+the reattached session may not work correctly if statically linked
+object files have changed. \fIups\fP will re-read any changed shared libraries
+when attaching.
+.LP
+A very handy use of the attach item is for debugging spawned
+processes that can timeout unless a communications handshake or license
+check is performed quickly. If the spawned process is stopped at a pause
+while \fIups\fP is invoked from scratch, the process may well timeout and exit
+before \fIups\fP can read all the necessary symbol information.
+The solution is to first invoke \fIups\fP on the target without a PID in the command
+line. After the symbols have been read, breakpoints can be set, then the 
+real process to be debugged is spawned. Then press \fBAttach\fP and
+quickly enter the PID of the spawned process to debug.
+.LP
+Shared libraries are reloaded if they change between attach/detach cycles. 
+So one can attach to a target, debug, detach and then rebuild a shared library 
+that the target uses. Then after the target is rerun with the new library, \fIups\fP 
+can be attached again and the new library will be re-scanned 
+and debugging can continue without quitting \fIups\fP, and without the overhead
+of re-reading symbols for the other libraries. Breakpoints in the 
+new library will need to be reset. \fIUps\fP puts out a message about what
+libraries are being reloaded in such cases.
+.LP
+The 
+.Cm Search
+command is used to search for regular expressions
+(using the same syntax as \fIgrep(1)\fP patterns) in the currently
+displayed source file.
+First type in the pattern to be searched for (typed characters appear
+in the typing line at the top of the window on the left) then
+press and hold down the left mouse button over the 
+.Cm Search 
+caption.
+A popup menu appears with the options 
+.Cm Backwards
+and 
+.Cm Forwards .
+Move the mouse over the one you want and release the button.
+If the pattern is found, the matching text is made visible in the
+source region and highlighted.
+.LP
+You can click the left mouse button on any variable or function name in the
+source window to display it.
+Double clicks will alternately expand and compress the variable.
+Variables are added to the display area, as described in
+.Sc "EXAMINING VARIABLE VALUES"
+below.
+If you click on a function name, the source for that function is displayed
+(this is similar to the tags facility in 
+.I emacs or
+.IR vi ).
+.I Ups
+maintains a stack of where you've been.
+After you have clicked on a function name you can use the
+.Cm Back
+command in the source menu to return to where you were.
+With a left click, \fIups\fP reads the
+function symbols before navigating to the function. You can bypass
+the symbol reading by using the middle mouse button. So an 
+unmodified left click looks up local symbols, then globals, a 
+Shift-left click does an automatic "add expr" and a middle 
+click edits breakpoint code, but if not over breakpoint code it looks up
+global symbol lookup only.
+.LP
+You can also get a function displayed by typing the name into the
+typing line at the top of the
+.I ups
+window.
+You do not need to type the whole name \- just enough characters to
+uniquely identify the function.
+As for typing in a breakpoint, pressing 
+ESC does partial name completion, and Shift-ESC, or Shift-RETURN will list 
+the matching
+names in the output window.
+If a function appears by the same name in more than one source file,
+you can use the syntax `filename:funcname' to specify which function
+you want.
+.I Ups
+will also understand shell-style globbing with `*' (e.g.
+.fX *foo_func* ') `
+for function and global
+variable names, with the restriction that the pattern must match only
+a single name.
+.LP
+Whenever the source region switches to a new source file,
+.I ups
+checks the last modified time of the source file against
+the last modified time of the target object file.
+If the source file is newer than the target you get a warning
+message and the source code is displayed with foreground and background
+colours reversed as a reminder that this source code might not
+correspond the object file you are debugging. See the section
+.Sc "FILE NAME BOX"
+below this for getting actual file dates.
+.LP
+You can select arbitrary text in the source window by dragging the
+mouse over it with the left button pressed.
+The selected text is highlighted, and can be pasted into other
+windows, or other areas in the ups window (such as the typing line).
+Note that dragging (press mouse button, move mouse, release) has a
+different effect than clicking (pressing and releasing the left mouse
+button without moving the mouse).
+.SH FILE NAME BOX
+There is a menu associated with this file name box above the source, and
+the mousehole and cursor also indicate that the right 
+mouse button invokes a menu over the region The menu has options
+to edit the source, show used and assumed file paths, rematch and reload the 
+file, and to show file dates. The latter is useful for an explanation
+of why \fIups\fP may be showing reverse video for a file. In the bottom output window, 
+it list the source file date, the associated shared library date if applicable,
+and the target file date. The menu is a convenient way to get information
+about a file without having to find the file in the source file list. 
+For breakpoints, when the source is displayed, the menu provides a quick way to
+get at full file names and dates.
+.SH "EDITABLE FIELDS"
+All editable fields in 
+.I ups
+work in the same way.
+To start editing you click the middle mouse button over the editable text.
+A black
+.I "marker bar"
+appears \- characters that you type appear to
+the left of this marker bar.
+You can reposition the marker bar by clicking in the new position
+with the middle mouse button, or by using one of the cursor movement
+key sequences described below.
+.LP
+Clicking the left or right button confirms the edit.
+Clicking the middle mouse button outside the editable text area
+also confirms the edit.
+In both cases the mouse click is then interpreted as normal \- this
+means that to confirm an edit you can simply move on to another activity.
+The final way to confirm an edit is to type ESC (the escape key)
+or click the left mouse button on the Enter Button (the small region to
+the right of the typing line with the "<<" image).
+.LP
+To paste the current window system cut buffer, use Control-Y or click
+the middle mouse button on the Enter Button.
+.LP
+When you try to confirm an edit
+.I ups
+checks that the new field value is reasonable.
+If not you get an error message and you are left in the edit.
+An immediate second attempt to quit abandons the edit and restores the
+original field value.
+.LP
+.I Ups
+recognizes a subset of the GNU emacs key bindings when editing fields.
+In the current version there is no way to customize these key
+bindings.
+This will be fixed in a future release.
+.LP
+You can use most of the common emacs key mappings when editing text
+(e.g. in the typing line, when adding breakpoints etc).  Here is a
+list of the supported mappings
+.fX C-x "" (
+means CONTROL-X,
+.fX M-x
+means ALT-X,
+.fX UP ,
+.fX DOWN ,
+.fX LEFT
+and
+.fX RIGHT
+are the arrow keys,
+.fX SPC
+is the space bar and
+.fX DEL
+is the delete key):
+.RS
+.En C-a
+Move to start of line
+.En C-e
+Move to end of line
+.En M-m
+Move to first non-whitespace character
+.En "M-@, M-SPC"
+Set mark
+.En C-w
+Delete text between mark and point
+.En "C-p, UP"
+Move up a line, if possible, otherwise retrieve the next
+previous item in the history buffer
+.En "C-n, DOWN"
+Move down a line, if possible, otherwise retrieve the next
+later item in the history buffer
+.En "C-b, LEFT"
+Move backwards one character
+.En "C-f, RIGHT"
+Move forward one character
+.En M-b
+Move backwards one word
+.En M-f
+Move forward one word
+.En "C-j, C-m"
+In an editable field, finish the edit.
+In the source window, start a new line.
+.En ESC
+Finish edit, in both editable fields and the source window.
+.En C-c
+Cancel edit (not an emacs binding).
+.En C-k
+Delete to end of line
+.En C-u
+Delete to start of line (not an emacsbinding )
+.En C-d
+Delete character under cursor
+.En M-d
+Delete word starting at cursor
+.En DEL
+Delete character before cursor
+.En M-DEL
+Delete word before cursor
+.En C-y
+Paste X selection
+.En M->
+Move to end of buffer
+.En M-<
+Move to start of buffer
+.RE
+.LP
+If you run
+.I ups
+from a terminal (or a terminal emulator like
+.I xterm),
+it tries to discover what keys you are using for delete and line erase.
+If this fails it takes both ^H (backspace) and DEL to mean delete, and ^U
+to mean line erase.
+.SH "EDIT HISTORY"
+Most of the editable fields in
+.I Ups
+have their own history of recently typed commands.  For example,
+there is a history of typing line commands, a history of
+breakpoint code entered, and a history of variable values changed.
+.LP
+Pressing the Left mouse button on the History Button, the small region
+to the right of the typing line with the triangular image, pops up
+a menu of recently entered data for that field.
+.LP
+When editing most single line fields, a Control-P, or up arrow moves the history pointer back
+one entry and replaces the current text with the previous entry. Typing
+a Control-N, or down arrow, moves the history pointer forward one entry.
+.LP
+Edit histories are saved between sessions of
+.I Ups
+in ups-state/editHistory, if you use the ups-state feature, or in
+the file ~/.upsEditHistory if not.
+.SH "CUT AND PASTE"
+You can select text with highlighting by pressing
+the left mouse button and dragging.  Releasing the
+left mouse button sets the X selection.
+.LP
+You can paste text into an edit with Control-Y or by clicking the
+middle mouse button on the Enter Button (the small region to the right
+of the typing line with the "<<" image).
+.LP
+Another useful trick is to define paste strings by using control characters
+in a custom menu: e.g. define
+.IP
+setenv UPS_F1_STR "^e^u^y"
+.IP
+setenv UPS_F2_STR "^y"
+.LP
+then the right mouse button  will invoke a menu: the first 
+item clears the current text
+no matter where the text cursor is, and does a paste; the second 
+just does a paste at the current location.
+See the section
+.Sc "ENVIRONMENT VARIABLES AFFECTING UPS" 
+for details on custom menus.
+
+In the source window there are some extra shortcuts:
+.IP \(bu
+Pressing and releasing the left mouse button (without
+dragging) adds a variable name to the display as in
+previous versions of ups.  Only if you move the mouse
+to a different character with the left button down do
+you get a plain X selection.
+.IP \(bu
+Doing a press-left-and-drag selection with the shift
+key pressed automatically pastes the selected text as
+an expression into the appropriate place in the stack
+trace.  It is equivalent to selecting some text,
+selecting `add expr' for the appropriate entry in the
+stack trace, pressing ^Y to paste the text and
+hitting RETURN.
+.IP \(bu
+If you hold the shift key down, the press and release
+the left mouse button without moving the mouse, ups
+adds the expression under the mouse to the display
+area.  It makes a reasonable attempt to select what
+to display.  Try it out to see what I mean.
+.LP
+See PASTING EXPRESSIONS FROM THE SOURCE WINDOW in the manual
+page for more information.
+
+In the display window, left button
+selects objects for operations, and one can pan vertically to select
+groups of objects. Selecting objects for some operation is
+distinct from making an X text selection.
+However, while the button is down, if the horizontal
+distance from the original click exceeds a certain value, the window
+shifts from selecting objects to making an text selection. 
+So one can easily just pan right to select a string for instance.
+The pixel value is
+30 by defaults, but can be overridden with an X resource.
+.LP
+See "X RESOURCES"
+for details.
+
+.SH "EDITING IN THE OUTPUT WINDOW"
+You can edit in the output window (the window where
+$printf output goes.  Click with the middle mouse button to
+display a cursor.  You can then append or delete text.  This
+is useful for tidying up output to make it clearer, or for
+deleting uninteresting stuff.
+.LP
+You can also dump objects (like the stack trace) to the
+output window (see the `Windows' menu item to the left of `Quit'),
+and save or restore the output window contents from/to files
+(`Load' and `Save' in the output window menu).
+.SH "LISTING MATCHING SYMBOLS FOR BREAKPOINTS"
+Pressing Shift-ESC, or Shift-RETURN when setting a breakpoint lists matching 
+functions in the output window.
+So `*' matches all function names, and `file.c:*' matches all
+function names for `file.c'.
+ESC states how many matching functions there are, 
+while holding the shift key down lists them in the output window. To list all 
+functions in a program (and there may be many thousands) enter `*' then 
+Shift-ESC. 
+.LP
+The full path names of source files are given when listing symbols.
+.LP
+Stripped libraries contain
+no symbol information or file names, so it is not possible to use 
+the `file_name:function_name' 
+syntax to specify a unique breakpoint via the `Breakpoint' header. For such 
+cases, \fIups\fP accepts a shared library
+name in conjunction with the function name. The syntax is
+.IP
+`shared_lib_name:function_name' 
+.LP
+This allows breakpoints to be set in specific shared libraries when there are 
+name conflicts. The width of the breakpoint text has been doubled to allow
+for longer breakpoint specifications.
+.LP
+.SH "EXAMINING THE TARGET'S STATE"
+When the target is stopped at a breakpoint or when
+.I ups
+has been started with a core file, the target's state is show in the
+form of a \fIstack trace\fP in the display area.
+This consists of a line for each active function giving the
+name of the function, the source line number of the line that
+was being executed, and the name of the source file containing the function.
+.LP
+The stack trace appears under the 
+.Ob Functions
+object in the display
+area.
+As an example, consider the following stack trace:
+.Vs
+\f(CBFunctions\fP
+  main		main.c:42
+  docmd		commands.c:84
+  getline		io.c:21
+.fi
+.Ve
+.LP
+In this example, execution in function \fImain\fP reached line 42, at which
+point \fImain\fP called \fIdocmd\fP.
+In turn, \fIdocmd\fP at line 84 called \fIgetline\fP.
+\fIGetline\fP is stopped at line 21 (which is yet to be executed).
+.LP
+When the target stops, the source of the innermost function is displayed,
+with the line that is just about to be executed highlighted (displayed
+in reverse video).
+To look at the source of other functions in the stack trace:
+.IP \(bu
+Click the left mouse button over a line in the stack trace.
+The line is highlighted, and a menu appears near the top of the
+window with the captions 
+.Cm Expand ,
+.Cm Collapse ,
+.Cm "Add expr" ,
+.Cm Source ,
+and 
+.Cm Path .
+.IP \(bu
+Click on 
+.Cm Source
+in the menu.
+The source corresponding to the selected line in the stack trace
+is shown, with the line that is currently executing highlighted.
+.LP
+In this way you can see exactly where the target is stopped at any
+level in the stack.
+.LP
+If the initialization file has been used to load only certain libraries,
+unloaded libraries will be indicated by the sytax
+.Cm<full library name> 
+in the stack trace. To load it, select
+the line and press "Load library". As always for objects in the display
+window, multiple objects in the stack can be selected at once, and 
+loaded as a group.
+.SH "EXAMINING VARIABLE VALUES"
+There are several ways to find the values of variables.
+The simplest and most often used is simply to click with the
+left mouse button on the name of a variable in the source region.
+A line is added to the display area which looks something like:
+.Vs
+int <varname>			73
+.Ve
+.LP
+In this example, an integer variable called \fIvarname\fP with a current value
+of 73 is shown.  The meaning of the angle brackets around the name is
+explained later \- ignore them for now.
+.LP
+If the variable is local to a function, it is added just below the
+line in the stack trace for that function.
+If the variable is global, an entry for the source file of the variable
+is added below the
+.Ob "Source files"
+object in the display area and
+the variable is displayed below that.
+In rare cases
+.I ups
+does not know the type of the variable, in
+which case it is assumed to be an integer and displayed under the
+.Ob "Untyped variables"
+object.
+.LP
+Once the variable is added to the display, it remains there until
+its function returns (for a local variable) or you explicitly
+delete it (see later for how to do this).
+This means that you can watch the value change as you control the
+execution of the target.
+.LP
+As well as selecting individual variables to be shown, you can add all
+the local variables of an active function to the display.
+Select the function in the stack trace whose variables you wish to see, 
+and select 
+.Cm Expand
+from the menu produced.
+This will produce a popup menu with the options
+.Cm "Like before"
+and
+.Cm Completely.
+The default option is
+.Cm "Like before"
+- it means to make the display look like it did last time you looked
+at the local variables for this function.
+If there is no `last time', all the local variables are displayed.
+The second
+.Cm Expand
+option
+.Cm Completely ) (
+always adds all the function's local variables to the display.
+.LP
+To remove all the local variables select
+.Cm Collapse .
+You can subsequently put them back as they were using
+.Cm Expand ,
+.Cm "Like before" .
+If you have saved state enabled, you can do this even after exiting
+.I ups
+and starting it again.
+See the
+.Sc "SAVING STATE"
+section for details.
+.LP
+.ne 8
+When you use 
+.Cm Expand
+to add all the local variables of a function,
+you may see some lines like this:
+.Vs
+\u\l'7m'\d    lines 84..93 \u\l'7m'\d
+.Ve
+.LP
+These lines are added for variables declared within inner blocks of a
+function.
+In this example, there is an inner block starting at line 84 and ending
+at line 93 which contains local variable declarations (the line numbers
+are sometimes inaccurate because of bad information supplied by some compilers).
+If you click the left mouse button over one of these entries, a menu
+with the options 
+.Cm Expand ,
+.Cm Collapse ,
+.Cm "Add Expr"
+.Cm Source ,
+and 
+.Cm Path ,
+is
+produced.
+Selecting 
+.Cm Expand
+adds to the display all variables declared in the block.
+.Cm Collapse
+removes them again, and 
+.Cm Source
+makes the first line
+of the block visible in the source region.
+Selecting \fBPath\fP brings
+up a sub menu with \fBUsed\fP, \fBAssumed\fP, \fBRematch\fP, \fBReload\fP and \fBDates\fP
+items. 
+The \fBUsed\fP item shows  
+what file is actually being displayed in the source window. The \fBAssumed\fP 
+item displays
+the assumed path name of the selected file as suggested by the target
+binary. If the file could not be found under the \fBAssumed\fP name,
+the \fBUsed\fP name will be the first good match in the source path list.
+For C code, there is normally no problem in finding the source and hence
+the  \fBUsed\fP and \fBAssumed\fP paths will be the same. For  Centerline C++ code, 
+the two are usually different. \fIUps\fP uses symbol table function 
+line number information to find the most likely match. This also allows 
+different files of the same name to be located correctly.
+
+This feature removes the need to constantly rearrange the \fBUse\fP paths in
+the \fIups\fP init file to accommodate debugging different targets. \fIUps\fP outputs
+a message for C++ files indicating what file was matched.
+
+When no symbols are available
+for a function, both items print the library name for that function.
+
+If for some reason the match process described above gets the wrong file, 
+it is possible to find the next match in the search path list. To 
+replace the file with the next match, select the \fBRematch\fP item in the 
+\fBPath\fP menu. 
+
+The \fBReload\fP item will
+reload the currently selected file. A situation where this may be useful
+is, when in the middle of a debug session, it becomes apparent that
+the debugger is using version of a file that differs from the
+build version of the file. If the current version is newer than the object
+code, or the target, the file will appear in reverse video as a warning.
+To correct such a problem, restore the file, and reload. 
+This will reload the text and also retest the file dates and remove the 
+reverse video if appropriate.
+.LP
+The \fBDates\fP item shows the full names and dates of the source
+file, shared library if used, and target binary.
+.LP
+See the later section
+.Sc "CONTROLLING THE DISPLAY OF VARIABLES"
+for information on (among other things) how to change the format of a
+displayed variable, indirect through pointers, expand structures and unions
+and step through the elements of an array.
+.SH "ACCELERATORS IN THE DISPLAY AREA"
+A Shift-left click or double left click does the most commonly used actions for the object
+listed below:
+.LP
+.TP
+.BR "env header"
+Toggle between expanding and compressing the environment display.
+.TP
+.BR "signal header"
+Toggle between expanding and compressing the signal display.
+.TP
+.BR "source header"
+Toggle between expanding and compressing 
+all source files. Files are expanded 
+to `like before state'. If some files have variables or expressions
+displayed, such files will remain visible when the source file list is
+compressed. Use the menu item "completely" to remove all source files.
+.TP
+.BR "source files"
+Toggle between expanding and compressing
+all the global variables of the file
+.TP
+.BR "file add expr"
+See the actions under "variable".
+.TP
+.BR "function"
+Toggle between expanding and compressing
+all the outermost local variables. 
+Variables are expanded to `like before 
+state'.
+.TP
+.BR "function block"
+Toggle between expanding and compressing
+all the local variables of the block
+.TP
+.BR "func add expr"
+See the actions under "variable".
+.TP
+.BR "variable"
+If the variable is a struct or union, or pointer to  a struct
+or union, toggle between expanding and compressing 
+the current level of the variable.  If the variable is a pointer
+to data of integer type, dereference the pointer one level.  If the
+variable is of integer type, or fully dereferenced pointer to a
+such a variable, toggle between unsigned hex and signed decimal
+formats.
+.TP
+.BR "bpt header"
+By default, toggle the global breakpoint enable flag.
+The
+.Sc BreakPointHeaderAcceleratorAction
+X resource may be set to request that \fIups\fP prompt for a new breakpoint
+instead.
+.TP
+.BR "breakpoint"
+By default, toggle the current breakpoint between the active an inactive
+states.
+The
+.Sc BreakPointAcceleratorAction
+X resource may be set to request that the breakpoint be removed instead.
+Double clicking ( but not shift-clicking) on the breakpoint in the source
+window selects has the same effect of toggling or removing breakpoint
+according to the 
+.Sc BreakPointAcceleratorAction
+X resource.
+.SH "SOURCE FILES MENU"
+There is a menu for compressing the source file list. It has options
+of "first level" and "completely". The Shift-left accelerator on the
+source file header is equivalent to "first level". When globals are 
+displayed in \fIups\fP, they appear under the source file name. 
+The "first level" item only removes files that do not have any globals
+or expressions displayed. This cleans up the display, just leaving items 
+of interest.
+The "completely" item removes all file names and globals from the display.
+.LP
+If state has been saved from a prior usage of UPS on the same target,
+by creating a "ups-state" directory, the next invocation of the debugger
+allows you to restore the globals shown before. After the target is running,
+simply expand the source file list to show all files and the chosen
+globals, then compress the list to the first level to leave just the
+globals.
+.LP
+.SH "BREAKPOINT MENUS"
+By selecting a breakpoint, the 
+.Cm "Activate"
+and
+.Cm "Inactivate",
+captions control whether the breakpoint is either active or inactive. 
+Active code is 
+executed normally, whereas inactive code is ignored. The activation state
+is set by the two captions labeled \fBActivate\fP and \fBInactivate\fP that
+appear after selecting the breakpoint object. The current state appears to
+the right of the breakpoint line number.
+The
+.Cm Execute
+caption can be used to execute breakpoint code
+whenever the target context allows it. The most common use for this
+is to repeatedly call a function, such as the Purify API functions
+purify_describe() or purify_all_leaks() without having to enter the 
+call at every line in the source where it may be required.    
+.LP
+By selecting 
+the \fBBreakpoints\fP
+header object, the captions labeled
+\fBEnable\fP and \fBDisable\fP
+allow global control of processing of breakpoints.
+When globally enabled, all breakpoint code is examined, and if the breakpoint
+is active, the code is executed. Conversely, when breakpoint code is
+globally disabled, no breakpoint code is executed, regardless of
+its activation state. The current enabled state is implicitly shown
+by the shaded caption - so after pressing \fBDisable\fP, that
+caption is shaded and the \fBEnable\fP caption becomes normal.
+.LP
+When globally disabled or individually inactivated,
+the breakpoint code will still 
+exist in the source, but the code will be ignored until re-enabled.
+The target will run at full speed for such breakpoints.
+.LP
+When typing in a breakpoint, pressing ESC does partial name completion
+whenever possible. So if a program has just two routines, `process_key()' 
+and `process_cmd()', typing `p' then ESC will expand the line to `process_'
+and in the third line will be a message like 
+`process_' matches `process_key' and `process_cmd'.
+Then typing `k' then ESC will complete the line to `process_key'
+See the \s-2LISTING MATCHING SYMBOLS FOR BREAKPOINTS\s0 section for details 
+on listing the matches.
+.SH SPECIAL HANDLING FOR SIGSEGV AND SIGBUS
+Some programs have exception handlers that allow the program to continue to run 
+despite receiving SIGKILL, SIGSEGV or SIGBUS signals.
+If SIGSEGV or SIGBUS are
+changed from the default of `Stop - ignore signal on continue' to
+`Stop - accept signal on continue', \fIups\fP will stop on the exception, 
+but allow the target to continue running upon pressing 
+.Cm Cont ,
+.Cm Next ,
+or 
+.Cm Step. 
+.LP
+SIGSEGV or SIGBUS signals that intercepted by third party software such
+as ObjectStore can be handled by setting the signal to \fBaccept and continue\fP.
+Do not use \fBignore\fP as then the target never gets the signal and it will
+appear to hang. However, when set to \fBaccept and continue\fP, the target
+can crash on bad code, but \fIups\fP will not catch it. For such cases, set
+a breakpoint in the a target's signal handler (if it has one), or change
+`accept' to `stop'. 
+.SH "CONTROLLING TARGET EXECUTION"
+Once you have the target stopped at a breakpoint there are several
+ways of controlling its execution.
+Most of these are invoked from the \fItarget menu\fP \- the permanent
+menu just below the display area.
+.LP
+The usual way of debugging is to set a breakpoint in the function which
+you think is misbehaving and then step through its code one line at a time.
+The
+.Sc "GETTING STARTED"
+section above explains how to set breakpoints
+and start the target running.
+To step over a line of source, select
+.Cm Next
+from the target menu.
+The code on the highlighted line is executed, and the highlighting
+moves on to the next line to be executed.
+.LP
+The values of variables in the display area are updated every time the
+target stops, so you can watch values change as you step through the
+code.
+On colour displays variables are shown in a different colour if their
+values have changed since the last time the target stopped.
+.LP
+If the line to be executed calls a function,
+.Cm Step
+takes you to the first line of the called function,
+and stepping continues in the function.
+The step action may take some time occasionally; however the 
+.Cm Stop
+command can be used to break out such a situation.
+If you don't want to step through the code of called functions in this
+way, use the
+.Cm Next
+command.
+This behaves like
+.Cm Step ,
+except that it never steps into called functions.
+.LP
+Both
+.Cm Next
+and
+.Cm Step
+work with respect to the currently displayed source.
+If you click on a function in the stack trace and select
+.Cm Source
+to display its source, a subsequent
+.Cm Next
+or
+.Cm Step
+moves to the next line of the displayed source.
+This makes it easy to get out of a function that you have stepped into
+by accident and don't wish to step all the way through.
+Use the
+.Cm Source
+command to display the source of the calling function, then use
+.Cm Next
+or
+.Cm Step .
+.LP
+The
+.Cm Cont
+command in the target menu offers a third way to
+control the target \- this command runs the target until it
+hits another breakpoint, gets a signal, or exits.
+.LP
+See the section
+.Sc "THE SOURCE REGION"
+for details about the 
+.Cm Attach
+and
+.Cm Detach
+buttons.
+.LP
+Finally, you can `drag' execution in the target to a line in the
+source file.
+Move the mouse cursor over the line you wish to get to, and press
+and hold down the right mouse button.
+A popup menu appears, with the captions
+.Cm "Add breakpoint"
+.Cm "Execute to here" .
+.Cm "Jump to here" .
+and
+.Cm "Edit source" .
+Drag the mouse down so that the
+.Cm "Execute to here"
+caption is highlighted, and release the button.
+The effect of this is to set a temporary breakpoint at the line,
+temporarily disable all other breakpoints, and then continue the
+target.
+You can use this command to move past uninteresting bits of code
+without having to set up and remove breakpoints.
+.LP
+The second command on the popup menu,
+.Cm "Add breakpoint" ,
+adds a breakpoint at the line of source you pointed at.
+Unfortunately, to set a breakpoint at (or execute to) a single statement that
+extends over several text lines, you must point at the last
+text line.
+This is due to limitations in the symbol table information put out
+by the compilers.
+The 
+.Cm "Jump to here"
+command causes the target execution to jump to the current line
+without executing any intervening code. Use this with caution as it
+is possible to jump to a bad context where the data is bad or where there
+is no valid call stack. The safest usage is to jump over lines
+within a function. It can also be used to jump back within a function.
+If you try a jump to an invalid context, such as to a point up in
+the stack, you can use the stop button to restore the program to the state
+it had before the jump.
+When the current lowest level function has no symbols (such as "poll"), you will
+need to press the stop button twice to restore the program state.
+The 
+.Cm "Edit source"
+command spawns an editor (typically either emacs or vi), 
+and set the cursor at the current location in the file. The editor
+used is controlled by the EDITOR environment variable.
+.LP
+You can stop the target running at any time by clicking on
+.Cm Stop
+in the target control menu.
+The target will then stop wherever it is currently executing as if it
+had hit a breakpoint. In addition, if a symbol search puts the debugger 
+in a long traversal of stack functions or files, the 
+.Cm stop
+command will break it out of the search. The command is queued, and will
+be honored after completing the scan of the current function or file.
+In addition, the 
+.Cm stop
+command will break out of a
+.Cm step
+command that is taking a long time.
+.LP
+The
+.Cm Kill
+command kills off the current instance target process.
+You can then use
+.Cm Start
+or
+.Cm "Execute to here"
+to start the target again.
+Quitting
+.I ups
+also kills the target process (unless you attached
+.I ups
+to a running process, in which case
+.I ups
+detaches from the process and leaves it to continue unmolested).
+.SH "THE TYPING LINE MENUS"
+The caption labeled \fBWindows\fP, just to the left of the \fBQuit\fP 
+caption, provides a number of options loosely related to coordinating
+the various UPS windows.
+The \fBSnapshot Selected Objects\fP item dumps objects (like the stack trace)
+to the output window.
+The \fBSnapshot All Objects\fP item dumps the complete display to the output
+window.
+The \fBMessage Logging\fP item toggles on or off the copying of all subsequent
+messages printed to the 
+message line to the bottom window. As well as providing a log of messages,
+this facility allows the text of messages to be selected for pasting.
+This allows a path that has been displayed with the path caption to
+be pasted when setting a breakpoint in a function name that is not unique.
+.LP
+The four items \fBNo Raise On Break\fP, \fBRaise On Break\fP,
+\fBRaise On Break/Lower On Run\fP and \fBRaise On Break/Iconify On Run\fP
+select how
+.I ups
+manages its window(s) when the target process goes in or out of run.
+The default action is \fBNo Raise On Break,\fP that is, no special action
+is taken.  If \fBRaise On Break\fP is selected, 
+.I ups
+will automatically raise its main window to the foreground when the debugged
+application stops.
+If \fBRaise On Break/Lower On Run\fP is selected, then in addition to
+raising the main window on a break, 
+.I ups
+will lower the main window to the bottom of the window
+stack, after a brief delay, when the process goes into run.
+If \fBRaise On Break/Iconify On Run\fP is selected, then in addition to
+raising the main window on a break, 
+.I ups
+will iconify the all windows, after a brief delay, when the process goes
+into run.
+.LP
+In split screen modes, these options raise or lower the window containing
+the source display and start/next/step buttons.
+.LP
+The initial state of these options may be set using the
+.B WantRaiseOnBreak
+family of X Resources
+(see the section
+.Sc "X RESOURCES"
+below), or by the -raise_on_break, -lower_on_run,
+and -iconify_on_run command line options.
+.LP
+The button labeled \fBSearch \fP to the left of the \fBWindows\fP button
+is used to search for regular expressions
+(using the same syntax as \fIgrep(1)\fP patterns) in the display window.
+First type in the pattern to be searched for (typed characters appear
+in the typing line at the top of the window on the left) then
+press and hold down the left mouse button over the 
+.Cm Search 
+caption.
+A popup menu appears with the options 
+.Cm Backwards
+and 
+.Cm Forwards .
+Move the mouse over the one you want and release the button.
+If the pattern is found, the matching text is made visible in the
+display region and highlighted.
+.LP
+The button labeled \fBHelp \fP to the left of the \fBSearch\fP button
+provides simple textual help information on a variety of topics.
+Output is placed in the bottom output window. By default, the text is appended
+to the bottom of the window, with the scrollbar positioned so that the
+topic begins at the top of the window. The last item in the \fBhelp\fP 
+menu allows the window to be cleared before a new help topic is printed out.
+.SH "TARGET COMMAND LINE"
+The first line of the display area shows the command line that
+specifies the target to debug. It can be edited and changed to a different
+target at any time in order to debug a different target. It accepts csh
+style tilde notation. When changing targets, \fIups\fP will read new symbols as 
+necessary and reinstate breakpoints and variables as possible. So if you are
+working on a shared library, and you need to test it with 
+different targets, simply enter the new target name and 
+attach, and the debug state information will be preserved.
+.SH "TARGET COMMAND LINE ARGUMENTS"
+The second line of the display area shows the command line arguments that
+will be given to the target when it is next started.
+The arguments shown include the zero'th argument which is initially set to the name
+of the target.
+.LP
+You can specify an initial set of arguments for the target with the
+.B -a
+option when you start
+.IR ups .
+If you don't give the
+.B -a
+option and you are debugging from a core file,
+\fIups\fP attempts to extract the command line arguments from the core file.
+Otherwise the command line contains no arguments other than the name of the
+target.
+.LP
+\fIUps\fP parses the command line in a similar way to the shell.
+It supports Bourne shell type redirection (>, >>, <, >&dig, etc.) as
+well as the \fIcsh\fP forms >& and >>&.
+\fIUps\fP also understands most \fIcsh\fP
+metacharacters \- globbing with `*', `?' and `[xyz]', the `~', `~user' and
+`{a,b,c}' shorthands, and quoting with single or double quotes and backslash.
+The current version of
+.I ups
+does not support
+.I $var 
+type shell variable substitution.
+.LP
+You can edit the command line at any time to change the command line arguments
+(although the changes will only take effect when you next start the target).
+.LP
+The command name shown is just the zero'th argument and can be edited just
+like the other arguments.
+This is useful with programs which use the zero'th argument as a sort of
+hidden flag.
+Changing the command name only affects the arguments given to the target \-
+it does not change which program is being debugged.
+.SH "CONTROLLING THE DISPLAY OF VARIABLES"
+When you add a variable to the display (see
+.Sc "EXAMINING VARIABLE VALUES"
+above)
+it is displayed in a default format.
+If you click the left button over the line for the variable, a menu
+appears in the top part of the window.
+You can use this menu to set the display format for the variable (
+.Cm Format )
+,
+to change the level of indirection for pointers
+.Cm * "" (
+and
+.Cm & ),
+to expand all base classes and show vector tables for a class (
+.Cm  :: ),
+to show all the members of structures and unions (
+.Cm Expand
+and
+.Cm Collapse ),
+to choose the format variables are displayed in
+.Cm Format ,
+to duplicate or delete entries for variables (
+.Cm Dup
+and
+.Cm Del )
+to control whether typedefs are used in displayed variables
+(
+.Cm Decl )
+and if watchpoints are available, add a watchpoint at the variable address
+(
+.Cm Watch )
+..
+.LP
+.B
+Pointers
+.LP
+The default for a pointer variable is simply to show the pointer value
+in hex.
+To take a common example, if you add a variable of type
+.fX "pointer to pointer to char"
+called
+.fX argv
+to the display, you will get a line like:
+.Vs
+char **<argv>		0x7fffe184
+.Ve
+.LP
+The angle brackets separate the type from the value.
+In this example, what is shown is the value of argv, which is
+of type
+.fX "char **" .
+.LP
+If you now click with the left mouse button on this line, and select
+.Cm * ' `
+(the leftmost caption) in the variables menu, the format
+of the line changes to something like:
+.Vs
+char *<argv{0}>		0x7fffe1d0
+.Ve
+.LP
+This says that what is shown is the value of
+.fX argv[0] ,
+which is of type
+.fX "char *" .
+The braces (`{' and `}') are used to distinguish a dereferenced pointer
+from a true array.
+.LP
+A second click on the
+.Cm * ' `
+menu option changes the line to:
+.Vs
+char <argv{0}{0}>		"foo"
+.Ve
+.LP
+This is a special case in
+.I ups
+\- variables of type
+.fX char
+are displayed as strings if they are indirected pointers or members of arrays.
+.LP
+The
+.Cm & ' `
+menu option is the opposite of
+.Cm * ' `
+\- it drops
+one level of indirection.
+You can only use this on indirected pointers.
+Use an expression if you want to see the address of a variable (see
+.Sc "EXPRESSIONS IN THE DISPLAY AREA"
+below).
+.LP
+.B
+Arrays
+.LP
+Arrays are initially displayed with all subscripts zero.
+You can edit the subscript to another value by clicking on it
+with the middle mouse button.
+A marker bar appears, and you can use the delete key to delete the
+old subscript and type a new one.
+When you hit ESC, the value of the new array element is shown.
+.LP
+Often you wish to quickly scan through all the elements of an array.
+You can do this using either the arrow key or the `>' and '<' keys.
+When editing an array subscript, the '>' key adds one to the
+subscript value and displays the new element. Note that the
+.Sc ReverseArrows 
+X resource can be used to reverse the function of the arrow keys.
+Similarly, the '<' key subtracts one from the subscript value.
+Using these keys you can rapidly scan up or down an array.
+.LP
+.I Emacs
+users can use ^P and ^N as synonyms for '<' and '>'.
+.I Vi
+users can use 'k' and 'j' similarly.
+.LP
+The arrow (or whatever) keys actually act on the digit to the left of
+the cursor, so by moving the cursor left you can step by tens,
+hundreds etc.
+.LP
+.B
+Structures
+.LP
+Note: in this section `structures' also include unions: they are simply
+treated as structures with all members having an offset of zero.
+.LP
+Variables that are structures or pointers to structures are initially
+displayed with just the address in hex.
+You can use the 
+.Cm Expand
+command in the variables menu to add
+all the members of a structure to the display.
+The structure members are indented to make it clear which structure
+they belong to.
+Clicking on
+.Cm Expand
+will produce a popup menu with the options
+.Cm "Expand Structure"
+and
+.Cm "Expand Static Variables".
+Selecting 
+.Cm "Expand Structure"
+will display all the non-static members members of the structure
+except vector tables. ( See the section
+.Sc "EXAMINING BASE CLASSES AND VECTOR TABLES"
+below for vector tables.)
+If the selected item is a member of a class with static members, the
+.Sc "Expand Static Variables"
+option will show all the static members of the class.  See the section
+.Sc "EXAMINING STATIC MEMBERS OF CLASSES"
+below.
+.LP
+If a structure element is itself a structure or a pointer to a structure,
+it can be expanded in turn to show all its members.
+In this way linked data structures can be explored.
+For a more selective way of exploring a linked data structure, see
+the
+.Sc "EXAMINING LINKED DATA STRUCTURES"
+section below.
+.LP
+.Cm "Show size"
+will display size of the arrays
+and structures (but not memory sizes that may have been allocated to a
+pointer - such variables will the standard 4 bytes).
+Note that in the display window, a variable formatted as "type <name[0]>" indicates
+an array, whereas "type <name{0}>" indicates a pointer.
+.LP
+To remove all the members of a structure from the display, use the
+.Cm Collapse
+command in the variables menu.
+This has a submenu with the options
+.Cm "First level"
+and 
+.Cm Completely .
+The first of these removes all members except expanded ones; the second
+recursively collapses all expanded structures below the selected one.
+.LP
+.B
+Changing formats
+.LP
+By default integer variables are displayed in decimal
+and pointer values are shown in hex.
+You can change the format with the 
+.Cm Format
+command in the
+variables menu.
+The possible formats are signed or unsigned decimal, hex, octal and binary,
+as well as `ascii' and `string'.
+The `ascii' format displays integers in C character notation (e.g.
+the value 65 is displayed as `a').
+The `string' format is applicable to variables of type
+.fX char
+that are indirected pointers or arrays \- it treats the address
+as the first character of a NULL terminated string.
+.LP
+Floating point values are shown in the conventional notation (using the
+.I printf
+.fX %g
+format).
+You can use the
+.Cm Format
+command to display a hex representation of the value (it makes no difference
+whether you select signed or unsigned hex from the menu).
+This shows in hex the bit pattern used to represent the floating point value.
+.LP
+.B
+Duplicating and deleting entries
+.LP
+The 
+.Cm Delete
+command in the variables menu deletes
+all selected variables from the display area.
+This is useful for tidying up the display by removing variables
+that are no longer of interest.
+.LP
+Sometimes it is useful to have a variable displayed more than
+once.
+One common case is where you want to see several elements of an
+array simultaneously.
+The 
+.Cm Dup
+command in the variables menu duplicates the
+entries for all selected variables.
+So to see multiple elements of an array, use 
+.Cm Dup
+to
+add an entry for each element you wish to see, then
+edit the subscripts separately for each entry.
+When duplicating a pointer variable for which the contents
+of the pointer is displayed, the array index is bumped by 1, or
+by 40 if a string is displayed.
+.LP
+.B
+Use of typedefs
+.LP
+If a structure, union or enum has a typedef name then
+.I ups
+will use it in the display area.
+Thus if you have the following in a function:
+.Vs
+typedef struct foo_s {
+	int x;
+	int y;
+} foo_t;
+
+foo_t *f;
+.Ve
+then clicking on variable
+.fX f
+will add a line like:
+.Vs
+	foo_t *<f>		0x40ec
+.Ve
+to the display area.
+Typedefs are not used if they hide a level of indirection or an
+array, or if the typedefed type is not a struct, union or enum.
+.LP
+If you want to see the non-typedef type for a variable in the display
+area, select the variable and press and hold down the left mouse button
+over the
+.Cm Decl
+command in the variables menu.
+This produces a popup menu with the captions
+.Cm "Use typedefs"
+and
+.Cm "Ignore typedefs" .
+Release the mouse over
+.Cm "Ignore typedefs"
+and you will be shown the non-typedefed type for all the selected variables.
+.SH "CHANGING VARIABLE VALUES"
+You can change the value of a displayed variable simply by editing
+the displayed value (i.e. by clicking on it with the middle mouse
+button and editing in the new value).
+This works for C pointers and integral types (including enums), floating
+point values and strings.
+.LP
+You can use any of the integer display formats for the new value
+(decimal, hex, octal, binary or ASCII character).
+You can use enum constant names for new enum values, and function
+names for function pointers.
+When editing strings or characters you can use the standard C notation
+for special characters
+.fX \en ', (`
+.fX \eb ', `
+.fX \e007 ' `
+etc).
+.LP
+Normally
+.fX ups
+will not let you edit extra characters into a string as this would
+overwrite whatever was stored in memory just after the string.
+If space is known to exist (for example if the string is stored
+in an array of known size and there are unused bytes) then you can add
+as many characters as will fit.
+If you know you want to overwrite memory beyond the end of the string
+you can force 
+.I ups
+to accept a long value by putting
+.fX >> ' `
+before the leading quote character of the string.
+.LP
+Normally a trailing NUL
+.fX \e0 ') ('
+is added to the edited string in the normal C way.
+If you delete the trailing quote character then this is omitted.
+.SH "EXPRESSIONS IN THE DISPLAY AREA"
+You can add C expressions as well as variables to the display area.
+This is useful if you wish to see what an expression in the source
+code evaluates to.
+It also allows you to use casts when you know better than the source
+code what the type of a given variable is.
+.LP
+To add an expression, select a function in the stack trace and
+click on
+.Cm "Add expr"
+in the function menu.
+A marker bar appears, ready for you to enter an expression.
+When you have finished type ESC, and if the expression is legal
+the value will be displayed.
+If there is an error in the expression you will get an error message
+and the marker bar will be repositioned at the point of the error.
+.LP
+A workaround for dealing with preprocessor macros is to create a repltab
+file. Ups will look in 
+.fX ups-state/repltab
+below the current directory. If that file does not exist, it will look for 
+.fX $HOME/repltab. 
+See the section
+.Sc "PASTING EXPRESSIONS FROM THE SOURCE WINDOW" 
+for details on the repltab file.
+.LP
+In an expression you can use any variable name, structure tag or typedef
+name that is in scope in the function.
+If you want to add expressions using a variable in an inner block,
+you will have to add the expression to the appropriate inner block.
+The easiest way to get the inner block object displayed is to click
+on a variable in the inner block in the source region.
+Once it is displayed select the block header and click on
+.Cm "Add expr"
+in its menu.
+.LP
+You can `bump' numbers in expressions in a similar way to array
+subscripts.
+Hitting the down arrow (or Control-N) over a number while editing an expression
+increases the digit to the left of the marker bar and displays
+the new value of the expression.
+Similarly the up arrow (or Control-P) decreases the digit to the left of the
+marker bar and redisplays the expression value.
+.LP
+Expressions are reevaluated like variable values every time the target stops.
+They also have the same menu associated with them as variables,
+and you can have both expressions and variables in the same selection.
+All the menu commands work as they do on variables.
+This means in particular that if you add an expression whose type
+is `pointer to struct' (or union) you can use
+.Cm Expand
+to show the structure elements.
+You can also use
+.Cm Format
+to change the format used to display the expression value.
+.LP
+You can call target functions in expressions, but you can't
+modify target data in a display
+area expression (thus operators like `++' are illegal).
+.SH "EXAMINING BASE CLASSES AND VECTOR TABLES"
+When the object selected is a class, clicking on
+.Cm ::
+recursively adds all base classes for the object to the display, and
+displays the vector table(s), showing the address symbolically when
+possible.  This is useful if you want to expand a base class to
+look at a member of a base class several levels deep in the class hierarchy,
+without expanding everything in between.
+
+In addition, it is usually possible to tell from the name of the
+vector table which subclass of the current class the object is "really"
+a member of.
+
+A special case worth knowing about occurs when the selected object has
+been deleted.  In this case, the vector table will indicate
+that the object is a member of the root class for the class hierarchy,
+rather than of any subclass.
+
+For example, consider the short C++ program:
+.Vs
+.ps -2
+.vs -2
+class A {
+public:
+                A() { cnt++;} 
+   virtual      ~A() { cnt--;}
+private:
+   static int cnt;
+};
+
+int A::cnt;
+
+class B : public A {
+public:
+          void bad();
+  virtual void v() {}
+};
+class C : public B {
+public:
+  virtual void v() {}
+};
+void B::bad()
+{
+   delete this;
+   v();
+}
+main()
+{
+   C* c = new C;
+   c->bad();
+}
+.ps +2
+.vs +2
+.Ve
+If you stop at the start of B::bad(), click on "this" then select  "::", you
+will see something like:
+.Vs
+Functions
+   main
+   B::bad
+     B* <this{0}>         0x12345678
+       struct A <A>          0x12345678
+         void *<_vtbl.>         C::__vtbl
+Breakpoints
+.ft P
+.Ve
+.LP
+The _vtbl entry shows that "this" is really a C, a subclass of B.
+.LP
+When you single step over the delete, the display changes to
+.Vs
+Functions
+   main
+   B::bad
+     B* <this{0}>         0x12345678
+       struct A <A>          0x12345678
+         void *<_vtbl.>         A::__vtbl
+Breakpoints
+.ft P
+.Ve
+.LP
+Since class A is a base class for B, seeing that "this" is really
+an A in a method for class B is surely an error, and often results from
+object having been been deleted.
+
+
+The expansion of base classes only works for compilers that include
+base class information in their symbol tables, namely for g++ and SC4.
+The symbolic representation of vector tables works for both of these
+and also for cfront.
+.SH "EXAMINING STATIC MEMBERS OF CLASSES"
+Static members of classes may be examined as other global data.
+In addition, depending on the compiler, they may be examined
+as members of a structure are examined.
+
+In the example in the previous section, 
+the static member A::cnt may be displayed by
+.IP
+Typing "A::cnt" in the typing line.
+.IP
+Clicking on "A::cnt" anywhere in the source window.
+.LP
+In addition, if the compiler supplies information about static
+members in the symbol table  (g++ and SC4 do this), A::cnt
+may be examined by:
+.IP
+While in a NON-static method for class A, click on "cnt" in the source window.
+.IP
+Select an object of type A and enter ".cnt" in the typing line.
+.IP
+Select an object of type A, press the 
+.Cm Expand
+option then select
+.Cm "Expand Static Variables"
+from the resulting popup menu.  This latter option displays all
+static members for class A.
+.SH "PASTING EXPRESSIONS FROM THE SOURCE WINDOW"
+It is often useful to display the value of an expression in the source.
+You could select
+.Cm "Add expr"
+as described in the previous section,
+and cut and paste the expression from the source window.
+This works, but there is a quicker way: simply select the text of the
+expression in the source window while holding the shift key down (i.e.
+press the shift key, then drag the mouse over the desired text).
+When you release the mouse button, the selected text is added as an
+expression in the display area.
+It is OK to drag over multiple lines.
+.LP
+You will notice that when you first press the left mouse button (with
+the shift key pressed), ups highlights some text.
+This is its guess as the to expression you would like to paste.
+If you are happy with this, release the mouse button without moving
+the mouse, and the highlighted text will be added as an expression.
+If the highlighted text is not what you want, drag the mouse to make
+the selection as described before.
+.LP
+Pasting expressions from the source window can often fail because of
+preprocessor macros which
+.I ups
+does not understand (e.g.
+.fX NULL ).
+The correct fix for this is for
+.I ups
+to understand
+.fX #defines ,
+but in the interim there is a workaround: if the file
+.fX ups-state/repltab
+exists below
+the current directory ups will apply the substitutions specified
+there. If that file does not exist, it will look for 
+.fX $HOME/repltab. 
+Here is a
+.fX repltab
+file that would deal with
+.fX NULL
+and
+.fX EOF :
+.Vs
+	# Repltab for ups
+	NULL	0
+	EOF	(-1)
+.Ve
+.LP
+Hash comments and blank lines are ignored in the normal way.
+Any substitutions will be visible in the pasted expression.
+.LP
+Ups checks to see if the repltab file has been updated each
+time an expression is pasted, so you don't have to restart ups
+to it to notice changes.
+.SH "ADDING INTERPRETED CODE"
+The
+.I ups
+display area gives a good picture of that state of
+a program at any one time.
+Often though, you want a record of what happened over a series
+of calls of a function.
+This is one of the reasons why people still tend to put print statements in code
+despite the availability of debuggers and the inconvenience
+of recompiling the code.
+.LP
+To make it easier to add diagnostic output statements,
+.I ups
+allows you to insert fragments of C code at any breakpoint.
+The default breakpoint action \- stopping the target \- is represented
+as a fragment of pseudo C code.
+This is the
+.Vs
+#stop;
+.Ve
+.LP
+line that appears in the source region when you add a breakpoint.
+.LP
+You can change this to a fragment of C code, editing the text
+in the usual way by clicking the middle mouse button to
+position a marker bar.
+You can use the RETURN key to enter multi-line code fragments.
+As with other editable fields, you end the edit with ESC.
+If there is an error in the code, an error message is given
+and the marker is positioned at the point of the error.
+.LP
+For example, you could change the breakpoint action to:
+.Vs
+printf("Entered function foo with x = %d\\n", x);
+.Ve
+.LP
+From now on, whenever the target reaches this point in the program,
+it will call \fIprintf\fP rather than stopping.
+.LP
+Note that a breakpoint will not stop the target unless the special
+keyword
+.fX #stop
+is executed.
+You can use this to set conditional breakpoints, like:
+.Vs
+if (i == 72)
+	#stop;
+.Ve
+.LP
+or, to use a more sophisticated example:
+.Vs
+if (strcmp(p->p_name, "foo") == 0)
+	#stop;
+.Ve
+.LP
+In the above examples, the function calls (\fIprintf\fP and \fIstrcmp\fP)
+are implemented as calls to functions in the target.
+You can call any target function from a breakpoint, but in the current
+version of
+.I ups
+all functions are assumed to return
+.fX int .
+You can often get around this by casting the return value to the correct type.
+.LP
+One problem with calling functions like
+.fX printf
+to do diagnostic
+output is that the output is mixed up with the normal output of the target
+program.
+If you want the output kept separate, use the built in
+.I ups
+function
+.fX $printf .
+This function creates a new region in the
+.I ups
+window the first
+time it is called, and sends output to that region.
+The menu at the top of the region allows you to search for regular
+expressions in the output, as well as page through it and clear
+all output.
+.LP
+The
+.fX $printf
+function takes the same format string as \fIprintf\fP,
+with one addition.
+The `%v' format string can be used with any variable type, and means
+print in the default
+.I ups
+format for the type.
+The `%v' format character will print symbolic names for
+.fX enum
+values and function pointers (i.e. you will get output like
+.fX RED
+and
+.fX close_callback
+rather than
+.fX 23
+and
+.fX 0x5e748 .
+In addition `%v' applied to a struct or union pointer will print the
+names and values of all the fields of the pointed-to struct or union.
+.LP
+You can declare your own variables in breakpoint code.
+This is useful when you want only want to stop at a breakpoint
+after it has been hit a given number of times.
+A code fragment to do this would look something like:
+.Vs
+{
+	static int count = 0;
+
+	if (++count == 74)
+		#stop;
+}
+.Ve
+.LP
+This would stop the target the 74th time the breakpoint was encountered.
+Static variables are reinitialized every time the target is started.
+Automatic variables are uninitialized and do not preserve their values
+between separate executions of breakpoint code.
+.LP
+You can mix C interpreter variables with real target variables
+in expressions in breakpoint code, with some restrictions.
+You can assign to target variables, but making
+a target pointer point at an interpreter variable will not work,
+as interpreter variables do not exist in the target's address space.
+On the other hand, the interpreter knows about the target address
+space, so you can point interpreter variables at target variables.
+.LP
+Note that you can only
+.I add
+interpreted code \- you can't directly affect the flow of control
+of the compiled code.
+For example adding a
+.fX return
+statement will
+.I not
+cause the compiled function to return to the caller.
+It is sometimes possible to indirectly affect the flow of control
+by judicious changes to variable values.
+.LP
+You cannot add C interpreter variables to the display; if you click on
+a variable in interpreted code it is taken to be a variable from the
+target process.
+.LP
+[ You probably want to skip this paragraph. ]
+For people who want to live at the ragged edge, the C interpreter
+uses copy-in copy-out semantics when passing interpreter addresses
+to the target.
+If you pass an argument of type
+.fX "pointer to T"
+to a compiled target function then the interpreter copies
+.fX sizeof(T)
+bytes to the target address space and passes a pointer to that copy.
+When the target function returns the same number of bytes are copied
+back from the target into the interpreter address space.
+Similarly when you pass an array, the contents of the array are
+copied in and out.
+Note that this mechanism does not work in general \- it only copes
+with passing an array or a pointer to a single object.
+The main motivation for this feature was to make string literals
+(e.g. \*(Cr"hello"\fP)
+work as expected when passed to target functions like
+.fX strcmp .
+.SH "EXAMINING LINKED DATA STRUCTURES"
+\fIUps\fP has several facilities that are useful for examining linked data
+structures.
+Firstly, you can expand structures or structure pointers.
+By repeatedly expanding structures you can follow down a linked list or tree.
+.LP
+Often this adds too much information to the display, as you are probably not
+interested in all the structure elements.
+There is a more selective method of expanding lists and trees which lets
+you easily see just the elements you want.
+.LP
+Suppose you have a structure declaration like this:
+.Vs
+struct linkst {
+	struct linkst *prev, *next;
+	int key;
+};
+.Ve
+.LP
+Suppose also that you have a variable
+.fX linkptr
+displayed which is a pointer to this structure.
+.LP
+If you type in a `.' followed by the name of element, such as
+.fX prev ,
+that element of any selected structures or structure pointers will be
+added to the display and selected when you hit ESC.
+.LP
+Assume
+.fX linkptr
+in the example above is displayed and selected.
+Typing
+.fX .next
+followed by ESC will add the
+.fX next
+field of
+.fX linkptr
+to the display and select it, and deselect
+.fX linkptr .
+Typing ESC again will add the next element of the list.
+Thus by repeatedly typing ESC you can easily walk down a linked list.
+.LP
+You can give many structure elements separated by spaces.
+Thus the line
+.Vs
+\&.key .next
+.Ve
+.LP
+would add both fields to the display.
+In this way you can walk down a linked list with members of interest
+displayed as well as the links.
+.LP
+One problem with this way of looking at lists is that the indentation
+of structure elements tends to make the list wander off the right hand
+side of the display area.
+To avoid this you can say `@member' rather than `.member'.
+The `@' character means do not indent \- this is the only difference
+between it and `.'.
+Thus to get a nicely laid out list in the example above you could
+enter the line:
+.Vs
+\&.key @next
+.Ve
+.LP
+and keep typing ESC to walk down the list.
+.LP
+One last wrinkle: if you add `#nnn' to the end of the typing line, where
+`nnn' is a decimal number, the effect is as if you had pressed ESC that
+number of times.
+This is handy if you want to see all of a 500 element linked list without
+having to type ESC 500 times.
+.LP
+In C interpreter code (described in the previous section) you can
+scan through a linked list as if it were an array using the
+(non-standard)
+.fX ->[\fIcount\fP] ' `
+\fRoperator.
+This is a shorthand for applying the
+.fX -> ' `
+operator
+.I count
+times.
+You can use the arrow keys (or ^N and ^P) as described in
+.Sc "EXPRESSIONS IN THE DISPLAY AREA"
+to bump the count parameter up or down and step through a linked list one
+element at a time.
+.LP
+Thus in the example above, adding the following expression to the
+display area:
+.Vs
+linkptr->[0]next
+.Ve
+would just show the value of
+.fX linkptr
+(the
+.fX ->
+operator is being applied zero times).
+You can expand the structure and add and delete elements to get the
+display set up as you like.
+Then you can edit the 
+.fX 0 ' `
+to
+.fX 1 ' `
+to see the next element of the list, and so on.
+.SH "DUMPING MEMORY"
+The contents of raw memory may be dumped to the output window in two ways.
+If the memory to be dumped is the address of a simple variable or structure, or
+is pointed to by a pointer variable, select the variable of interest,
+press the 
+.Cm Expand
+option then select
+.Cm "Dump Memory"
+from the resulting popup menu.  This option displays the contents of memory at
+the selected address.  The length of memory displayed, and the grouping
+(as bytes, shorts, or longs) is based on the type of object selected.
+This option also prints in the output window the equivalent typing line
+command, which you may copy to the typing line and edit as required.
+.sp
+The commands to display memory through the typing line begin with "%d"
+(for dump):
+.Vs
+%d  address [size|.. end_address]
+     dump size bytes of memory at address
+%db address [size|.. end_address]
+     dump size bytes of memory as bytes at address
+%ds address [size|.. end_address]
+     dump size bytes of memory as shorts at address
+%dl address [size|.. end_address]
+     dump size bytes of memory as longs at address
+.Ve
+If the size is omitted, 16 bytes are displayed.  If the grouping is unspecified,
+bytes or shorts are selected depending on target endianness.
+.SH "ENVIRONMENT VARIABLES"
+By default the target inherits the same set of environment variables as
+.I ups .
+You can change this using the
+.Ob Environment
+object in the display area.
+Any changes to the target environment take effect the next time the
+target is started.
+.LP
+Selecting the
+.Ob Environment
+object produces a menu with the commands
+.Cm "Expand" ,
+.Cm "Collapse" ,
+.Cm "Add entry"
+and
+.Cm "Reset env" .
+The
+.Cm Expand
+command adds an entry to the display area for each environment variable.
+You edit an environment variable name or value by clicking on it in the
+normal way with the middle mouse button.
+.Cm Collapse
+removes all the entries from the display area.
+.LP
+To add a new entry select
+.Cm "Add entry"
+from the environment menu and type in the `\fIname=value\fP' string.
+.I Ups
+will accept any string as an entry, but gives a warning for odd-looking
+entries.
+.LP
+If you wish to abandon any changes you have made to the environment
+select
+.Cm "Reset env" .
+This resets to the environment to the state it was in when
+.I ups
+was started.
+.LP
+If you select an individual environment entry you get a menu with
+the options
+.Cm Hide ,
+.Cm Delete
+and
+.Cm "Append entry" .
+The
+.Cm Hide
+command removes the entry from the display but not from the environment.
+This is useful for clearing the display of uninteresting entries.
+By contrast the
+.Cm Delete
+command removes the entry from the environment.
+The
+.Cm "Append entry"
+command allows you to add a new environment variable just after the
+one selected; this is useful if you need the environment set in a
+particular order.
+.LP
+.SH "SIGNALS"
+When the target gets a signal control returns to
+.IR ups .
+Depending on the signal and the way you have specified it should be handled,
+the target is either stopped or restarted (possibly with a display refresh),
+and the signal can either be passed on to the target or ignored.
+.LP
+Near the top of the main display area is a 
+.Ob Signals
+object.
+Selecting this produces a menu with 
+.Cm Expand
+and 
+.Cm Collapse
+as options.
+Expanding the signals object produces a list of all signals, with the
+current way the signal is handled displayed for each signal.
+Selecting a signal produces a menu which lets you change the way it
+is handled.
+.LP
+You can control whether a given signal causes
+.I ups
+to stop the target,
+refresh the display and continue the target or just continue the target
+without refreshing the display.
+You can also control whether the signal should be passed on to the target.
+.LP
+You can trim the signals display by selecting the ones you aren't
+interested in and clicking on
+.Cm Hide
+in the signals menu.
+This will remove those signals from the display area.
+.LP
+The
+.Cm Next ' `
+and
+.Cm Step ' `
+commands both step over functions called as a
+result of a signal.
+Breakpoints in signal handling functions work normally.
+.SH "TYPING LINE SHORTCUTS"
+A few frequent requests can be invoked by typing input as an alternative
+to mouse operations.
+.IP \(bu
+Typing "%g name" will display the global variable or function `name', skipping the
+sometimes slow search for `name' as a local variable.
+.IP \(bu
+Typing "%l file" will list 'file', the same as expanding the list of
+source files and clicking on a file name.  It is only necessary to enter
+the final component of the file name.
+.IP \(bu
+Typing "%b function" will enter a breakpoint at the entry to `function',
+the same as clicking on the breakpoint header, selecting "add breakpoint",
+and entering the function name.
+.IP \(bu
+Typing "%d address" will dump 16 bytes of memory at the given address to the
+output window. See the section
+.Sc "DUMPING MEMORY"
+for more on the %d command.
+.IP \(bu
+Typing "/pattern" or "?pattern" will do a forward or backward search for
+pattern.  The search may be continued in the same direction by hitting
+RETURN, or in either direction using the \fBSearch\fP pulldown menu.
+.SH "X AND SUNVIEW COMMAND LINE FLAGS"
+Under SunView
+.I ups
+recognizes the standard SunView tool flags.
+These can occur anywhere on the command line.
+.LP
+Under X
+.I ups
+recognizes most common X11 command line arguments.
+The currently recognized flags are:
+.TP
+.B \-iconic
+Start up as an icon rather than as a window.
+.TP
+.BI \-display " displayname"
+Create a window on the named display rather than using the value
+of the
+.fX DISPLAY
+environment variable.
+.TP
+.BI \-geometry " geometry"
+Use the specified X geometry for the window.
+.TP
+.BI \-name " name"
+Use
+.I name
+rather than the default
+.fX ups
+as the window and icon name.
+This name is also used when fetching X defaults.
+.TP
+.BI \-fn " fontname"
+Use X font
+.I fontname
+rather than the default.
+.TP
+.BI \-fg " colorspec"
+Use
+.I colorspec
+(which should be a standard X11 color specification)
+as the color of the foreground pixel.
+.TP
+.BI \-bg " colorspec"
+Use
+.I colorspec
+as the color of the background pixel.
+.TP
+.B \-rv
+Reverse the foreground and background pixel colors.
+.LP
+These options are available under X and SunView:
+.TP
+.B \-mono
+Force monochrome mode even if when using a color display.
+Use this flag to stop
+.I ups
+interfering with the colormap on pseudocolor displays (e.g. when
+you are debugging a program with a colormap related problem).
+The flag is also useful on some Sun displays under SunView where
+using monochrome significantly increases the display speed.
+.TP
+.BI \-wn_record " filename"
+Record mouse and keyboard events in file
+.IR filename .
+.TP
+.BI \-wn_replay " filename"
+Read mouse and keyboard input from file
+.I filename
+rather than the mouse and keyboard.
+The file
+.I filename
+must have been created with the
+.B \-wn_record
+flag in a previous session.
+.TP
+.B \-wn_replay_warp
+When replaying events with
+.BR \-wn_replay ,
+warp the mouse in the 
+.I ups
+window to reflect the recorded mouse movement events.
+.SH "X RESOURCES"
+.LP
+.I Ups
+recognizes a number of X defaults.
+By default it uses the last pathname component of the name you run
+it with as the application name when looking up resources (i.e. if
+you run it as `/usr/bin/ups' it will use `ups').
+You change the name with the
+.B \-name
+flag described above.
+If it fails to find a resource with the application name,
+.I ups
+does a lookup using `\*(CrUps\fP' (note the initial upper case letter).
+A resource specified as `\*(CrUps.\fP\fIxxx\fP' will thus always be
+noticed.
+Finally
+.I ups
+looks in the resource file
+.fX /usr/lib/X11/app-defaults/Ups
+if a resource is not found anywhere else.
+(In addition to the above directory, ups looks for the file
+.fX Ups
+in the colon separated list of directories given by the environment
+variable XUSERFILESEARCHPATH, and in the single directory given by the environment
+variable XAPPLRESDIR.)
+.LP
+The current list of recognized resources is:
+.TP
+.B Font
+The name of the normal font.
+The default is `fixed'.
+.TP
+.B MenuFont
+The font used for menu captions.
+The default is to use the normal font.
+.TP
+.B SrcFont
+The font used for text in the source window.
+The default is to use the normal font.
+.TP
+.B EditFont
+The font used for editable text in the source window.
+The default is a bold version of the normal font (using the name
+formed by replacing
+.fX medium
+with
+.fX bold
+in the font name).
+If this substitution cannot be made, 
+.I ups
+tries
+.fX -*-fixed-bold-r-normal--15-*-*-*-*-*-*-* .
+If this font is unavailable,
+.I ups
+complains and uses the normal font.
+.TP
+.B Foreground
+The color of the foreground pixel.
+The default is whatever the 
+.fX BlackPixel
+macro returns for the display.
+.TP
+.B Background
+The color of the background pixel.
+The default is whatever the 
+.fX WhitePixel
+macro returns for the display.
+.TP
+.B ReverseVideo
+If this is set (to anything) it has the same effect as the
+.B -rv
+flag.
+.TP
+.B WantInstalledColormap
+If this is set to "yes",
+.I ups
+will install its own colormap, rather than use the default colormap.
+Use this if 
+.I ups
+complains that it failed to allocate some colors.
+The same effect can be achieved
+by using the command line option "-install". Note that the command line 
+option of "-noinstall" will override the resource.
+.TP
+.B Geometry
+The size and (optionally) position of the main
+.I ups
+window.
+The default is to suggest to the window manager a window 580 pixels wide
+by 550 pixels deep at a user-specified position.
+Most window managers will of course let you sweep out a window of the
+size you require.
+
+In the split window modes, the source and output windows have their
+own Geometry resources.  Set the resource  Ups.Src.Geometry to specify
+a geometry for the ups Source window, and Ups.Output.Geometry to specify
+the geometry for the ups Output window. Or set the resource Ups*Geometry
+to specify the same geometry for all ups windows.
+.TP
+.B EditlinesColor
+The color used for editable text in the source window.
+The default is blue.
+.TP
+.B ColorVars
+Can be set to "off" to disable coloring of variable names.
+.TP
+.B VariableColor
+The color used for variable names in the display area.
+The default is purple.
+.TP
+.B HighlightColor
+The color used to highlight variables in the display area whose
+values have changed since the last time the target stopped.
+The default is red.
+.TP
+.B WantMenuColors
+If set to `yes',
+.I ups
+will use foreground and background menu colors as listed below.
+If not set to `yes', such settings are ignored, and the 
+.B Foreground 
+and
+.B Background 
+resources are used.
+.TP
+.B MenuForeground, MenuBackground
+The default colors for text and background in all buttons and menus. 
+Sub menus inherit the colors
+of their parents unless specifically overwritten.
+.TP 
+.B DisabledTextColor
+The color for text that is disabled, such as the `start' caption 
+after starting the target, or globally disabled breakpoints.
+.TP
+.B LastButtonTextColor
+The text color of a busy button pressed (such as `cont' 
+while the target is executing) or the parent menu item of
+a sub menu.
+.TP
+.B SourceMenuForeground, SourceMenuBackground
+The text and background colors of the pop up menu for the source window.
+.TP
+.B CustomMenuForeground, CustomMenuBackground
+The text and background colors 
+of the custom pop up menu for editing text strings.
+.TP
+.B FileBoxMenuForeground, FileBoxMenuBackground
+The text and background colors of the pop up menu for the file name and 
+line number box that is directly above the source window.
+.TP
+.B UnloadedLibMenuForeground, UnloadedLibMenuBackground
+The text and background colors of the pop up menu for the "Load library" 
+menu invoked from the target line.
+.TP
+.B <text caption>Foreground,  <text caption>Background
+The text and background colors for a menu item with a specific text caption: 
+for example "Add breakpointForeground". Note that imbedded spaces are allowed.
+.TP
+.B AsteriskForeground, AsteriskBackground
+The text and background colors of the "*" menu caption that appears
+when selecting a variable. This caption uses a special resource name
+in order to resolve a conflict with main foreground and background resources.
+.TP
+.B WantExtendedTextColors
+If set to `yes',
+.I ups
+will use the colors for the text items in the display window 
+as listed below. If not set to `yes', such settings are ignored.
+.TP
+.B SignalTextColor
+The text color of the signals listed under the `Signal' header.
+.TP
+.B EnvironmentTextColor
+The text color of environment strings listed under the `Environment' header.
+.TP
+.B SourceFileTextColor
+The text color of the file names listed under the `Source files' header.
+.TP
+.B FunctionTextColor
+The text color of the function names in the stack under the `Functions' header.
+.TP
+.B BreakpointTextColor
+The text color of active breakpoints listed under the `Breakpoints' header.
+Inactive breakpoints are in the main foreground color, as is the text
+of breakpoint code in the source window.
+.TP
+.B WatchpointTextColor
+The text color of active Watchpoints listed under the `Watchpoints' header.
+Inactive watchpoint are in the main foreground color.
+.TP
+.B MouseholeWidth
+The width of the mousehole in pixels.
+.TP
+.B WantWatchpoints
+If this is set to `yes', watchpoints will be available. On x86 machines,
+watchpoints are available be default but watchpoint action is unreliable
+on other machines at present, so on these it is not shown by default.
+.TP
+.B WatchPointRefreshInterval
+This adjusts the interval between refreshes of the display when mprotect
+style emulated watchpoints are being used.
+.TP
+.B WantMousehole
+If this is set to `yes', the mousehole is removed from the display.
+This is useful if you use a large font and find the typing
+line too small.
+.TP
+.B PermanentMenuWidth
+The width of the permanent menu (Quit, Help etc.) in pixels.
+.TP
+.B SelectionThreshold
+The number of pixels to move right in order to activate text selection
+in the display window. Default is 30.
+.TP
+.B NonFrameFunctions
+When set to `on', 
+.I ups
+does different processing of non frame (or frameless) pointer functions. This will normally 
+make 
+.I ups
+work better with software that inserts calls into the object code,
+such as Purify Purecov and Quantify. This should fix truncated stacks and
+anomalous `next' and `step' behaviour when debugging such code. However,
+it occasionally causes problems with ordinary targets, so this feature
+is disabled by default. 
+.I Ups
+will automatically set the value to `on' if it detects the presence
+of Purify Purecov and Quantify. A value of  `off' explicitly
+overrides such automatic setting.
+.TP
+.B ScrollbarType
+Controls the scrollbar
+behavior. If set to anything other that `UPS',
+such as `MOTIF', then scrolling will move the viewport in the opposite
+direction to the mouse movement, this being the convention used by most X
+toolkits (for better or worse).
+.TP
+.B ScrollbarWidth
+The width of all the scroll bars in pixels.
+.TP
+.B ScrollDelay
+Set this if scrolling is too fast.
+A value of 25 or 50 is usually sufficient. The default is 25.
+.TP
+.B SrcwinNameWidth
+The width in pixels of the box above the source window containing the current
+source file name and line number.
+.TP
+.B SrcwinPercent
+The percentage of the window height used for the source window (after
+space used by the fixed size regions is subtracted).
+The default is 50 (i.e. half).
+.TP
+.B DisplayAreaPercent
+The percentage of the window height used for the display area (after
+space used by the fixed size regions is subtracted).
+The default is 50 (i.e. half).
+If
+.B DisplayAreaPercent
+and
+.B SrcwinPercent
+are both set they need not add up to 100 \- the values actually
+specify a proportion of the total.
+Thus setting both to 20 (or any pair of identical values) results
+in a 50-50 split.
+.TP
+.B OutwinPercent
+The percentage of the window height used for the output window
+if and when it is added.
+The default is 10 (which actually means a tenth of the total \-
+see the note about
+.B SrcwinPercent
+above.
+.TP
+.B ReverseArrows
+If this is set to `yes' then
+.I ups
+reverses the sense of 
+the up and down arrows which are used in an expression or variable index.
+.TP
+.B HistoryButtonWidth
+The width of the history button in pixels.
+.TP
+.B EnterButtonWidth
+The width of the text entry button in pixels.
+.TP
+.B WantSplitWindows
+If this is set to `yes' then
+.I ups
+will come up with 2 windows. The source window, source menu, target menu, 
+and output window and menu (if used) will be in one frame. The display window 
+and the permanent menu (Quit, Help, etc.) and dynamic menus (Expand, Collapse
+etc) will be in another frame. The same effect can be achieved by using the
+command line option "-split".
+To request a screen number for the second window, use the form `yes:number'.
+.TP
+.B WantSplitOutputWindow
+If this is set to `yes' then
+.I ups
+will come up with 2 windows, or 3 windows if WantSplitWindows is also set,
+with separate frame for the output window.  The same effect can be achieved
+by using the command line option "-splitoutwin".
+To request a screen number for the second window, use the form `yes:number'.
+.TP
+.B WantLogging
+If this is set to `yes', ups will come up with error messages
+logged to the output window.  The same effect can be achieved by using the
+command line option "-logging" or during the session by turning on the Message
+Logging option under the Windows popup menu.
+.TP
+.B WantRaiseOnBreak, WantLowerOnRun, WantIconifyOnRun
+These resources set the initial state of the Raise On Break family of
+options in the Windows popup menu.  These should be set to `yes' or `no'
+as to whether and how
+.I ups
+should manipulate its windows when the target
+process goes in or out of run.  All are set to `no' by default.
+
+These are evaluated in the order listed, the last of these options set
+to `yes' being the initial state of the Raise On Break option.
+.TP
+.B LowerOnRunTime
+When the Lower or Iconify on Run options in the Windows popup menu are active,
+this resource sets the time in milliseconds that
+.I ups
+waits for the process to break before lowering or iconifying itself.
+The default value is 1500, that is, a 1.5 second delay.
+.LP
+The default vertical position of the objects in the display window can be specified 
+by the following
+.B Row
+keywords. Legal values are 1 to 9 inclusive: 1 indicates the top row and 9 the
+bottom. Only rows of interest need to be specified. Other rows are positioned 
+according to their default values. For example, if one wants to put the 
+breakpoints above the function stack (and one is not using Fortran), use:
+.TP
+     Ups*BreakpointsRow: 6
+.TP
+.B TargetRow
+The vertical position of the 
+.I Target 
+header in the display window. Default is 1. Note 
+that this is a double height row.
+.TP
+.B SignalsRow
+The vertical position of the 
+.I Signals 
+header in the display window. Default is 2.
+.TP
+.B EnvironmentRow
+The vertical position of the 
+.I Environment 
+header in the display window. 
+Default is 3.
+.TP
+.B UntypedVariablesRow
+The vertical position of the 
+.I Untyped variables 
+header in the display window. 
+Default is 4.
+.TP
+.B SourceFilesRow
+The vertical position of the 
+.I Source files 
+header in the display window. 
+Default is 5.
+.TP
+.B ModulesRow
+The vertical position of the 
+.I Modules 
+header in the display window, for
+targets using Fortran modules. Default is 6.
+.TP
+.B CommonBlocksRow
+The vertical position of the 
+.I Common blocks 
+header in the display window, for
+targets using Fortran common blocks. Default is 6 if no modules exist,
+7 otherwise.
+.TP
+.B FunctionsRow
+The vertical position of the 
+.I Functions 
+header in the display window. 
+Default is 6 for non Fortran targets, 7 or 8 if the target has Fortran  modules 
+or common blocks.
+.TP
+.B BreakpointsRow
+The vertical position of the 
+.I Breakpoints 
+header in the display window. 
+Default is 7 for non Fortran targets, 8 or 9 if the target has Fortran modules 
+or common blocks.
+.TP
+.B WatchpointsRow
+The vertical position of the 
+.I Watchpoints 
+header in the display window. 
+Default is 8 for non Fortran targets, 9 or 10 if the target has Fortran modules 
+or common blocks.
+.TP
+.B WantTypedefs
+If this is set to `no', then
+.I ups
+will not attempt to use typedefs in display area variable declarations.
+See
+.B "Use of typedefs"
+in the
+.Sc "CONTROLLING THE DISPLAY OF VARIABLES"
+section.
+.TP
+.B TabWidth
+The width in characters of a tab character (for use in the source
+window).
+The default is eight.
+.TP
+.B UseMono
+If this is set to `yes' then
+.I ups
+will always use mono even on colour displays.
+This resource has the same effect as the
+.B \-mono
+flag (see above).
+.\" AMC Enhancements
+.TP
+.B MultiClickTime
+This resource specifies the maximum time in milliseconds between
+multi-click events. The default is 250 milliseconds.
+.TP
+.B BreakPointAcceleratorAction
+This resource selects the accelerator action when shift-clicking or
+double clicking on a breakpoint in the source code or display area.
+The resource may be set to "Toggle", to toggle the breakpoint between
+the active and inactive states, or "Remove" to remove the breakpoint.
+The default is to toggle the breakpoint.
+.TP
+.B BreakPointHeaderAcceleratorAction
+This resource selects the accelerator action when shift-clicking or
+double clicking on the breakpoints header in the display area.
+The resource may be set to "Toggle", to toggle the global breakpoint between
+the active and inactive states, or "Add" to to add a new breakpoint.
+The default is to toggle the global breakpoint state.
+.TP
+.B WatchPointHeaderAcceleratorAction
+This resource selects the accelerator action when shift-clicking or
+double clicking on the watchpoints header in the display area.
+The resource may be set to "Toggle", to toggle the global watchpoint between
+the active and inactive states, or "Add" to to add a new watchpoint.
+The default is to toggle the global watchpoint state.
+.TP
+.B SourceMenuDefault, AltSourceMenuDefault
+These resources control the default action when clicking the right
+mouse button in the source window to quickly select from the pop-up
+menu ( without taking the time to actually select something).
+The AltSourceMenuDefault resource, if used, controls the selection when
+shift-clicking, while the SourceMenuDefault controls the selection otherwise.
+If AltSourceMenuDefault is not used, then SourceMenuDefault controls both;
+if SourceMenuDefault is not used, it defaults to "LastSelection".
+
+Possible values are:
+.IP
+.B LastSelection:
+Selects the most recently selected value.
+.IP
+.B ResetDefault:
+For the AltSourceMenuDefault resource only, causes the a selection made with
+shift button depressed to reset the default option used when quickly
+clicking.
+.IP
+.B AddBreakPoint:
+Selects the Add BreakPoint option.
+.IP
+.B ExecuteToHere:
+Selects the Execute to here option.
+.IP
+.B JumpToHere:
+Selects the Jump to here option.
+.IP
+.B EditFile:
+Selects the Edit file option.
+.TP
+.B TypingLineHistorySize
+Sets the number of entries in the typing line history buffer.
+There are also resources to control the other edit histories.
+To determine their names, find the name of the history
+in the edit history file and append "HistorySize".
+.SH "DEBUGGING FORTRAN CODE"
+.I Ups
+has support for debugging code written in Fortran 77 and Fortran 90.
+The Fortran 77 support works with most compilers.
+The Fortran 90 support has only been tested with the
+.I epcf90
+compiler running under SunOS 4.1.3.
+.LP
+The most visible difference with Fortran code is that variable types
+are displayed using Fortran rather than C syntax.
+Thus a typical stack display might look like:
+.Vs
+.B Functions
+\*(Cr   MAIN
+     double precision acctim                   0.0
+     integer*4 count                           0
+     double precision table(168,10) [1,1]      0.0
+     logical dotrace                           .false.
+.Ve
+.ft R
+Variable names will usually be shown in lower case, even if you have
+used upper case in the source code.
+This transformation is done by the compiler, and
+.I ups
+has no control over it.
+.LP
+Notice that there are two sets of subscripts shown for the array
+.fX table .
+The first set (in round brackets) show the actual size of the array.
+The second set shows the subscript of the element that is being
+displayed.
+These can be edited to show different elements in the same way as with C arrays.
+.LP
+If the program has any common blocks, these are shown under a
+.Ob "Common blocks"
+object in the display area.
+This can be expanded to show the list of common blocks, and individual
+common blocks can be expanded in turn to show the variables.
+If a given common block is declared differently in different
+functions, each different declaration gets its own entry in the list.
+Thus you might see:
+.Vs
+.B Common blocks
+\*(Cr  common /supp_defs/ (as defined in MAIN)
+  common /supp_defs/ (as defined in foo)
+.Ve
+.LP
+Fortran 90 user defined types are treated in much the same way as C
+structures.
+You can recursively expand them to follow linked lists and such.
+.LP
+If you are using Fortran 90 modules,
+.I ups
+adds a
+.Ob Modules
+object to the display area.
+You can expand this to show a list of modules.
+Module names can be expanded in their turn to show a list of functions
+and subroutines defined within the module.
+In the current version module variables are not displayed under the
+appropriate module heading; instead they appear under a common block
+entry.
+This will be fixed in a future release.
+.LP
+There is currently no support for interpreted code under Fortran.
+Nor can you add Fortran expressions to the display area.
+This will be fixed if and when someone writes a Fortran interpreter
+for
+.I ups .
+.SH "SUPPORT FOR C++"
+\fIUps\fP provides reasonable support for debugging C++ code compiled
+with cfront version 3, and the Sun SC4 and g++ compilers.  
+.LP
+For C++ code, classes are shown as structs
+with the methods invisible. Function and variable names are demangled.
+The function stack and the breakpoint list use the `class::method'
+syntax. A restriction is that it is not possible to debug class templates.
+To debug executable code in header files, such as accessor functions defined
+in the class definition, turn off in-lining when compiling.
+.LP
+Function names in wrapper modules are unmangled and present no problems.
+.LP
+When you 
+click on symbols in C++ source, \fIups\fP searches local variables, and
+if that fails, it searches fields in the "this" pointer, and finally
+it searches for globals.
+In addition it searches in all unions for matching
+components - that is, the union tag does not have appear in the source.
+When breakpoints are set on overloaded methods in C++ code, \fIups\fP queries 
+whether to place breakpoints on all matching names.
+.LP
+The `tags' operation works fairly well for C++ code. This is
+the facility that allows easy navigation through source code by simply
+clicking on a function name. You can click on methods and it will usually take 
+you to the source. The `back' button returns to the original code.
+The target needs to be running to get it to work so it can look up
+the classes of variables. It won't always get it right for inherited
+or virtual methods, but it is still a quick and useful way of navigating
+the code. You may have to click twice sometimes to first get it read
+a variable. If the source is in a library with no debug information,
+the message line will show the method name in the library.
+.LP
+In `add expr' and breakpoint code you can cast to un-typdef'ed 
+structs, including classes in C++. Examples are  "(Class*)name" 
+where name is a variable, or 
+"(Class*)0x765678" for a numeric address. If you want to cast
+to a class that is undefined in the current context, try an `add expr'
+for the source file where the constructor is defined. This generally works, 
+at the file level, but not always. It should always work for `add expr'
+in the constructor though. If you don't know which file the constructor is 
+defined in, enter the constructor name in the top typing line and press <RET>
+or <ESC>. The file name will be displayed just above the source window.
+You can then expand the source file list to find the file, select it, and
+enter the `add expr' code.
+.LP
+When a class is expanded in the display window, members of other
+classes are show as `struct class_name <member> value' or perhaps as
+`undefined struct class_name  <member> value'. The class of the member
+is therefore the struct name, and the methods for that class can be listed
+as shown above.
+.LP
+You can set breakpoints on "cout" statements in C++ code in \fIups\fP by
+breaking on the overloaded "<<" operator. The general
+form of setting breakpoints in the display window of \fIups\fP is:
+.Vs
+<filename>:function
+.Ve
+.LP
+The simplest way of breaking on cout statements in C++ code is:
+.LP
+ostream::operator<<
+.LP
+.LP
+Output can be flushed with a call to `ostream::flush(&cout)'.
+.LP
+Similarly, in breakpoint code, character output can be sent to cout with the 
+following syntax:
+.LP
+ostream::operator<<(&cout, "text including tabs (\t) and newlines (\n)");
+.LP
+For character input, the syntax is similar:
+.LP
+istream::operator>>(&cin, &buffer);
+.LP
+where "buffer" is some suitable character storage. Note that the code
+is linked with just the first overloaded methods in the iostream
+libraries, which is typically (const char*), so it won't work for other data
+types.
+.LP
+Application defined operator methods can have breakpoints set
+in the same fashion. \fIUps\fP asks whether to place
+breakpoints on all matching strings, so a string like
+"class::operator" can place breakpoints on all operator methods of
+the class. If you just want a particular one, such as "==", then
+add this at the end, i.e. "class::operator==".
+.LP
+For cfront compiled C++ code, clicking on a variable name in the source
+window will case \fIups\fP to find all matching names, including matches in the
+implicit "this" pointer as well as automatics.
+
+.SH INITIALIZATION FILE
+The debugger reads an initialization file of name `.upsinit' in
+the current directory or, if that does not exist,
+the users home directory, upon invocation. 
+.LP
+There are four basic commands that can be specified in the
+file. These are 
+.Cm "use <directory>"
+,
+.Cm "load <string>"
+,
+.Cm "noload <string>"
+, and
+.Cm "break <function>"
+. These are used respectively to: specify paths to search for sources;
+libraries to load; or libraries not to load when reading symbols; and 
+functions in which to set breakpoints.
+.LP
+By only loading the minimum standard libraries, ups will start a
+lot faster. Other libraries can be loaded on the fly by selecting 
+"Target", then "Load library", or by selecting an unloaded 
+library name in the stack trace. 
+.Vs
+An example is:
+
+load *libc.so*
+load *libC.so*
+load /usr/lib/lib*
+load /usr/openwin/*
+load /usr/platform/*
+load /usr/dt/lib/*
+# for target specific libraries:
+load ./*
+load ../*
+.Ve
+.LP
+The initialization file is also convenient
+for adding new source paths or loading additional libraries on the fly.
+.LP
+The source paths are needed for Centerline C++ because clcc creates
+c files in temporary directories, and the symbol tables suggest that this is
+where the parent C++ files are too. This is not a problem for SC4 or g++
+however.
+The `use' command is equivalent
+to the colon separated list of directories that can be given on the command
+line for invoking \fIups\fP, or during debugging with the \fBadd source path\fP 
+caption.
+.LP
+The load/noload allow you to just
+load symbols for the debugging area of interest, instead of always
+loading everything. 
+.LP
+By ignoring all libraries of no interest, \fIups\fP can be attached to even
+large targets (10s of megabytes)
+quite quickly. When all the long C++ names are ignored, the debugger is
+as quick as it was before with a pure C target in respect to setting
+breakpoints are examining data. 
+.LP
+A caveat with using `noload' is that this causes \fIups\fP to skip all information
+for the specified library, so functions and files for unloaded libraries
+will be invisible. Attempts to set breakpoints on such functions 
+will results in `no such function' messages, and the files will not
+appear in the source file list.
+By using "load" rather than "noload", \fIups\fP won't be affected by different 
+sets of libraries that each target may have.
+.LP
+Note that "./" has the meaning of the directory of the target, not of
+where \fIups\fP was started.
+.LP
+The "load" and "noload" keywords cannot be used together. Specifying neither 
+means that all symbols are loaded. Wildcards can be used at the beginning or end
+of the string.
+.LP
+You can see all the symbol table names that are loaded and not loaded by doing a
+"setenv VERBOSE 1" before calling \fIups\fP. Setting VERBOSE to "NOLOAD" causes
+to list just the libraries that are not loaded.
+.LP
+You can specify breakpoints
+with the syntax "break function". Unlike the `-record' style syntax, this
+does not require a file or a line number, hence the same breakpoints
+will work on different versions of the target source, provided the 
+functions exist. \fIUps\fP will silently skip breakpoints that it cannot set.
+The limitation is that the breakpoint 
+will always be set at the beginning of the function.
+.LP
+You can create more complex commands for the initialization file by
+using the undocumented `-record' command line option. An example
+is `ups target -record ./.upsinit'
+The record file must not exist before it is created.
+When \fIups\fP is next invoked, with a command like `ups target', it will read the 
+commands in `./.upsinit'
+if such a file exists, otherwise `$HOME/.upsinit'. 
+The record mode does not support interactions with the output window 
+menus at present, nor `search' menus with the source window,
+Similarly mouse button modifiers are not recorded. 
+Such actions will be ignored when the file
+is read. The following is an example of an initialization file that
+sets the SIGBUS and SIGSEGV signals to `accept':
+.Vs
+select sghead
+menu sghead show_all_signals
+select sghead|sigbus
+addselect sghead|sigsegv
+menu signal toggle_accept_ignore
+select sghead
+menu sghead hide_all_signals
+menu pmenu quit_ups
+.Ve
+.LP
+The last line to quit the debugger should be deleted with a text editor after 
+creation. Some of the most commonly used syntax is:
+.Vs
+breakpoint filename funcname lnum
+menu menu_name action
+.Ve
+.SH MULTIPLE LINKED FILES
+\fIUps\fP works with for multiple linked files.
+For such files, at least two versions of the code exist in the target.
+.LP
+\fIUps\fP makes all duplicate files visible, with automatic replication
+in the duplicate file of any setting or modification of a multiple linked function 
+breakpoint. In this manner, all breakpoint code is kept identical between
+duplicate files, and all breakpoints should be honored.
+.LP
+What this means in practice when using \fIups\fP is that multiple linked function files are 
+listed twice in the source file listing. Either one can be used to set a 
+breakpoint, and a second breakpoint will be created automatically in the
+duplicate file. 
+.LP
+The following actions maintain this automatic shadowing:
+.IP \(bu
+Selecting a file and setting a breakpoint with the right mouse button in the source window.
+.IP \(bu
+Setting a breakpoint by selecting the `Breakpoints' header and then pressing 
+the \fBAdd new\fP caption (or Shift-left accelerator on 
+the `Breakpoints' header).
+.IP \(bu
+Deleting a breakpoint.
+.IP \(bu
+Renaming a breakpoint (works for all transitions between single instance and duplicate functions).
+.IP \(bu
+Changing the line number of a breakpoint.
+.IP \(bu
+Changing the activation state of a breakpoint.
+.IP \(bu
+Selecting a file and using the right mouse button menu in the source window to `execute to here'.
+.LP
+.SH "SAVING STATE"
+When you quit
+.IR ups ,
+it normally forgets things like breakpoint locations and the way your
+variables are displayed.
+This can be a nuisance, especially if you have added interpreted code,
+or typed long expressions into the display area.
+To preserve these settings,
+.I ups
+will optionally save state information when you quit it, and reload
+this information when you start it again.
+.LP
+In addition, a state file can be explicitly created or loaded at any time
+by selecting the target name at the top of the display region. This
+will create a menu with four captions:
+.Cm "Load library",
+.Cm "Save state",
+.Cm "Load state",
+.Cm "Drop state",
+and
+.Cm "Rescan init file".
+.LP
+Clicking on
+.Cm "Load library"
+Invokes a dynamic submenu of unloaded libraries. Choosing one will load
+that library. If all libraries are loaded, no submenu is displayed, but
+a message indicates that all libraries are loaded. See the section
+.Sc "INITIALIZATION FILE"
+(near the end of this manual page) for information on specifying what libraries
+to load.
+.LP
+Selecting 
+.Cm "Save state"
+prompts you for a file name in which to save the current debugger state. 
+.LP
+Selecting 
+.Cm "Load state"
+asks for a state file name which will be then loaded.
+.LP
+Selecting 
+.Cm "Drop state"
+deletes the temporary state file that UPS
+uses to save information about breakpoints and what data have
+been displayed during a previous debug session. If you have previously
+attached to a process, and have been looking at global variables
+that take some time for UPS to find, you can stop the debugger scanning
+again for the variables on reattaching to a rebuilt target by using
+the drop state button when unattached. You may also want to use it when
+attaching to a different process.
+.LP
+.Cm "Rescan init file"
+will re-read your ~/.upsint file, if it exists. 
+.LP
+This section describes how this state is saved and restored.
+.LP
+If the directory
+.fX ups-state
+exists in the current directory, ups
+will use it to store state information between sessions.
+This includes breakpoint locations
+(and the interpreted code, if any), and the state of the
+variables display.
+.LP
+The saved state is used in several ways:
+.IP \(bu
+After starting ups, you can select
+.Cm Restore
+from the
+.Ob Breakpoints
+menu to put breakpoints back as they were
+from the previous session. 
+Ups tries to put
+breakpoints back in the right places, but it can be
+defeated by major changes to the source code.
+.IP \(bu
+The default for the
+.Cm Expand
+option for stack trace and source file entries is
+.Cm "Like before" .
+This adds variables as they were in the last time you looked at them.
+If the
+.fX ups-state
+directory exists, the state of the variables display is remembered
+across different
+.I ups
+sessions.
+.IP \(bu
+When you add a variable the display format (hex, octal
+etc) is taken from the way it was last time you
+displayed the variable.
+.IP \(bu
+The attributes for signal handling are restored (i.e., whether accepted,
+ignored, cause the process to stop).
+.LP
+State is saved to the file
+.fX ups-state/\fIxxx\fP.state ,
+.ft R
+where
+.I xxx
+is the last component of the path of the file you are debugging.  You
+can also create the file
+.fX ups-state/\fIxxx\fP.config
+.ft R
+(perhaps by copying
+.fX ups-state/\fIxxx\fP.state ).
+.ft R
+The
+.fX .config
+file is read at startup by ups, but not written.
+Also, breakpoints in the
+.fX .config
+file are automatically restored on startup.
+.LP
+In future releases you will be able to use the
+.fX .config
+file to add environment variable settings, etc.  Currently the only directive
+(other than things specifying breakpoints, saved variable and signal state) is
+.fX auto-start
+which takes a single argument
+.fX yes
+or
+.fX no .
+The line:
+.Vs
+    auto-start yes
+.Ve
+in the
+.fX \fIxxx\fP.config
+.ft R
+file means start the target running as
+soon as 
+.I ups
+has started up.
+.LP
+Ups also looks for saved state in the file
+.fX $HOME/.upsrc
+and
+.fX .upsrc
+(in the current directory).
+Thus the full set of files is:
+.Vs
+$HOME/.upsrc
+\&.upsrc
+ups-state/\fIxxx\fP.config
+ups-state/\fIxxx\fP.state
+.Ve
+.ft R
+Files later in the sequence can override earlier settings.
+.SH "LOADING AND SAVING BREAKPOINTS"
+You can explicitly load and save breakpoints to files.  To save
+breakpoints, select one or more in the display area, then
+select `save' from the menu.  You will be prompted for a file
+name.  If the file already exists you will be asked whether
+you want to cancel the save, overwrite the file or append to
+it. The submenu controls whether breakpoints loaded this way 
+get saved in a statefile.
+.LP
+Saved breakpoints can be reloaded by selecting
+.Cm "`Load File'"
+and then
+.Cm "`Load - bpts NOT saved in statefile'"
+or
+.Cm "`Load - bpts saved in statefile'"
+from the
+.Ob Breakpoints
+header menu.
+.SH "SEE ALSO"
+cc(1), f77(1), ld(1), dbx(1)
+.SH BUGS
+.LP
+On the SPARC you can't step or next through the return statement
+of a function returning a struct or union (functions returning
+.I pointers
+to structs or unions work fine).
+This is due to the peculiar and undocumented protocol that the
+SPARC uses for returning structs and unions by value.
+.LP
+On the SPARC you get surprising behaviour if you use in interpreted
+code a struct or union that is a formal parameter.
+Your interpreted code must be written as if the variable is a
+.I pointer
+to a struct rather than a struct.
+This is again due to the SPARC structure passing protocol.
+.LP
+The SPARC C compiler emits an inline loop to implement structure
+assignmemt for large structs.
+Because of the way next and step are implemented in
+.I ups
+you have to hit
+.Cm Next
+or
+.Cm Step
+several times to step over a line containing such a struct assignment.
+Workaround: use
+.Cm "Execute to here"
+to get to the next line.
+.LP
+If you change a binary while you are debugging it
+.I ups
+will get very upset (read: will probably core dump with a fatal
+error message).
+This is unsatisfactory and will be fixed in a future release.
+.LP
+Core files dumped from dynamic executables are incomplete which means
+that you can only examine the non shared parts of the binary.
+.LP
+The
+.Cm Stop
+button in the target menu doesn't work if you are hitting lots of
+fragments of interpreted code that don't stop the target.
+.SH ACKNOWLEDGEMENTS
+.LP
+The work to support Solaris 2 was made possible by the generous
+support of the following people (in alphabetical order):
+.RS
+.nf
+.sp 0.5
+.ta 1.6i
+Ian Edwards	Panorama Software Corporation
+Paul Friberg	Incorporated Research Institutions for Seismology
+Robert L. Prehn	AT&T Bell Labs
+Daniel Quinlan	University of Colorado
+Ricardo Telichevesky	Cadence Design Systems, Inc.
+Frank Vernon	UC San Diego
+.RE
+.fi
+.sp 0.5
+Special thanks to Dan Quinlan for all the work he put into
+organizing the project.
+.LP
+The regular expression matching algorithm was written by Ozan S. Yigit
+of the Department of Computer Science, York University.
+.SH AUTHORS
+Mark Russell, University of Kent.
+Original version for the ICL Perq and many of the important ideas
+by John Bovey, University of Kent.
+
+.SH ENHANCEMENT AUTHORS
+Rod Armstrong, Schlumberger Tech, (rod@san-jose.tt.slb.com) added:
+symbol table fixes for SC3/4, g++ and cfront/clcc;
+C++ demangling for cfront, SC3/4 and g++; 
+dynamic library support for Solaris;
+native port for Linux ELF (based on the a.out port done by Rick Sladkey);
+duplication of breakpoints for overloaded C++ methods;
+automatic deference of the "this" pointer in C++ code;
+messages when symbols are read in;
+Motif type scrolling direction if desired;
+colored variable and breakpoint text;
+attach and detach buttons; 
+honoring of quit request from a window manager;
+autoscrolling on selecting text;
+activate, inactive and execute buttons for breakpoints;
+accelerators for the display window;
+custom menus;
+X resource for fixing stacks for Purify/Quantify;
+menu items to spawn an editor, show file paths and reload and rematch files;
+partial name completion for breakpoints;
+listing of matching breakpoint names;
+init file support;
+rescan of initialization file on reattach;
+format option for RWCString;
+special signal control for SIGSEGV or SIGBUS;
+support for multiple linked files; 
+explicit save and load of state files;
+help facility;
+various bug fixes.
+.LP
+Ian Edwards (ian@concerto.demon.co.uk) provided a patch for 
+FreeBSD 2.2.6-STABLE, and support for `long long' and `long double' data types.
+He also maintains the
+web site for UPS at www.concerto.demon.co.uk/UPS.
+.LP
+Russ Browne, Applied MicroSystems (russ@amc.com) added handling of symbol 
+table information concerning base classes, vector tables, and static class 
+members in SC4 and g++ object files. He also contributed
+the UPS_FORMATS environment variable, control characters in
+UPS_F*STRs, bumping of array indicies on duplication,
+and elastic formating of file names in the stack and breakpoint list.
+The formating feature allows the file names to be visible for large
+fonts, and when the debugger window is made quite narrow.
+He also did the extended double click accelerators; typing line shortcuts;
+shading of inactive and disabled breakpoints; added X resources
+for multiclick time, and source window menu control; added a 
+command line option to force ups to pass the full name of the target executable;
+and a fix for the size of "bool" data types;
+.LP
+C Daniel M. Quinlan (danq@lemond.colorado.edu) supplied fixes for displaying
+Structures and unions, some fortran variables and a fix for " unknown type"
+in scanning SC4 symbol tables.
+.LP
+Callum Gibson (callum@bain.oz.au) contributed the save state
+code for signals.
+.LP
+A fix for 16bpp visuals was contributed by Craig Amey <craiga@MetaSW.COM>.
+.LP
+Tom Hughes (thh@cyberscience.com) contributed: double clicking on a variable in 
+the source window; calling functions from expressions; improvements for long
+long types; fix for parameter widening in the stack; saving and restoring
+terminal state; adding clipping routines to eliminate flicker on redraw;
+for x86 machines, stepping across shared libraries, and handling of frameless stacks;
+main() can be in a shared library; support for DT_RUNPATH; better handling for
+segv on Linux machines.

@@ -1,0 +1,157 @@
+# $Id$
+
+Updated : 25/Sep/2002
+
+KNOWN BUGS IN UPS
+=================
+
+The systems which are known or expected to have the problem are listed,
+it may well be on others as well.
+
+Please report bugs to the mailing list <ups-users@ukc.ac.uk>
+
+If you are trying to debug UPS build it with :
+
+    configure  --enable-debug
+
+
+BUILD
+-----
+ o  'gcc' produces warnings about certain routines being unsafe.
+
+ o  Sun SparCompiler produces warnings about "argument #n is incompatible
+    with prototype ...".
+
+ o  FreeBSD 4.5 build fails in ao_pt_uarea.c because PTRACE_PEEKUSER is
+    not defined.  This either needs a kernel patch (see the mailing list)
+    or hack 'ptrace_get_sigstate()' in ao_pt_uarea.c to always return
+    SGH_DEFAULT.
+
+ o  FreeBSD 2.2.7 produces a compiler error about '__error()' in
+    cx_libfuncs.h.  Change
+
+	#if HAVE___ERROR && OS_FREEBSD
+		F(__error)
+	#endif
+    to
+	#if HAVE___ERROR && HAVE___ERRNO_DECL
+		F(__error)
+	#endif
+
+ o  To build an 'a.out' executable of UPS on FreeBSD 3.x please see the
+    instructions in the main README under "FreeBSD 3.x a.out SUPPORT".
+
+
+GENERAL
+-------
+ o  If you are using GCC 3.1 (or later) and no source is displayed when
+    you start UPS even when you have built the program with the '-g' flag
+    then try building the program with '-gstabs' instead.
+
+ o  On RedHat Linux 7.1 with gcc-2.96 UPS crashes with the message
+
+	Fatal internal error: bad number in parse_num (aborting) ...
+	Dumping core ... Abort
+
+    A related problem is the incorrect warning message
+
+	Warning:  sizeof(bool) inconsistent across compile modules!
+
+    These probably affect any Linux system with gcc-2.96 or later.
+    Patch is available on the UPS web site.
+
+ o  <Bad format hint> when displaying a variable in a C++ program
+    has a patch on the web site.
+    
+ o  From Panagiotis Tsirigotis <pgttso@best.com> :
+
+	OS: Linux 2.2.14-5.0 (RedHat 6.2)
+	Window system: KDE-1.1.2
+	System: Dell Dimension T700r
+	CPU: P-III 700Mhz
+
+    When I start ups-3.35-beta13, and after I hit 'Start', my whole
+    desktop freezes (sometimes).
+
+    My only way out when this happens is to switch to another console,
+    and kill kwm.  Killing UPS does not help.  So, this may not be a UPS
+    problem, but a kwm problem. This did not happen with 3.35-beta10.
+
+ o  The 'raise on break' option can cause "Xlib: unexpected async reply"
+    errors when using a local display, i.e display is :0.0, with XFree86.
+    Using localhost:0.0 as the display may cure the problem, either set
+    the environment variable $DISPLAY or use the '-display' option to ups.
+
+ o  Programs built with the 'egcs' version of 'gcc' sometimes crash, or
+    do not display, a structure variable which includes other structures
+    or typedefs.  Probably limited to programs with complex data structures
+    whose definitions spread across many header files (e.g. ups).
+    (FreeBSD ELF, Linux ELF)
+
+ o  'struct' variables with storage class 'register' are not displayed
+    correctly (FreeBSD 2.x)
+
+ o  Problems calling routines in shared libraries from interpreted code
+    added at breakpoints (FreeBSD ELF, Linux ELF).
+
+    If you get messages like "Warning: function `...' appears in both ..."
+    then prevent the 'ld.so' library from being loaded by creating the file
+    ~/.upsinit and putting a 'noload' command in it.
+    For RH Linux 6 this would be
+
+	noload *ld-linux*
+
+    For FreeBSD this would be
+
+	noload *ld-elf*
+
+ o  Annette Hartman <a.hartman@xpedite.com> reported that ups works for 
+    ReflectionX, but not XVision.
+
+
+CORE FILES
+----------
+ o  variables with storage class 'register' are not displayed correctly
+    (FreeBSD ELF, Linux ELF)
+
+ o  'long long' variables with storage class 'register' are not displayed
+    correctly (FreeBSD a.out)
+
+ o  If the crash was in a shared library routine the stack trace and source
+    display do not show the statement that caused the crash but the call to
+    the routine containing that statement (FreeBSD, Linux)
+
+
+FORTRAN
+-------
+ o  g77 version egcs-2.91.66 does not work with ups.
+    Use g77 version 2.95 (release) (from FSF-g77 version 0.5.25 (release))
+    or later.
+
+ o  GNU Fortran (g77) : display of COMPLEX variables looks like a C
+    structure on some systems.
+    Click on the Expand button to see their contents.
+
+ o  GNU Fortran (g77) : cannot display COMMON blocks or their variables
+    in a meaningful way, even when the program is built with the option
+    "-fdebug-kludge".
+
+ o  (FreeBSD) f77 using f2c : not usable on ELF systems, i.e. FreeBSD 3.0
+    or later.  You have two options -
+    1) Build UPS for aout files, by "configure --with-aout" and compile
+       your Fortran with "OBJFORMAT=aout f77 ..."
+    2) Switch to GNU Fortran (g77).
+
+ o  (FreeBSD) f77 using f2c : cannot display most COMMON blocks or their
+    variables.
+    If the COMMON block is named and all the variables in it are of the
+    same type then you can get a display by typing the name of the block
+    with a trailing underscore in the typing line at the top of the UPS
+    window and pressing the Escape key.  Then click on the Expand button.
+
+ o  (FreeBSD) f77 using f2c : when UPS is first started it may not let you
+    set breakpoints in subroutines.  If you use the Step button to step
+    into the routine it should now allow breakpoints to be set in it.
+    Restoring saved breakpoints works at startup, so once you have set
+    breakpoints save them to a file so you can reload them.
+___________________________________________________________________________

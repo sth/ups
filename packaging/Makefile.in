@@ -1,0 +1,72 @@
+# $Id$
+
+# -----------------------------------------------------------------------------
+#  Makefile for FreeBSD package, RPM etc.
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+# -----------------------------------------------------------------------------
+
+RPM_FILES	=  ups-rpm-spec  ups.spec  ups.wmconfig  ups.sh
+SCRIPTS		=  build_rpmspec.sh
+FREEBSD_FILES	=  fb_makefile
+FILES		=  Makefile.in  ${FREEBSD_FILES}  ${RPM_FILES}  ${SCRIPTS}
+
+default:
+	@echo Read the Makefile and decide what you require.
+
+list:
+	@echo ${FILES} | tr ' ' '\012'
+
+count: ${SOURCE_FILES}
+	wc ${SOURCE_FILES}
+
+veryclean: clean
+
+clean:
+	rm -f ${ALL_OBJS} ${BINARIES} ${LIBRARIES} ups.core core
+
+
+# -----------------------------------------------------------------------------
+#  FreeBSD package/port
+# -----------------------------------------------------------------------------
+
+# $version : Make '3.35b10' out of '3.35-beta10'
+
+freebsdport:
+	@test -z "${RELTAG}" && echo "Use 'RELTAG=...  make $@'"
+	@version=`perl -e "\\$$v = '${RELTAG}';" -e '$$v =~ s/-|eta//g;' -e 'print $$v;'`; \
+	file=Makefile.freebsd;				\
+	echo "Writing port Makefile into $$file";	\
+	sed						\
+		-e "s/__RELTAG__/${RELTAG}/"		\
+		-e "s/__VERSION__/$$version/"		\
+		< fb_makefile > $$file;			\
+	echo "To build this do -";			\
+	echo "  cp ../releases/ups-${RELTAG}.tar.gz /usr/ports/distfiles";	\
+	echo "  cd freebsd";				\
+	echo "  make makesum";				\
+	echo
+
+
+# -----------------------------------------------------------------------------
+#  RPM stuff
+# -----------------------------------------------------------------------------
+
+# $release : Use the date as the RPM release number.
+# $version : The '3.35' out of '3.35-beta10'
+
+rpmspec:
+	@test "${RELTAG}" || ( echo;echo "Use 'RELTAG=...  make $@'";exit 1 )
+	@sh build_rpmspec.sh
+
+
+# -----------------------------------------------------------------------------
+

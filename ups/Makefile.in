@@ -1,0 +1,786 @@
+# $Id$
+# @(#)Makefile	1.57 04 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Makefile for ups and interpreter
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+# 'bison' not acceptable
+# YACC		= @YACC@
+YACC		= yacc
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+RANLIB		= @RANLIB@
+
+# Where to install the programs and manual page
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+BINDIR		= @bindir@
+MANDIR		= @mandir@/man${MANSUFFIX}
+INCDIR		= @includedir@
+
+# Version of 'ci_parse.y' to use/generate.
+CI_PARSE	= @CI_PARSE@
+
+# The suffix to use for the manual page
+MANSUFFIX	= 1
+
+# The directory where X include files live.
+X11_INC		= @X_CFLAGS@
+
+# X libraries
+X11_LIB		= @X_LIBS@  @X_PRE_LIBS@  -lX11  @X_EXTRA_LIBS@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.  ${X11_INC}
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@  ${X11_LIB}  @LIBS@
+LIBS		= @LIBS@
+
+GDB_DIR		= @GDB_DIR@
+
+#MANPAGE_OWNER	= -o root
+#BINARY_OWNER	= -o bin
+
+# -----------------------------------------------------------------------------
+
+UPS_HEADERS	= -Idevelhdrs
+UPS_CFLAGS	= ${CFLAGS} ${UPS_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${UPS_CFLAGS} $S
+CCLINE_NO_ERROR = ${CC} -c ${UPS_CFLAGS} ${GCC_NO_ERROR} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${UPS_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${X11_LIB} ${LIBS}
+
+MAKE_LIBRARY	= ${AR} cq
+
+# -----------------------------------------------------------------------------
+
+UPS_BINARY	= ups
+UDB_BINARY	= ups-gdb
+CX_BINARY	= cx
+XC_BINARY	= xc
+CG_BINARY	= cg
+CI_LIBRARY	= libci.a
+DEF_BINARY	= @DEF_BINARY@
+
+BINARIES	= ${DEF_BINARY} ${CX_BINARY} ${XC_BINARY} ${CG_BINARY}
+LIBRARIES	= ${CI_LIBRARY}
+
+default_target: ${DEF_BINARY}
+
+all: ${BINARIES} ${LIBRARIES}
+
+LIBOBJ		= ../lib
+
+# $GDB_DIR must be an absolute path
+GD		= ${GDB_DIR}
+GD_SUB		= ${GDB_DIR}/gdb
+GDB_HEADERS	= -I${GD}/include -I${GD_SUB} -I${GD_SUB}/config -I${GD}/bfd
+GDB_CFLAGS	= ${GDB_HEADERS} ${CFLAGS} ${UPS_HEADERS}
+CCLINE_GDB	= ${CC} -c ${GDB_CFLAGS} $S
+
+# Command names
+ETAGS	= etags
+SCCS	= sccs
+
+TAGSFILE = TAGS
+
+STOBJS = st_debug.o st_lookup.o st_fmap.o st_util.o st_cb.o \
+	 st_module.o
+STSRCS = st_debug.c st_lookup.c st_fmap.c st_util.c st_cb.c \
+	 st_module.c
+
+VAOBJS = va_decl.o va_edit.o va_menu.o va_type.o va_val.o \
+	 va_expr.o va_state.o va_format.o
+VASRCS = va_decl.c va_edit.c va_menu.c va_type.c va_val.c \
+	 va_expr.c va_state.c va_format.c
+
+UIOBJS = ui_iploop.o ui_layout.o ui_menu.o ui_misc.o ui_src.o
+UISRCS = ui_iploop.c ui_layout.c ui_menu.c ui_misc.c ui_src.c
+
+UI2OBJS = state.o reg.o cursors.o menudata.o tdr.o util.o
+UI2SRCS = state.c reg.c cursors.c menudata.c tdr.c util.c
+
+ASOBJS = as_vax.o as_68020.o as_mips.o as_clipper.o as_sparc.o
+ASSRCS = as_vax.c as_68020.c as_mips.c as_clipper.c as_sparc.c
+
+AOOBJS = ao_target.o ao_procfs.o ao_core.o \
+	 ao_ptrace.o ao_pt_regs.o ao_pt_uarea.o \
+	 ao_symread.o ao_shlib.o ao_symload.o ao_symparse.o \
+         ao_symscan.o ao_symcb.o ao_aout.o ao_elfcore.o \
+	 ao_elfread.o ao_elfsym.o ao_elflib.o ao_aflist.o \
+	 ao_dwarf.o ao_dwfsyms.o ao_dwftext.o ao_dwftype.o ao_dwfutil.o \
+	 ao_te.o ao_text.o ao_stack.o ${ASOBJS}
+AOSRCS = ao_target.c ao_procfs.c ao_core.c \
+	 ao_ptrace.c ao_pt_regs.c ao_pt_uarea.c \
+	 ao_symread.c ao_shlib.c ao_symload.c ao_symparse.c  \
+         ao_symscan.c ao_symcb.c ao_aout.c ao_elfcore.c \
+	 ao_elfread.c ao_elfsym.c ao_elflib.c ao_aflist.c \
+	 ao_dwarf.c ao_dwfsyms.c ao_dwftext.c ao_dwftype.c ao_dwfutil.c \
+	 ao_te.c ao_text.c ao_stack.c ${ASSRCS}
+
+GDB_OBJS = gd_gdb.o gd_ups.o tops-native.o gd_main.o
+GDB_SRCS = gd_gdb.c gd_ups.c tops-native.c
+
+NATIVE_OBJS = ${AOOBJS} tops-native.o
+NATIVE_SRCS = ${AOOBJS} tops-native.c
+
+XCOBJS = xc_symparse.o xc_text.o xc_load.o xc_machine.o xc_builtins.o
+XCSRCS = xc_symparse.c xc_text.c xc_load.c xc_machine.c xc_builtins.c
+
+DBOBJS = bp.o wp.o exec.o trun_ss.o trun_j.o data.o target.o as_mi.o
+DBSRCS = bp.c wp.c exec.c trun_ss.c trun_j.c data.c target.c as_mi.c
+
+OBJOBJS = obj_bpt.o obj_signal.o obj_misc.o obj_buildf.o \
+	  obj_target.o obj_env.o obj_stack.o obj_util.o obj_wpt.o
+OBJSRCS = obj_bpt.c obj_signal.c obj_misc.c obj_buildf.c \
+	  obj_target.c obj_env.c obj_stack.c obj_util.c obj_wpt.c
+
+CIOBJS = ${CI_PARSE}.o ci_types.o ci_lex.o ci_stm.o \
+	 ci_decl.o ci_func.o ci_util.o ci_expr.o ci_showexpr.o \
+	 ci_constexpr.o ci_compile.o ci_compile_expr.o ci_opcodes.o \
+	 ci_init.o
+
+CISRCS =              ci_types.c ci_lex.c ci_stm.c \
+	 ci_decl.c ci_func.c ci_util.c ci_expr.c ci_showexpr.c \
+	 ci_constexpr.c ci_compile.c ci_compile_expr.c ci_opcodes.c \
+	 ci_init.c
+
+RESTOBJS = expr.o srcwin.o srcbuf.o srcpath.o \
+	   printf.o config.o ups.o cc.o
+RESTSRCS = expr.c srcwin.c srcbuf.c srcpath.c  \
+	   printf.c config.c ups.c cc.c
+
+STDSRCS = ${STSRCS} ${AOSRCS} ${UISRCS} ${VASRCS} ${OBJSRCS} ${UI2SRCS} \
+	  ${DBSRCS} ${RESTSRCS} ${XCSRCS} ${CISRCS} \
+	  cx.c cx_link.c cx_symio.c cx_wsym.c cx_onefile.c xc.c cg.c
+
+COMMON_UPS_OBJS = ${STOBJS} ${UIOBJS} ${VAOBJS} ${OBJOBJS} \
+		  ${UI2OBJS} ${DBOBJS} ${RESTOBJS} ${CIOBJS} ${XCOBJS} \
+	   	  cx_onefile.o sccsdata.o
+
+UDB_OBJS = ${COMMON_UPS_OBJS} ${GDB_OBJS}
+UPS_OBJS = ${COMMON_UPS_OBJS} ${NATIVE_OBJS}
+
+CG_OBJS = cg.o cc.o ${CIOBJS} xc_machine.o xc_builtins.o cx_onefile.o
+
+CILIB_OBJS = cc.o ${CIOBJS} xc_machine.o xc_builtins.o cx_onefile.o
+
+CX_OBJS = cx.o cc.o cx_link.o cx_symio.o cx_wsym.o ${CIOBJS}
+
+XC_OBJS = xc.o xc_load.o xc_builtins.o xc_machine.o
+
+ALL_OBJS = ${UPS_OBJS} ${GDB_OBJS} ${CG_OBJS} ${CX_OBJS} ${XC_OBJS}
+
+DEPS_SRCS = ${STDSRCS} tops-gdb.c tops-native.c ${CI_PARSE}.c sccsdata.c
+TAGS_SRCS = ${STDSRCS} ${GDB_SRCS} ${CI_PARSE}.c	# C source files
+LINT_SRCS = ${TAGS_SRCS}
+
+TGT_MENUS = tgt_start_men.c tgt_next_men.c tgt_step_men.c \
+	    tgt_cont_men.c tgt_stop_men.c tgt_kill_men.c \
+	    tgt_attach_men.c tgt_detach_men.c tgt_restart_men.c 
+MENUS = bphmen.c bptmen.c cbhmen.c cblockmen.c cmdmen.c coremen.c nolibmen.c \
+	filmen.c gblmen.c sghmen.c shmen.c sigmen.c srcmen.c outmen.c \
+	${TGT_MENUS} varmen.c envheadmen.c envmen.c blockmen.c mfuncmen.c \
+	wphmen.c wptmen.c varmen2.c 
+
+CURSORS = cu_dead cu_dead_mask cu_display cu_display_mask cu_drag_box cu_drag_box_mask cu_menu cu_menu_mask cu_sbar cu_sbar_mask cu_sc_pressed cu_sc_pressed_mask cu_scroll_down cu_scroll_down_mask cu_scroll_up cu_scroll_up_mask cu_wait cu_wait_mask cu_line cu_line_mask cu_dragbox cu_dragbox_mask
+
+HDRS = ao.h ao_aflist.h ao_aout.h ao_asm.h ao_core.h                          \
+       ao_dwarf.h ao_dwfsyms.h ao_dwftext.h ao_dwftype.h ao_dwfutil.h         \
+       ao_elfcore.h ao_elflib.h ao_elfpriv.h ao_elfread.h ao_elfsym.h         \
+       ao_execinfo.h ao_ifdefs.h ao_procfs.h ao_ptrace.h ao_shlib.h	      \
+       ao_stack.h ao_symcb.h ao_symload.h ao_symparse.h ao_symread.h	      \
+       ao_syms.h ao_symscan.h ao_target.h ao_te.h ao_text.h as.h breakpoint.h \
+       cc.h ci.h ci_compile.h ci_compile_expr.h ci_constexpr.h ci_decl.h      \
+       ci_expr.h ci_func.h ci_init.h ci_lex.h ci_opcodes.h ci_parse.h	      \
+       ci_showexpr.h ci_stm.h ci_tokens.h ci_types.h ci_util.h config.h	      \
+       cursors.h cx_libfuncs.h cx_libvars.h cx_link.h cx_symio.h	      \
+       cx_wsym.h data.h debug.h dx.h elfstab.h exec.h expr.h gd.h menudata.h  \
+       mips_frame.h mreg.h obj_bpt.h obj_buildf.h obj_env.h obj_misc.h	      \
+       obj_signal.h obj_stack.h obj_target.h obj_util.h objtypes.h output.h   \
+       printf.h proc.h reg.h sccsdata.h srcbuf.h srcpath.h srcwin.h st.h      \
+       state.h symtab.h target.h tdr.h trun.h ui.h ui_priv.h ups.h util.h     \
+       va.h va_priv.h xc.h xc_builtins.h xc_load.h xc_machine.h xc_opcodes.h  \
+       xc_symparse.h st_debug.h obj_wpt.h watchpoint.h
+
+SOURCE_FILES = ${STDSRCS} ${GDB_SRCS} tops-native.c ci_parse.y ${HDRS} # Actual source files
+
+DOCS = doc/ups.man doc/helptext.man doc/upsman.html \
+	doc/porting.ms doc/linking.ms doc/refs.refer
+
+FILES = ${SOURCE_FILES} Makefile.in ${DOCS}
+
+CIHDRS = ci_constexpr.h ci_decl.h ci_expr.h ci_func.h ci_lex.h \
+	 ci_parse.h ci_showexpr.h ci_stm.h ci_tokens.h ci_types.h ci_util.h
+
+# Installed versions of various libraries.
+# We normally build ups with the development versions (below).
+#
+#UKCLIB = -lukcprog				# Installed ukcprog library
+#MENLIB = -lMen3wn				# Installed menu library.
+#X11WNLIB = -lx11wn				# Installed X11 wn library
+
+UKCLIB	= ${LIBOBJ}/libukcprog/libukcprog.a	# Development ukcprog library
+MTRLIB	= ${LIBOBJ}/libmtrprog/libmtrprog.a	# Development mtrprog library
+OBJLIB	= ${LIBOBJ}/libobj/libobj.a		# Development object library.
+ARGLIB	= ${LIBOBJ}/libarg/libarg.a		# Development arg library.
+GNULIB	= ${LIBOBJ}/libgnu/libdmangl.a		# Development GNU library.
+EDITLIB	= ${LIBOBJ}/libedit/libedit.a		# Development edit library.
+MENLIB	= ${LIBOBJ}/libMen3/libMen3wn.a		# Development menu library.
+X11WNLIB = ${LIBOBJ}/libx11wn/libwn.a		# Development X11 wn library
+
+GDBCONF	= gdb/upsgdb/upsconf
+GDBCC	= `cat ${GDBCONF}/cccmd`
+LIBGDB	= libgdb.a
+GDBLIBS	= ${LIBGDB} `cat ${GDBCONF}/gdblibs`
+
+COMMONLIBS = ${OBJLIB} ${MENLIB} ${ARGLIB} ${EDITLIB} ${MTRLIB} ${UKCLIB} ${GNULIB}
+
+NATIVE_X11LIBS = ${COMMONLIBS} @DWARFLIB@ @ELFLIB@ ${X11WNLIB}
+GDB_X11LIBS = ${NATIVE_X11LIBS} ${GDBLIBS}
+
+NATIVE_X11LIBDEPS =  ${COMMONLIBS} ${X11WNLIB}
+GDB_X11LIBDEPS = ${NATIVE_X11LIBDEPS} ${LIBGDB}
+
+
+SCCSCHECK_DIRS = ${LIBSRC}/libobj ${LIBSRC}/libMen3 ${LIBSRC}/libarg \
+		 ${LIBSRC}/libmtrprog ${LIBSRC}/libukcprog ${LIBSRC}/libx11wn
+
+X11LINTLIBS = -larg -lobj -lMen3wn -lx11wn -lX11
+SUNLINTLIBS = -larg -lobj -lMen3wn -lwn -lsunwindow -lpixrect
+
+CGLIBDEPS = ${MTRLIB} ${UKCLIB}
+CGLIBS	= ${CGLIBDEPS}
+
+CXLIBDEPS = ${MTRLIB} ${UKCLIB}
+CXLIBS	= ${CXLIBDEPS}
+
+XCLIBDEPS = ${MTRLIB} ${UKCLIB}
+XCLIBS	= ${XCLIBDEPS}
+
+oxc: ${XC_BINARY}
+ocx: ${CX_BINARY}
+ocg: ${CG_BINARY}
+olibci: ${CI_LIBRARY}
+oups-gdb: ${UDB_BINARY}
+oups: ${UPS_BINARY}
+
+# -----------------------------------------------------------------------------
+
+${XC_BINARY}: ${XC_OBJS} ${XCLIBDEPS}
+	@rm -f $@
+	@echo Linking $@ with ${LINKCC} ${LINKCFLAGS} ${LINKFLAGS} ...
+	@${LINKCC} ${LINKCFLAGS} -o $@ ${XC_OBJS} ${XCLIBS} ${STDLIBS} ${LINKFLAGS}
+
+${CG_BINARY}: ${CG_OBJS} ${CGLIBDEPS}
+	@rm -f $@
+	@echo Linking $@ with ${LINKCC} ${LINKCFLAGS} ${LINKFLAGS} ...
+	@${LINKCC} ${LINKCFLAGS} -o $@ ${CG_OBJS} ${CGLIBS} ${STDLIBS} ${LINKFLAGS}
+
+${CI_LIBRARY}: ${CILIB_OBJS} 
+	@rm -f $@
+	@echo Linking $@ with ${MAKE_LIBRARY} ...
+	@${MAKE_LIBRARY} $@ ${CILIB_OBJS} 
+	@${RANLIB} $@
+
+${CX_BINARY}: ${CX_OBJS} ${CXLIBDEPS}
+	@rm -f $@
+	@echo Linking $@ with ${LINKCC} ${LINKCFLAGS} ${LINKFLAGS} ...
+	@${LINKCC} ${LINKCFLAGS} -o $@ ${CX_OBJS} ${CXLIBS} ${STDLIBS} ${LINKFLAGS}
+
+# The following dependencies are for building ups in parallel on an MP system
+uiobjs: ${UIOBJS}
+stobjs: ${STOBJS}
+vaobjs: ${VAOBJS}
+objobjs: ${OBJOBJS}
+ui2objs: ${UI2OBJS}
+dbobjs: ${DBOBJS}
+restobjs: ${RESTOBJS}
+ciobjs: ${CIOBJS}
+
+${UDB_BINARY}: ${UDB_OBJS} ${GDB_X11LIBDEPS}
+	@rm -f $@
+	@echo Linking $@ with ${LINKCC} ${LINKCFLAGS} ${LINKFLAGS} ...
+	@${LINKCC} ${LINKCFLAGS} -o $@ ${UDB_OBJS} ${GDB_X11LIBS} ${STDLIBS} ${LINKFLAGS}
+
+${UPS_BINARY}: ${UPS_OBJS} ${NATIVE_X11LIBDEPS}
+	@rm -f $@
+	@echo Linking $@ with ${LINKCC} ${LINKCFLAGS} ${LINKFLAGS} ...
+	@${LINKCC} ${LINKCFLAGS} -o $@ ${UPS_OBJS} ${NATIVE_X11LIBS} ${STDLIBS} ${LINKFLAGS}
+
+ofiles: ${UPS_OBJS}
+
+list:
+	@echo README ${FILES} ci_parse_sun.c ci_parse_new.c sccsdata.c | tr ' ' '\012'
+	@echo doc/sample.c
+	@echo README GLUEMENUS ${MENUS} | tr ' ' '\012' | sed 's;^;menus/;'
+	@echo README START END ${CURSORS} | tr ' ' '\012' | sed 's;^;cursors/;'
+
+${TAGSFILE}: ${TAGS_SRCS} ${HDRS}
+	${ETAGS} -t ${TAGS_SRCS} ${HDRS}
+	rep ci_parse\\.c ci_parse.y ${TAGSFILE}
+
+lint:
+	lint ${UPS_HEADERS} ${LINTFLAGS} ${ARCH_CFLAGS} ${LINT_SRCS} # ${X11LINTLIBS}
+
+count: ${SOURCE_FILES}
+	wc ${SOURCE_FILES}
+
+fullcount: count
+	@echo `egrep -v '^[ 	]*$$' ${SOURCE_FILES} | wc -l` non blank lines
+	@echo `semicount ${SOURCE_FILES}` semicolons
+
+ci_count: ${CIHDRS} ${CISRCS} ci_parse.y
+	wc -l ${CIHDRS} ${CISRCS} ci_parse.y
+
+deps: ${DEPS_SRCS}
+	@deps ${UPS_HEADERS} ${ARCH_CFLAGS} ${DEPS_SRCS} | \
+		sed 's/{CCLINE}xc_machine/{CCLINE_NO_ERROR}xc_machine/
+
+cursorfile:
+	cd cursors; cat START ${CURSORS} END > ../cursors.c
+
+menusfile:
+	cd menus; ./GLUEMENUS ${MENUS} > ../menudata.c
+
+veryclean: clean
+	rm -f tags ${CI_PARSE}.c
+	${SCCS} clean
+
+clean:
+	rm -f ${ALL_OBJS} ${BINARIES} ${LIBRARIES} ups.core core
+
+SCCS_CHECK = sccsinfo ${SCCSCHECK_DIRS} ${FILES} && newer sccsdata.c ${FILES}
+
+checklist: ${FILES} ci_parse_sun.c ci_parse_new.c sccsdata.c
+	@checklist
+
+sccs_check:
+	@${SCCS_CHECK}
+
+sccssnapshot:
+	mksccs -version_tag "${VERSION_TAG}" -changefile CHANGES -wh -c t_snapshot.c -h t_snapshot.h ups ${FILES}
+
+sccsfile:
+	@sccsinfo ${SCCSCHECK_DIRS} ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@${SCCS} edit ${SCCSFILE_RELEASE} sccsdata.c
+	@mksccs -version_tag "${VERSION_TAG}" -changefile CHANGES -wh ups ${FILES}
+	@${SCCS} delget sccsdata.c
+
+install:
+	@echo You must run 'make install' in the directory above this one. 1>&2
+
+install_ups: ${BINDIR}/ups ${MANDIR}/ups.${MANSUFFIX}
+
+install_interpreter: ${BINDIR}/cx ${BINDIR}/xc ${BINDIR}/cg
+ 
+install_cx: ${BINDIR}/cx
+
+install_xc: ${BINDIR}/xc
+
+install_cg: ${BINDIR}/cg
+
+${BINDIR}/ups: ups
+	test -d ${BINDIR} || ${INSTALL} -d ${BINDIR}
+	${INSTALL_PROGRAM} ${BINARY_OWNER} -s $? $@
+
+${BINDIR}/cx: ${CX_BINARY}
+	test -d ${BINDIR} || ${INSTALL} -d ${BINDIR}
+	${INSTALL_PROGRAM} ${BINARY_OWNER} -s $? $@
+
+${BINDIR}/xc: ${XC_BINARY}
+	test -d ${BINDIR} || ${INSTALL} -d ${BINDIR}
+	${INSTALL_PROGRAM} ${BINARY_OWNER} -s $? $@
+
+${BINDIR}/cg: ${CG_BINARY}
+	test -d ${BINDIR} || ${INSTALL} -d ${BINDIR}
+	${INSTALL_PROGRAM} ${BINARY_OWNER} -s $? $@
+
+${MANDIR}/ups.${MANSUFFIX}: doc/ups.man
+	test -d ${MANDIR} || ${INSTALL} -d ${MANDIR}
+	${INSTALL_DATA} ${MANPAGE_OWNER} $? $@
+
+# -----------------------------------------------------------------------------
+#  Special dependency for ci_parse.y
+# -----------------------------------------------------------------------------
+${CI_PARSE}.c: ci_parse.y
+	${YACC} -d $Sci_parse.y
+	-sed '1,5d' ci_tokens.h | cmp - y.tab.h || { \
+		echo '/* ci_tokens.h - yacc generation token #defines */';   \
+		echo;							     \
+		echo '/* Copyright 1991-1995 Mark Russell, University of Kent at Canterbury */';	     \
+		echo;							     \
+		echo '/* %'W'% %'G'% (UKC) */';				     \
+		cat y.tab.h;						     \
+	} > ci_tokens.h
+	sed -e '/^extern char \*malloc(), \*realloc();/d'		     \
+	    -e '/^#include <malloc.h>/d'				     \
+	    -e 's/malloc(/malloc((size_t)/'				     \
+	    -e '/yysccsid/s/const//'					     \
+	    -e '/goto skip_init;/,/skip_init:/d'			     \
+	    -e '/yynewstate:/,/goto yy_newstate/d'			     \
+	    -e 's/\(yymaxdepth \* sizeof(YYSTYPE)\));$$/(size_t)(\1));/'     \
+	    -e 's/\(yymaxdepth \* sizeof(int)\));$$/(size_t)(\1));/'	     \
+	    -e '/^# *line/d'						     \
+		y.tab.c > $@
+
+# -----------------------------------------------------------------------------
+#  Special dependencies for GDB
+# -----------------------------------------------------------------------------
+gd_main.o: ${GD_SUB}/main.c
+	@echo Compiling gd_main.c ...
+	${CCLINE_GDB}gd_main.c \
+	    -DSTART_PROGRESS=start_progress \
+	    -DEND_PROGRESS=end_progress \
+	    -DBEFORE_MAIN_LOOP_HOOK="before_main_loop(argc,argv)" \
+	    -DADDITIONAL_OPTION_HANDLER="additional_options()"
+
+${LIBGDB}: libgdb-files
+	${MAKE_LIBRARY} $@ `grep '\.o$$' libgdb-files`
+	@${RANLIB} $@
+
+# 
+#OMITTED	= annotate.o
+
+# grep '\.o$$' ${GD_SUB}/libgdb-files
+
+libgdb-files: ${GD_SUB}/libgdb-files Makefile
+	@rm -f $@ l-tmp
+	@: > $@
+	@echo "Looking for GDB files in ${GD_SUB}"
+	@for i in `cat ${GD_SUB}/libgdb-files` ${OMITTED}; do \
+		if test -f ${GD_SUB}/$$i; then \
+		    echo ${GD_SUB}/$$i >> $@; \
+		else \
+		    echo "$$i : not present"; \
+		fi; \
+	done
+
+${GD_SUB}/libgdb-files:
+	cd ${GD_SUB} && make libgdb-files
+
+# -----------------------------------------------------------------------------
+#  Header dependenices
+# -----------------------------------------------------------------------------
+# .o header dependencies, generated by make deps
+st_debug.o: develhdrs/mtrprog/ifdefs.h st_debug.c ups.h symtab.h target.h \
+  st.h ao_syms.h st_debug.h va.h util.h 
+	${CCLINE}st_debug.c
+st_lookup.o: develhdrs/mtrprog/ifdefs.h st_lookup.c ups.h symtab.h ci.h st.h target.h state.h 
+	${CCLINE}st_lookup.c
+st_fmap.o: develhdrs/mtrprog/ifdefs.h st_fmap.c ups.h symtab.h st.h 
+	${CCLINE}st_fmap.c
+st_util.o: develhdrs/mtrprog/ifdefs.h st_util.c ups.h symtab.h ci.h target.h st.h obj_bpt.h srcbuf.h srcpath.h 
+	${CCLINE}st_util.c
+st_cb.o: develhdrs/mtrprog/ifdefs.h st_cb.c ups.h symtab.h ci.h target.h st.h state.h 
+	${CCLINE}st_cb.c
+st_module.o: develhdrs/mtrprog/ifdefs.h st_module.c ups.h symtab.h st.h 
+	${CCLINE}st_module.c
+ao_target.o: develhdrs/mtrprog/ifdefs.h ao_target.c ao_ifdefs.h ups.h ci.h target.h mreg.h dx.h breakpoint.h \
+  ao_core.h ao_target.h ao_text.h ao_stack.h ao_shlib.h obj_bpt.h ao_ptrace.h \
+  ao_aout.h ao_procfs.h ao_elflib.h 
+	${CCLINE}ao_target.c
+ao_procfs.o: develhdrs/mtrprog/ifdefs.h ao_procfs.c ao_ifdefs.h ups.h target.h ao_core.h ao_target.h ao_procfs.h \
+  ao_elflib.h ao_elfcore.h breakpoint.h obj_bpt.h debug.h ui.h 
+	${CCLINE}ao_procfs.c
+ao_ptrace.o: develhdrs/mtrprog/ifdefs.h ao_ptrace.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
+  ao_ptrace.h debug.h 
+	${CCLINE}ao_ptrace.c
+ao_pt_regs.o: develhdrs/mtrprog/ifdefs.h ao_pt_regs.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
+  ao_ptrace.h debug.h 
+	${CCLINE}ao_pt_regs.c
+ao_pt_uarea.o: develhdrs/mtrprog/ifdefs.h ao_pt_uarea.c ao_ifdefs.h ups.h ui.h target.h ao_target.h \
+  ao_ptrace.h debug.h 
+	${CCLINE}ao_pt_uarea.c
+ao_core.o: develhdrs/mtrprog/ifdefs.h ao_core.c ao_ifdefs.h ups.h target.h data.h ao_core.h ao_elfcore.h \
+  ao_aout.h 
+	${CCLINE}ao_core.c
+ao_symread.o: develhdrs/mtrprog/ifdefs.h ao_symread.c ao_ifdefs.h ups.h symtab.h elfstab.h target.h st.h \
+  ao_syms.h ao_symread.h 
+	${CCLINE}ao_symread.c
+ao_shlib.o: develhdrs/mtrprog/ifdefs.h ao_shlib.c ao_ifdefs.h 
+	${CCLINE}ao_shlib.c
+ao_symload.o: develhdrs/mtrprog/ifdefs.h ao_symload.c ao_ifdefs.h elfstab.h ups.h symtab.h st.h ci.h srcbuf.h \
+  srcpath.h ao_syms.h ao_symload.h ao_symread.h ao_symparse.h ao_symscan.h ao_elfsym.h \
+  util.h 
+	${CCLINE}ao_symload.c
+ao_symparse.o: develhdrs/mtrprog/ifdefs.h ao_symparse.c ao_ifdefs.h elfstab.h ups.h symtab.h ci.h target.h \
+  st.h ao_syms.h ao_symread.h ao_symparse.h ao_symscan.h 
+	${CCLINE}ao_symparse.c
+ao_symscan.o: develhdrs/mtrprog/ifdefs.h ao_symscan.c ao_ifdefs.h elfstab.h ups.h symtab.h ci.h st.h ao_syms.h \
+  ao_symscan.h ao_symread.h ao_elfsym.h ao_symcb.h util.h 
+	${CCLINE}ao_symscan.c
+ao_symcb.o: develhdrs/mtrprog/ifdefs.h ao_symcb.c ao_ifdefs.h elfstab.h ups.h symtab.h ci.h st.h ao_syms.h \
+  ao_symcb.h ao_symread.h ao_symscan.h ao_symparse.h 
+	${CCLINE}ao_symcb.c
+ao_aout.o: develhdrs/mtrprog/ifdefs.h ao_aout.c ao_ifdefs.h 
+	${CCLINE}ao_aout.c
+ao_elfcore.o: develhdrs/mtrprog/ifdefs.h ao_elfcore.c ao_ifdefs.h ups.h ao_core.h ao_elfpriv.h ao_elfread.h \
+  ao_elfcore.h ao_dwarf.h 
+	${CCLINE}ao_elfcore.c
+ao_elfread.o: develhdrs/mtrprog/ifdefs.h ao_elfread.c ao_ifdefs.h ups.h ao_execinfo.h ao_elfpriv.h ao_elfread.h \
+  ao_elflib.h elfstab.h ao_dwarf.h 
+	${CCLINE}ao_elfread.c
+ao_elfsym.o: develhdrs/mtrprog/ifdefs.h ao_elfsym.c ao_ifdefs.h ups.h symtab.h target.h st.h srcwin.h \
+  ui.h ao_core.h ao_execinfo.h ao_syms.h ao_text.h ao_symread.h ao_symscan.h ao_aflist.h \
+  ao_elfpriv.h ao_elfread.h ao_elfsym.h ao_elflib.h elfstab.h ao_dwarf.h 
+	${CCLINE}ao_elfsym.c
+ao_elflib.o: develhdrs/mtrprog/ifdefs.h ao_elflib.c ao_ifdefs.h ups.h symtab.h target.h st.h ao_syms.h \
+  ao_core.h ao_target.h ao_elfpriv.h ao_elfread.h ao_elflib.h ao_elfsym.h ao_symscan.h ao_dwarf.h 
+	${CCLINE}ao_elflib.c
+ao_aflist.o: develhdrs/mtrprog/ifdefs.h ao_aflist.c ao_ifdefs.h ups.h symtab.h ci.h st.h ao_aflist.h ao_syms.h \
+  ao_symscan.h 
+	${CCLINE}ao_aflist.c
+ao_dwarf.o: develhdrs/mtrprog/ifdefs.h ao_dwarf.c ao_dwarf.h 
+	${CCLINE}ao_dwarf.c
+ao_dwfsyms.o: develhdrs/mtrprog/ifdefs.h ao_dwfsyms.c \
+  ao_dwarf.h ao_dwfsyms.h ao_dwftype.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
+  ao_syms.h ao_symscan.h 
+	${CCLINE}ao_dwfsyms.c
+ao_dwftext.o: develhdrs/mtrprog/ifdefs.h ao_dwftext.c \
+  ao_dwarf.h ao_dwfsyms.h ao_dwftext.h ups.h symtab.h ci.h st.h \
+  ao_syms.h ao_symscan.h 
+	${CCLINE}ao_dwftext.c
+ao_dwftype.o: develhdrs/mtrprog/ifdefs.h ao_dwftype.c \
+  ao_dwarf.h ao_dwftype.h ups.h symtab.h ci.h st.h \
+  ao_syms.h
+	${CCLINE}ao_dwftype.c
+ao_dwfutil.o: develhdrs/mtrprog/ifdefs.h ao_dwfutil.c \
+  ao_dwarf.h ao_dwfutil.h ups.h symtab.h ci.h st.h \
+  ao_syms.h ao_symscan.h 
+	${CCLINE}ao_dwfutil.c
+ao_te.o: develhdrs/mtrprog/ifdefs.h ao_te.c ao_ifdefs.h 
+	${CCLINE}ao_te.c
+ao_text.o: develhdrs/mtrprog/ifdefs.h ao_text.c ao_ifdefs.h \
+  ups.h symtab.h target.h st.h as.h ao_syms.h \
+  ao_asm.h ao_symread.h ao_execinfo.h ao_text.h ao_symload.h ao_symscan.h \
+  ao_symcb.h ao_shlib.h ao_elfread.h ao_elfsym.h ao_aout.h ao_dwfsyms.h 
+	${CCLINE}ao_text.c
+ao_stack.o: develhdrs/mtrprog/ifdefs.h ao_stack.c ao_ifdefs.h ups.h symtab.h target.h data.h st.h ao_syms.h \
+  ao_stack.h ao_text.h 
+	${CCLINE}ao_stack.c
+as_vax.o: develhdrs/mtrprog/ifdefs.h as_vax.c 
+	${CCLINE}as_vax.c
+as_68020.o: develhdrs/mtrprog/ifdefs.h as_68020.c 
+	${CCLINE}as_68020.c
+as_mips.o: develhdrs/mtrprog/ifdefs.h as_mips.c 
+	${CCLINE}as_mips.c
+as_clipper.o: develhdrs/mtrprog/ifdefs.h as_clipper.c 
+	${CCLINE}as_clipper.c
+as_sparc.o: develhdrs/mtrprog/ifdefs.h as_sparc.c ups.h debug.h target.h as.h ao_asm.h 
+	${CCLINE}as_sparc.c
+ui_iploop.o: develhdrs/mtrprog/ifdefs.h ui_iploop.c cursors.h ups.h symtab.h target.h st.h ui.h tdr.h \
+  srcwin.h ui_priv.h data.h expr.h reg.h state.h as.h debug.h obj_bpt.h va.h st_debug.h 
+	${CCLINE}ui_iploop.c
+ui_layout.o: develhdrs/mtrprog/ifdefs.h ui_layout.c cursors.h reg.h ups.h symtab.h srcwin.h ui.h tdr.h \
+  ui_priv.h state.h menudata.h debug.h objtypes.h obj_util.h sccsdata.h 
+	${CCLINE}ui_layout.c
+ui_menu.o: develhdrs/mtrprog/ifdefs.h ui_menu.c objtypes.h ups.h target.h srcwin.h ui.h ui_priv.h exec.h \
+  obj_target.h reg.h tdr.h state.h menudata.h cursors.h 
+	${CCLINE}ui_menu.c
+ui_misc.o: develhdrs/mtrprog/ifdefs.h ui_misc.c ups.h debug.h objtypes.h symtab.h target.h st.h ci.h srcwin.h \
+  ui.h ui_priv.h exec.h data.h obj_stack.h reg.h state.h tdr.h 
+	${CCLINE}ui_misc.c
+ui_src.o: develhdrs/mtrprog/ifdefs.h ui_src.c ups.h reg.h symtab.h ci.h srcwin.h tdr.h ui.h ui_priv.h \
+  cursors.h menudata.h expr.h obj_bpt.h obj_stack.h exec.h state.h 
+	${CCLINE}ui_src.c
+va_decl.o: develhdrs/mtrprog/ifdefs.h va_decl.c ups.h symtab.h ci.h target.h data.h va.h va_priv.h state.h 
+	${CCLINE}va_decl.c
+va_edit.o: develhdrs/mtrprog/ifdefs.h va_edit.c ups.h symtab.h objtypes.h obj_buildf.h target.h st.h obj_target.h \
+  obj_util.h state.h va.h ci.h data.h va_priv.h ui.h tdr.h 
+	${CCLINE}va_edit.c
+va_menu.o: develhdrs/mtrprog/ifdefs.h va_menu.c objtypes.h ups.h symtab.h target.h state.h data.h va.h \
+  menudata.h va_priv.h ui.h obj_stack.h tdr.h 
+	${CCLINE}va_menu.c
+va_type.o: develhdrs/mtrprog/ifdefs.h va_type.c ups.h symtab.h target.h st.h data.h va.h va_priv.h ci.h \
+  state.h 
+	${CCLINE}va_type.c
+va_val.o: develhdrs/mtrprog/ifdefs.h va_val.c ups.h symtab.h target.h st.h data.h va.h va_priv.h state.h 
+	${CCLINE}va_val.c
+va_expr.o: develhdrs/mtrprog/ifdefs.h va_expr.c objtypes.h ups.h symtab.h reg.h ci.h ui.h va.h target.h \
+  st.h data.h exec.h obj_stack.h obj_util.h menudata.h va_priv.h tdr.h state.h 
+	${CCLINE}va_expr.c
+va_state.o: develhdrs/mtrprog/ifdefs.h va_state.c ups.h objtypes.h symtab.h ci.h target.h va.h ui.h st.h \
+  obj_stack.h obj_misc.h va_priv.h srcwin.h expr.h util.h 
+	${CCLINE}va_state.c
+va_format.o: develhdrs/mtrprog/ifdefs.h va_format.c ups.h symtab.h va.h va_priv.h st.h ui.h objtypes.h \
+  obj_stack.h 
+	${CCLINE}va_format.c
+obj_bpt.o: develhdrs/mtrprog/ifdefs.h obj_bpt.c objtypes.h obj_util.h ups.h symtab.h ci.h ui.h exec.h \
+  target.h breakpoint.h st.h data.h obj_bpt.h menudata.h debug.h tdr.h config.h \
+  srcbuf.h reg.h srcwin.h state.h util.h expr.h 
+	${CCLINE}obj_bpt.c
+obj_signal.o: develhdrs/mtrprog/ifdefs.h obj_signal.c objtypes.h ups.h ui.h obj_signal.h menudata.h tdr.h \
+  target.h state.h 
+	${CCLINE}obj_signal.c
+obj_misc.o: develhdrs/mtrprog/ifdefs.h obj_misc.c ups.h symtab.h objtypes.h target.h st.h obj_misc.h srcwin.h \
+  ui.h va.h obj_stack.h menudata.h tdr.h state.h 
+	${CCLINE}obj_misc.c
+obj_buildf.o: develhdrs/mtrprog/ifdefs.h obj_buildf.c ups.h symtab.h target.h st.h objtypes.h obj_buildf.h \
+  obj_misc.h obj_target.h obj_bpt.h obj_signal.h obj_env.h obj_stack.h va.h ui.h \
+  exec.h expr.h state.h 
+	${CCLINE}obj_buildf.c
+obj_target.o: develhdrs/mtrprog/ifdefs.h obj_target.c ups.h objtypes.h target.h obj_target.h obj_env.h \
+  exec.h ui.h obj_stack.h obj_util.h state.h tdr.h 
+	${CCLINE}obj_target.c
+obj_env.o: develhdrs/mtrprog/ifdefs.h obj_env.c objtypes.h ui.h obj_env.h obj_util.h menudata.h tdr.h 
+	${CCLINE}obj_env.c
+obj_stack.o: develhdrs/mtrprog/ifdefs.h obj_stack.c objtypes.h ups.h symtab.h st.h target.h obj_stack.h \
+  data.h ui.h va.h obj_signal.h obj_misc.h menudata.h debug.h tdr.h 
+	${CCLINE}obj_stack.c
+obj_util.o: develhdrs/mtrprog/ifdefs.h obj_util.c reg.h objtypes.h obj_util.h ui.h state.h tdr.h 
+	${CCLINE}obj_util.c
+obj_wpt.o: develhdrs/mtrprog/ifdefs.h obj_wpt.c reg.h objtypes.h obj_wpt.h ui.h state.h tdr.h 
+	${CCLINE}obj_wpt.c
+state.o: develhdrs/mtrprog/ifdefs.h state.c ups.h symtab.h ci.h srcwin.h reg.h target.h cc.h state.h 
+	${CCLINE}state.c
+reg.o: develhdrs/mtrprog/ifdefs.h reg.c reg.h cursors.h debug.h tdr.h 
+	${CCLINE}reg.c
+cursors.o: develhdrs/mtrprog/ifdefs.h cursors.c cursors.h 
+	${CCLINE}cursors.c
+menudata.o: develhdrs/mtrprog/ifdefs.h menudata.c 
+	${CCLINE}menudata.c
+tdr.o: develhdrs/mtrprog/ifdefs.h tdr.c srcwin.h ui.h cursors.h reg.h ups.h symtab.h st.h exec.h objtypes.h \
+  obj_misc.h obj_target.h obj_bpt.h obj_signal.h obj_env.h obj_stack.h obj_util.h \
+  va.h menudata.h expr.h state.h tdr.h util.h sccsdata.h 
+	${CCLINE}tdr.c
+util.o: develhdrs/mtrprog/ifdefs.h util.c util.h 
+	${CCLINE}util.c
+bp.o: develhdrs/mtrprog/ifdefs.h bp.c ups.h target.h breakpoint.h dx.h 
+	${CCLINE}bp.c
+exec.o: develhdrs/mtrprog/ifdefs.h exec.c ups.h symtab.h va.h ci.h cursors.h target.h st.h exec.h dx.h \
+  breakpoint.h obj_stack.h obj_target.h obj_signal.h obj_buildf.h obj_bpt.h obj_env.h \
+  trun.h printf.h ui.h menudata.h tdr.h state.h 
+	${CCLINE}exec.c
+trun_ss.o: develhdrs/mtrprog/ifdefs.h trun_ss.c ups.h symtab.h target.h st.h breakpoint.h trun.h exec.h \
+  obj_stack.h obj_signal.h obj_bpt.h dx.h 
+	${CCLINE}trun_ss.c
+trun_j.o: develhdrs/mtrprog/ifdefs.h trun_j.c ups.h symtab.h target.h as.h st.h breakpoint.h trun.h data.h \
+  exec.h obj_stack.h obj_signal.h obj_bpt.h dx.h 
+	${CCLINE}trun_j.c
+data.o: develhdrs/mtrprog/ifdefs.h data.c ups.h target.h data.h obj_stack.h obj_target.h state.h util.h 
+	${CCLINE}data.c
+target.o: develhdrs/mtrprog/ifdefs.h target.c ups.h symtab.h target.h tdr.h cursors.h ui.h 
+	${CCLINE}target.c
+as_mi.o: develhdrs/mtrprog/ifdefs.h as_mi.c ups.h symtab.h st.h trun.h target.h as.h debug.h state.h srcbuf.h \
+  util.h 
+	${CCLINE}as_mi.c
+expr.o: develhdrs/mtrprog/ifdefs.h expr.c objtypes.h ups.h symtab.h srcwin.h ui.h va.h obj_stack.h target.h \
+  st.h obj_misc.h state.h expr.h tdr.h 
+	${CCLINE}expr.c
+srcwin.o: develhdrs/mtrprog/ifdefs.h srcwin.c ups.h reg.h symtab.h st.h srcbuf.h srcwin.h target.h srcpath.h \
+  ui.h state.h 
+	${CCLINE}srcwin.c
+srcbuf.o: develhdrs/mtrprog/ifdefs.h srcbuf.c srcbuf.h 
+	${CCLINE}srcbuf.c
+srcpath.o: develhdrs/mtrprog/ifdefs.h srcpath.c srcbuf.h srcwin.h srcpath.h 
+	${CCLINE}srcpath.c
+printf.o: develhdrs/mtrprog/ifdefs.h printf.c ups.h reg.h symtab.h ci.h target.h st.h printf.h srcwin.h \
+  exec.h data.h ui.h state.h tdr.h 
+	${CCLINE}printf.c
+config.o: develhdrs/mtrprog/ifdefs.h config.c obj_bpt.h config.h va.h state.h 
+	${CCLINE}config.c
+ups.o: develhdrs/mtrprog/ifdefs.h ups.c ups.h symtab.h ci.h reg.h tdr.h exec.h target.h st.h ui.h obj_buildf.h \
+  obj_bpt.h cc.h state.h debug.h menudata.h cursors.h config.h va.h srcpath.h \
+  srcwin.h sccsdata.h 
+	${CCLINE}ups.c
+cc.o: develhdrs/mtrprog/ifdefs.h cc.c ups.h symtab.h ci.h cc.h cx_libfuncs.h cx_libvars.h 
+	${CCLINE}cc.c
+wp.o: develhdrs/mtrprog/ifdefs.h wp.c watchpoint.h 
+	${CCLINE}wp.c
+xc_symparse.o: develhdrs/mtrprog/ifdefs.h xc_symparse.c ups.h symtab.h xc_symparse.h ci.h 
+	${CCLINE}xc_symparse.c
+xc_text.o: develhdrs/mtrprog/ifdefs.h xc_text.c ups.h symtab.h target.h st.h ci.h xc_opcodes.h xc_machine.h \
+  xc_symparse.h xc_load.h ci_opcodes.h xc_builtins.h xc.h as.h breakpoint.h dx.h \
+  cc.h state.h 
+	${CCLINE}xc_text.c
+xc_load.o: develhdrs/mtrprog/ifdefs.h xc_load.c ci.h xc_opcodes.h xc_machine.h xc_load.h xc_builtins.h 
+	${CCLINE}xc_load.c
+xc_machine.o: develhdrs/mtrprog/ifdefs.h xc_machine.c ci.h xc_opcodes.h xc_machine.h xc_builtins.h 
+	${CCLINE_NO_ERROR}xc_machine.c
+xc_builtins.o: develhdrs/mtrprog/ifdefs.h xc_builtins.c ups.h symtab.h ci.h xc_opcodes.h xc_machine.h \
+  xc_builtins.h cx_libfuncs.h cx_libvars.h 
+	${CCLINE}xc_builtins.c
+ci_types.o: develhdrs/mtrprog/ifdefs.h ci_types.c ups.h symtab.h ci.h ci_parse.h ci_util.h ci_types.h 
+	${CCLINE}ci_types.c
+ci_lex.o: develhdrs/mtrprog/ifdefs.h ci_lex.c ups.h symtab.h ci.h ci_parse.h ci_util.h ci_lex.h ci_tokens.h 
+	${CCLINE}ci_lex.c
+ci_stm.o: develhdrs/mtrprog/ifdefs.h ci_stm.c ups.h symtab.h ci.h ci_parse.h ci_util.h ci_stm.h ci_func.h \
+  ci_types.h ci_expr.h ci_constexpr.h ci_showexpr.h 
+	${CCLINE}ci_stm.c
+ci_decl.o: develhdrs/mtrprog/ifdefs.h ci_decl.c ups.h symtab.h ci.h ci_parse.h ci_decl.h ci_types.h ci_util.h \
+  ci_lex.h ci_init.h 
+	${CCLINE}ci_decl.c
+ci_func.o: develhdrs/mtrprog/ifdefs.h ci_func.c ups.h symtab.h expr.h ci.h ci_parse.h ci_util.h ci_decl.h \
+  ci_func.h ci_types.h ci_expr.h 
+	${CCLINE}ci_func.c
+ci_util.o: develhdrs/mtrprog/ifdefs.h ci_util.c ups.h symtab.h expr.h ci.h ci_parse.h ci_expr.h ci_constexpr.h \
+  ci_util.h 
+	${CCLINE}ci_util.c
+ci_expr.o: develhdrs/mtrprog/ifdefs.h ci_expr.c ups.h symtab.h ci.h ci_parse.h ci_util.h ci_expr.h ci_func.h \
+  ci_types.h ci_decl.h ci_showexpr.h ci_constexpr.h 
+	${CCLINE}ci_expr.c
+ci_showexpr.o: develhdrs/mtrprog/ifdefs.h ci_showexpr.c ups.h symtab.h ci.h ci_parse.h ci_showexpr.h ci_types.h \
+  ci_util.h 
+	${CCLINE}ci_showexpr.c
+ci_constexpr.o: develhdrs/mtrprog/ifdefs.h ci_constexpr.c ups.h symtab.h ci.h ci_parse.h ci_showexpr.h \
+  ci_constexpr.h ci_types.h ci_util.h 
+	${CCLINE}ci_constexpr.c
+ci_compile.o: develhdrs/mtrprog/ifdefs.h ci_compile.c ups.h symtab.h ci.h ci_parse.h ci_types.h xc_opcodes.h \
+  xc_machine.h cx_link.h ci_compile.h ci_compile_expr.h ci_util.h 
+	${CCLINE}ci_compile.c
+ci_compile_expr.o: develhdrs/mtrprog/ifdefs.h ci_compile_expr.c ups.h symtab.h ci_parse.h ci_types.h ci_constexpr.h \
+  ci.h xc_opcodes.h xc_machine.h cx_link.h ci_compile.h ci_compile_expr.h ci_util.h 
+	${CCLINE}ci_compile_expr.c
+ci_opcodes.o: develhdrs/mtrprog/ifdefs.h ci_opcodes.c ups.h symtab.h ci_parse.h ci_util.h ci.h xc_opcodes.h \
+  xc_machine.h cx_link.h ci_compile.h ci_opcodes.h 
+	${CCLINE}ci_opcodes.c
+ci_init.o: develhdrs/mtrprog/ifdefs.h ci_init.c ups.h symtab.h ci.h ci_parse.h ci_init.h ci_expr.h ci_constexpr.h \
+  ci_util.h ci_types.h 
+	${CCLINE}ci_init.c
+cx.o: develhdrs/mtrprog/ifdefs.h cx.c ups.h symtab.h ci.h xc_load.h cx_link.h cc.h 
+	${CCLINE}cx.c
+cx_link.o: develhdrs/mtrprog/ifdefs.h cx_link.c ups.h ci.h xc_opcodes.h xc_machine.h xc_load.h cx_link.h \
+  cx_symio.h 
+	${CCLINE}cx_link.c
+cx_symio.o: develhdrs/mtrprog/ifdefs.h cx_symio.c ups.h ci.h xc_load.h cx_link.h cx_symio.h cx_wsym.h 
+	${CCLINE}cx_symio.c
+cx_wsym.o: develhdrs/mtrprog/ifdefs.h cx_wsym.c ups.h symtab.h cx_symio.h cx_wsym.h 
+	${CCLINE}cx_wsym.c
+cx_onefile.o: develhdrs/mtrprog/ifdefs.h cx_onefile.c ups.h symtab.h ci.h ci_util.h xc_opcodes.h xc_machine.h \
+  cx_link.h 
+	${CCLINE}cx_onefile.c
+xc.o: develhdrs/mtrprog/ifdefs.h xc.c ups.h ci.h xc_load.h 
+	${CCLINE}xc.c
+cg.o: develhdrs/mtrprog/ifdefs.h cg.c ups.h symtab.h ci.h xc_opcodes.h xc_machine.h xc_builtins.h cc.h 
+	${CCLINE}cg.c
+tops-gdb.o: develhdrs/mtrprog/ifdefs.h tops-gdb.c ups.h symtab.h target.h xc.h gd.h 
+	${CCLINE}tops-gdb.c
+tops-native.o: develhdrs/mtrprog/ifdefs.h tops-native.c ups.h symtab.h target.h ao.h ao_ifdefs.h xc.h \
+  gd.h 
+	${CCLINE}tops-native.c
+gd_ups.o: develhdrs/mtrprog/ifdefs.h gd_ups.c ups.h symtab.h target.h st.h ci.h obj_target.h gd_defs.h 
+	${CCLINE}gd_ups.c 
+gd_gdb.o: develhdrs/mtrprog/ifdefs.h gd_defs.h 
+	${CCLINE_GDB}gd_gdb.c 
+${CI_PARSE}.o: develhdrs/mtrprog/ifdefs.h ${CI_PARSE}.c ups.h symtab.h ci.h ci_parse.h ci_types.h ci_util.h \
+  ci_decl.h ci_func.h ci_expr.h ci_stm.h ci_lex.h 
+	${CCLINE}${CI_PARSE}.c
+sccsdata.o: sccsdata.c sccsdata.h 
+	${CCLINE}sccsdata.c

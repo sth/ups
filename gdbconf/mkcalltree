@@ -1,0 +1,152 @@
+#! /usr/local/bin/perl -w
+
+# @(#)mkcalltree	1.4 16/9/94 (UKC)
+
+# With the -f flag, generate a list of all the functions in the given .c files.
+# Without the -f flag, generate a call tree (dumbly).
+
+$conf = 'upsconf';
+$allfuncs = "$conf/allfuncs";
+$cppcmd_path = "$conf/cppcmd";
+
+($make_allfuncs = $ARGV[0] eq '-f') && shift @ARGV;
+	
+if (@ARGV == 0 || $ARGV[0] =~ /^-/) {
+	die("Usage: mkcalltree [-f] file [file ...]\n");
+}
+	
+if (!$make_allfuncs) {
+	open(FUNCS, $allfuncs) || die("Can't open $allfuncs ($!)\n");
+	
+	while (<FUNCS>) {
+		chop;
+		s/\s.*//;
+		if (/^\[(.*)\]$/) {
+			$structs{$1} = 1;
+		}
+		else {
+			$funcs{$_} = 1;
+		}
+	}
+}
+
+open(CPPCMD, $cppcmd_path);
+$cppcmd = <CPPCMD>;
+close(CPPCMD) || die("Error reading $cppcmd_path ($!)\n");
+chop($cppcmd);
+
+grep(&munge($_), @ARGV);
+print STDERR "\n";
+
+if ($make_allfuncs) {
+	grep(printf("%-30s %s\n", $_, $srcfile{$_}), sort keys %srcfile);
+	exit(0);
+}
+
+foreach $name(sort keys %callers) {
+	$path = $srcfile{$name};
+	print "  -> $name($path): $callers{$name}\n";
+	print "<-   $name($path): $calledby{$name}\n" if defined $calledby{$name};
+}
+
+foreach $name(sort keys %calledby) {
+	$path = $srcfile{$name};
+	print "<-   $name($path): $calledby{$name}\n" if !defined $callers{$name};
+}
+
+sub munge {
+	local($path) = @_;
+	
+	print STDERR "$path ";
+	
+	open(CPP, "$cppcmd $path |") || die("Can't run $cppcmd ($!)\n");
+
+	$lnum = 0;
+	$name = '';
+	$expected_name = '';
+	
+	while (<CPP>) {
+		++$lnum;
+
+		if (/^\# (\d+) "([^\"]+)"/) {
+			$filename = $2;
+			$lnum = $1 - 1;
+			next;
+		}
+
+		s/^static\s+void\s+//;
+		
+		if (/^(\w+)\s*\(/ && !/^__/ && !/\"/ && !/\\/) {
+
+			# Munge multiline prototypes into a single line by
+			# counting matching brackets.
+			#
+			while (tr/\(/\(/ != tr/\)/\)/) {
+				last unless ($line = <CPP>);
+
+				chop($_);
+				$_ .= $line;
+			}
+			
+			if (!/;/) {
+				$expected_name = $1;
+				$start_lnum = $lnum;
+				next;
+			}
+		}
+
+		if (/^{/ && $expected_name ne '') {
+			if ($name ne '') {
+				print STDERR "Warning: missed '}' for $name ($filename:$start_lnum..$lnum)\n";
+				undef %called;
+			}
+			$name = $expected_name;
+			$expected_name = '';
+		}
+		
+		if (/\bstruct\s+\w+\s+(\w+_(ops|fns|defn))\s+=/) {
+			$name = "[$1]";
+			next;
+		}
+
+		if ($name ne '' && /^\};?\s*$/) {
+			@cfuncs = sort keys %called;
+
+			# If only perl -w wasn't so anal ...
+			#
+			foreach $func (@cfuncs) {
+				if (defined($callers{$func})) {
+					$callers{$func} .= " $name";
+				}
+				else {
+					$callers{$func} = " $name";
+				}
+			}
+				   
+			$calledby{$name} = join(' ', @cfuncs) if (@cfuncs);
+			$srcfile{$name} = "$filename:$start_lnum..$lnum";
+			$name = '';
+			undef %called;
+
+			$expected_name = '';
+		}
+		
+		
+		if ($name ne '') {
+			s/\\\"/@/g;	      # Protect escaped quotes
+			s/"[^\"]*"//g;         # Lose strings
+			s/\"?[^\"]*\\n\\$//;    # Lose partial strings
+
+			foreach $word (/[a-zA-Z_]\w*/g) {
+				$called{$word} = 1 if ($funcs{$word});
+				$called{"[$word]"} = 1 if ($structs{$word});
+			}
+		}
+	}
+
+	close(CPP) || die("Error running cc -E ($!)\n");
+}
+
+# Local Variables:
+# mode: perl
+# End:

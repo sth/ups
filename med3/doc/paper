@@ -1,0 +1,304 @@
+.tr *\(**
+.TL
+A Tool for Providing Programs with Menus
+.AU
+J. D. Bovey
+.AI
+Computing Laboratory UKC
+.AB
+.LP
+This document describes a tool for providing menus to be used by
+programs running on a graphical workstation.
+.LP
+Menus help make programs easy to use.
+On a graphical workstation the best sort of
+menus are those where the user selects his choice by using the mouse or
+mouse to point the cursor at an area of the screen.
+Such menus,
+though convenient for the user, require considerable implementation effort.
+This document describes a tool that drastically reduces this
+implementation effort
+.LP
+The menus are created and modified using \fImed3\fP, a `menu editor'. 
+There is also a library of routines, callable from C, Fortran or Pascal\(dg,
+to load the menus, display them
+and return to the user's program the field selected.
+.AE
+.FS
+\(dgThe current SUN version of the interface routines can not be called
+directly from Pascal or Fortran.
+.FE
+.NH
+Introduction
+.LP
+This document describes version 3 of the \fImed\fP menu package.
+The package is made up of the following parts:
+.IP \(bu
+The menu editor \fImed3\fP which is used to create and modify menus.
+The menus are written out as C source code which can be compiled and
+linked in the usual way, or can be loaded dynamically while the program
+is running.
+.IP \(bu
+An interface library which is linked with the users program
+and which contains all the functions needed to load, modify, display
+and let the user select from the menus.
+.IP \(bu
+A header file \fImenu3.h\fP which needs to be included in programs
+which use the menus.
+.LP
+The menu editor and interface functions are all described in manual
+pages but this paper tries to give an overview of the system.
+.LP
+As with earlier versions of package, the mouse coordinates are read by
+the user program rather than by the interface routine, and are passed
+to the interface routine as parameters.
+This means that the coordinates are available to the program and allows
+the menus to be used concurrently with other graphical input.
+.NH
+Description of the menus
+.LP
+There are two views of the tool: one is that of the \fIprogrammer\fP
+who uses the tool to implement menus within his program; the second
+is that of the \fIuser\fP of the program, who communicates with the
+menus that have been created.
+As the user sees it, a menu is a rectangle divided into fields
+(or buttons), containing captions.
+When the user moves the cursor to one of these buttons and presses 
+and releases a mouse button, a
+value representing the chosen button is returned to the program.
+This returned value will usually initiate some action by the program.
+.LP
+In more complicated menus the initially displayed buttons can have
+sub-menus which are hidden until the field is selected.
+The fields
+of the sub-menus can in turn have their own submenus and so on.
+The user program will not usually need to take any action until the
+displaying routine returns a value indicating the selection of a
+button with no submenus.
+.LP
+The submenu associated with a button can be the same size and shape as
+a portion of the original menu or it can be freely positioned as a
+rectangle near the button.
+The latter positioning creates what is in effect a pop-up submenu.
+Pop-up submenus can be configured to appear positioned relative
+to the cursor coordinates, or at a fixed position relative to its
+parent menu.
+.LP
+The menu interface routines support both \fIaction-on-button-press\fP and
+\fIaction-on-button-release\fP styles of menu use.
+.IP "\fBaction on button press\fP"
+.br
+If a menu used in this mode, the return value from the selected
+field is returned to the program when the mouse button is pressed.
+The selected field can be highlighted to give some feedback to the user
+and the highlighting is removed by the program when it is ready to
+receive another selection.
+.IP "\fBaction on button release\fP"
+.br
+This is a more sophisticated way of using menus.
+When the button is pressed the selected field is highlighted as feedback but
+no action is taken by the program until the button is released.
+What happens if the user moves the
+cursor out of the selected field before releasing the button depends
+on an attributes of the menu (set using \fImed3\fP(1k)).
+The two alternatives are:
+.RS
+.IP "\fBselect on press\fP"
+.br
+The button has to be released in the field in which it was pressed for
+the action to take place.
+In this mode the highlighting is removed if the cursor is moved out of
+the field before releasing the button and is restored if the cursor
+is moved back in again.
+The existence of the highlighting indicates that the selected action
+will go ahead if the button is released without moving the cursor.
+This mode of use is most appropriate in menus with hidden subfields.
+.IP "\fBselect on drag\fP"
+Moving the cursor to a different field and then releasing the button
+causes the new field to be selected instead of the original one.
+In this case moving the cursor to a new field causes the highlighting
+to move to the new field.
+The highlighted field is the one that will be selected if the button
+is released.
+This mode of use is appropriate in simple menus and popup submenus.
+.RE
+.LP
+The type of highlighting is under the control of the programmer and
+can be any combination of bold face, grey shading and inverted video.
+For more details see the manual page \fIMfmodes\fP(3k).
+.NH
+The Menu Editor
+.LP
+Most menus are created using the menu editor \fImed3\fP(1k).
+Menus are created by starting with a blank rectangle and successively
+subdividing it either vertically or horizontally.
+Captions are then edited into the resulting fields.
+Each menu button has a number of attributes which can be set using the
+editor.
+At present these are:
+.IP \(bu
+The value which will be returned to the program when a user selects the
+button.
+.IP \(bu
+The font used to display the caption.
+Each menu can use up to four fonts at once, with a maximum of one font per
+caption.
+The fonts used by the menu are loaded at run-time (see \fIMfonts\fP(3k))
+but the editor is used to specify
+which font should be used for each individual caption.
+.IP \(bu
+Whether a submenu of the button will operate in \fBdrag\fP or \fBpress\fP
+mode.
+.IP \(bu
+Whether a submenu of the button will be scaled when the main menu's size is
+changed using \fIMsize\fP(3k).
+.IP \(bu
+Whether a submenu of the button will be displayed positioned relative to
+the cursor, or at a fixed position.
+.IP \(bu
+The colour of the dividing lines which seperate the menu buttons.
+At present two colours are available: Foreground and Background (invisible).
+.LP
+\fIMed3\fP also has a range of editing commands which can be used to
+insert new buttons, move or delete existing buttons, adjust individual
+button sizes and
+adjust groups of buttons so that they have equal size.
+.NH
+Programming with the menus
+.LP
+The definitive description of the menu interface is in the Manual pages
+to the C language menu functions.
+When implemented,
+the Fortran and Pascal interfaces both use these C interface functions
+and it is assumed in the description below that a programmer who
+wants to use the menu package from Fortran or Pascal knows enough C
+to understand the C documentation.
+The next section, which gives a summary of the C interface, should be
+read whatever the intended language. 
+.NH 2
+Using the menus from C
+.LP
+Once a menu has been loaded into a a program it is identified by a small
+positive integer called a \fImenu descriptor\fP.
+These menu descriptors are used in much the same way that file descriptors
+are used by the UNIX I/O system calls.
+.NH 3
+Functions that return a menu descriptor
+.LP
+The easiest way of loading a menu is to use \fIMopen\fP(3) which takes
+the pathname of the menu file as its argument.
+An alternative is to compile the menu file using the C compiler and link
+it in with the main program.
+The function \fIMinsert\fP(3k) is then used to convert the resulting
+data structure into a menu descriptor.
+.LP
+If a simple \fIpop-up\fP type menu is desired with one caption per line
+and no hidden subfields then it can be created directly using
+\fIMmake\fP(3k) which takes a number of arguments describing the
+captions, return values, fonts etc.
+.LP
+The function \fIMdup\fP(3k) takes a menu descriptor as argument and returns
+a menu descriptor to a menu which is a duplicate of the first.
+\fIMdup\fP is needed if a menu needs to be displayed more than once
+at the same time.
+.NH 3
+Functions that modify menus
+.LP
+Once a menu has been loaded, using \fIMopen\fP or otherwise, it usually
+needs to be modified so that it will be displayed in the right position
+with the correct dimensions.
+By default a menu will be displayed the same size that it was created, and
+with its top left hand corner in the top left hand corner of the window.
+.LP
+The function \fIMplace\fP changes the position at which the menu will be
+displayed.
+It takes as arguments a \fImenu descriptor\fP and the window
+coordinates of the top-left-hand corner of the menu.
+Similarly \fIMsize\fP will change a menu's width and height.
+All the menu's subfields and bound submenus are scaled in proportion,
+but a button's free submenu can be scaled or not depending
+on the button's attributes (see \fImed3\fP(1k) and \fIMsize\fP(3k)).
+.LP
+A menu buttons attributes can be dynamically altered by
+using the function \fIMchange\fP(3k).
+The button is identified by return value and the new caption, return value,
+font and other attributes are specified as parameters.
+.LP
+The types of highlighting used by the menu to provide feedback can be modified
+using \fIMfmodes\fP(3k).
+.NH 3
+Displaying the menus
+.LP
+The command to display a menu is \fIMdisplay\fP(3k) which takes three
+arguments.
+Its first argument is the \fImenu descriptor\fP of the menu.
+The second argument is used to specify the
+window in which the menu is to be displayed.
+If the third argument is non-zero then the area of screen under the menu
+will be saved so that it can be restored when the menu is removed.
+Menus are removed from the display with \fIMremove\fP(3k).
+.NH 3
+Selecting from the menus
+.LP
+The function which enables a user to make selections from the menus
+and which
+updates the menu display in response to those selections is \fIMselect\fP(3k).
+.LP
+The first two arguments to \fIMselect\fP are the \fIx\fP and \fIy\fP
+window-coordinates of the cursor.
+These coordinates have to be obtained by the program using what ever
+mouse input function is available.
+.LP
+If the coordinates happen to lie within a displayed menu then the menu
+will be updated and, if appropriate, the value of the selected field will
+be returned.
+If the coordinates don't lie within a displayed menu then, apart from
+possibly updating the highlighting to give feedback, the call to
+\fIMselect\fP will be ignored and zero will be returned.
+This means that it is not usually necessary for the program to check whether
+the coordinates lie within a menu.
+If they don't they will be ignored.
+.LP
+The remaining arguments to \fIMselect\fP are:
+.IP \(bu
+a variable which identifies the window in which the coordinates lie.
+.IP \(bu
+a \fImode\fP variable which is used inform \fIMselect\fP what button action
+(press release etc.) has just occurred.
+.IP \(bu
+a bit map which specifies those menus that should be ignored by \fIMselect\fP.
+This last argument will usually be zero so that selection can be made from
+any menus that are displayed.
+.NH 3
+Other menu functions
+.LP
+When \fIMselect\fP returns a value to say that the user has selected a field
+with no hidden subfields the selected field will usually be left highlighted
+as feedback to the user.
+After the action initiated by the menu selection is complete and the
+program is ready to take another selection, this feedback should be
+removed using \fIMclear\fP(3k) or \fIMreset\fP(3k).
+\fIMclear\fP just removes the highlighting and any \fIselect-on-drag\fP
+submenus
+but \fIMreset\fP restores the
+menu to the state it was in when it was first displayed.
+.LP
+The two functions \fIMredraw\fP(3k) and \fIMrepair\fP(3k) both redraw
+all the menus displayed in a window.
+The difference between them is that \fIMredraw\fP re-saves any saved
+background and is particularly useful after a window size change.
+\fIMrepair\fP should be called to repair menus which have been
+temporarily overwritten by other graphical software.
+.LP
+If it is desired to delay a window update until several changes have
+been made to the display then the changes should be bracketed by calls
+to \fIMpushsu\fP(3k) and \fIMpopsu\fP.
+.LP
+A return value of \-1 from a function in the menu library always indicates
+an error.
+More information about the reason for the error can be obtained by examining
+the external variable \fImenerr\fP.
+A list of possible values of \fImenerr\fP is given in \fImenus\fP(3k).
+Alternatively the function \fIMperror\fP(3k) will output an error message
+to the error device.
+.so appendix_a

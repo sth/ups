@@ -1,0 +1,20 @@
+# @(#)zapcalls	1.1 17 Apr 1994 (UKC)
+
+# Calls to these functions in the gdb source are #ifdefed out.
+add_com
+add_com_alias
+add_info
+add_info_alias
+add_cmd
+add_prefix_cmd
+add_set_cmd
+add_show_cmd
+add_show_from_set
+add_alias_cmd
+add_abbrev_prefix_cmd
+add_prefix_cmd
+print_stack_frame
+
+# These calls are only #ifdefed out in the named function.
+target_signal_to_host:warning
+finish_command:value_print

@@ -1,0 +1,37 @@
+
+# Holds UPS specific targets
+
+HDRS	= lib/*.h
+
+SOURCE	= lib/*.c po/*.c
+
+# Files needed by AutoConf and configure
+CONF	= \
+	Makefile.in configure.in config.h.in UpsMakefile.in \
+	acconfig.h aclocal.m4 configure config.guess config.sub \
+	install-sh mkinstalldirs stamp-h.in \
+	lib/Makefile.in lib/sys_elf.h.in \
+	po/Makefile.in
+
+DOCS	=
+
+OTHERS	= \
+	COPYING.LIB ChangeLog INSTALL README VERSION \
+	po/libelf.pot po/*.po po/*.msg po/*.cat
+
+EDITED	= *.elflib lib/*.elflib po/*.elflib
+
+FILES	= ${HDRS} ${SOURCE} ${CONF} ${DOCS} ${OTHERS} ${EDITED}
+
+# List one to a line the files in this directory that should go in a release
+list:
+	@echo ${FILES} | tr ' ' '\012'
+
+check-list:
+	@-bash -c "diff -bc <(make -f UpsMakefile list | sort) <(ls -d * */* | sort)"
+
+diffs:
+	@-for i in ${EDITED}; do \
+		diff -bc $$i `basename $$i .elflib`; \
+	done
+

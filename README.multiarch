@@ -1,0 +1,36 @@
+# $Id$
+
+Building multiple versions of ups from a single source tree
+-----------------------------------------------------------
+
+This requires a 'make' program that supports VPATH, most recent ones
+do, e.g. SunOS 4.1.x, Solaris 2.x, GNU make, BSD make.
+
+You should also read the instructions in the README file which provides
+more details on most of the steps, only step 2 is different.
+
+WARNING - you cannot mix building in the source tree with building in
+a different directory.  If you have already done a build in the source
+tree, "cd" into it and type "make clean". 
+
+1)  Unpack the distribution.
+ 
+2)  Create the directory where ups will be built, change into that
+    directory and run the 'configure' script located in the top ups
+    directory.  E.g. for ups-3.34 unpacked in the current directory:
+
+	mkdir sun4
+	cd sun4
+	../ups-3.34/configure
+
+    NOTE - you *MUST* use a relative path to the configure script.
+
+3)  Check the files created by 'configure' in this root directory :
+	Makefile  ifdefs.h
+
+4)  Just type:
+
+	make  ups
+
+    If all goes well this should build you a binary called ups/ups.
+

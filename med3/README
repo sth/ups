@@ -1,0 +1,20 @@
+$Id$
+
+This is the source code for the med3 menu editor.  
+Med3 was written by John Bovey, UKC, 26-4-93
+
+
+I have added the med3 files to the standard ups distribution.
+There is documentation under the med3/doc directory.
+Use "make" to build the med3 menu editor. The menus in ups
+are under ups/menus. You can use med3 to modify and create
+new menus. Then in the ups/menus directory, use 
+
+./GLUEMENUS *.c >../menudata.c
+
+to update the master menu file. Any change in the menu identifiers
+need to be manually edited in the ups/menudata.h file.
+
+
+Rod Armstrong 25 Sept 1998
+

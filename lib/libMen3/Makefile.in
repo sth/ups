@@ -1,0 +1,165 @@
+# $Id$
+# @(#)Makefile	1.16 04 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Makefile for the Men3wn library.
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+INSTALL		= @INSTALL@
+RANLIB		= @RANLIB@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@  ${X11_LIB}  @LIBS@
+LIBS		= @LIBS@
+
+# -----------------------------------------------------------------------------
+
+LIB_HEADERS	= -Idevelhdrs
+LIB_CFLAGS	= ${CFLAGS} ${LIB_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${LIB_CFLAGS} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${LIB_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${LIBS}
+
+MAKE_LIBRARY	= ar cq
+
+# -----------------------------------------------------------------------------
+
+LIBNAME = Men3wn
+HDRNAME = menu3
+LIBDIRNAME = med3lib
+LINTLIBS = -lwn
+
+TESTSRCS =
+LIBSRCS = marea.c mclose.c mcreate.c mdisplay.c mdup.c mfmodes.c minfo.c minsert.c mnewcap.c mopen.c mperror.c msize.c mstdfont.c wdbyte.c
+OBJS = marea.o mclose.o mcreate.o mdisplay.o mdup.o mfmodes.o minfo.o minsert.o mnewcap.o mopen.o mperror.o msize.o mstdfont.o wdbyte.o sccsdata.o
+HDRS = menu3.h menu_priv.h sccsdata.h wdbyte.h 
+
+DOCS = 
+
+SCCSCHECK_DIRS = ../libx11wn
+
+# Begin common part of Makefile
+target: lib${LIBNAME}.a
+
+SRCS = ${LIBSRCS} ${TESTSRCS}
+FILES = ${SRCS} ${HDRS} ${DOCS} Makefile.in
+
+test${LIBNAME}: lib${LIBNAME}.a test${LIBNAME}.o ${TESTLIBDEPS}
+	${CC} ${CFLAGS} ${LINKFLAGS} -o test${LIBNAME} test${LIBNAME}.o lib${LIBNAME}.a ${TESTLIBS}
+
+lib${LIBNAME}.a:  ${OBJS}
+	rm -f $@
+	${MAKE_LIBRARY} $@ ${OBJS}
+	${RANLIB} lib${LIBNAME}.a
+
+all: lib${LIBNAME}.a
+
+tags: ${SRCS}
+	ctags -tw ${SRCS} ${HDRS}
+
+list:
+	@echo README ${FILES} sccsdata.c | tr ' ' '\012'
+
+count:
+	wc ${HDRS} ${SRCS}
+
+SCCS_CHECK = sccsinfo ${SCCSCHECK_DIRS} ${FILES} && newer sccsdata.c ${FILES}
+
+sccs_check:
+	@${SCCS_CHECK}
+
+sccssnapshot:
+	@mksccs -changefile CHANGES -wh -c t_snapshot.c -h t_snapshot.h ${LIBNAME} ${FILES}
+
+sccsfile:
+	@sccsinfo ${SCCSCHECK_DIRS} ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@sccs edit sccsdata.c
+	@mksccs -changefile CHANGES -wh ${LIBNAME} ${FILES}
+	@sccs delget sccsdata.c
+
+
+install: ${LIB}/lib${LIBNAME}.a ${INCLUDE}/${HDRNAME}.h
+
+${LIB}/lib${LIBNAME}.a: lib${LIBNAME}.a
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+	cd ${LIB}; ${RANLIB} $@
+
+${INCLUDE}/${HDRNAME}.h: ${HDRNAME}.h
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+clean:
+	rm -f ${OBJS} lib${LIBNAME}.a llib-l${LIBNAME}.ln core
+
+veryclean: clean
+	rm -f tags
+	sccs clean
+
+lintf:
+	lint ${LINTFLAGS} ${ARCH_CFLAGS} ${SRCS} ${LINTLIBS} | .lintf > t_lintf
+
+llib: llib-l${LIBNAME}.ln
+
+llib-l${LIBNAME}.ln: ${LIBSRCS}
+	lint -C${LIBNAME} ${ARCH_CFLAGS} ${LIBSRCS}
+	mv llib-l${LIBNAME}.ln $@
+
+install_lint: ${LIB}/lint/llib-l${LIBNAME}.ln
+
+${LIB}/lint/llib-l${LIBNAME}.ln: llib-l${LIBNAME}.ln
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+deps: ${SRCS} sccsdata.c
+	@deps ${LIB_HEADERS} ${SRCS} sccsdata.c
+
+# End common part of Makefile
+
+# Machine generated .o file dependencies
+marea.o: marea.c menu3.h menu_priv.h wdbyte.h 
+	${CCLINE}marea.c
+mclose.o: mclose.c menu3.h menu_priv.h 
+	${CCLINE}mclose.c
+mcreate.o: mcreate.c menu3.h menu_priv.h 
+	${CCLINE}mcreate.c
+mdisplay.o: mdisplay.c menu3.h menu_priv.h sccsdata.h wdbyte.h 
+	${CCLINE}mdisplay.c
+mdup.o: mdup.c menu3.h menu_priv.h 
+	${CCLINE}mdup.c
+mfmodes.o: mfmodes.c menu3.h menu_priv.h 
+	${CCLINE}mfmodes.c
+minfo.o: minfo.c menu3.h menu_priv.h 
+	${CCLINE}minfo.c
+minsert.o: minsert.c menu3.h menu_priv.h 
+	${CCLINE}minsert.c
+mnewcap.o: mnewcap.c menu3.h menu_priv.h 
+	${CCLINE}mnewcap.c
+mopen.o: mopen.c menu3.h menu_priv.h 
+	${CCLINE}mopen.c
+mperror.o: mperror.c menu3.h menu_priv.h 
+	${CCLINE}mperror.c
+msize.o: msize.c menu3.h menu_priv.h 
+	${CCLINE}msize.c
+mstdfont.o: mstdfont.c menu3.h 
+	${CCLINE}mstdfont.c
+wdbyte.o: wdbyte.c menu3.h menu_priv.h wdbyte.h 
+	${CCLINE}wdbyte.c
+sccsdata.o: sccsdata.c sccsdata.h 
+	${CCLINE}sccsdata.c

@@ -1,0 +1,10 @@
+# @(#)README	1.1 6/8/94 (UKC)
+
+This directory contains the source for the edit library.  This supports
+emacs-like editing in application subwindows.  It can also be used to
+display read-only files without editing.
+
+It is currently used only for the ups debugger.  As yet there is no
+documentation.
+
+Mark Russell, 6th August 1994

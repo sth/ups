@@ -1,0 +1,39 @@
+ 
+! The App-defaults file for ups.
+ 
+! Control scrolling speed.  25 or 50 is usually sufficient.
+
+Ups*ScrollDelay: 25
+
+! Here are some suggested resources if you are using a color workstation.
+! These items are strictly to make it look `nice'.
+
+Ups*WantMenuColors: yes
+Ups*MenuForeground: black
+Ups*MenuBackground: cornsilk1
+Ups*DisabledTextColor: peachpuff3
+Ups*LastButtonTextColor: white
+
+Ups*WantExtendedTextColors: yes
+Ups*SignalTextColor: navyblue
+Ups*EnvironmentTextColor: navyblue
+Ups*SourceFileTextColor: navyblue
+Ups*FunctionTextColor: navyblue
+Ups*BreakpointTextColor: blue
+Ups*WatchpointTextColor: brown
+
+Ups*Add breakpointForeground: blue
+Ups*Execute to hereForeground: forestgreen
+Ups*Jump to hereForeground: red
+
+Ups*RestartForeground: blue
+Ups*StartForeground: blue
+Ups*AttachForeground: blue
+Ups*StopForeground: red
+Ups*StopBackground: white
+Ups*KillForeground: red
+
+Ups*Foreground: black
+Ups*Background: ivory
+Ups*WantInstalledColormap: no
+Ups*ReverseArrows: yes

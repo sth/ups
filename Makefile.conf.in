@@ -1,0 +1,77 @@
+# $Id$
+# -----------------------------------------------------------------------------
+#  Makefile for GNU Autoconf derived stuff and 'upsconf'
+#  Ian Edwards <ian@concerto.demon.co.uk>
+# -----------------------------------------------------------------------------
+
+SHELL	= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+DESTDIR		= $(HOME)/SOFTWARE/UPS/ups-3.33
+
+CC		= @CC@
+CPP		= @CPP@
+
+CANONICAL	= -DHOST_CPU="@host_cpu@" -DHOST_VENDOR="@host_vendor@" -DHOST_OS="@host_os@"
+
+CPPFLAGS	= -I@srcdir@  @X_CFLAGS@  @CPPFLAGS@  @DEFS@
+CFLAGS		= @CFLAGS@  $(CPPFLAGS)
+LDFLAGS		= @LDFLAGS@  @X_LIBS@  @X_PRE_LIBS@  -lX11  @X_EXTRA_LIBS@  @LIBS@
+
+RANLIB		= @RANLIB@
+LN_S		= @LN_S@
+
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+OBJ	= upsconf.o
+SRC	= $(OBJ:.o=.c)
+
+# To do symbolic links :
+#   (cd /x && $(LN_S) foo bar)
+
+BUILD	= Makefile Makefile.conf ifdefs.h
+
+all: $(BUILD)
+
+upsconf:  $(OBJ)
+	$(CC)  $(LDFLAGS)  -o $@  $(OBJ)
+	./upsconf
+
+upsconf.c: ifdefs.h
+
+install:
+	cp $(BUILD) $(SRC) *.in configure $(DESTDIR)
+	-cp config.sub config.guess install-sh $(DESTDIR)
+	echo Copied files
+
+clean:
+	@-rm -f config.log config.cache
+	@-rm -f upsconf $(OBJ)
+
+distclean: clean
+	@-rm -f Makefile.conf
+
+# -----------------------------------------------------------------------------
+#  Stuff for GNU Autoconf
+# -----------------------------------------------------------------------------
+
+${srcdir}/configure: configure.in
+	cd ${srcdir} && autoconf
+
+ifdefs.h: ifdefs.h.in config.status
+	./config.status
+
+Makefile: Makefile.in config.status
+	./config.status
+
+Makefile.conf: Makefile.conf.in config.status
+	./config.status
+
+config.status: configure
+	./config.status --recheck
+
+# END

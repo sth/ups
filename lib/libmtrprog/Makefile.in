@@ -1,0 +1,191 @@
+# $Id$
+# @(#)Makefile	1.36 04 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Makefile for the mtrutil library.
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+INSTALL		= @INSTALL@
+RANLIB		= @RANLIB@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@  @LIBS@
+LIBS		= @LIBS@
+
+# -----------------------------------------------------------------------------
+
+LIB_HEADERS	= -Idevelhdrs
+LIB_CFLAGS	= ${CFLAGS} ${LIB_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${LIB_CFLAGS} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${LIB_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${LIBS}
+
+MAKE_LIBRARY	= ar cq
+
+# -----------------------------------------------------------------------------
+
+LIBNAME = mtrprog
+HDRNAME = mtrprog
+LIBDIRNAME = mtrprog
+LINTLIBS = 
+
+LIBSRCS = \
+	read_chunk.c hash.c e_close.c is_number.c memxxx.c \
+	query_user.c rm_rf.c serverhost.c so.c strcache.c regex.c \
+	strtod.c swap_longs.c appltofl.c fmtostr.c onpath.c \
+	fttostr.c fopnew.c strtobsz.c mtrprog_vers.c failmesg.c
+
+OBJS = \
+	read_chunk.o hash.o e_close.o is_number.o memxxx.o \
+	query_user.o rm_rf.o serverhost.o so.o strcache.o regex.o \
+	strtod.o swap_longs.o appltofl.o fmtostr.o onpath.o \
+	fttostr.o fopnew.o strtobsz.o mtrprog_vers.o \
+	failmesg.o sccsdata.o
+
+HDRS = \
+	alloc.h genmergesort.h hash.h regex.h sccsdata.h \
+	serverhost.h so.h strcache.h utils.h io.h
+
+DOCS = 
+
+SCCSCHECK_DIRS =
+
+# Begin common part of Makefile
+target: lib${LIBNAME}.a
+
+SRCS = ${LIBSRCS} ${TESTSRCS}
+FILES = ${SRCS} ${HDRS} ${DOCS} Makefile.in
+
+test${LIBNAME}: lib${LIBNAME}.a test${LIBNAME}.o ${TESTLIBDEPS}
+	${CC} ${CFLAGS} ${LINKFLAGS} -o test${LIBNAME} test${LIBNAME}.o lib${LIBNAME}.a ${TESTLIBS}
+
+lib${LIBNAME}.a: ${OBJS}
+	rm -f $@
+	${MAKE_LIBRARY} $@ ${OBJS}
+	${IN_OBJDIR}${RANLIB} lib${LIBNAME}.a
+
+all: lib${LIBNAME}.a
+
+tags: ${SRCS}
+	ctags -tw ${SRCS} ${HDRS}
+
+list:
+	@echo README ${FILES} sccsdata.c | tr ' ' '\012'
+
+count:
+	wc ${HDRS} ${SRCS}
+
+SCCS_CHECK = sccsinfo ${SCCSCHECK_DIRS} ${FILES} && newer sccsdata.c ${FILES}
+
+sccs_check:
+	@${SCCS_CHECK}
+
+sccssnapshot:
+	@mksccs -changefile CHANGES -wh -c t_snapshot.c -h t_snapshot.h ${LIBNAME} ${FILES}
+
+sccsfile:
+	@sccsinfo ${SCCSCHECK_DIRS} ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@sccs edit sccsdata.c
+	@mksccs -changefile CHANGES -wh ${LIBNAME} ${FILES}
+	@sccs delget sccsdata.c
+
+
+install: ${LIB}/lib${LIBNAME}.a ${INCLUDE}/${HDRNAME}.h
+
+${LIB}/lib${LIBNAME}.a: lib${LIBNAME}.a
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+	cd ${LIB}; ${RANLIB} $@
+
+${INCLUDE}/${HDRNAME}.h: ${HDRNAME}.h
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+clean:
+	rm -f ${OBJS} lib${LIBNAME}.a llib-l${LIBNAME}.ln core
+
+veryclean: clean
+	rm -f tags
+	sccs clean
+
+lintf:
+	lint ${LINTFLAGS} ${ARCH_CFLAGS} ${SRCS} ${LINTLIBS} | .lintf > t_lintf
+
+llib: llib-l${LIBNAME}.ln
+
+llib-l${LIBNAME}.ln: ${LIBSRCS}
+	lint -C${LIBNAME} ${ARCH_CFLAGS} ${LIBSRCS}
+	mv llib-l${LIBNAME}.ln $@
+
+install_lint: ${LIB}/lint/llib-l${LIBNAME}.ln
+
+${LIB}/lint/llib-l${LIBNAME}.ln: llib-l${LIBNAME}.ln
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+deps: ${SRCS} sccsdata.c
+	@deps ${LIB_HEADERS} ${SRCS} sccsdata.c
+
+# End common part of Makefile
+
+# Machine generated .o file dependencies
+hash.o: hash.c hash.h 
+	${CCLINE}hash.c
+e_close.o: e_close.c utils.h 
+	${CCLINE}e_close.c
+is_number.o: is_number.c utils.h 
+	${CCLINE}is_number.c
+memxxx.o: memxxx.c ifdefs.h 
+	${CCLINE}memxxx.c
+onpath.o: onpath.c utils.h 
+	${CCLINE}onpath.c
+query_user.o: query_user.c utils.h 
+	${CCLINE}query_user.c
+rm_rf.o: rm_rf.c utils.h 
+	${CCLINE}rm_rf.c
+serverhost.o: serverhost.c serverhost.h 
+	${CCLINE}serverhost.c
+so.o: so.c ifdefs.h alloc.h so.h strcache.h utils.h 
+	${CCLINE}so.c
+strcache.o: strcache.c ifdefs.h strcache.h 
+	${CCLINE}strcache.c
+regex.o: regex.c regex.h 
+	${CCLINE}regex.c
+strtod.o: strtod.c ifdefs.h 
+	${CCLINE}strtod.c
+swap_longs.o: swap_longs.c utils.h 
+	${CCLINE}swap_longs.c
+appltofl.o: appltofl.c ifdefs.h utils.h 
+	${CCLINE}appltofl.c
+fmtostr.o: fmtostr.c utils.h 
+	${CCLINE}fmtostr.c
+fttostr.o: fttostr.c utils.h 
+	${CCLINE}fttostr.c
+fopnew.o: fopnew.c utils.h 
+	${CCLINE}fopnew.c
+strtobsz.o: strtobsz.c utils.h 
+	${CCLINE}strtobsz.c
+mtrprog_vers.o: mtrprog_vers.c utils.h sccsdata.h 
+	${CCLINE}mtrprog_vers.c
+failmesg.o: failmesg.c utils.h 
+	${CCLINE}failmesg.c
+read_chunk.o: read_chunk.c utils.h 
+	${CCLINE}read_chunk.c
+sccsdata.o: sccsdata.c sccsdata.h 
+	${CCLINE}sccsdata.c

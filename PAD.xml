@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<XML_DIZ_INFO>
+    <MASTER_PAD_VERSION_INFO>
+        <MASTER_PAD_VERSION>1.15</MASTER_PAD_VERSION>
+        <MASTER_PAD_INFO>Portable Application Description, or PAD for short, is a data set that is used by shareware authors to dissemminate information to anyone interested in their software products.  To find out more go to http://www.asp-shareware.org/pad</MASTER_PAD_INFO>
+    </MASTER_PAD_VERSION_INFO>
+    <Company_Info>
+        <Company_Name></Company_Name>
+        <Address_1></Address_1>
+        <Address_2></Address_2>
+        <City_Town></City_Town>
+        <State_Province></State_Province>
+        <Zip_Postal_Code></Zip_Postal_Code>
+        <Country></Country>
+        <Company_WebSite_URL>http://www.concerto.demon.co.uk/UPS/</Company_WebSite_URL>
+        <Contact_Info>
+            <Author_First_Name>Mark</Author_First_Name>
+            <Author_Last_Name>Russell</Author_Last_Name>
+            <Author_Email></Author_Email>
+            <Contact_First_Name>Ian</Contact_First_Name>
+            <Contact_Last_Name>Edwards</Contact_Last_Name>
+            <Contact_Email>ups@concerto.demon.co.uk</Contact_Email>
+        </Contact_Info>
+        <Support_Info>
+            <Sales_Email></Sales_Email>
+            <Support_Email>ups-users@ukc.ac.uk</Support_Email>
+            <General_Email>ups-users@ukc.ac.uk</General_Email>
+            <Sales_Phone></Sales_Phone>
+            <Support_Phone></Support_Phone>
+            <General_Phone></General_Phone>
+            <Fax_Phone></Fax_Phone>
+        </Support_Info>
+    </Company_Info>
+    <Program_Info>
+        <Program_Name>UPS</Program_Name>
+        <Program_Version>3.37</Program_Version>
+        <Program_Release_Month>04</Program_Release_Month>
+        <Program_Release_Day>02</Program_Release_Day>
+        <Program_Release_Year>2002</Program_Release_Year>
+        <Program_Cost_Dollars>0</Program_Cost_Dollars>
+        <Program_Cost_Other_Code></Program_Cost_Other_Code>
+        <Program_Cost_Other></Program_Cost_Other>
+        <Program_Type>Freeware</Program_Type>
+        <Program_Release_Status>New Release</Program_Release_Status>
+        <Program_Install_Support>Install and Uninstall</Program_Install_Support>
+        <Program_OS_Support>Solaris,Linux,FreeBSD</Program_OS_Support>
+        <Program_Language>English</Program_Language>
+        <Program_Change_Info></Program_Change_Info>
+        <Program_System_Requirements>'C' compiler</Program_System_Requirements>
+        <Program_Specific_Category>Development Tools</Program_Specific_Category>
+        <Program_Categories>debugger</Program_Categories>
+        <File_Info>
+            <Filename_Versioned></Filename_Versioned>
+            <Filename_Previous></Filename_Previous>
+            <Filename_Generic>ups-3.37.tar.gz</Filename_Generic>
+            <Filename_Long>ups-3.37.tar.gz</Filename_Long>
+            <File_Size_Bytes>1535808</File_Size_Bytes>
+            <File_Size_K></File_Size_K>
+            <File_Size_MB></File_Size_MB>
+        </File_Info>
+        <Expire_Info>
+            <Has_Expire_Info>N</Has_Expire_Info>
+            <Expire_Count></Expire_Count>
+            <Expire_Based_On>Days</Expire_Based_On>
+            <Expire_Other_Info></Expire_Other_Info>
+            <Expire_Month></Expire_Month>
+            <Expire_Day></Expire_Day>
+            <Expire_Year></Expire_Year>
+        </Expire_Info>
+        <Includes_VB_Runtime>N</Includes_VB_Runtime>
+        <Includes_JAVA_VM>N</Includes_JAVA_VM>
+        <Includes_DirectX>N</Includes_DirectX>
+    </Program_Info>
+    <Program_Descriptions>
+        <English>
+            <Keywords>debugger C C++ Fortran</Keywords>
+            <Char_Desc_45>UPS is a debugger for C, C++ and Fortran</Char_Desc_45>
+            <Char_Desc_80>UPS is a debugger for C, C++ and Fortran on Solaris, Linux and FreeBSD</Char_Desc_80>
+            <Char_Desc_250>
+</Char_Desc_250>
+            <Char_Desc_450>
+</Char_Desc_450>
+            <Char_Desc_2000>
+Ups is a X based source level debugger for the C, C++ and Fortran
+programming languages.  It supports both run time debugging with breakpoints
+and post-mortem debugging from a core file.  On Suns you can attach ups
+to a running process. Ups runs in its own window, thus not interfering
+with the target program's I/O.  The ups window has two major areas - one
+showing a structured document representing the target state, the other
+showing the source that is being executed.
+
+Ups makes heavy use of direct manipulation and feedback.  When you add a
+breakpoint it is shown as a pseudo C statement (#stop) in the source
+display.  The current point of execution is highlighted in the source
+display and you can watch it move as you step through loops and function
+calls.  You can edit in fragments of interpreted C code (including
+assignments to variables and calls to target functions).  There are powerful
+facilities for exploring linked data structures - you can recursively
+expand and collapse structures to follow links.
+</Char_Desc_2000>
+        </English>
+    </Program_Descriptions>
+    <Web_Info>
+        <Application_URLs>
+            <Application_Info_URL>http://www.concerto.demon.co.uk/UPS/</Application_Info_URL>
+            <Application_Order_URL></Application_Order_URL>
+            <Application_Screenshot_URL></Application_Screenshot_URL>
+            <Application_Icon_URL></Application_Icon_URL>
+            <Application_XML_File_URL>http://www.concerto.demon.co.uk/UPS/PAD.xml</Application_XML_File_URL>
+        </Application_URLs>
+        <Download_URLs>
+            <Primary_Download_URL>http://www.concerto.demon.co.uk/UPS/src/</Primary_Download_URL>
+            <Secondary_Download_URL></Secondary_Download_URL>
+            <Additional_Download_URL_1>ftp://ftp.x.org/contrib/utilities/ </Additional_Download_URL_1>
+            <Additional_Download_URL_2></Additional_Download_URL_2>
+        </Download_URLs>
+    </Web_Info>
+    <Permissions>
+        <Distribution_Permissions>
+Copyright 1991 Mark Russell, University of Kent at Canterbury.
+
+UPS is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option)
+any later version.
+
+UPS is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along
+with UPS; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA  02111-1307  USA
+</Distribution_Permissions>
+        <EULA>
+Copyright 1991 Mark Russell, University of Kent at Canterbury.
+
+UPS is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option)
+any later version.
+
+UPS is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along
+with UPS; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA  02111-1307  USA
+</EULA>
+    </Permissions>
+    <ASP>
+        <ASP_Member>N</ASP_Member>
+        <ASP_Member_Number></ASP_Member_Number>
+    </ASP>
+</XML_DIZ_INFO>
+

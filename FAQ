@@ -1,0 +1,330 @@
+# $Id$
+
+# 	UPS Frequently Asked Questions
+# 	------------------------------
+
+Q: Why can't I invoke UPS without any arguments and then instruct it to
+   debug a program?
+
+A: UPS was designed from the start to get its target name from the command
+   line. You can also supply the target arguments on the command line
+   with the "-a" option. See <<<UPS Command Line Arguments>>>.
+
+   You can also add or edit arguments within UPS by editing the 
+   target text at the top of the display window. See
+   <<<Target Command Line Arguments>>>. You can also attach and detach to 
+   specific instances of the target from within UPS via the attach and 
+   detach buttons - see <<<The Source Region>>>.
+   
+Q: How can I cut and paste text in UPS?
+
+A: Pan with the left mouse button down to select text, and ^y to paste the 
+   text selection in. See the <<<Cut and Paste>>> section for details.
+
+Q: I have a very large program and UPS takes forever to come up. Can
+   the speed be improved?
+
+A: UPS does a prescan of global symbols and addresses on invocation.
+   This allows you to put breakpoints in shared libraries (such
+   as printf in libc) before the libraries are actually mapped in.
+   An application may use dozens of libraries, but typically you are
+   only interested in debugging a small set. You can tell UPS not to
+   load any symbols for specified libraries by using the noload or load
+   statements in a ~/.upsinit file. In this way the invocation time
+   can be dramatically reduced. See the <<<Initialization file>>> for 
+   more details. Unloaded libraries can be interactively loaded on
+   demand with the "rescan init file" caption in the target menu.
+
+Q: I want to see how some data in heap changes from one point to another. If 
+   I click on such a variable where it is created, it may be out of context 
+   and not displayed at another point. How can I make the display permanent?
+
+A: Place an "add expr" high up in the stack (such as "main"), or in a source
+   file where the data type is used. The expression should be a typecast of 
+   the variable address to the right data type. For example, for a variable
+   displayed like 
+
+	struct func_s **<p_initfunc>      0x14d56c
+
+   the expression would be "(struct func_s **)0x14d56c". The expression can 
+   be expanded, and cont pressed. Then when UPS next stops, either at a 
+   breakpoint or by pressing the stop button, any changed data members 
+   will be shown in the highlight color (default is red). 
+
+   In most cases you can copy the variable line in the display window, click 
+   on the function name, press add expr, then paste and edit the string  
+   with this custom menu string:
+
+	# this is to change a variable to an `add exp' of the address
+	setenv UPS_F5_STR "^y@b^ @b^w^b^d)^a(\n"
+
+Q: The pause() instruction in my program no longer works in Solaris. Why?
+
+A: The pause() functionality in Solaris is different from SunOS. In order
+   to make pause() work, you need to add a dummy signal handler for
+   SIGCONT for a pause to work. For example:
+
+	static void dummy_cont(int sig) {}
+	main()
+	{
+	    signal(SIGCONT,dummy_cont);
+	    pause();
+	}
+
+Q: My program has the dummy signal handler for SIGCONT, and it is stopped
+   at a pause(), but when I attach UPS, why does the stack show 
+   <bad text address>?
+
+A: The symbols for the C library are not loaded. Check your ~/.upsinit file
+   for statements like "noload *libc*".
+
+Q: The scrollbars work in the opposite direction from what I expect. Can
+   this be changed?
+
+A: Yes - set the ScrollbarType X resource to anything other that UPS, such 
+   as MOTIF. Then scrolling will move the viewport in the opposite direction 
+   to the mouse movement, this being the convention used by most X toolkits.
+   See the <<<X Resources>>> section.
+
+   One might point out that the industry standard for this is contrary to 
+   the action of a real scroll of paper, in which the viewport remains fixed
+   and the paper in moved through the viewport onto the rollers. The UPS
+   scrollbar emulates moving the paper with the viewport fixed: other
+   scrollbars apparently suggest keeping the paper fixed and moving
+   the viewport.
+
+Q: Can I position the scrollbars on the right, instead of the left?
+
+A: The undocumented SHIFT+CONTROL with left/right button combinations can do 
+   this. However there is currently a bug in that scroolbars on the right 
+   display no elevator blob. 
+
+Q: It is sometimes laborious to expand and collapse objects by always having
+   to select them, then move the mouse up to the top menu to perform the action.
+   Is there a quicker way?
+
+A: Yes - see the <<<Accelerators in the Display Area>>> section. 
+   SHIFT - left click generally toggles between expanding and collapsing
+   the object.
+
+Q: My display window often shows too much data. I might be interested
+   in seeing just a couple of data components in the third level of
+   a nested struct, but expanding the intermediate levels uses too much 
+   space and obscures the stack.
+
+A: There are several solutions for this. First, create a ups-state
+   directory before invoking UPS, then having displayed the data in the
+   desired form, it can be restored in a later session to the "like
+   before" state. See the <<<Saving State>> section for details.
+
+   Consider the following example:
+
+      func_t <f{0}>                      *0x1ddfb8
+        short <fu_flags>                   0
+        char <fu_name{0}>                  "main"
+        char <fu_demangled_name{0}>        "main"
+        type_t <fu_type{0}>                *NULL
+        unsigned long <fu_addr>            458916
+        fil_t <fu_fil{0}>                  *0x1dbdc0
+           char <fi_name{0}>                  "ups.c"
+           char <fi_name_only{0}>             "ups.c"
+           char <fi_path_hint{0}>             "/bs/ups-3.31-RGA/ups/"
+           char <fi_source_path{0}>           "/bs/ups-3.31-RGA/ups/"
+           language_t <fi_language>           LANG_C
+           short <fi_flags>                   0
+           symtab_t *<fi_symtab>              0x148948
+           char <fi_data{0}>                  ""
+           undefined struct Srcbuf *<fi_srcbuf>              0x0
+           block_t *<fi_block>                0x1dbd98
+           funclist_t *<fi_funclist>          0x1ddb00
+           fil_t *<fi_next>                   0x1dc628
+        language_t <fu_language>           LANG_C
+        symtab_t *<fu_symtab>              0x148948
+        undefined struct cblist_s *<fu_cblist>            0x0
+        func_t *<fu_next>                  0x1dea28
+        char <fu_predata{0}>               *NULL
+        char <fu_symdata{0}>               ""
+        undefined struct statement_s *<fu_statement>      0x0
+        lexinfo_t *<fu_lexinfo>            0x0
+        lno_t *<fu__lnos>                  0x0
+        short <fu_max_lnum>                21331
+        block_t *<fu__blocks>              0x0
+
+   When the specific data element appears in the source window, 
+   a left click on the text will display just the desired element:
+   for instance if "f->fu_fil" appears in the source, a left click on
+   the first "f" displays:
+
+         func_t <f{0}>                      *0x1ddfb8
+
+   whereas a left click on "fu_fil" displays:
+
+         func_t <f{0}>                      *0x1ddfb8
+            fil_t <fu_fil{0}>                  *0x1dbdc0
+
+
+   Suppose you are only interested in the "fi_name" and "fi_name_only" 
+   members. One method is to fully expand all levels of the struct and then
+   select and delete unwanted members. Note that collapsing to the
+   "top level" will not delete expanded data members. 
+
+   To eliminate all other data, left click on the "fi_path_hint" line and drag
+   vertically down to the "fi_next" line. Be carefully not to stray horizontally
+   too far - see the X selection threshold description in <<<Cut and Paste>>>.
+   The display window will scroll if necessary. Then press "del" to delete 
+   the unwanted data.
+
+   To eliminate data in the "func_t" struct, simply SHIFT-left click on the
+   "func_t" line, this being an accelerator for collapsing to the first
+   level. The net results will be:
+
+         func_t <f{0}>                      *0x1ddfb8
+            fil_t <fu_fil{0}>                  *0x1dbdc0
+               char <fi_name{0}>                  "ups.c"
+               char <fi_name_only{0}>             "ups.c"
+
+   An alternative is to select the fully collapsed "func_t" object,
+   then enter
+       .fu_fil->fi_name .fu_fil->fi_name_only <RET>
+   in the typing line. This method provides a great deal of flexibility.
+   See <<<Examining Linked Data Structures>>>. You can even put such
+   commonly used dereference strings in a pop up menu - see the custom
+   menu description in <<<Environment Variables Affecting UPS>>>.
+    
+Q: My program is linked to code that our customers write. It has SIGSEGV
+   and SIGBUS signal handlers in order to recover from errors in the
+   user code. However when debugging with UPS, the program is terminated
+   on a user error, when in fact it is capable of recovering and continuing.
+   How can I tell UPS not to kill off the target?
+
+A: See the <<<Special handling for SIGSEGV and SIGBUS>>> section.
+   Essentially, the signals should be set to "Stop - accept signal on continue".
+
+Q: Sometimes when I paste expressions into the source area, UPS objects to
+   preprocessor macros such as NULL or FALSE. How can I get UPS to understand
+   these?
+
+A: Use a ups-state/repltab file to define such strings. See 
+   <<<Pasting Expressions from the Source Window>>> for details.
+
+Q: UPS crashes on invocation with my target. Is there anyway to do some
+   debugging?
+
+A: UPS has probably encountered some syntax in a library that it can't deal 
+   with. A work-around is to not load symbols for such libraries. Set the 
+   environment variable VERBOSE to 1 and start UPS again. It should list 
+   the library that caused the crash. Then put a noload statement for this 
+   library in your ~/.upsinit file, for example: 
+
+                noload *my_library*
+
+Q: How can I see long strings in the display window?
+
+A: There are several methods. You can select the line and use the snapshot
+   menu to dump it to the bottom output window which does line wrapping.
+   For single indexed strings, you can do a "Dup" which will duplicate
+   the string, but with the index bumped by 40. You can also manually
+   edit the index to change the start of the string (perhaps using the bump 
+   keys - see <<<Expressions in the Display Area>>>). Finally, you can copy
+   the text by vertically panning across the line with the cursor to the
+   left of the text. It can then be pasted elsewhere, including the
+   output window - seee <<<Editing in the Output Window>>>.
+
+Q: I have several expressions, created via "add expr", to view different 
+   components of a linked list using the "->[]" syntax as shown below. 
+   I can traverse the list by bumping the index, but this only affects the 
+   expression I am editing. How can I change many expressions at once?
+
+	root->[0]next->name
+	root->[0]next->type
+
+A: If possible, change the expressions to use a local or global variable, such
+   as: 
+
+	root->[i]next->name
+	root->[i]next->type
+
+   where i is some integer. Then create a scratch line of  breakpoint code 
+   to bump its value:
+
+	i++;
+
+   Select the code and repeatedly execute it by pressing the execute caption
+   at the top of the display window. This will cause all affected expressions
+   to change at the same time. The variable may have to be inialized beforehand
+   and reset afterwards - do this by editing the value in the display window.
+
+Q: I am using Purify on my application, and want to repeated call a Purify
+   API to check for memory state as I step down lines of source code. How
+   can I do this without putting breakpoint code after every line?
+
+A: Use just one line of breakpoint code. Whenever you need to call the API,
+   select the breakpoint and press the execute button.
+ 
+Q: I don't want UPS to upset the colormap of my application so I use the -mono
+   command line option. However this means that I lose the highlight and
+   variable colors. Is there any way to get this information back?
+
+A: The UnderlineVars X resource (see <<<X Resources>>>) can be set to 
+   underline variable names. In a later version of UPS you will be able to 
+   do the same for data that is highlighted.
+
+Q: How can I make a conditional breakpoint on a 'long long' integer?
+
+A: Because the interpreter does not support long long types, there is a
+   trick for making conditional breakpoints for such numbers.  The workaround
+   is to use pointers in breakpoint code.  You can check all 8 bytes by
+   casting each 4 bytes to a long.  (This assumes the 8 bytes are contiguous;
+   works on Solaris, but may not for Linux.)
+
+   e.g. if long long ll = 0x123456789abcdef0
+   use this for a conditional breakpoint:
+
+	if (*((long*)&ll) == 0x12345678 && *((long*)&ll+1) == 0x9abcdef0) #stop;
+
+   You could make an editing macro to simplify it:
+
+	setenv UPS_F1_STR '^e^uif(*((long*)&^y)==0x0 && *((long*)&^y+1)==0x0) #stop;'
+
+   1. Create a breakpoint (#stop;).
+   2. Select the variable (ll).
+   3. Middle click anywhere in the stop line, then right click.
+
+Q: How do I instruct UPS to follow the child process after doing a 'fork()/exec()'?
+
+A: You can follow the child using just one instance of UPS:
+
+   1. Start UPS on the parent:
+   
+	ups parent &
+
+   2. In the parent add a breakpoint and calls to kill() and printf():
+
+	if ((child_pid = vfork()) == FALSE)
+	{                            
+	    /* this is the child */
+	    ....
+	}
+	else
+	{
+	    /* this is the parent */
+	    kill (child_pid, 23);       <<< insert this breakpoint code. 23 is SIGSTOP
+	    printf ("child pid is %d\n", child_pid);  <<< breakpoint code to get pid
+	    ....
+	}
+	#stop;  <<< stop here to follow the child
+
+   2. At the #stop, edit the target name to the child name, press RET.
+
+   3. Attach UPS to the child <pid>.
+
+   4. From an xterm, continue the child:
+
+	kill -CONT <pid>
+
+   5. In UPS, put a break on main() or whatever, and continue.
+
+# Rod Armstrong
+# 7th April 1998
+# 7th March 2001
+

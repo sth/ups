@@ -1,0 +1,72 @@
+.bp
+.ft B
+.DS C
+Appendix A
+
+Summary of C Menu Munction Calls
+.DE
+.ft
+.sp 3
+Arguments shown as being of type \fIWINDOW\fP are used to identify a window
+and have a type depending
+on the particular window enviroment with which the package is being used.
+A description of supported window enviroments and their window identifiers
+can be found in the \fIMdisplay\fP(3k) manual page.
+Any undeclared variable is an integer
+.sp
+.nf
+\fBMchange(mdesc,oldrv,newrv,newcap,fontno)\fP   change a button attributes
+\fBchar *newcap;\fP
+
+\fBMclear(mdesc)\fP   clear highlighting from a menu
+
+\fBMclose(mdesc)\fP   close a menu and free the menu descriptor
+
+\fBMdisplay(mdesc,wdesc,save)\fP   display a menu
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMdup(mdesc)\fP   duplicate a menu
+
+\fBMfmodes(mdesc,fmode1,fmode2,fmode3)\fP   change highlighting styles
+
+\fBMfonts(mdesc,font1,font2,font3,font4)\fP set the menu fonts
+\fBstruct font *font1, *font2, *font3, *font4;\fP
+
+\fBMinsert(menu)\fP get a menu descriptor for a MENU structure
+\fBMENU *menu;\fP
+
+\fBMmake(captions,rvalues,fonts,style,width)\fP  create a simple pop-up menu
+\fBchar * captions[];\fP
+\fBint *rvalues, *fonts\fP
+
+\fBMopen(name)\fP   load a menu from a menu file
+\fBchar *name;\fP
+
+\fBMperror(string)\fP   print an error message on the error device
+\fBchar *string;\fP
+
+\fBMplace(mdesc,x,y)\fP   set the position at which a menu will be displayed
+
+\fBMpopsu(wdesc)\fP   restore screen update
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMpushsu(wdesc)\fP   delay screen update
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMredraw(wdesc)\fP   redraw all the menus in a window, resave background
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMremove(mdesc;)\fP   remove a menu from the screen
+
+\fBMrepair(wdesc)\fP   redraw all the menus in a window, do not resave background
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMreset(mdesc)\fP    restore a menu to its initial state
+
+\fBMselect(x,y,wdesc,mode,ignore)\fP   make a selection from a menu
+\fIWINDOW\fP\fB wdesc;\fP
+
+\fBMsize(mdesc,width,height)\fP   change a menu size
+
+\fBstruct font *\fP
+\fBMstdfont()\fP return a pointer to the built-in font

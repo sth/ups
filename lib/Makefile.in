@@ -1,0 +1,18 @@
+# $Id$
+
+# -----------------------------------------------------------------------------
+#  Makefile for `lib` subdirectory
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+
+FILES		= Makefile.in
+
+list:
+	@echo ${FILES} | tr ' ' '\012'
+

@@ -1,0 +1,65 @@
+#! /usr/local/bin/perl
+
+# @(#)mungemakefile	1.3 09 Apr 1995 (UKC)
+
+# Munge the gdb Makefile to build libgdb.a
+
+$use_gcc = @ARGV != 0 && $ARGV[0] eq '-gcc';
+shift if $use_gcc;
+
+$ranlib = (-x '/usr/bin/ranlib') ? "\tranlib libgdb.a\n" : '';
+
+$system = `uname -s`;
+chop $system;
+
+$done_common = 0;
+
+while (<>) {
+	s/^(TERMCAP|READLINE) = /#$&/;
+	s/^all: /all: libgdb.a\nold_$&/;
+	s/^[-\w\.]+\.c:/dont_make_$&/;
+
+	if ($use_gcc) {
+		s/^#(CC=gcc)/$1/;
+	}
+	else {
+		s/^\#(MH_CFLAGS=-xs)/$1/;
+
+		if ($system eq 'IRIX' && /^GLOBAL_CFLAGS = / && !$done_common) {
+			print "MH_CFLAGS = -common\n";
+			$done_common = 1;
+		}
+	}
+
+	if (/^gdb:/) {
+		$in_gdb_block = 1;
+		$libgdb_block = '';
+	}
+	elsif (/^\S/ && $in_gdb_block) {
+		print $libgdb_block;
+		$in_gdb_block = 0;
+	}
+
+	if ($in_gdb_block) {
+		$line = $_;
+		$line =~ s/gdb:/libgdb.a:/;
+		$line =~ s/rm -f gdb/rm -f libgdb.a/;
+		$line =~ s/\S.* -o gdb/ar cq libgdb.a/;
+		$line =~ s/\$\((CLIBS|LOADLIBES)\)//g;
+		/^\s*$/ && ($line = "$ranlib$line");
+		
+		$libgdb_block .= $line;
+	}
+
+	if ($_ eq ".include <bsd.prog.mk>\n") {
+		print "LIB = gdb\n";
+		print "NOPROFILE = 1\n";
+		$_ = ".include <bsd.lib.mk>\n";
+	}
+	
+	print $_;
+}
+
+# Local Variables:
+# mode: perl
+# End:

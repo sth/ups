@@ -1,0 +1,369 @@
+# $Id$
+# @(#)Makefile	1.23 05 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Top level makefile for ups 
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+
+CC		= @CC@
+CPP		= @CPP@
+
+# -----------------------------------------------------------------------------
+# You may want to edit some of the following variables.
+
+# Where to install the programs and manual page
+#
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+BINDIR		= @bindir@
+MANDIR		= @mandir@/man${MANSUFFIX}
+INCDIR		= @includedir@
+
+# The suffix to use for the manual page
+#
+MANSUFFIX	= 1
+
+# Specify mode/owner of installed files
+#
+MANPAGE_OWNER	= 
+BINARY_OWNER	=
+HEADER_OWNER	=
+
+# The directory where X include files live.
+#
+X11_INC		= @X_CFLAGS@
+
+# The arguments to @CC@ needed to link against the Xlib library.
+# Change this to an explicit path (e.g. /usr/X11/lib/libX11.a)
+# if your Xlib lives in a place that won't be found by -lX11.
+#
+X11_LIB		= @X_LIBS@  @X_PRE_LIBS@  -lX11  @X_EXTRA_LIBS@
+
+# If you want you can pass make variable assignments to the
+# subdirectory makefiles by uncommenting and editing the
+# following assignment to EXTRA_SUBMAKEFLAGS.
+#
+# You can put multiple space separated assignments here if you want.
+#
+#EXTRA_SUBMAKEFLAGS = "-k"
+
+# Flags for RISC/os from Conor Doherty and Hal R. Brand
+# Edit HERE below to the absolute path to the ups source directory
+#EXTRA_SUBMAKEFLAGS ="MORE_CFLAGS=-Driscos -DNO_DIRENT -DNO_PUTENV -IHERE/misc/riscos"
+
+# If you are building ups for a Sun (any architecture) running SunOS 4.0.3
+# or earlier then you must uncomment the following line.  If you don't
+# you will get incorrect values for char and short parameters.  Note that
+# this means you can't share a single ups binary between SunOS 4.1.1 and
+# an earlier release.  You need to turn this flag on for SunOS 3.X.
+#
+#EXTRA_SUBMAKEFLAGS = "ARCH_CFLAGS=-DFIX_SHORT_PARAMS"
+# -----------------------------------------------------------------------------
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.  ${X11_INC}
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+
+RANLIB		= @RANLIB@
+LN_S		= @LN_S@
+
+UPS_BINARY	= ups
+UDB_BINARY	= ups-gdb
+CX_BINARY	= cx
+XC_BINARY	= xc
+CG_BINARY	= cg
+CI_LIBRARY	= libci.a
+DEF_BINARY	= @DEF_BINARY@
+
+SUBMAKEFLAGS	= ${EXTRA_SUBMAKEFLAGS}
+
+BINDIRS		= ups med3 tests
+LIBDIRS		= lib/libx11wn lib/libmtrprog lib/libukcprog lib/libarg \
+		  lib/libgnu lib/libMen3 lib/libobj lib/libedit
+DWFDIRS		= lib/libelf lib/libdwarf lib/dwarfdump
+
+COMMONLIBS	= libx11wn libmtrprog libukcprog libarg \
+		  libgnu libMen3 libobj libedit @UPS_ELFLIB@ @UPS_DWARFLIB@
+
+SUBDIRS		= ${LIBDIRS} ${BINDIRS}
+
+
+# -----------------------------------------------------------------------------
+#  User targets
+# -----------------------------------------------------------------------------
+
+# Note: we use MFLAGS for the recursive makes rather than MAKEFLAGS.
+# This is because the BSDI make loops forever if you say `make -',
+# which is what you get if you say `${MAKE} -${MAKEFLAGS} when MAKEFLAGS
+# is not set to anything.
+
+default: ${DEF_BINARY}
+
+all: ${DEF_BINARY} interpreter
+
+interpreter: cx xc cg libci.a
+
+install: install_${DEF_BINARY}
+
+ups ups-gdb cx xc cg libci.a: ${COMMONLIBS}
+	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
+
+med3: libx11wn libMen3
+	cd med3 && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
+
+dwarfdump: libelf libdwarf
+	cd lib/dwarfdump && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
+
+${COMMONLIBS}: ups/develhdrs
+	cd lib/$@ && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS}
+
+libgdb.a: ups/develhdrs
+	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
+
+check:
+	@echo No automatic tests yet. 1>&2
+
+tests: testprogs
+
+testprogs:
+	cd tests && ${MAKE} ${MFLAGS} $@
+
+install_ups: ups
+	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
+			BINDIR=${BINDIR} \
+			INCDIR=${INCDIR} \
+			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@
+
+install_med3: med3
+	cd med3 && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
+			BINDIR=${BINDIR} \
+			INCDIR=${INCDIR} \
+			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@
+
+install_interpreter: cx xc cg libci.a
+	cd ups && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} \
+			BINDIR=${BINDIR} \
+			MANDIR=${MANDIR} MANSUFFIX=${MANSUFFIX} $@
+
+# Clean up so can rebuild with a 'make'
+clean: rmlinks
+	for i in ${SUBDIRS} ${DWFDIRS}; do \
+		(cd $$i && ${MAKE} ${MFLAGS} clean); \
+	done
+	@${MAKE} ${MFLAGS} -f Makefile.conf clean
+
+# Try to leave the source directory as it came in the distribution
+# Does not do sub-directories but is "good enough"
+distclean: clean
+	@-rm -f ifdefs.h config.log config.cache config.status Makefile
+	@${MAKE} ${MFLAGS} -f Makefile.conf distclean
+
+
+# -----------------------------------------------------------------------------
+#  Internal targets
+# -----------------------------------------------------------------------------
+
+rmlinks:
+	@-rm -f lib/libmtrprog/ifdefs.h
+	@-rm -f lib/libgnu/ifdefs.h
+	for i in ${SUBDIRS} ${DWFDIRS}; do \
+		rm -rf $$i/develhdrs; \
+	done
+
+# The ups source assumes that various UKC libraries and header files
+# are installed.  We distribute ups so that the source is self contained:
+# this target makes the symlinks needed to support this.
+ups/develhdrs:
+	@echo "Making links to headers under ${topdir} ..."
+	@-for i in ${SUBDIRS} ${DWFDIRS}; do mkdir $$i/develhdrs; done
+	@-for i in Men3 arg mtrprog obj edit x11wn; do \
+		mkdir lib/lib$$i/develhdrs/local; \
+	done
+	@-for i in Men3 arg obj edit x11wn; do \
+		mkdir lib/lib$$i/develhdrs/mtrprog; \
+	done
+	@-for i in Men3 obj edit; do \
+		ln -s ../../../../${topdir}/lib/libx11wn/wn.h \
+					lib/lib$$i/develhdrs/local/wn.h; \
+	done
+	@-for i in arg mtrprog obj edit x11wn; do \
+		ln -s ../../../../${topdir}/lib/libukcprog/ukcprog.h \
+					lib/lib$$i/develhdrs/local/ukcprog.h; \
+	done
+	@-for i in obj; do \
+		ln -s ../../../../${topdir}/lib/libmtrprog/genmergesort.h \
+					lib/lib$$i/develhdrs/mtrprog/genmergesort.h; \
+	done
+	@-for i in obj; do \
+		ln -s ../../../../${topdir}/lib/libmtrprog/alloc.h \
+					lib/lib$$i/develhdrs/mtrprog/alloc.h; \
+	done
+	@-for i in edit; do \
+		ln -s ../../../../${topdir}/lib/libmtrprog/utils.h \
+					lib/lib$$i/develhdrs/mtrprog/utils.h; \
+	done
+	@-for i in ups med3; do \
+		mkdir $$i/develhdrs/local; \
+		mkdir $$i/develhdrs/mtrprog; \
+	done
+	@-for i in ups lib/libdwarf lib/dwarfdump; do \
+		mkdir $$i/develhdrs/libelf; \
+	done
+	@-ln -s ../../../${topdir}/lib/libarg/arg.h ups/develhdrs/local/arg.h
+	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h ups/develhdrs/local/menu3.h
+	@-ln -s ../../../${topdir}/lib/libobj ups/develhdrs/local/obj
+	@-ln -s ../../../${topdir}/lib/libedit ups/develhdrs/local/edit
+	@-ln -s ../../../${topdir}/lib/libukcprog/ukcprog.h ups/develhdrs/local/ukcprog.h
+	@-for f in alloc.h genmergesort.h hash.h io.h regex.h so.h strcache.h utils.h; do \
+		ln -s ../../../${topdir}/lib/libmtrprog/$$f \
+					ups/develhdrs/mtrprog/$$f; \
+	done
+	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h ups/develhdrs/local/wn.h
+	@-for f in elf_repl.h gelf.h libelf.h nlist.h sys_elf.h; do \
+		ln -s ../../../${topdir}/lib/libelf/lib/$$f \
+					ups/develhdrs/libelf/$$f; \
+		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
+					lib/libdwarf/develhdrs/libelf/$$f; \
+		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
+					lib/dwarfdump/develhdrs/libelf/$$f; \
+	done
+	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h med3/develhdrs/local/menu3.h
+	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h med3/develhdrs/local/wn.h
+	@echo "Making links to local ifdefs.h ..."
+	@-ln -s ../../ifdefs.h lib/libmtrprog/ifdefs.h
+	@-ln -s ../../ifdefs.h lib/libgnu/ifdefs.h
+	@-for i in Men3 arg obj edit x11wn; do \
+		ln -s ../../../../ifdefs.h \
+					lib/lib$$i/develhdrs/mtrprog/ifdefs.h; \
+	done
+	@-ln -s ../../../ifdefs.h ups/develhdrs/mtrprog/ifdefs.h
+	@-ln -s ../../../ifdefs.h med3/develhdrs/mtrprog/ifdefs.h
+
+
+# -----------------------------------------------------------------------------
+#  Building a release
+# -----------------------------------------------------------------------------
+
+# The rest of this makefile is concerned only with making releases from
+# the master source directory.
+
+# Odd files needed for particular architectures etc.
+MISCFILES	= \
+	tkups \
+	misc/riscos/stdlib.h
+
+# The gdb munging scripts and steering files
+GDBFILES = gdbconf/initlist	 \
+	   gdbconf/mkcalltree	 \
+	   gdbconf/mkfunclist	 \
+	   gdbconf/mkupsgdb	 \
+	   gdbconf/mkccinfo	 \
+	   gdbconf/mungeinit	 \
+	   gdbconf/mungemakefile \
+	   gdbconf/srcmunge	 \
+	   gdbconf/zapcalls
+
+# Files needed by AutoConf and configure
+CONFIGFILES	= \
+	Makefile.in Makefile.conf.in configure.in ifdefs.h.in \
+	configure config.guess config.sub install-sh upsconf.c
+
+# Documentation, X application resources
+DOCFILES	= \
+	README README.gdb README.multiarch README.maintain FAQ INSTALL BUGS \
+	COPYING CHANGES Ups repltab PAD.xml README.dwarf
+
+FILES		= ${DOCFILES} ${GDBFILES} ${MISCFILES} ${CONFIGFILES}
+FILELIST	= releasefiles
+CHECKRELEASE	= checkrelease
+RELROOT		= releases
+RELNAME		= ups-`sccs prs -d:I: ups/sccsdata.c`${RELTAG}
+
+# Make a release as a compressed tar file
+release: ${CHECKRELEASE} filelist ${RELROOT}
+	@echo "Creating release file ${RELNAME} ..."
+	@-rm -f thesefiles
+	@sed -e "s;^;${RELNAME}/;" -e 's;/./;/;' < ${FILELIST} > thesefiles
+	@rm -f ${RELNAME}
+	@ln -s . ${RELNAME}
+	@tar cf - `cat thesefiles` | gzip > ${RELROOT}/${RELNAME}.tar.gz
+	@chmod 444 ${RELROOT}/${RELNAME}.tar.gz
+	@(cd ${RELROOT} && md5 ${RELNAME}.tar.gz > ${RELNAME}.md5)
+	@chmod 444 ${RELROOT}/${RELNAME}.md5
+	@rm -f ${RELNAME}
+
+testrelease:
+	rm -f releases/ups-${RELTAG}.tar.gz
+	@rm -f releases/ups-${RELTAG}.md5
+	${MAKE} ${MFLAGS} CHECKRELEASE= RELNAME=ups-${RELTAG} release
+
+${RELROOT}:
+	mkdir ${RELROOT}
+
+# Check that everything is checked in OK for a release
+checkrelease:
+	@echo "Checking release status ..."
+	@here=`pwd`;                                      \
+	 for i in ${SUBDIRS} .; do                        \
+		if cd $$i && make sccs_check; then        \
+			echo $$i OK for release;          \
+		else                                      \
+			failed="$$failed $$i";            \
+		fi;                                       \
+		cd $$here;                                \
+	 done ;                                           \
+	                                                  \
+	 if test -n "$$failed"; then                      \
+		echo;                                     \
+		echo Not ready for release: $$failed;     \
+		exit 0;                                   \
+	 fi
+
+sccs_check:
+	@sccsinfo ${FILES}
+
+# Put into ${FILELIST} a list of all the files that make up an
+# ups source release.
+filelist:
+	@-rm -f ${FILELIST}
+	@: > ${FILELIST}
+	@for i in . lib ${SUBDIRS} ups-state interpreter packaging; do \
+		echo Adding files from $$i; \
+		(cd $$i && make list) | sed "s;^;$$i/;" >> ${FILELIST}; \
+	done
+	@for i in ${DWFDIRS}; do \
+		echo Adding files from $$i; \
+		(cd $$i && make -f UpsMakefile list) | sed "s;^;$$i/;" >> ${FILELIST}; \
+	done
+
+# Count ...
+count:
+	@for i in ${SUBDIRS}; do \
+		(cd $$i && ${MAKE} ${MFLAGS} count | sed -n "s@total@$$i@p"); \
+	done
+
+# List one to a line the files in this directory that should go in a release
+list:
+	@echo ${FILES} | tr ' ' '\012'
+
+
+# -----------------------------------------------------------------------------
+#  FreeBSD package/port, RPM etc.
+# -----------------------------------------------------------------------------
+
+freebsdport:
+	(cd packaging && ${MAKE} ${MFLAGS} freebsdport)
+
+rpmspec:
+	(cd packaging && ${MAKE} ${MFLAGS} rpmspec)
+
+
+# -----------------------------------------------------------------------------

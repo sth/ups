@@ -1,0 +1,42 @@
+#! /bin/sh
+
+# glue the seperate menu data files into one C file
+
+cat << 'EOF'
+/* menudata.c - data defining menus (automatically generated - don't edit) */
+
+/*  Copyright 1991 Mark Russell, University of Kent at Canterbury.
+ *  All Rights Reserved.
+ *
+ *  This file is part of UPS.
+ *
+ *  UPS is free software; you can redistribute it and/or modify it under
+ *  the terms of the GNU General Public License as published by the Free
+ *  Software Foundation; either version 2 of the License, or (at your option)
+ *  any later version.
+ *
+ *  UPS is distributed in the hope that it will be useful, but WITHOUT ANY
+ *  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ *  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ *  details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with UPS; if not, write to the Free Software Foundation, Inc., 59 Temple
+ *  Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+char ups_menu_data_c_sccsid[] = "%W% %G%";
+
+#include <local/wn.h>
+#include <local/menu3.h>
+EOF
+
+for file
+do
+	name=`expr $file : '\(.*\).c'`
+	echo
+	echo
+	echo "/* --- Cut here for $file --- */"
+	sed -e '/#include/d' -e "s/MM/${name}_MM/g" -e "s/\<NULL\>/0/" $file
+done

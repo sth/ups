@@ -1,0 +1,136 @@
+# $Id$
+# @(#)Makefile	1.22 04 Jun 1995 UKC
+
+# -----------------------------------------------------------------------------
+#  Makefile
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+INSTALL		= @INSTALL@
+RANLIB		= @RANLIB@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@  @LIBS@
+LIBS		= @LIBS@
+
+# -----------------------------------------------------------------------------
+
+#LIB_HEADERS	= -Idevelhdrs
+LIB_CFLAGS	= ${CFLAGS} ${LIB_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${LIB_CFLAGS} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${LIB_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${LIBS}
+
+MAKE_LIBRARY	= ar cq
+
+# -----------------------------------------------------------------------------
+
+SCCS = sccs
+SCCS_CHECK = ${SCCS} check
+
+OBJS =	alloc.o e_malloc.o e_realloc.o errf.o \
+	formf.o panic.o ssplit.o strf.o strnf.o strsave.o \
+	fpgetline.o strtol.o config.o ip.o ebuf.o logf.o \
+	sccsdata.o
+
+SRCS =	alloc.c e_malloc.c e_realloc.c errf.c \
+	formf.c panic.c ssplit.c strf.c strnf.c strsave.c \
+	fpgetline.c strtol.c config.c ip.c ebuf.c logf.c
+
+HDRS = ukcprog.h
+
+DOCS = doc/ukcprog.3
+
+FILES = ${HDRS} ${SRCS} ${DOCS} Makefile.in
+
+all: libukcprog.a
+
+sccsfile:
+	@sccsinfo ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@${SCCS} edit sccsdata.c
+	@mksccs -changefile CHANGES -versfunc ukcprog.h ukcprog ${FILES}
+	@${SCCS} delget sccsdata.c
+
+install: sccs_check ${LIB}/libukcprog.a ${INCLUDE}/ukcprog.h ${MAN}/ukcprog.3
+
+${LIB}/libukcprog.a: libukcprog.a
+	$(INSTALL) -c -m 644 libukcprog.a ${LIB}/libukcprog.a
+	cd ${LIB} && ${RANLIB} libukcprog.a
+
+${INCLUDE}/ukcprog.h: ukcprog.h
+	$(INSTALL) -c -m 644 $? $@
+
+${MAN}/ukcprog.3: doc/ukcprog.3
+	$(INSTALL) -c -m 644 $? $@
+
+libukcprog.a: /. ${OBJS}
+	rm -f $@
+	${MAKE_LIBRARY} $@ ${OBJS}
+	${IN_OBJDIR}${RANLIB} libukcprog.a
+
+sccs_check:
+	@${SCCS_CHECK}
+
+list: ${FILES}
+	@echo ${FILES} sccsdata.c | tr ' ' '\012'
+
+clean:
+	rm -f ${OBJS} libukcprog.a
+
+deps:
+	@deps ${SRCS} sccsdata.c
+
+count:
+	@wc ${FILES}
+
+#
+
+alloc.o: alloc.c ukcprog.h 
+	${CCLINE}alloc.c
+e_malloc.o: e_malloc.c ukcprog.h 
+	${CCLINE}e_malloc.c
+e_realloc.o: e_realloc.c ukcprog.h 
+	${CCLINE}e_realloc.c
+errf.o: errf.c ukcprog.h 
+	${CCLINE}errf.c
+formf.o: formf.c ukcprog.h 
+	${CCLINE}formf.c
+panic.o: panic.c ukcprog.h 
+	${CCLINE}panic.c
+ssplit.o: ssplit.c ukcprog.h 
+	${CCLINE}ssplit.c
+strf.o: strf.c ukcprog.h 
+	${CCLINE}strf.c
+strnf.o: strnf.c ukcprog.h 
+	${CCLINE}strnf.c
+strsave.o: strsave.c ukcprog.h 
+	${CCLINE}strsave.c
+fpgetline.o: fpgetline.c ukcprog.h 
+	${CCLINE}fpgetline.c
+strtol.o: strtol.c 
+	${CCLINE}strtol.c
+config.o: config.c ukcprog.h 
+	${CCLINE}config.c
+ip.o: ip.c ukcprog.h 
+	${CCLINE}ip.c
+ebuf.o: ebuf.c ukcprog.h 
+	${CCLINE}ebuf.c
+logf.o: logf.c
+	${CCLINE}logf.c
+sccsdata.o: sccsdata.c ukcprog.h 
+	${CCLINE}sccsdata.c

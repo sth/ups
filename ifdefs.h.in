@@ -1,0 +1,558 @@
+/* $Id$ */
+
+/* ifdefs.h - #defines of symbols based on predefined macros */
+
+/*  Copyright 1991 Mark Russell, University of Kent at Canterbury.
+ *  Copyright 1999 Ian Edwards <ian@concerto.demon.co.uk>
+ *  All Rights Reserved.
+ *
+ *  This file is part of UPS.
+ *
+ *  UPS is free software; you can redistribute it and/or modify it under
+ *  the terms of the GNU General Public License as published by the Free
+ *  Software Foundation; either version 2 of the License, or (at your option)
+ *  any later version.
+ *
+ *  UPS is distributed in the hope that it will be useful, but WITHOUT ANY
+ *  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ *  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ *  details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with UPS; if not, write to the Free Software Foundation, Inc., 59 Temple
+ *  Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+/* @(#)ifdefs.h	1.16 25/5/95 (UKC) */
+
+#ifndef IFDEFS_H_INCLUDED
+#define IFDEFS_H_INCLUDED
+
+/* ---------------------------------------------------------------------------
+ *  These symbols are used in a lot of the code.
+ *
+ *  ARCH_SUN3		- Sun 3 (Motorola 68000 based)
+ *
+ *  ARCH_SUN4		- Sun 4 (SPARC)
+ *  ARCH_SPARC		- any SPARC (not currently used)
+ *
+ *  ARCH_SUN386		- Sun 386i (obsolete)
+ *
+ *  ARCH_CLIPPER	- Clipper
+ *  ARCH_ALPHA		- DEC Alpha
+ *
+ *  ARCH_386		- any Intel x86
+ *  ARCH_LINUX386	- Linux (x86)
+ *  ARCH_BSDI386	- should be BSD/OS (x86), actually any BSD (x86)
+ *  ARCH_FREEBSD386	- FreeBSD (x86)
+ *
+ *  ARCH_MIPS		- any MIPS
+ *  ARCH_MIPS_MIPS	- MIPS MIPS
+ *  ARCH_ULTRIX_MIPS	- Digital Ultrix MIPS
+ *
+ *  OS_BSD		- supports most BSD routines
+ *  OS_BSD44		- derived from BSD4.4-Lite (not SunOS !)
+ *  OS_SVR4		- supports System V release 4 features
+ *  OS_SUNOS		- any SunOS
+ *  OS_ULTRIX		- Digital Ultrix
+ * ---------------------------------------------------------------------------
+ */
+
+
+#undef HOST_CPU
+#undef HOST_VENDOR
+#undef HOST_OS
+#undef THIS_ARCH
+
+#undef LONG_LONG_FMT
+#define LONG_DOUBLE_FMT		".12L"
+
+#undef LLONG_MAX
+
+
+/* ---------------------------------------------------------------------------
+ *  One of these ARCH_... definitions should be set.
+ * ---------------------------------------------------------------------------
+ */
+#undef ARCH_SUN386
+#undef ARCH_SUN3
+#undef ARCH_SUN4
+#undef ARCH_386
+#undef ARCH_FREEBSD386
+#undef ARCH_OPENBSD386
+#undef ARCH_NETBSD386
+#undef ARCH_BSDI386
+#undef ARCH_LINUX386
+#undef ARCH_ALPHA
+#undef ARCH_CLIPPER
+#undef ARCH_MIPS_ULTRIX
+#undef ARCH_MIPS_MIPS
+#undef ARCH_VAX
+
+
+/* ---------------------------------------------------------------------------
+ *  One of these OS_... definitions should be set.
+ * ---------------------------------------------------------------------------
+ */
+#undef OS_SUNOS_3
+#undef OS_SUNOS_4
+#undef OS_SUNOS_5
+#undef OS_FREEBSD
+#undef OS_BSD44
+#undef OS_LINUX
+#undef OS_OSF
+#undef OS_RSICOS
+#undef OS_ULTRIX
+
+
+/* ---------------------------------------------------------------------------
+ *  FreeBSD 2.2.x has started to diverge from other BSDs on Intel x86,
+ *  ARCH_FREEBSD386 is *only* used to flag these.
+ * ---------------------------------------------------------------------------
+ */
+#if (ARCH_FREEBSD386) || (ARCH_OPENBSD386) || (ARCH_NETBSD386)
+#define ARCH_BSDI386		1
+#endif
+
+/* ---------------------------------------------------------------------------
+ *  Any 386 ?
+ * ---------------------------------------------------------------------------
+ */
+#if (ARCH_BSDI386) || (ARCH_LINUX386)
+#define ARCH_386		1
+#endif
+
+/* ---------------------------------------------------------------------------
+ *  MIPS_MIPS   : original MIPS running RISC/os, also works for Sony NewsOS.
+ *  MIPS_ULTRIX : Digital Ultrix ran the processor in 'little endian' mode.
+ * ---------------------------------------------------------------------------
+ */
+#if (ARCH_MIPS_MIPS) || (ARCH_MIPS_ULTRIX)
+#define ARCH_MIPS		1
+#endif
+
+/* ---------------------------------------------------------------------------
+ *  OS ?
+ * ---------------------------------------------------------------------------
+ */
+#if (OS_SUNOS_3) || (OS_SUNOS_4) || (OS_SUNOS_5)
+#define OS_SUNOS		1
+#define OS_BSD			1
+#endif
+
+#if (OS_SUNOS_5) || (OS_LINUX)
+#define OS_SVR4			1
+#endif
+
+#if (OS_FREEBSD)
+#define OS_BSD44		1
+#endif
+
+#if (OS_OSF)
+#define OS_BSD44		1
+#endif
+
+#if (OS_BSD44)
+#define OS_BSD			1
+#endif
+
+
+/*
+ * ===========================================================================
+ *  The following are initially 0 and get set to 1 by 'configure'
+ * ===========================================================================
+ */
+
+/* ANSI C headers ?  (use instead of __STDC__) */
+#define STDC_HEADERS		0
+
+/* GDB front-end ? */
+#define WANT_GDB		0
+
+/* ELF ? */
+#define WANT_ELF		0
+
+/* DWARF ? */
+#define WANT_DWARF		0
+
+/* ThirdEye ? (Old DEC/SGI debugging info for MIPS chips) */
+#define WANT_THIRD_EYE		0
+
+/* DWARF needs libelf - use the one we include ? */
+#define WANT_OWN_ELFLIB		0
+
+/* Multi-screen X support ? */
+#define WANT_MULTI_SCREEN	0
+
+/* Extras to help debug ups ? */
+#define WANT_DEBUG		0
+
+/* Iconify instead of quit on WM_DELETE_WINDOW ? */
+#define WANT_ICONIFY_WM_DELETE	0
+
+/* Headers available. */
+#define HAVE_A_OUT_H		0
+#define HAVE_AR_H		0
+#define HAVE_DIRENT_H		0
+#define HAVE_ELF_H		0
+#define HAVE_FCNTL_H		0
+#define HAVE_GRP_H		0
+#define HAVE_LIMITS_H		0
+#define HAVE_LINK_H		0
+#define HAVE_MEMORY_H		0
+#define HAVE_NDIR_H		0
+#define HAVE_NETDB_H		0
+#define HAVE_POLL_H		0
+#define HAVE_PROCFS_H		0
+#define HAVE_PTRACE_H		0
+#define HAVE_PWD_H		0
+#define HAVE_SIGNAL_H		0
+#define HAVE_STAB_H		0
+#define HAVE_STDLIB_H		0
+#define HAVE_STRING_H		0
+#define HAVE_STROPTS_H		0
+#define HAVE_TERMIOS_H		0
+#define HAVE_TIME_H		0
+#define HAVE_UNISTD_H		0
+#define HAVE_VARARGS_H		0
+#define HAVE_VFORK_H		0
+
+#define HAVE_ASM_DEBUGREG_H	0
+#define HAVE_LINUX_DEBUGREG_H   0
+
+#define HAVE_LINUX_ELF_H	0
+
+#define HAVE_MACHINE_CPU_H	0
+#define HAVE_MACHINE_FRAME_H	0
+#define HAVE_MACHINE_INST_H	0
+#define HAVE_MACHINE_REG_H	0
+#define HAVE_MACHINE_SYSARCH_H	0
+#define HAVE_MACHINE_TSS_H	0
+#define HAVE_MACHINE_MACHPARAM_H	0
+#define HAVE_MACHINE_VMPARAM_H	0
+
+#define HAVE_SYS_CORE_H		0
+#define HAVE_SYS_DIR_H		0
+#define HAVE_SYS_ERRNO_H	0
+#define HAVE_SYS_FAULT_H	0
+#define HAVE_SYS_FILE_H		0
+#define HAVE_SYS_FRAME_H	0
+#define HAVE_SYS_IOCTL_H	0
+#define HAVE_SYS_NDIR_H		0
+#define HAVE_SYS_PARAM_H	0
+#define HAVE_SYS_POLL_H		0
+#define HAVE_SYS_PROCFS_H	0
+#define HAVE_SYS_PTRACE_H	0
+#define HAVE_SYS_REG_H		0
+#define HAVE_SYS_RESOURCE_H	0
+#define HAVE_SYS_SOCKET_H	0
+#define HAVE_SYS_STAT_H		0
+#define HAVE_SYS_TIME_H		0
+#define HAVE_SYS_TYPES_H	0
+#define HAVE_SYS_USER_H		0
+#define HAVE_SYS_UCONTEXT_H	0
+#define HAVE_SYS_UTSNAME_H	0
+#define HAVE_SYS_VMPARAM_H	0
+#define HAVE_SYS_WAIT_H		0
+
+#define HAVE_X_WINDOWS		0
+
+/* The right <time.h> is included later. */
+#define TIME_WITH_SYS_TIME	0
+#define TM_IN_SYS_TIME		0
+
+
+/* Routines */
+
+#define HAVE_GETPGRP		0
+#define	GETPGRP_VOID		0
+#define HAVE_SETPGRP		0
+#define	SETPGRP_VOID		0
+
+#define SETVBUF_REVERSED	0
+
+#define HAVE_BCOPY		0
+#define HAVE_FLOCK		0
+#define HAVE_GETMNTENT		0
+#define HAVE_MEMCMP		0
+#define HAVE_MEMCPY		0
+#define HAVE_MEMMOVE		0
+#define HAVE_MMAP		0
+#define HAVE_POLL		0
+#define HAVE_PTRACE		0
+#define HAVE_PUTENV		0
+#define HAVE_REMOVE		0
+#define HAVE_RENAME		0
+#define HAVE_SELECT		0
+#define HAVE_STRCHR		0
+#define HAVE_STRCOLL		0
+#define HAVE_STRERROR		0
+#define HAVE_STRSTR		0
+#define HAVE_STRTOD		0
+#define HAVE_STRTOL		0
+#define HAVE_STRTOUL		0
+#define HAVE_STRFTIME		0
+#define HAVE_SYMLINK		0
+#define HAVE_UTIME_NULL		0
+#define HAVE_WAIT3		0
+#define HAVE_VPRINTF		0
+#define HAVE_DOPRNT		0
+#define HAVE_CPLUS_DEMANGLE	0
+#define HAVE_CPLUS_DEMANGLE_NORET	0
+
+#define HAVE_SIGLONGJMP		0
+#define HAVE_SIGSETJMP		0
+#define HAVE__LONGJMP		0
+#define HAVE__SETJMP		0
+
+/* Most of these are for the C interpreter. */
+#define HAVE_CTYPE_FUNCTIONS	0
+#define HAVE_FEOF_FUNCTIONS	0
+#define HAVE_SYS_ERRLIST	0
+#define HAVE_SYS_NERR		0
+#define HAVE_GLOBAL_CTYPE	0
+#define HAVE_GLOBAL_IOB		0
+#define GLOBAL_CTYPE		0
+#define GLOBAL_IOB		0
+#define NAME_CTYPE		""
+#define NAME_IOB		""
+#define HAVE_GETC_HELPER	0
+#define GETC_HELPER		0
+#define GETC_H_NAME		""
+#define HAVE_PUTC_HELPER	0
+#define PUTC_HELPER		0
+#define PUTC_H_NAME		""
+#define HAVE_PEEKC_HELPER	0
+#define PEEKC_HELPER		0
+#define PEEKC_H_NAME		""
+
+#define HAVE_GETDTABLESIZE_DECL	0
+#define HAVE_GETRUSAGE_DECL	0
+#define HAVE_KILLPG_DECL	0
+#define HAVE_SETLINEBUF_DECL	0
+#define HAVE_SRANDOM_DECL	0
+#undef HAVE_SYS_ERRLIST_DECL
+#undef HAVE_SYS_NERR_DECL
+#define HAVE_UTIMES_DECL	0
+#define HAVE_WAIT3_DECL		0
+#define HAVE_ERRNO_LOCATION_DECL 0
+#define HAVE___ERRNO_DECL	0
+
+/* Most of these are for the C interpreter. */
+#define HAVE_ADJTIME		0
+#define HAVE_ATEXIT		0
+#define HAVE_BSEARCH		0
+#define HAVE_CLOCK		0
+#define HAVE_DIFFTIME		0
+#define HAVE_FGETPOS		0
+#define HAVE_FSETPOS		0
+#define HAVE_GETRUSAGE		0
+#define HAVE_GETS		0
+#define HAVE_GETDTABLESIZE	0
+#define HAVE_GETHOSTBYNAME	0
+#define HAVE_GETPWNAM		0
+#define HAVE_GETTIMEOFDAY	0
+#define HAVE_I386_CLR_WATCH	0
+#define HAVE_I386_SET_WATCH	0
+#define HAVE_KILLPG		0
+#define HAVE_LABS		0
+#define HAVE_MKSTEMP		0
+#define HAVE_SEEKDIR		0
+#define HAVE_SETGROUPS		0
+#define HAVE_SETGRENT		0
+#define HAVE_SETLINEBUF		0
+#define HAVE_SETVBUF		0
+#define HAVE_SIGADDSET		0
+#define HAVE_SIGEMPTYSET	0
+#define HAVE_SIGPROCMASK	0
+#define HAVE_SOCKET		0
+#define HAVE_SRANDOM		0
+#define HAVE_TMPFILE		0
+#define HAVE_UTIMES		0
+#define HAVE__XUSTAT		0
+#define HAVE___ASSERT		0
+#define HAVE___ASSERT_FAIL	0
+#define HAVE___BUILTIN_NEXT_ARG	0
+#define HAVE___ERRNO_LOCATION	0
+#define HAVE___ERROR		0
+#define HAVE_LIBXT		0
+
+/* Extras requested in the C interpreter ? */
+#define WANT_LL			0
+#define WANT_LDBL		0
+#define HAVE_LIBM		0
+#define WANT_MATH		0
+#define WANT_CLIB		0
+#define WANT_GETS		0
+
+#define WANT_OLD_LINK		0
+
+
+/* Misc. */
+
+#define STAT_MACROS_BROKEN	0
+#define SYS_SIGLIST_DECLARED	0
+#define HAVE_ST_BLKSIZE		0
+#define HAVE_RESTARTABLE_SYSCALLS 0
+
+#define HAVE_DEFINED_ENVIRON	0
+#define HAVE_PSINFO_T		0
+#define HAVE_PSTATUS_T		0
+#define HAVE_GREG_T		0
+#define HAVE_GREGSET_T		0
+#define HAVE_PRGREG_T		0
+#define HAVE_L_PHNUM_F		0
+
+/* Set for Motorola and SPARC, not for Intel and VAX. */
+#define WORDS_BIGENDIAN		0
+#define IS_BIG_ENDIAN		WORDS_BIGENDIAN
+
+#define C_PREPROCESSOR		""
+
+
+/* Also defines
+    vfork = vfork if vfork() works
+    vfork = fork  if vfork() does not work
+
+    __CHAR_UNSIGNED__ if char is unsigned
+*/
+#define VFORK			vfork
+#define GETGROUPS_T		GETGROUPS_T
+#define GID_T			gid_t
+#define MODE_T			mode_t
+#define SIZE_T			size_t
+#define OFF_T			off_t
+#define PID_T			pid_t
+#define UID_T			uid_t
+#define RETSIGTYPE		RETSIGTYPE
+#define const			const
+
+#define SIZEOF_SHORT		SIZEOF_SHORT
+#define SIZEOF_INT		SIZEOF_INT
+#define SIZEOF_LONG		SIZEOF_LONG
+#define SIZEOF_FLOAT		SIZEOF_FLOAT
+#define SIZEOF_DOUBLE		SIZEOF_DOUBLE
+#define SIZEOF_LONG_LONG	SIZEOF_LONG_LONG
+#define SIZEOF_LONG_DOUBLE	SIZEOF_LONG_DOUBLE
+
+#define __CHAR_UNSIGNED__	0
+#define HAVE_LONG_DOUBLE	0
+#define HAVE_LONG_LONG		(SIZEOF_LONG_LONG > SIZEOF_LONG)
+
+/*
+ * ===========================================================================
+ *  Our definitions start here...
+ * ===========================================================================
+ */
+
+#include <stdio.h>
+
+
+/* 'autoconf' suggests :- */
+
+#if HAVE_UNISTD_H
+# include <sys/types.h>
+# include <unistd.h>
+#elif HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#ifdef _POSIX_VERSION
+/* Code for POSIX.1 systems.  */
+#endif
+
+
+/* 'autoconf' suggests :- */
+
+#if STDC_HEADERS
+# include <string.h>
+#else
+# if HAVE_STRING_H
+#  include <string.h>
+# endif
+# if HAVE_MEMORY_H
+#  include <memory.h>
+# endif
+# ifndef HAVE_STRCHR
+#  define strchr index
+#  define strrchr rindex
+# endif
+char *strchr (), *strrchr ();
+# ifndef HAVE_MEMCPY
+#  define memcpy(d, s, n) bcopy ((s), (d), (n))
+# endif
+# ifndef HAVE_MEMMOVE
+#  define memmove(d, s, n) bcopy ((s), (d), (n))
+# endif
+#endif
+
+
+/* 'autoconf' suggests :- */
+
+#if HAVE_DIRENT_H
+# include <dirent.h>
+# define NAMLEN(dirent) strlen((dirent)->d_name)
+#else
+# define dirent direct
+# define NAMLEN(dirent) (dirent)->d_namlen
+# if HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
+
+
+/* 'autoconf' suggests :- */
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+
+/* 'autoconf' suggests :- */
+
+#if HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
+#ifndef WEXITSTATUS
+# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+#endif
+#ifndef WIFEXITED
+# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#endif
+
+
+/*
+ * ---------------------------------------------------------------------------
+ *  Fix-ups through macros...
+ * ---------------------------------------------------------------------------
+ */
+
+#include <errno.h>
+#if !HAVE_STRERROR
+extern char *sys_errlist[];
+extern int sys_nerr;
+/* As we have just declared them ... */
+#define HAVE_SYS_ERRLIST_DECL	1
+#define HAVE_SYS_NERR_DECL	1
+#define strerror(n) \
+    (((n) >= 0 && (n) < sys_nerr) ? sys_errlist[n] : "unknown error")
+#endif
+
+
+#endif
+
+/* END */

@@ -1,0 +1,114 @@
+dnl $Id$
+
+dnl ---------------------------------------------------------------------------
+dnl  Configure for building test programs.
+dnl ---------------------------------------------------------------------------
+
+dnl  Process this file with 'autoconf' to produce a configuration script
+dnl  called "configure".  This is a shell script that the user building
+dnl  UPS runs before doing 'make'.
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Initialisation.
+dnl ---------------------------------------------------------------------------
+AC_INIT(assertion.c)
+AC_REVISION($Id$)dnl
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for system type and C compiler
+dnl ---------------------------------------------------------------------------
+AC_PROG_CC
+AC_PROG_CXX
+
+AC_CANONICAL_HOST
+AC_SUBST(host)
+AC_SUBST(host_cpu)
+AC_SUBST(host_vendor)
+AC_SUBST(host_os)
+
+# -O2 is (probably) not a good idea for UPS
+
+upsCFLAGS=
+for flag in $CFLAGS
+do
+    case "$flag" in
+	-O|-O?)	;;
+	*)	upsCFLAGS="$upsCFLAGS $flag" ;;
+    esac
+done
+CFLAGS="$upsCFLAGS"
+
+# -ansi useful with 'gcc' on SunOS4
+
+if test "$GCC" = "yes"
+then
+    case "${host_os}" in
+	sunos4*)	CFLAGS="$CFLAGS -ansi" ;;
+    esac
+fi
+
+# -pipe supported ?
+
+AC_MSG_CHECKING(compiler supports -pipe)
+pipe=no
+case "$CC" in
+    acc|*/acc)	;;
+    cxx)	;;
+    *)		oldCFLAGS="$CFLAGS"
+		CFLAGS="-pipe $CFLAGS"
+		AC_TRY_LINK([#include <stdio.h>], [int i;],pipe=yes)
+		if test $pipe != yes ; then
+		    CFLAGS="$oldCFLAGS"
+		fi
+		;;
+esac
+AC_MSG_RESULT(${pipe})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for Fortran compiler
+dnl ---------------------------------------------------------------------------
+# Set F77 to 'g77' or 'f77' if found, otherwise set it to 'echo'
+AC_CHECK_PROGS(F77, [g77 f77], echo)
+
+AC_MSG_CHECKING(how to pre-process Fortran)
+preproc=no
+case "$F77" in
+    echo)	;;
+    *)		oldFPPFLAGS="$FPPFLAGS"
+		FPPFLAGS="-x f77-cpp-input $FPPFLAGS"
+		AC_TRY_LINK([#define TRUE 1], [ ],preproc='-x f77-cpp-input')
+		if test "$preproc" != '-x f77-cpp-input' ; then
+		    FPPFLAGS="$oldFPPFLAGS"
+		fi
+		;;
+esac
+AC_MSG_RESULT(${preproc})
+AC_SUBST(FPPFLAGS)
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for programs.
+dnl ---------------------------------------------------------------------------
+
+dnl  For MAKE= in Makefile
+AC_PROG_MAKE_SET
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for X Windows
+dnl ---------------------------------------------------------------------------
+AC_PATH_XTRA
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Output header and convert these files...
+dnl ---------------------------------------------------------------------------
+AC_OUTPUT(
+    Makefile2
+)
+
+
+dnl ---------------------------------------------------------------------------

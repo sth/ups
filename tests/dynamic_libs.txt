@@ -1,0 +1,129 @@
+/* From Rod Armstrong <rod@san-jose.tt.slb.com> 12th July 2000 */
+
+Ricardo,
+
+	I spent some time a few years ago getting ups to work with
+dynamically loaded libraries, on SunOS and Solaris. It should work fine
+when attached to a process that has already loaded the libraries, as well
+as when debugging processes that go ahead and load libraries.
+
+// (no longer applies)
+// 	This latter feature is broken unless you make the following fixes:
+// you need to get WANT_DYNAMIC_RELOAD to get the code in ao_elflib.c to
+// work.  (Could just change to "#if 1"). Also change the "#if 0" to "#if 1"
+// at line 737 in ao_procfs.c in procfs_create_child().
+
+	In the code, you'll see flags for xp_hit_solib_event,
+xp_new_dynamic_libs_loaded, and rescan_dynamic_solibs(),
+install_solib_event_breakpoint() etc. The idea is that the dynamic linker
+is the interpreter that runs the process, loading libraries as needed.
+In order to detect the loading of a dynamic library, one sets a breakpoint
+in the dynamic linker See elf_get_dynamic_shlib_info() in ao_elflib.c
+where debug.r_brk value is used to set the breakpoint. This is defined my
+the ELF specs and the system header files on Solaris.
+
+	You can play with this with the following test case on Solaris
+Put the main.c in one directory and the rga.c file in another, ../lib.
+After stepping into the dynamic lib (myfunc()), you'll see the new files
+in the source list (you'll have to collapse and expand the list manually).
+
+Rod
+
+-------------------------- main.c in . ----------------------------------------
+#include <dlfcn.h>
+
+main()
+{
+  char buff[32];
+
+  int (*func_ptr)();
+  void *sh_handle = 0;
+  char *shpath = "../lib/librga.so.1.0", *func_name = "myfunc";
+
+  printf("Link myfunc() (y/n) ?");
+  gets(buff);
+  if (buff[0] == 'y')
+  {
+    if (sh_handle)
+      if (dlclose(sh_handle))
+	printf("Cannot close shared object : %s.\n",dlerror());
+
+    printf("Shared library = %s.\n",shpath);
+    sh_handle = dlopen(shpath,1);
+    func_ptr = (int(*)())dlsym(sh_handle, func_name); 
+    if (!func_ptr) 
+      printf("Cannot find symbol %s : %s.\n", func_name, dlerror());
+
+    printf("Call myfunc() (y/n) ?");
+    gets(buff);
+    if (buff[0] == 'y')
+      (func_ptr)();
+  }
+}
+---------------------- end main.c in .   -------------------------------------
+
+---------------------- end rga.c in ../lib -----------------------------------
+#include <signal.h>
+int test0;
+static int test1;
+static int test2;
+static int test3;
+static int test4;
+static int test5;
+static int test6;
+int test7;
+static void dummy_cont(int sig) {
+}
+
+myfunc1()
+{
+ int k;
+
+ k = 22;
+ printf("Got to myfunc1()\n");
+}
+
+myfunc()
+{
+ int i;
+  char buff[32];
+
+  signal(SIGCONT,dummy_cont);
+  pause();
+
+ i =2;
+ test0 = -1;
+ test1 = 1;
+ test2 = 2;
+ test3 = 3;
+ test4 = 4;
+ test5 = 5;
+ test6 = 6;
+ test7 = 7;
+ if (test1)
+   printf("test1 = %d!\n", test1);
+ printf("Got here!!\n");
+ printf("Call myfunc1() (y/n) ?");
+ gets(buff);
+ if (buff[0] == 'y')
+   myfunc1();
+}
+---------------------- end rga.c in ../lib -----------------------------------
+
+To build.
+
+# For Solaris using SC4
+
+cd ../dl;rm a.out;cd ../lib ;rm *.o *.i ;cd ../dl
+cd ../lib ; cc -g -c -KPIC rga.c ;cc -G -o librga.so.1.0 rga.o ; cd ../dl ; cc -g -o a.out -I../lib -ldl main.c
+
+# For centerline on SunOS
+clcc -g -c -PIC -o rga-sunos.o rga.c
+mv rga-sunos.o rga-sunos.op
+ld -assert pure-text -o librga-sunos.so.1.0 rga-sunos.op
+rm -f rga-sunos.so
+ln -s librga-sunos.so.1.0 rga-sunos.so
+clcc -g -o a-sunos.out -ldl main-sunos.c
+
+----------------------------------------------------------------------
+

@@ -1,0 +1,7 @@
+This directory contains the .c files that define most of the
+ups menus.  They are produced and edited with the med3 menu
+editor (which is now included in the ups source distribution).
+
+Med3 was written by John Bovey, University of Kent.
+
+Modified : 20/May/1999

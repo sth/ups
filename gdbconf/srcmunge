@@ -1,0 +1,271 @@
+#! /usr/local/bin/perl -w
+
+# @(#)srcmunge	1.4 07 Jan 1995 (UKC)
+
+# Put #ifdefs round gdb functions that we don't need
+
+$conf = 'upsconf';
+$funclist = "$conf/funclist";
+$zapcalls = "$conf/zapcalls";
+$cfiles = "$conf/cfiles";
+
+$origdir = '../gdb';
+$ifdef_line = "#ifdef NOT_NEEDED_FOR_UPS\n";
+$endif_line = "#endif /* !NOT_NEEDED_FOR_UPS */\n";
+
+&loadfuncs(*zapcalls, "$zapcalls");
+&loadfuncs(*keep, "$funclist");
+
+if (@ARGV == 0) {
+	&loadfuncs(*cfiles, $cfiles);
+	grep(&srcmunge($_), sort keys %cfiles);
+}
+else {
+	grep(&srcmunge($_), @ARGV);
+}
+
+print STDERR "\n";
+
+sub loadfuncs {
+	local(*tab, $path) = @_;
+	local($toplevel);
+	
+	open(FUNCS, $path) || die("Can't open $path ($!)\n");
+
+	while (<FUNCS>) {
+		chop $_;
+		$toplevel = ($path eq $funclist && /\#\s*$/);
+		s/\s*#.*//;
+		$tab{$_} = 1 unless /^\s*$/;
+		$toplevel_keep{$_} = 1 if ($toplevel);
+	}
+
+	close(FUNCS); 
+}
+
+sub srcmunge {
+	local($file) = @_;
+	local($in, $out);
+
+	$in = "$origdir/$file";
+	$out = "$file.tmp";
+	$old = "$file.old";
+
+	return if ($file eq 'init.c');
+	
+	unless (-e $in) {
+		print STDERR "[skipped $file] ";
+		return;
+	}
+	
+	open(IN, $in) || die("Can't open $in ($!)\n");
+	open(OUT, ">$out") || die("Can't open $out ($!)\n");
+	unlink($old);		# No check - let the cp complain if needed
+	system("cp $file $old") && die("Can't copy $file to $old (exit=$?)");
+
+	$lastline = '';
+	$func = '';
+	$thisfunc = '';
+
+ line:
+	while (<IN>) {
+
+		# If we `#define foo bar' and we are zapping calls to foo,
+		# zap calls to bar as well.
+		#
+		if (/^\#\s*define\s+(\w+)\s+(\w+)\s*$/) {
+			$zapcalls{$1} = 1 if defined $zapcalls{$2};
+			$keep{$1} = 1 if defined $keep{$2};
+		}
+
+		# Comment out calls to functions in the zap list
+		#
+	        if (/^\s+(\w+\s*=\s*)?(\w+)/ &&
+		    ($zapcalls{$2} || $zapcalls{"$thisfunc:$2"})) {
+			&flush_lastline();
+			print OUT $ifdef_line;
+
+			until (($start, $end) = /(.*\))(;\s*)$/) {
+				print OUT $_;
+				$_ = <IN>;
+				die("Unexpected EOF in $in\n") unless ($_);
+			}
+
+			($pad = $start) =~ s/\S/ /g;
+			print OUT "$start\n$endif_line$pad$end\n";
+			next line;
+		}
+       		
+		# Join up `static' on a line by itself with the following
+		# line.  This is so we don't emit a #ifdef between the
+		# `static' keyword and the thing that is static.
+		#
+		if ($_ eq "static\n") {
+			chop $_;
+			$_ .= ' ' . <IN>;
+		}
+
+		# Comment out unused structures that contain function
+		# pointers.  These structure names are "[xxx]" in the funclist.
+		#
+		if (/^\w/ && /\bstruct\s+\w+\s+(\w+_(ops|fns|defn))\s+=/ &&
+		    !$keep{"[$1]"}) {
+			$func = "[$1]";
+			&flush_lastline();
+			print OUT $ifdef_line;
+		}
+
+		# If we have named a function as wanted (in funclist)
+		# then make the prototype non-static if necessary.
+		#
+		if (/^(\w+)\s+PARAMS\s+/ && $toplevel_keep{$1}) {
+			$lastline =~ s/^\s*static\s*//;
+		}
+
+		# Look for the start of a function
+		#
+		if (/^(static\s+void\s+)?(\w+)\s*\(/o && !/;/ && !/\\n\\$/) {
+			if ($keep{$2}) {
+
+				$thisfunc = $2;
+
+				# If we want the function we certainly don't
+				# want it static.
+				#
+				if ($toplevel_keep{$2}) {
+					$lastline =~ s/^\s*static\s*//;
+				}
+			}
+			else {
+				# Unwanted function.  Remember the name
+				# (for sub putline) and emit a #ifdef
+				# to remove it.
+
+				$func = $2;
+
+				# Don't emit #ifdef in the middle of a comment
+				# or a function start that is one one line.
+				if ($lastline =~ /\*\/\s*$/ || /^static/) {
+					&flush_lastline();
+				}
+				
+				print OUT $ifdef_line;
+			}
+		}
+
+		# Special substitution to zap assignments of function
+		# pointers to cmd structures.
+		#
+		s@^(\s*)(\w+\s*->\s*(function\.[cs]func|completer)\s*=\s*\w+);(\s*)$@$1/* $2 */;$4@;
+
+		# Special file or function substitutions
+
+		if ($thisfunc eq 'procfs_mourn_inferior') {
+			&do_procfs_mourn_inferior_bugfix();
+		}
+		elsif ($thisfunc eq 'fork_inferior') {
+			s@(shell_file\s+=\s+)getenv\s*\(\s*"SHELL"\s*\)\s*;@$1"/bin/sh";@;
+		}
+		elsif ($file eq 'infrun.c') {
+			s/\((stop_command->hook)\)/(stop_command && $1)/ &&
+				($changed_file = 1);
+			s/^static (unsigned char \*signal_(stop|print|program);)/$1/;
+		}
+		elsif ($file eq 'breakpoint.c') {
+			s/static (struct breakpoint \*breakpoint_chain)/$1/;
+		}
+		elsif ($file eq 'symtab.h') {
+			s/(\#define\s+BYTE_BITFIELD\s+:8)\;/$1/;
+		}
+		elsif ($file eq 'symtab.c') {
+			s/^#ifdef (HPPA_COMPILER_BUG)$/#if defined($1) && !defined(__GNUC__)/;
+		}
+		elsif ($file eq 'main.c') {
+			s/static\s+(jmp_buf\s+(quit|error)_return\s*;)/$1/;
+		}
+
+		&putline($_);
+	}
+	&putline('');
+
+	close(OUT) || die("Error writing to $out ($!)\n");
+
+	if ($func ne '') {
+		unlink($out) || die("Can't unlink $out ($!)\n");
+		die("\n$file: Missing end to function `$func'\n");
+	}
+
+	$changed_file = !&files_same($out, $old);
+	$ch = $changed_file ? '#' : '';
+
+	unless ($changed_file) {
+		unlink($old) || die("Can't unlink $old ($!)\n");
+	}
+
+	if (&files_same($in, $out)) {
+		unlink($out) || die("Can't unlink $out ($!)\n");
+		unlink($file) || die("Can't unlink $file ($!)\n");
+		symlink($in, $file) || die("Can't symlink $in to $file ($!)\n");
+		print STDERR "[$file] ";
+	}
+	elsif (&files_same($out, $file)) {
+		unlink($out) || die("Can't unlink $out ($!)\n");
+		print STDERR "($file$ch) ";
+	}
+	else {
+		rename($out, $file) ||
+			die("Can't rename $out to $file ($!)\n");
+		chmod($changed_file ? 0444 : 0400, $file) ||
+			die("Can't chmod $file ($!)\n");
+		print STDERR "$file$ch ";
+	}
+}
+
+sub files_same {
+	local($file1, $file2) = @_;
+
+	$status = system('cmp', '-s', $file1, $file2);
+
+	if ($status == 0) {
+		return 1;
+	}
+	elsif ($status == 256) {
+		return 0;
+	}
+	else {
+		die("Bad exit status $status from `cmp -s $out $file'\n");
+	}
+}
+
+sub do_procfs_mourn_inferior_bugfix {
+	if ($lastline eq "  for (pi = procinfo_list; pi; pi = pi->next)\n" &&
+	    $_ eq "    unconditionally_kill_inferior (pi);\n") {
+		$lastline =~ s/pi->//;
+		$lastline = "  struct procinfo *next;\n\n$lastline";
+		s/uncon/(next = pi->next), $&/;
+	}
+}
+
+sub flush_lastline {
+	print OUT $lastline;
+	$lastline = '';
+}
+			
+sub putline {
+	local($line) = @_;
+
+	print OUT $lastline;
+
+	if ((substr($func, 0, 1) eq '[' && $lastline =~ /^\};\s*$/) ||
+	    ($func ne '' && $lastline =~ /^\}\s*$/)) {
+		print OUT $endif_line;
+		$func = '';
+		$thisfunc = '';
+	}
+
+	$lastline = $line;
+}
+
+# Local Variables:
+# mode: perl
+# End:

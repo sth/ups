@@ -1,0 +1,257 @@
+.\" $Id$
+.\" @(#)helptext.man	3.36   29 Aug 2000
+.\"
+.\"   This file is nroff source for UPS help topics that
+.\"   are not direct copies of the manual page text.
+.\"   It uses the same man page macros as ups.man, but
+.\"   is not intended to be placed in a man page directory
+.\"   as part of the install process.
+.\"
+.de Id
+.ds Rv \\$3
+.ds Dt \\$4
+..
+.Id $Id$
+.\" A sequence to switch into the font for example text
+.if t .ds Cb \f(CB
+.if n .ds Cb \fB
+.if t .ds Cr \f(CR
+.if n .ds Cr \fB
+.\" 
+.\"
+.\" ####################################
+.\" .Sc - print the argument in small caps
+.de Sc
+\s-2\\$1\s0\\$2
+..
+.\" ####################################
+.\"
+.\" ####################################
+.\" .Cm - print a menu command caption
+.de Cm
+\\$3\&\fB\\$1\fP\\$2
+..
+.\" ####################################
+.\" .Ob - print the name of a display area object
+.de Ob
+\\$3\&\fB\\$1\fP\\$2
+..
+.\" ####################################
+.\"
+.\" ####################################
+.\" .fX - print the argument in a fixed font
+.de fX
+\\$3\&\*(Cr\\$1\fP\\$2
+..
+.\" ####################################
+.\"
+.\" .En - .IP with Courier heading
+.de En
+.IP "\*(Cr\\$1\fP \fI\\$2\fP" 20
+..
+.\" ####################################
+.\" .Vs - start example
+.de Vs
+.in +4m
+\*(Cr
+.nf
+..
+.\" ####################################
+.\"
+.\"
+.\"
+.\"
+.\" ####################################
+.\" .Ve - end example
+.de Ve
+.fi
+.ft P
+.in -4m
+.sp 0.3v
+..
+.\" ####################################
+.\"
+.\"
+.\" ####################################
+.\" String register .Bo - outdented bullet
+.ds Bo \h'-1.3n'\(bu
+.\"
+.\"
+.TH UPS HELP 1 \*(Dt Local
+.SH AUTHORS
+UPS was written by Mark Russell, while at the University of Kent, UK.
+Original version for the ICL Perq
+and many of the important ideas by John Bovey, University of
+Kent.
+
+.SH ABOUT X RESOURCES
+UPS can be configured to meet individual preferences through
+X resources.
+
+As with any X application, you specify an X resource in the
+file .Xdefaults in your home directory.  Typical lines
+in .Xdefaults look like:
+.Vs
+*.Font: fixed            /* default font*/
+Ups.Geometry: 650x550     /* Geometry for Ups */
+.Ve
+The first example, with the initial '*', specifies your preferred
+font for any X application.
+The second example, with the initial "Ups", specifies the
+width and height ( in pixels) of the main window for ups only.
+Other X applications may look for a Geometry resource, but will not
+pick up the one specified for UPS.
+
+If  you want to specify not only width and height, but exact position,
+use the following form of the Geometry resource:
+.Vs
+Ups.Geometry: 650x550+20+30  /* Geometry for Ups */
+.Ve
+This example will place the main UPS window 20 pixels in and  30 down
+from the upper left corner of the screen.  Replace the + signs with -
+for a position relative to the right side or bottom of the screen.
+
+Your .Xdefaults file is normally processed when you start X.
+After editing your .Xdefaults file, run "xrdb -load ~/.Xdefaults"
+to process the file so that X applications will see your changes.
+
+Many X resources used by UPS have command line equivalents.
+The font may be specified on the command line with "-fn <font>", and 
+the geometry with "-geometry <geometry_spec>".
+You can to use the command line versions to experiment, then
+set up the resource in you .Xdefaults file if you like the result.
+.SH FONTS AND COLORS
+In addition to the standard X resources for fonts and colors, UPS
+allows for special fonts in breakpoint code or as menu text; and
+UPS has extensive options for setting up colors.  These are completely
+documented in the UPS man page, so we do not reproduce them
+here.
+
+The standard UPS color scheme is set up by the file "Ups", contained
+in the UPS distribution.  If UPS comes up black and white, it is probably
+because that file has not been properly installed.  It should be
+installed as /usr/lib/X11/app-defaults/Ups.
+
+If for some reason you can not place the Ups file
+in that directory, set up one of the following environment variables
+to specify the directory containing the Ups file:
+.Vs
+XAPPLRESDIR - directory containing Ups
+XUSERFILESEARCHPATH -
+	    Colon separated list of directories to search
+.Ve
+Simple fonts may be specified by aliases such as "8x13" for a font that is
+8 pixels wide and 13 high. See the file /usr/lib/X11/fonts/misc/fonts.alias
+for available font aliases.
+.SH SPLIT SCREENS
+The standard UPS configuration is as a single top level X window with
+three main regions: the display window ( display of stack, variables, etc.),
+the source display, and the output window (output of $printf, help, etc.). 
+Three alternate configurations are possible.
+
+To split off the combined source and output windows as a separate top level
+window, use the following X resource:
+.Vs
+Ups.WantSplitWindows: yes
+.Ve
+or start UPS with the -split on the command line.
+
+To split off the output alone window as a separate top level
+window, use the following X resource:
+.Vs
+Ups.WantSplitOutputWindows: yes
+.Ve
+or start UPS with the -splitoutwin on the command line.
+
+To split off both the source and output windows, use both X resources,
+or use both command line options.
+
+If your X display has more than one screen, you can arrange the the
+multiple UPS windows come up on different screens.  See the UPS manual
+page for details.
+
+To specify the geometry of the source and output windows, use the
+X resources Ups.Src.Geometry and Ups.Output.Geometry.
+.SH AUTOMATIC RAISE AND LOWER
+You can arrange that UPS will automatically raise itself, becoming the
+foremost X window, when the debugged process stops.  This
+can be convenient if the application window hides the UPS window
+so you don't realize that it's stopped.  You can also arrange
+that UPS lowers itself when the process goes back into run.
+This can be convenient in putting the debugged application back in
+the front where you can work with it.  Or you can arrange that
+UPS iconifies itself; on some window managers that might be more
+convient the lowering itself since it puts the UPS icon where you
+can quickly find it.
+
+You can change these settings at any time with the popup menu under
+the "Windows" button at the top of the UPS window.  To control
+the initial setting, set the following X resources or use the
+following command line options:
+.Vs
+To raise on a break
+   Ups.WantRaiseOnBreak: yes    or -raise_on_break
+
+To raise on a break and lower on run
+   Ups.WantLowerOnRun: yes      or -lower_on_run
+
+To raise on a break and iconify on run
+   Ups.WantIconifyOnRun: yes    or -iconify_on_run
+.Ve
+
+For the lower and iconify options, you can adjust the period
+UPS waits before lowering or iconifying itself with the
+following X resource:
+.Vs
+Ups.LowerOnRunTime: 1000     /* delay time in milliseconds */
+.Ve
+The default delay is 1500, or 1.5 seconds.
+.SH BREAKPOINT MENU
+When you make a selection with the source window popup menu
+UPS remembers your selection and makes it the default the
+next time you use that menu.  This can be convenient if you are
+going to use "Execute to here" several times in a row to step
+through a section of code.  But it can be a problem if you forget
+that your last selection was "Execute to here" and try to set a 
+breakpoint.
+
+You can make the menu default stay fixed on "Add breakpoint" by
+setting the following X resource
+.Vs
+Ups.SourceMenuDefault: AddBreakPoint
+.Ve
+You can also use this resource to select any of the other menu options
+as the fixed default.  Also, can arrange to have an alternate default
+selected by pressing the shift key and right mouse button, or you can
+use that combination to deliberately change the default.  The
+the UPS manual page for details.
+.SH SCROLLING
+UPS scroll bars work differently from most X applications.
+In UPS, you move the mouse up to move the display up,
+and down to move the display down.   To reverse these directions, use
+the following X resource:
+.Vs
+Ups.ScrollbarType: MOTIF
+.Ve
+
+You may find that UPS scrolls too fast.  To introduce some delay in the
+scroll loop, use the following X resource:
+.Vs
+Ups.ScrollDelay: 40
+.Ve
+values between 25 and 50 usually produce good results.
+.SH REMOVING THE MOUSEHOLE
+The "mousehole" is the region in the upper right corner of
+the main UPS window that updates to show what actions are
+invoked by the three mouse buttons.  To remove the mousehole, obtaining
+more space for the typing line and error message text, use the following
+X resource:
+.Vs
+Ups.WantMousehole: no
+.Ve
+or start UPS with -nomousehole on the command line.
+
+This option can be especially useful with large fonts, which make the
+typing line rather short.
+
+

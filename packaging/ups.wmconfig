@@ -1,0 +1,3 @@
+ups name "UPS Debugger"
+ups exec "ups.sh"
+ups group "Development"

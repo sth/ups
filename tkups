@@ -1,0 +1,88 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
+
+# Tk interface for starting 'ups'
+# Written by Giuseppe Borzì <gborzi@ieee.org>
+# $Id$
+
+set program ""
+set core ""
+set dir "~"
+set dirsrc ""
+set pid ""
+set t_arg ""
+set other ""
+
+label .p -text "Program to open:"
+entry .pe -textvariable program
+button .pb -text "Open..." -command "set program \[tk_getOpenFile -initialdir ~ \]"
+
+label .c -text "Core file:"
+entry .ce -textvariable core
+button .cb -text "Open..." -command "set core \[tk_getOpenFile -initialdir ~ \]"
+
+label .d -text "Working directory:"
+entry .de -textvariable dir
+button .db -text "Choose..." -command "set dir \[tk_chooseDirectory -mustexist true -initialdir ~ \]"
+
+label .s -text "Sources directory:"
+entry .se -textvariable dirsrc
+button .sb -text "Choose..." -command "set dirsrc \[tk_chooseDirectory -mustexist true -initialdir ~ \]"
+
+label .i -text "PID:"
+entry .ie -textvariable pid
+
+label .a -text "Program arguments:"
+entry .ae -textvariable t_arg
+
+label .o -text "Other options:"
+entry .oe -textvariable other
+
+button .ok -text "OK" -background green -command {OpenUPS}
+button .dsm -text "Dismiss" -background white -command "exit"
+
+grid .p -row 0 -column 0 -sticky e -padx 10
+grid .pe -row 0 -column 1 -padx 10
+grid .pb -row 0 -column 2 -padx 10
+
+grid .d -row 1 -column 0 -sticky e -padx 10
+grid .de -row 1 -column 1 -padx 10
+grid .db -row 1 -column 2 -padx 10
+
+grid .c -row 2 -column 0 -sticky e -padx 10
+grid .ce -row 2 -column 1 -padx 10
+grid .cb -row 2 -column 2 -padx 10
+
+grid .s -row 3 -column 0 -sticky e -padx 10
+grid .se -row 3 -column 1 -padx 10
+grid .sb -row 3 -column 2 -padx 10
+
+grid .i -row 0 -column 4 -sticky e -padx 10
+grid .ie -row 1 -column 4 -padx 10
+
+grid .a -row 2 -column 4 -sticky e -padx 10
+grid .ae -row 3 -column 4 -padx 10
+
+grid .o -row 4 -column 0 -pady 10
+grid .oe -row 4 -column 1 -pady 10
+
+grid .ok -row 4 -column 3 -pady 10
+grid .dsm -row 4 -column 4 -pady 10
+
+proc OpenUPS args {
+     global core dir dirsrc pid program t_arg
+
+     if { $program == "" } then return
+     set cmd "cd $dir; xterm -exec ups $program"
+     if { $core != "" } then { set cmd "$cmd $core" } else { set cmd "$cmd $pid" }
+     set cmd "$cmd $dirsrc"
+     if { $t_arg != "" } then { set cmd "$cmd -a $t_arg" }
+     exec echo "$cmd" | sh &
+     exit
+}
+
+
+#if [ -x $FILE ]; then
+#   aterm -title UPS -e ups $FILE
+#fi

@@ -1,0 +1,11 @@
+# $Id$
+
+UPS README for lib/libgnu
+-------------------------
+
+This is the function name demangler for GCC taken from the GNU 'libiberty'
+library.  See COPYING.LIB for the associated license.
+
+The complete source code for the GNU 'libiberty' library is available from
+http://gcc.gnu.org/ and various GNU mirrors.
+

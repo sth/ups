@@ -1,0 +1,1471 @@
+# $Id$
+
+See the file README for build instructions.
+
+The URL for the ups web site is:
+
+           http://www.concerto.demon.co.uk/UPS/
+
+It is maintained by Ian Edwards <ian@concerto.demon.co.uk>.
+It includes a FAQ, html man pages, site listings where ups
+can be found, supported architectures, a history of changes
+between versions, and other information.
+
+
+Changes between 3.38beta1 and 3.37
+----------------------------------
+
+Changes from Ian Edwards <ian@concerto.demon.co.uk>:
+
+o  Support DWARF 2 debugging format as used by GCC 3.1 and later.
+   Only works for C programs, limited Fortran support, no C++ support.
+
+Enhancements from Tom Hughes <thh@cyberscience.com>:
+
+o  Fix a crash if it fails to find a function definition for the target
+   address when you step into a new function.
+
+o  Fix some more problems when an target file is reloaded by ensuring that
+   everything is changed to point at the new symbol information.
+
+o  Bound issues in some loops that I found by running ups under valgrind.
+
+o  Prevent confusion when you have both a function and a global variable
+   with the same name.
+
+o  Get the file descriptor limit right.
+
+o  Allow config loading to occur even if there is no state directory. This
+   is reasonable because there may be a ~/.upsrc or something that we want
+   to read even if there is no saved state.
+
+
+Changes between 3.37 and 3.36
+-----------------------------
+Enhancements from Tom Hughes <thh@cyberscience.com>:
+
+o  The stack and breakpoint listings show object names if source
+   file names aren't available.
+
+o  Added watchpoints for x86 machines. They support both real x86 
+   hardware watchpoints (where possible) and use of mprotect() to 
+   implement watchpoints when that fails. They can be made visible
+   on other architectures by using the WantWatchpoints X resource.
+   Watchpoints work in some cases on Solaris, but not reliably. 
+   If ups moves to the new procfs interface, we could use
+   better method provided by the Sun kernel watchpoints.
+
+o  On machines using ptrace, ups blocks correctly now. It uses
+   sigsetjmp() and siglongjmp(). Also added code to fix a problem with 
+   some X servers that was revealed once it was blocking properly - 
+   some X server and/or window managers send us synthetic events that 
+   looked like the special end of events event we send ourselves.
+
+o  Fixed some problems with preamble decoding on x86 machines - some 
+   tail call optimised routines would confuse it completely and it got 
+   the minimum breakpoint address wrong most of the time.
+
+o  Reloading of shared objects which change work properly now. It 
+   ensures that only objects which change are reloaded and that we only 
+   load each object once at startup instead of twice. It also migrates 
+   everything to the new symbol table and discards the old one which 
+   fixes all sorts of prolems including memory and file descriptor 
+   leaks and the tendency of breakspoints to not appear in the source 
+   display after a reload.
+
+o  Vastly improved handling of long long types in expressions. It 
+   should also improve long double a bit.
+
+o  A bug fix for my previous patch to add frameless stack tracing on x86.
+
+o  If the ReverseArrows X resource is set, ups reverses the sense of 
+   the up and down arrows which are used in an expression or variable index.
+
+o  The address-of and dereference buttons work for expressions as well 
+   as variables. This allows one to pick out components of an expression
+   from the command line, just as one does with variables.
+
+o  The start button morphs into a restart button if the target is running 
+   so that you don't need to kill it and then start it - this has the same 
+   confirmation protection as the kill button.
+
+o  File descriptors open on startup now remain open in the target process.
+
+o  Double clicking on a variable in the source window expands or compresses
+   the structure as it does in the display window. So you can select and 
+   dereference a pointer or struct without having to move up to the stack 
+   display.
+
+o  Functions in the target process can be called from expressions in the 
+   stack display.
+
+o  Extends the canonicalisation of integer type names to cover long long 
+   as well as the other integer types.
+
+o  Fix for parameters which have to be widened when passed from 
+   appearing twice in the stack frame - gcc on linux adds
+   two stabs for these, one for the actual type in the parameter and one
+   for the widened form used when it is passed.
+
+o  Ups saves the terminal state on startup and restore it on
+   exit and when restarting the target process. This ensures that if the
+   application being debugged changes the terminal state and then exits
+   or is killed before restoring it the terminal is put back in a sane state.
+
+o  Fix for a crash when dealing with void types with gcc on linux.
+
+o  Optimized the redraw routines by using clipping so that ups doesn't flicker 
+   like mad when you drag a window across it.
+
+o  Fix for single stepping across shared library boundaries on x86 machines.
+
+o  Ups checks the dynamic linker cache when it is trying to work out which 
+   shared library will be used. Without this it was getting confused about 
+   which C library was being used because it wasn't implementing the same 
+   search rules as the dynamic linker. The patch also implements DT_RUNPATH 
+   (for those systems that support it) from the dynamic section in addition 
+   to DT_RPATH so that the search rules should now exactly match those given 
+   in the linux manual page for the dynamic linker.
+
+o  Allows main() to be in a shared library.
+
+o  Fix for x86 machines to allow backtraces to be generated even when 
+   functions do not have frame pointers by searching back through the 
+   stack for plausible return addresses that appear to point after 
+   call instructions.
+o  Fix to deal with the fact that linux does not provide signal handler 
+   information in the ptrace user area by looking in /proc for it instead. 
+   This means that ups will correctly stop when it encounters a segv and 
+   the target process has not got a handler installed for it. This also
+   allows ups to stop on any signal which we have asked to stop on, even 
+   if we were single stepping when it was caught. 
+
+Changes from Rod Armstrong <rod@san-jose.tt.slb.com>:
+
+o  One can direct ups to use its own colormap rather than use
+   the default colormap. Use this if ups complains that it failed to 
+   allocate some colors. This is a particular problem if one uses
+   netscape 6 on an 8 bit frame buffer machine, as netscape assumes 24 bit 
+   color and corrupts the default colormap. Set the WantInstalledColormap 
+   X resource to "yes" if you want ups to use its own colormap. The 
+   command line options of -install or -noinstall can also be used.
+
+o  Fixes for editing of long breakpoint names: names are left justified
+   rather than right, so the edit point matches the text. Overflow
+   dots are shown at the right. Both breakpoint and object names
+   resize as the window width changes.
+
+o  Allowed a double click on a variable in the source window to
+   alternately expand or compress the variable, just as it does in
+   the display window.
+
+o  Fixed the address calculation for pointers to Fortan arrays.
+
+o  Extended the use of the repltab file for all expressions, not just
+   those automatically pasted from the source window. In addition, if
+   a ./ups-state/repltab files does not exist, ups looks for
+   $HOME/repltab as well. If a repltab file is found ups does 
+   replacements as specified in the file for text of expressions.
+   See the man pages for details. A simple repltab file is:
+       NULL 0
+       FALSE 0
+       TRUE 1
+
+o  Eliminated the messages at invocation for loading stripped libraries
+   ("Warning: no .symtab section ... using .dynsym instead"). The 
+   messages still appear when loading libraries interactively.
+
+o  Various fixes to allow ups to survive bad code in expressions,
+   particularly when calling functions.
+
+o  Fix for using state and breakpoint files with overloaded
+   methods. The files now contain the mangled function name followed by the
+   demangled name in double quotes. The latter is for readibility only. 
+
+o  Defaulted the ScrollDelay to 25 instead of 0.
+
+o  Fixed the "unknown type 200" messages when reading the symbols of a 
+   target buit with Forte 6.1 under Solaris 8. There may be other problems 
+   with Solaris 8 however.
+
+o  Fix to enable ups to compile for 64 bits under Solaris 8. This is
+   just a start so others can try and get it working for 64 bits. Use
+   CC="cc -xarch=v9 -DOS_SUNOS_V9 -I/usr/include/v9", run ./configure,
+   then manually change the HAVE_GETC_HELPER and HAVE_PUTC_HELPER defines
+   in ./ifdefs.h to 0 before the make.
+
+o  Added a "Drop state" item to the target menu.
+   This simply deletes the temporary state file that ups
+   uses to save information about breakpoints and what data have
+   been displayed during a previous debug session. If you have previously
+   attached to a process, and have been looking at global variables
+   that take some time for ups to find, you can stop the debugger scanning
+   again for the variables on reattaching to a rebuilt target by using
+   the drop state button when unattached. You may also want to use it when
+   attaching to a different process.
+
+o  You can now recover from a bad "jump to here" selection. If you try
+   to jump to an invalid context, such as trying to jump up the stack,
+   the "Stop" button will be active. When stop is pressed, the process 
+   will be restored to the state before the jump.
+
+o  Fixed a crash that happened when bad breakpoint code was loaded from
+   a breakpoint file, and then ups attached to a process. 
+
+Changes from Ian Edwards <ian@concerto.demon.co.uk> :
+
+o  Fixed demangling of Fortran names to cope with the single and double
+   underscores added by GNU f77.
+o  Fixes for watchpoints on FreeBSD.
+o  Changes to the Fortran stuff in the 'tests' directory.
+o  Fix for the testwn.c wn library testing file.
+o  Moved the GNU C++ demangler out of ups/ao_symscan.c into a new
+   directory lib/libgnu and added the demangler for GCC 3.x. 
+
+Changes from Russ Browne <rbrowne@ncplus.net> :
+
+o  Fix for the <Bad format hint> problem seen with g++ on 
+   Solaris 5.6 as reported by Will Dowling.
+o  Fix for the "sizeof(bool) inconsistent across compile modules"
+   warning as reported by John Utz and Zhidian Du.
+
+o  Changes from Terry R. Friedrichsen <terry@venus.sunquest.com>
+    - look for '.upsinit' file in current directory before $HOME
+
+o  Changes from Giuseppe Borzì <gborzi@ieee.org>
+    - more idiomatic RPM specification file and other RPM stuff
+
+
+Changes between 3.36 and 3.35
+-----------------------------
+o  3.36 has been used on Solaris 2.x, SunOS 4.3.1 and Linux Debian 2.0.34
+   only.  Built and minimal testing on FreeBSD 3.2, 4.3 and 5.0-CURRENT.
+   Being based on 3.35, it should be possible to build it on Solaris 8,
+   FreeBSD 3.x, FreeBSD 4.x and RedHat Linux 6.2.
+
+o  The changes to ups make it more versatile and faster to use. It will
+   continue to work as before, but for large targets, it is more efficient
+   to load just a few standard libraries and load others on the fly as
+   needed.  This can be done with a ".upsinit" file in your home directory.
+   An example is:
+
+	load *libc.so*
+	load *libC.so*
+	load /usr/lib/lib*
+	load /usr/openwin/*
+	load /usr/platform/*
+	load /usr/dt/lib/*
+	# for target specific libraries:
+	load ./*
+	load ../*
+
+   You might want to edit this to always load certain libraries, and add 
+   source paths with the "use" command, but now there should be little need 
+   to deal with this file as libraries can be easliy loaded interactively.
+
+   By using "load" rather than "noload", ups won't be affected by different 
+   sets of libraries that each target may have.
+
+   Note that "./" now has the meaning of the directory of the target, not of
+   where ups was started.
+
+o  By only loading the minimum standard libraries, ups will start a
+   lot faster. Other libraries can be loaded on the fly by selecting 
+   "Target", then "Load library", which will display a menu of unloaded 
+   libraries - simply choose one to load it. Similarly, the stack trace will
+   display <full library name> for an unloaded library. To load it, select
+   the line and press "Load library". As always for objects in the display
+   window, multiple objects in the stack can be selected at once, and 
+   loaded as a group.
+
+   The full set of libraries that the target uses is determined
+   after the target has been started or attached to, so the "Load library"
+   list will change at that point.
+
+o  Ups is now persistent - that is, it can be kept running for weeks
+   like an editor, with no need to exit at the end of each debug
+   session. The top line of the "Target" line can be edited to a 
+   different name, and ups will read new symbols as necessary and 
+   reinstate breakpoints and variables as possible. So if you are
+   working on a shared library, and you need to test it with 
+   different targets, simply enter the new target name and 
+   attach, and the debug state information will be preserved.
+   (The unimplemented "Write target core" was changed to "Load library").
+   The target name accepts csh style tilde notation.
+
+   Similarly, one can continue to debug code that gets built each
+   night by a nightly build: detach before the rebuild, then
+   reattach afterwards and ups will read any newly built libraries and
+   restore the debug state. There should no longer be problems with 
+   reverse video caused by the debugger not updating its symbol information.
+
+o  It is now easier to use ups to examine code. Left clicking
+   on a function name in an active function causes ups to read the
+   function symbols before navigating to the function. You can bypass
+   the symbol reading by using the middle mouse button. So an 
+   unmodified left click looks up local symbols, then globals, a 
+   shift-left click does an automatic "add expr", and a middle click,
+   if not over breakpoint code, looks up global symbol lookup only.
+
+o  Fixed a refresh bug when using CDE with "click to focus" and "raise on
+   focus" - ups now repaints properly when it receives focus.
+
+o  Changed the submenu order when loading breakpoint files so that the
+   default is to save the breakpoints to the statefile.
+
+o  Changes from Terry R. Friedrichsen <terry@venus.sunquest.com>
+    - Fixes for building on Red Hat Linux 7.0
+
+o  Changes from Russ Browne <russ@amc.com>
+    - Changes to the menu editor (med3) to produce readable output.
+
+o  There are new X resources for the "Load library" menu invoked from the
+   target line: UnloadedLibMenuForeground and UnloadedLibMenuBackground.
+
+
+Changes between 3.35 and 3.34
+-----------------------------
+
+o  Changes from Russ Browne <russ@amc.com>
+    - Support for SC5 compiler:
+        Use the compiler supplied demangling library.
+        Recognize the bool type, now supported by this compiler.
+        Support for new implementation of virtual base classes used
+        by this compiler.
+
+    - Corrected look and feel for X clipboard operations:
+        Selected text does not vanish when the mouse button is released.
+        Instead, it stays selected until another clipboard selection
+        is made or the displayed text is changed by some user action.
+
+        Corrected paste from X clipboard to not allow pasting a new-line
+        in a text display that does not accept a new-line from the keyboard.
+
+    - Corrected display of source files with dos style line endings to not
+      display the \r at the end of each line.
+
+    - Added a keyboard history feature:
+        Most regions where UPS accepts data from the keyboard have
+        a history of recent entries.  Recent entries can be accessed
+        either through the keyboard by typing Control-P or Control-N,
+        or through the mouse by pressing a button that brings up a menu
+        of recent entries for that item.
+
+    - Added a text-entry button.
+        This was primarily so that when entries are accessed through
+        the history menu one can complete the entry with the mouse
+        rather than shifting to the keyboard to type return or escape.
+        Clicking the middle mouse button on this region does a paste.
+
+    - Allow the user to remove the mousehole from the display through X resources.
+        If one uses a large font, the typing line area can get
+        rather small.  By setting X resources one can retrieve the
+        space the mousehole takes up for the typing line instead.
+
+    - Fixed med3 keyboard routines to recognize the most useful control characters.
+
+    - display of 'long double' on SunOS 4.x
+    - implement raise/lower on "exec to here".
+    - fix to the symbol table problem reported by James Armstrong.
+    - stop 'Add Expresion' crash if no debugging info in the file
+    - fixes for lower/iconify on run
+
+  Notes from Russ Browne <russ@amc.com> :
+
+   Added X resource and command line option to split the output window
+   off as an independent top level X window.
+
+   Arrange that ups can raise itself to the foreground when the debugged
+   process breaks or dies.  This behavior can be turned on by a
+   menu option under "Windows" (below) or by an X resource or a command
+   line option.
+
+   Renamed the old "Snapshot" button to "Windows" and added options to
+   raise sister ups windows to the foreground and to make ups raise itself
+   to the foreground when the debugged process breaks or dies.
+
+  Some more technical changes:
+
+    Added handling of N_ILDPAD stabs information in elf symbol tables.
+
+    Further tightening up of compiler identification while handling
+    the N_OPT stab.
+
+    Treatment of SC5 virtual base classes is working to my satisfaction.
+    I removed from the CHANGES file the sentence about this requiring
+    a lot more work.
+
+    In split window mode, the typing line '/' and '?' shortcuts always
+    search something on the screen where the command is typed.
+
+    Changes in symbol parsing to ensure the the va_type field in
+    a var_t object is never NULL.  I reported earlier that I changed
+    TypeID to never return NULL; that proved to be a mistake.  Instead,
+    I always check that the "rtype" being assigned to v->va_type is
+    not NULL.
+
+    Removed the broken mousehole from the source window when it is
+    split off a top level window.
+
+    Renamed the X resource to remove the mousehole completely to
+    "WantMousehole=no".
+
+    Added X resource and command line option to turn message logging
+    on by default.
+
+    Added wn_setdefault() and used it to set several X resources
+    from the command line.  X resources so treated appear in the
+    command line as [-[no]option], so that an option turned on by an
+    X resource can be turned off by the command line, or vice-versa.
+    These options are:
+       -[no]split[:num] -[no]splitoutput[:num]
+       -[no]mousehole -[no]outwin -[no]logging -[no]raise_on_break
+
+    Added support for menu toggle items and used them to combine the
+    message logging on/off options into a single option and to add
+    the new raise-on-break option.
+
+    When the window containing the display area is iconified all UPS
+    windows are iconified.  When that window is de-iconified all windows
+    iconfied with it are restored.
+
+    Gave UPS an icon.  As I said earlier, I not a great artist.
+    If anyone wants to improve on my work, or replace the icon
+    completely, be my guest.  The bitmap for the icon is in ups.c
+
+    Added X resources for the source and output window geometries.
+    These are Src.Geometry and Output.Geometry.  Originally, these
+    were to be SrcGeometry and OutputGeometry, but the '.' fell out
+    of the existing get_xdef routine in wn_init.c and appears to be
+    consistent with X conventions for specifying a resource specific
+    to an individual window, button, or the like.  In the manual page
+    I spelled this out as "Ups.Src.Geometry" because I felt readers
+    might not understand that the "Ups." still goes in front of the
+    resource name.
+
+o  Changes from Rod Armstrong <rod@san-jose.tt.slb.com>
+    - splitting the ups window into two.
+    - X resources to control vertical positioning of the items in the
+      display window.
+    - fix for static globals with Centerline and Purify on Solaris.
+    - fix for scroll delay code
+    - revived the code for debugging dynamically loaded libraries.
+      This was commented out in 3.35 beta6 because it caused a step 
+      in C++ code to be very slow. The hit should happen now only
+      when the dynamic linker does a load, open or close of a 
+      dynamic library, or when the user rescans the init file.
+      Ricardo Telichevesky <ricardo@teli.org> reports this works
+      on Linux Red Hat 6.2 as well as Solaris.
+    - related to the above, rescanning the init file now works again.
+    - for a display window search, optimized the coloring by turning 
+      it on and off only when necessary. This reduced the setup time 
+      for a search from minutes, for a display window of thousands of 
+      lines, to millisecs.
+    - fixed a bug that caused most steps to behave like nexts in Sun
+      shared libraries, especially for C++ code.
+    - added support for displaying Static members of a class for 
+      Centerline compiled code.
+    - added /usr/openwin/lib/app-defaults to the search path for X resources.
+
+o  Changes from Ian Edwards <ian@concerto.demon.co.uk>
+    - support of multiple X screens in libx11wn.
+    - various FreeBSD and Linux bugs.
+    - 'C' library calls in interpreted code at breakpoints on Linux
+      and FreeBSD 3.x,4.x.
+    - fixes for lower/iconify on run
+    - application defaults file may be in /usr/X11R6/lib/...
+    - stuff to allow a FreeBSD package/port of ups to be built
+    - libx11wn builds in its directory and not the X11 subdirectory
+    - stuff to allow a Linux RPM of ups to be built
+
+o  Changes from Panagiotis Tsirigotis <pgttso@best.com>
+    - fix for UPS crash when using a g++ that generates vtable thunks
+      for virtual function dispatch.
+
+o  Changes from Peter Collinson <pc@hillside.co.uk>
+    - control speed of scrolling of text in windows with Ups.ScrollDelay
+
+o  Bob Carragher <bob@fla.fujitsu.com> and
+   Rick Mallett <rmallett@ccs.carleton.ca> tested the 'split windows'
+   code on dual-monitor systems.
+
+o  Doug Hughes <Doug.Hughes@ENG.Auburn.EDU> provided fixes for
+    -  Makefile errors.
+
+o  Dibyendu Majumdar <dibyendu@mazumdar.demon.co.uk> provided fixes for
+    -  memory leaks in the interpreter code.
+    -  make C interpreter understand class::method so can be used in
+       interpreted breakpoint code.
+
+o  Thanks to Laszlo Ladanyi <ladanyi@us.ibm.com> for pointing out
+  - UPS was using its own 'strstr()' when most C libraries now have one,
+  - 'gets()' should be avoided
+  - not necessary to remove "-O2" when building using 'gcc'
+
+
+Changes between 3.34 and 3.33
+-----------------------------
+
+o  Rod Armstrong <rod@san-jose.tt.slb.com> provided fixes for
+     -  debugging core files under Solaris 2.6 and 2.7. For Solaris,
+        from limited testing, debugging target and cores is summarized below:
+
+	UPS Built     Can debug targets from        Can debug cores from
+        on Solaris    2.5    2.6    2.7             2.5    2.6    2.7 
+
+        2.5           yes    no     no              yes    no     no
+        2.6           yes    yes    no              no     yes    no
+        2.7           yes    yes    yes             no     yes    yes
+ 
+    -  files created with a custom preprocessor inherit the 
+       dereference semantics of the language of the output files:
+       e.g. if "file.c-custom" is processed to "file.c", then the
+       C semantics of "->" and "." will be used when clicking on 
+       variables.
+    -  Globals should show their correct type instead of sometimes
+       showing "int assumed". The bug was introduced in 3.33.
+    -  The "Stop" button once again terminates a long symbol table search. 
+       The bug was introduced in 3.33.1.
+
+o  Russ Browne <russ@amc.com> provided fixes for
+    -  breakpoints in static constructors
+    -  compiler identification
+    -  changes to g++ 2.8.1 symbol table
+    -  using UPS on purify'd executables
+    -  locating X application resources file
+    -  display of 'register' storage class variables
+    -  latest version of GNU C++ name demangler
+    -  A Dump Memory item which can be used to show the contents of a 
+       section of memory in bytes, shorts, longs and ascii. 
+
+o  Ian Edwards <ian@concerto.demon.co.uk> provided
+    -  building UPS through a 'configure' script
+    -  changes for FreeBSD 3.x (a.out and ELF)
+    -  fixes for Fortran on FreeBSD and Linux
+
+o  Michele Ferlauto <ferlauto@athena.polito.it> provided sample
+   programs and did testing for the GNU Fortran fixes on Linux.
+
+o  Laszlo Ladanyi <ladanyi@watson.ibm.com> provided fixes for
+    -  building under debian Linux 2.0 (kernel 2.0.35)
+    -  building on Linux with glibc 2.1
+    -  ELF symbol table processing on Linux
+    -  compilation warnings
+
+o  Dibyendu Majumdar <dibyendu@mazumdar.demon.co.uk> provided
+    -  lots of work on the standalone C interpreter included in the
+       UPS source code, documentation on it, tests etc.  See the file
+       interpreter/docs/Interpreter.txt for full details.
+
+o  Will Renkel <rinky@lucky22.chi.il.us> provided the information
+   about building UPS on a Linux 'a.out' system (on the web site)
+
+
+Changes between 3.33 and 3.32-RGA 
+-------------------------------------
+   Russ Browne <russ@amc.com> added handling of symbol table information 
+   concerning base classes, vector tables, and static class members in 
+   SC4 and g++ object files.  This results in the following family  of 
+   features, most of which work only for the above two compilers:
+
+o  Base classes are displayed as structs within the structure,
+   similar to ddd or Visual C++.
+
+o  Static members of a class may be examined in a way consistent
+   with the UPS methods for  examining of global data ( e.g. click
+   on "myClass::statMem", or for examining members of a struct
+   (e.g. select an object of type myClass* then enter ".statMem"
+   in the typing line, or click on "statMem" inside a NON-static
+   method for myClass to get this->statMem).
+       
+o  Added a popup menu option to expand all static members of a
+   selected object.
+
+   He also:
+
+o  Moved the determination of the compiler to the initial load of the symbol
+   table instead of the parsing of type information.  This should remove the
+   need for the UPS_COMPILER environment variable as a workaround for when
+   the previous algorithm failed.  Also, the compiler is correctly identified
+   before it is needed during demangling.
+
+o  Fixed some ommisions in the demangling. ( Gnu distructors demangled
+   as A::_ instead of  A::~A; for SC4, operator*= and operator%= demangled
+   as operator-=; for SC4 and clcc, cast operators demangled incorrectly.)
+
+o  Added handling of template type names in g++ symbol tables.
+
+o  Put up a blocking cursor (hourglass) during symbol table parsing as
+   version 2.XX did.
+
+o  Corrected "Unknown PT_NOTE type " message that
+   came up when loading an ELF core file.
+
+o  Various fixes to better read static variables, both local and global,
+   for SC4 code.
+
+o  Improvements to handle optimized code. This should result in being able
+   to set breakpoints on the open brace of functions in optimized code,
+   and result in the stack trace when you break in optimized code (or
+   get a core file for one), showing all optimized functions as being
+   at their opening brace.  Better than not shown at all.
+
+o  Corrected the following in 3.32:
+
+       Default colors for "HighlightColor" and "VariableColor" failed
+       if these X resources were not set.
+
+       Using the typing line shortcut to do a search then shifting
+       to the search button in the menus to continue the search
+       dumped core.
+
+       With g++ version 2.6 and earlier, variables of type bool
+       could incorrectly display as true.
+
+o  Jody Goldberg <jodygold@sanwafp.COM> contributed a small fix for
+   the hashtable growing algorithm. This addresses a failure on large 
+   C++ programs under Solaris-2.5.1
+
+   Rod Armstrong added:
+
+o  Fix to allow debug of a target that is completely statically linked.
+
+o  Fix for cleaning up the temporary breakpoint file that UPS creates
+   when re-attaching to a different instance of a process.
+
+o  Fix so that that when multiple instances of local or global variables
+   are displayed (by using the duplicate option for instance), all
+   such instances are restored when the function is re-enetered.
+   Previously only one instance was restored.
+
+o  Updated the man pages and online help text.
+
+o  Added the source for the med3 menu editor. The old sources were made
+   ansi compliant, and the editor now reads and writes the expanded menu
+   structures that include the foreground and background colors that
+   were introduced in UPS version 3.32. The med3 sources are in the 
+   ups-3.33/med3 directory. There is documentation in ups-3.33/med3/doc.
+   Med3 was written by John Bovey, UKC, 26-4-93, who also did most of
+   the development of the wn library. Med3 links with the wn library in
+   the UPS distribution. I restored the autonomy of the this library by 
+   replacing all hardcorded calls to other ups functions with callbacks.
+
+
+   The following were in the 3.32.1 patch and are included in 3.33
+   ---------------------------------------------------------------
+
+o  Fixed the problem of finding source files for targets that are relatively
+   linked. This bug was introduced in the 3.32 version, and only appeared
+   for certain combinations of compilers and source.
+
+o  Fixed the menu colors for the "*" menu item for variables. There is
+   now a special Asterisk resource for this. See the man pages for details.
+
+o  Fix for finding symbol table information in library object files produced by
+   the SC4 compiler, that are statically linked into the target.
+
+o  The temporary file that ups uses to re-establish breakpoints on
+   reattaching to a target is now named with a PID number, and removed
+   after use. This fixes possible file conflicts between different users
+   on the same machine.
+
+o  Fixed a crash reported by Bob Carragher <bob@fla.fujitsu.com> caused by
+   an old state file that referred to a data structure that had since changed.
+
+o  A left click on a block in the stack (the line that shows the line
+   ranges for the block) now displays the source, instead of expanding the
+   block.
+
+o  Fixed inefficient repaints for target menu, and made the stop button
+   active during all symbol table reading.
+
+      Incorporated patches from Ian Edwards <ian@panorama.com> for:
+
+o  Fixing build problems with FreeBSD 2.2.6-STABLE (also thanks to 
+   Terry R. Friedrichsen <terry@venus.sunquest.com>). 
+
+o  This also restores the ability to call target functions from breakpoint
+   code. Should work for Linux as well.
+
+o  Fix for FreeBSD in which doing 'Stop', 'Kill', 'Start' caused 
+   "Fatal internal error: shared lib botch (aborting) ...".
+
+o  FreeBSD - when debugging a core file UPS now reports the signal that
+   caused the core dump, and the stack trace includes symbols that are
+   in shared libraries.
+
+o  General - can now edit long long integers.  Tested on FreeBSD 2.2.6-STABLE
+   and Solaris 2.
+
+
+Changes between 3.32 and 3.31-RGA 
+-------------------------------------
+   Mark Russell has decided to let this contrib release become the "official"
+   release, as he is unlikely to be able to work on ups in future. Consequently,
+   I've dropped the `RGA' suffix from this version forward.
+
+   I've updated UPS with some nice enhancements contributed by Russ Browne
+   (russ@amc.com) as listed below. I added a useful "Jump to here" feature,
+   and fixes for true color visuals, and additional colors for menus and text.
+
+o  Double-click and left-shift-click do the same thing whereever possible,
+   except where indicated below where this was not possible.
+
+o  Added X Resources to control the multi-click timeout value.
+
+o  In the upper (display) window, arranged that a double click or 
+   left-shift-click selects the same accelerator for each object type.
+
+o  Enhanced the above accelerators as follows:
+
+      For a variable or expression:
+        If the variable is a struct or struct*, expand or collapse it
+        as before,
+
+        If the variable is a pointer to some other type, and not fully
+        dereferenced, increase the level of dereferencing.
+
+        If the variable is of integer type, or a fully dereferenced pointer
+        to an integer type, toggle the format between unsigned hex and
+        signed decimal.
+
+        This results in shift-clicking on an expression doing something
+        useful most of the time.
+
+      For a breakpoint object:
+        Added an X resource to control the preferred accelerator.  Choices
+        are to remove the breakpoint, as ups currently does, or to 
+        toggle the active/inative state of the breakpoint. The default 
+        action is to toggle the breakpoint state, rather than to delete 
+        the breakpoint.
+  
+      For the breakpoint header object
+        Added an X resource to control the preferred accelerator.  Choices
+        are to add a new breakpoint as ups currently does, or to toggle
+        the global enable/disable state. The default is to toggle
+        the global state.
+
+o  A disabled breakpoint is displayed grayed out in the source window.
+
+o  When breakpoints are globally disabled, the active/inactive
+   states of breakpoints are grayed out in the objects window to give
+   visual indication of the global state, and all breakpoints are
+   displayed grayed out in the source window.
+
+o  Double clicking on a breakpoint in the source window
+   selects the same accelerator as double clicking or shift-clicking on
+   the breakpoint object in the display window.
+   Shift clicking in the source window adds an expression, as before, and
+   does NOT select an accelerator.
+
+o  Added X resources to control the default behavior of the source window
+   pop-up menu.  The options are:
+  
+       Remember the last selected option as the default, as ups currently
+       does.
+  
+       Make any of "add breakpoint", "execute to here", or "edit file" the
+       default.
+
+       In addition, make any of the above an alternate default selected by a
+       shift-right-mouse-button click.
+  
+       Cause a selection with shift-right-mouse-button to change the default
+       option in addition to selecting an option, as ups currently does
+       with with a plain right-mouse-button selection.
+  
+o  When the call editor option is used, and the editor is vi, display the
+   file name in the xterm title bar.
+  
+o  Added the following typing line "shortcuts":
+
+   %g name
+
+           Displays the global variable or function name, skipping the
+           sometimes expensive attempt to display name as a local variable.
+
+   %b function
+
+           Adds a breakpoint at function, same as clicking on the
+           breakpoints header, selecting "add breakpoint", and typing
+           the name.
+  
+   %l file
+           Lists file, if file is one of the files in the source file list,
+           the same as expanding the list and clicking on the file name.
+           One types only the final component of the file name.
+
+   /pattern or ?pattern
+
+           Begins a forward or backward search for pattern in the source
+           window, as in vi.  The search may be continued in the same
+           direction by hitting return, or in either direction by using
+           the search pulldown menu.
+
+o  Corrected a bug where attempting to edit the value of a byte or short
+   sized parameter fails.
+
+o  Added a command line option to force ups to pass the full name of the
+   target executable as argv[0] for the process, rather than truncating
+   it to the final component only.  This is useful for debugging programs
+   that use the path to themselves to locate resource files, or when
+   the program is purified and wants to process itself on startup.
+
+o  Updates and corrections to the man pages and on-line help.
+
+
+   The following contributed by Rod Armstrong:
+
+o  Fixed a makefile problem on Linux that caused "make" to try and
+   build a bogus target after having made the ups binary.
+
+o  Custom menus now support meta keys using `@' to denote a meta
+   key. This allows editing of text using entities of words.
+
+o  Added a "Jump to here" option in the source window menu.
+   This causes the target execution to jump to the current line
+   without executing any intervening code. Use this with caution as it
+   is possible to jump to a bad context where the data is bad or where there
+   is no valid call stack. The safest usage is to jump over lines
+   within a function. It can also be used to jump back within a function.
+
+o  Fixed color problems with true color displays. Ups should no longer 
+   emit warnings about bad parameters for X protocols. As a corollary of
+   this, I added the ability to use extra colors for all menus, and text
+   in the display window. 
+
+o  The old problem that caused ups to switch to monochrome when other color 
+   intensive applications such as netscape were present is gone. If ups 
+   cannot allocate private color cells with adjacent planes, it switches to
+   using publically allocated colors. Ups required cells with adjacent planes 
+   in order to do logic operations such a reversing colors and shading. It
+   now uses colors for the same effect if it can't obtain such cells.
+
+o  New X resources allow you to color menus and text. (If you don't 
+   want the new colors, set WantMenuColors and WantExtendedTextColors to "no".)
+
+      WantMenuColors
+	   If set to `yes', ups will use foreground and background
+	   menu colors as listed below. If not set to `yes', such
+	   settings are ignored, and the Foreground and Background
+	   resources are used.
+
+      MenuForeground, MenuBackground
+	   The default colors for text and background in all
+	   buttons and menus. Sub menus inherit the colors of their
+	   parents unless specifically overwritten.
+
+      DisabledTextColor
+	   The color for text that is disabled, such as the
+	   `start' caption after starting the target, or globally
+	   disabled breakpoints.
+
+      LastButtonTextColor
+	   The text color of a busy button pressed (such as `cont'
+	   while the target is executing) or the parent menu item
+	   of a sub menu.
+
+      SourceMenuForeground, SourceMenuBackground
+	   The text and background colors of the pop up menu for
+	   the source window.
+
+      CustomMenuForeground, CustomMenuBackground
+	   The text and background colors of the custom pop up
+	   menu for editing text strings.
+
+      FileBoxMenuForeground, FileBoxMenuBackground
+	   The text and background colors of the pop up menu for
+	   the file name and line number box that is directly
+	   above the source window.
+
+      <text caption>Foreground, <text caption>Background
+	   The text and background colors for a menu item with a
+	   specific text caption: for example "Add breakpointForeground". 
+	   Note that imbedded spaces are allowed.
+
+      WantExtendedTextColors
+	   If set to `yes', ups will use the colors for the text
+	   items in the display window as listed below. If not set
+	   to `yes', such settings are ignored.
+
+      SignalTextColor
+	   The text color of the signals listed under the `Signal'
+	   header.
+
+      EnvironmentTextColor
+	   The text color of environment strings listed under the
+          `Environment' header.
+ 
+     SourceFileTextColor
+          The text color of the file names listed under the
+          `Source files' header.
+ 
+     FunctionTextColor
+          The text color of the function names in the stack under
+          the `Functions' header.
+ 
+     BreakpointTextColor
+          The text color of active breakpoints listed under the
+          `Breakpoints' header. Inactive breakpoints are in the
+          main foreground color, as is the text of breakpoint
+          code in the source window.
+
+o  The distribution includes a sample apps-defaults file (Ups) that 
+   illustrates the use of such resources. It could be installed as
+   /usr/lib/X11/app-defaults/Ups. 
+
+o  Fixed a bug that broke the "Rescan Init File" option and automatic
+   rescan of the init file on a reattach. Also fixed unnecessary reloading
+   of shared libraries on a reattach.
+
+o  Added a workaround for a symbol table bug seen with the patched
+   Centerline compiler on Solaris. Ups now emits a message of the form
+   "unmatched N_BINCL symbol in <library> (<file>)" and continues rather 
+   than exiting as before.
+
+
+Changes between 3.31-RGA and 3.29-RGA 
+-------------------------------------
+   This is mostly a bug fix release. Support for gcc/g++ (including version
+   2.8.0) is much improved, and crashes when loading Sun SC4.2 compiled
+   code have been fixed.
+
+o  Fixes for reading SC4.2 code, mainly C++. 
+
+o  Many fixes for g++ to fix crashes on reading the symbol tables.
+   All data members of structs and classes should be displayed now -
+   previously these were often truncated. For g++, C++ name demangling 
+   conforms to the gnu style - for example a template method might be shown
+   as "array<array<int> *>::operator[]". 
+
+o  UPS allows spaces in function names as shown in the above example. 
+   State files and breakpoint files now enclose function names in
+   double quotes for this reason. However UPS will happily read old
+   style control files without quotes.
+
+o  There is no longer shell style globbing for breakpoint names. This
+   makes it easier to enter special characters such as brackets in operator 
+   methods. One could enter "ostream::operator<<" to break on cout
+   statements, for instance, without having to escape the "<" characters
+   as previously. Name completion works as before. 
+
+o  Provided a workaround for a problem in debugging shared libraries
+   with the Rational Clearcase source control file system. There is a
+   mismatch between the Clearcase virtual file system and the Solaris
+   /proc virtual file system such that UPS could not debug shared
+   libaries that were in a versioned object base or vob. UPS now figures 
+   out the mapping between the file systems and debugging can proceed.
+
+o  UPS understands the data type "bool" that gcc supports. Data of 
+   type bool is shown as "true" of "false" in the display window. It 
+   can be edited to be either such string, or an integer - 0 being displayed
+   as "false" and all other values as "true". In breakpoint code, it 
+   should be assigned to an integer.
+
+o  UPS will load a dymanically loaded library that occurs during a "next"
+   or "step" operation as well as during a "cont". Previously it worked
+   only for "cont".
+
+o  Fixed a bug when reattaching to a process that is stopped at a pause().
+   Previously the first attach left the target at the pause, but the
+   second attach broke it out of the pause.
+
+o  UPS should digest the occasional bad section of symbol tables without
+   croaking. A few bad stabs entries have been seen on some Solaris Centerline
+   compiled code. UPS will emit "Bad syntax in symbol table" and continue.
+
+o  Added a new help section under Help -> Breakpoints -> conditional.
+
+o  Minor updates and corrections to the man pages.
+
+
+Changes between 3.29-RGA and 3.28-RGA 
+-------------------------------------
+
+o  Incorporates a native port for Linux ELF. Testing done on 
+   Linux 2.0.27 from RedHat. One cannot debug core files at present.
+   Attaching to a running process works, though the stack trace
+   is truncated and one cannot do a "next" directly. Instead,
+   set a breakpoint in the source after the attach point and "cont" -
+   the the stack will right itself.
+
+o  Includes support for"long long" and "long double" data types from 
+   Ian Edwards <ian@concerto.demon.co.uk>
+
+o  More fixes for SC4.2 code, mainly C++, and minor fixes for g++.
+   This includes all patches previously posted to the UPS mailing list.
+   Fixed problems with endless complaints and beeping about "can't open file"
+   and "too many open files" for some targets. Source file listing now
+   includes all files that UPS knows about. Can now read classes defined
+   within classes for SC4.2.
+
+o  An "execute breakpoint" no longer deselects the breakpoint. One can
+   now repeatedly execute some breakpoint code by re-pressing the
+   execute caption. A useful application is to indirectly bump a
+   symbolic subscript in an `add expr' by incrementing the symbol
+   in breakpoint code.
+
+o  Static destructors are labelled "__STATIC_DESTRUCTOR" in the stack.
+
+
+Changes between 3.14-beta and 3.28-RGA
+--------------------------------------
+
+o  UPS now supports C and C++ code for SC4, SC4.2, gcc, and
+   cfront. There are some limitation: template classes cannot be debugged
+   and the symbol table reading for g++ is not complete. 
+
+o  Incorporated patch from Ian Edwards <ian@panorama.com> for FreeBSD 2.1.6.
+   The changes may have broken support for BSDI/386 (if it was working).
+
+o  You can now debug static constructors in C++ code that get called
+   before the start of main(). Simply put a breakpoint on the constructor
+   and run the target. The routine above the constructor in the stack
+   (labelled "__STATIC_CONSTRUCTOR" for SC4 and cfront) locates the
+   object instance in the source.
+
+o  Fixed problem about breaking out of a pause on Solaris. Note that due to 
+   an apparent Solaris bug, the debugged code needs to setup a dummy 
+   signal handler for SIGCONT for a pause to work. That is:
+
+	static void dummy_cont(int sig) {}
+ 	main()
+	{
+	   signal(SIGCONT,dummy_cont);
+	   pause();
+	}
+
+o  For Solaris only, UPS will now detect the dynamic linking that takes place 
+   when the target calls the dynamic linker routines such as dlsym(). The new 
+   library will be loaded at that time, and breakpoints re-established in the 
+   new library. There shouldn't be any problems about reverse video, and
+   mismatched source and libraries. This works even when the breakpoint is in a 
+   library that changes name after calling dlsym().
+
+o  Eliminated spurious messages about unknown type in stab.index 
+   when debugging binaries linked with Purelink.
+
+o  You can now re-read your `~/.upsinit' on demand during a debug session 
+   by selecting the `Target' object and selecting the `Rescan init file' 
+   caption. This is convenient for adding new source paths or loading
+   additional libraries on the fly. A missing library is indicated by the 
+   stack displaying a `<bad text address ...>' symbol, as well as the files 
+   of such libraries not being shown in the source files listing. After 
+   the rescan, the source files and stack are redisplayed to reflect the new
+   libraries and source paths. As before, the file is always read during an 
+   attach. However, the new method allows you to update the debugger without
+   losing control of the target by detaching.
+
+o  The "Step" button behavior is much improved. In the previous patch, the 
+   step action used heuristics, based on function names, for stepping into
+   and within shared libraries. A similar scheme was used for stepping
+   into C++ method calls. The step action is now much more reliable,
+   and the improvement is most apparent on Solaris and for C++ code.
+   It handles macro calls properly. The older step action worked by 
+   disassembling the object code to determine where to place a 
+   temporary breakpoint, and then ran the target to that point. The 
+   new method single steps the target at a low level, and at each point
+   checks to see if the target is in a known source file, and uses this to
+   determine whether to stop or not.
+
+   Because this technique is based on where the target actually 
+   jumps, rather than where it is expected to jump, the new step behavior 
+   may get occasionally get interrupted by a signal, such as a
+   an authorization check that runs at intervals. If this happens, 
+   click on the routine above the signal and press step
+   again to resume the step action.
+
+   Occasionally the step action may take some time - however the "Stop" 
+   button can be used to break out of such a situation. If you don't 
+   want to step through the code of called functions in this way, use 
+   the "Next" command. This behaves like Step, except that it never steps 
+   into called functions.
+
+   The improved step behavior has eliminated the need for the step
+   menu that appeared over the step button when debugging C++ code. 
+   The man pages and on line help have been updated to reflect this.
+
+o  UPS automatically changes to process frameless functions 
+   if it detects the presence of Purify, Purecov or Quantify.
+   This will fix the stack display, and the step action reverts to the
+   older heuristics scheme. A value of `off' for the NonFrameFunctions
+   X resource explicitly overrides such automatic setting.
+
+o  The activation state (active or inactive) of breakpoints is
+   now maintained when saving and restoring breakpoints.
+
+o  When loading breakpoints from a file, a submenu now offers the
+   choice between saving such breakpoints in the statefile or not.
+   Previously, breakpoints loaded via a file were not saved in the
+   statefile.
+
+o  Fixed a bug whereby a breakpoint entry was cleared if the text included
+   embedded wildcards.
+
+o  Fixed bug on Solaris whereby the debugger would not appear to stop
+   on a breakpoint unless the mouse cursor was over the debugger window.
+
+o  Ability to make a X selection (cut & paste) in the display window.
+   Left button selects objects for operations as before, and one can pan 
+   vertically to select groups of objects. If the horizontal
+   distance from the original click exceeds a certain value, the window
+   shifts from selecting objects to making an X selection. the value is
+   30 pixels by defaults, but can be set with the SelectionThreshold X
+   resource. One can easily just pan right to select a string for instance. 
+
+   If the selection in the display window begins outside of an object, 
+   text will be selected immediately. This makes it easy to select a 
+   stack trace for example, by simply panning vertically down the
+   leftmost column.
+
+o  A new button above the display window allows a search on text in the 
+   display window, in a similar manner to seaches in the source and output
+   window.
+
+o  Restored ability to make a text selection within breakpoint code. Click
+   on the line, but outside the text to select the breakpoint with
+   highlighting in the display window.
+
+o  Eliminated second appearance of custom menu when used in the display
+   window to insert text.
+
+o  Fixed compile problems in o.def.c and ui_layout.c.
+
+o  Fixed bug for displaying globals using the "file-name:global-sybol"
+   syntax in the typing line. This was broken for files that contained
+   global data, but no functions. In general: if the global-sybol
+   is a variable, the variable is added to the display; if it is
+   a function, the source window will display the code. 
+
+o  Previously, when you clicked on a global, UPS sometimes displayed
+   a bogus entry rather than the real instance of the variable. The bogus
+   entry had an invalid address; hence its value did not change at the
+   code was executed. With this version of UPS, such cases will
+   cause two entries to be displayed - of which one may be bogus.
+
+o  Symbol table fixes for SC3/4, g++ and cfront/clcc. There are still 
+   problems with SC4 in reading classes that refer to forward declarations 
+   of other classes - such classes cannot be expanded. 
+
+o  C++ demangling for SC3/4 and g++.
+
+o  Fixed fatal problems for large cfront C++ targets stemming from source 
+   file renaming.
+
+o  Save and load of UPS state on demand. This is accessible by selecting the 
+   target name at the top of the display region.
+
+o  Fixed next and step for SunOS shared libraries.
+
+o  Fixed editing of long fields in the display window. Affects target
+   name and arguments, environment strings, and global and local
+   variables. Editing fields now correctly resize when the tool is
+   resized.
+
+o  It is safe to make references to shared library code before attaching.
+   If UPS is invoked on a target without specifying a PID in the
+   command line, it is now safe to set breakpoints in shared libaries,
+   or otherwise view shared library files. It the debugger is then
+   attached to a target, the shared library symbol tables will be 
+   rescanned and any breakpoints in the shared libaries will be
+   reinstalled.
+
+o  The reload file function now works correctly, and breakpoints in reloaded
+   files are maintained.
+
+o  Fixed function block line numbers for shared libraries for SunOS. 
+   This also fixes a bug that breakpoint code couldn't see variables in
+   function sub-blocks in shared libraries.
+
+o  Added step sub menu for cfront compiled C++ code.
+
+o  Added a help button. This is to the left of the Snapshot button.
+
+o  Can now select "a -> b" with a left click. Previously, such
+   selections did not work when spaces were present.
+
+o  Restored ability to toggle selection of breakpoints in the display
+   window with right button.
+
+o  Fixed fatal "attempt to reference nonexistent object" condition
+   when removing a selected list of breakpoints that that contain
+   automatic duplicates due to multiple linking.
+
+o  Any "add expr" code in functions can now use file types. Previously,
+   file types were available only if a local variable referred to them.
+
+o  Long variable names are no longer truncated in the stack display.
+
+o  Restored behavior so that shared libraries are pre-scanned before running 
+   the target.
+
+o  Restored blocking for C++ code.
+
+o  Only file names are shown in the source file list, stack, and source
+   window label - sometimes path was also included. Eliminated files with
+   the same name and path from the list, other than multiple linked files.
+
+o  Tilde notation allowed on file reads and writes. Applies to breakpoint
+   files, state files. output window loads and saves and writing target cores.
+
+o  Fixed blobs left on screen when moving cursor in breakpoint code. This
+   only affected some fonts, such as 16pt fonts.
+
+o  Globals are automatically restored when using a state file.
+
+o  Cannot detach if already detached (this caused a crash).
+
+o  Fix for some SunOS shared libraries functions in which UPS could not 
+   read any variables.
+
+o  Fix so that tracking breakpoints in multiple linked files change together
+   when breakpoint code is used.
+
+o  Restoring breakpoints in multiple linked files from a breakpoint file,
+   or from a state file, or by a "break name" statement in a ~/.upsinit
+   file installs the tracking breakpoint as well.
+
+o  Restored the prescan of dynamic libraries, before the target is run.
+   This allows you to set breakpoints and see files of dynamic libraries
+   before the target loads them.
+
+o  Search for globals stops on the first exact match. For targets that have
+   many globals scattered in hundereds of files, this reduces the search
+   time from many minutes to a tens of seconds.
+
+o  When UPS is reading symbols, the `Stop' button becomes active while
+   the adjacent buttons become inactive. Pressing the button will stop
+   the symbol reading at the end of the current file or function. 
+
+o  If the UPS window is exposed of resized while it is reading symbols,
+   it will be promply repainted as required.
+
+o  Automatic duplication of breakpoints for C++ to catch overloaded methods.
+
+o  Automatic deference of the "this" pointer when clicking on names in C++ code
+
+o  Messages when symbols for functions are read in.
+
+o  Motif type scrolling direction if desired.
+
+o  Will quit when a window manager sends a WM_DELETE atom, whether
+   running or stopped.
+
+o  Autoscrolling on selecting text in the display window.
+
+o  Varible names are colored.
+
+o  Breakpoint code is colored.
+
+o  Different default color for breakpoint code and changed values.
+
+o  Added attach and detach buttons.
+
+o  Added Activate, Inactive and Execute buttons for breakpoints.
+
+o  Acclerators for the display window (SHIFT-left mouse button):
+
+o  Added a menu item in the source window to spawn an editor.
+
+o  Custom menus, including control character support, are available for 
+   the typing line, display, source and output windows. See the section
+   on "ENVIRONMENT VARIABLES AFFECTING UPS" in the man pages for details.
+
+o  Left click on breakpoint code in soure window highlights breakpoint
+   line in display window, (as did previous versions of UPS).
+
+o  ESC/RET do partial name completion when setting breakpoints.
+
+o  Shift-ESC, or Shift-RET, list options in output window. When multiple matches
+   are found, the message indicates that Shift-ESC can be used to list
+   the matches, without terminating the edit.
+
+o  Includes enhancements from Russ Browne, Applied MicroSystems (russ@amc.com) 
+   for the UPS_FORMATS environment variable, and bumping of array indicies 
+   on duplication, and elastic formating of file names in the stack and 
+   breakpoint list. The formating feature allows the file names to be 
+   visible for large fonts, and when the debugger window is made quite narrow.
+
+o  Incorporates fixes from Daniel M. Quinlan (danq@lemond.colorado.edu) for
+   displaying structures and unions, some fortran variables and a fix for 
+   "unknown type" in scanning SC4 symbol tables.
+
+o  Includes enhancements from Callum Gibson (callum@bain.oz.au) for
+   the save state code for signals.
+
+o  A fix for 16bpp visuals was contributed by Craig Amey <craiga@MetaSW.COM>.
+
+o  Added global enabling and disabling of breakpoints.
+
+o  Breakpoints which are inactive or globally disabled run at full speed.
+
+o  Added NonFrameFunctions X resource for fixing stacks for Purify/Quantify.
+
+o  Fix so targets using shared libraries can be debugged from other
+   directories.
+
+o  Added `Add source path' to source file header.
+
+o  Added a menu for files, functions and the file name box to show
+   file paths and reload and rematch files.
+
+o  Added control of logging of messages to the Snapshot menu.
+
+o  Added `Collapse -> First level/Completely' sumbmenu to 
+   source file header.
+
+o  Added VERBOSE environment variable. Can be 1, 2, or NOLOAD.
+
+o  Added init file support: use, load, noload and break. Also record file syntax.
+
+o  Added rescan of initization file on reattach, so libaries can be loaded, if
+   initially NOLOAD.
+
+o  Added -nosavesigs to command line.
+
+o  Added RWCString under Formats -> other
+
+o  Signals setup control if target is killed on getting SIGSEGV or SIGBUS, and
+   if such signals can be passed to the target and allow debugging to continue
+   (for ObjectStore typically).
+
+o  Support for multiple linked files.
+
+o  Default outwin is about 10% instead of 30% height.
+
+o  Fix so breakpoint code at first breakpoint works.
+
+o  Updated man pages and CHANGES to included features of this patch.
+
+o  Included the Linux port done by Rick Sladkey (jrs@world.std.com)
+   for version 2 of UPS some time ago. Version 2 only supports the 
+   older "a.out" binaries, not the newer "ELF" binaries that Solaris and 
+   Linux now use.
+
+   It is included in this version as a starting point for someone to port
+   UPS to Linux with ELF. It should be simple to get it working for a.out
+   targets; elf targets will require more work, but as this version has
+   elf support for Solaris, it should not be too onerous. If anyone
+   does a port, I'll be happy to include it in my next patch with appropriate
+   acknowledgment.
+
+
+Changes between 2.45.3 and 3.14-beta
+------------------------------------
+
+ - Solaris 2 support
+
+	Ups now works under Solaris 2, with either gcc or the Sun
+        SPARCompiler version 3.  It can read symbol from .o files, so
+	you do not need to compile with cc -xs.
+
+
+ - Gdb based support
+
+	Ups can now be build using a automatically modified version of
+	the GNU gdb debugger.  See the README file for the precise
+	instructions.  Basically the process is:
+
+		- unpack, configure and build gdb
+
+		- run a shell script which builds a symlinks copy of
+		  the source tree, munges the gdb source file there,
+		  then builds libgdb.a from the munged source files
+
+		- run make in the top-level directory to build ups
+		  using libgdb.a for the debugger functionality.
+
+	I have built ups under HPUX and IRIX using the gdb
+	support.  Canned support for these and other architectures
+	will be included in a future release.
+
+	You can build ups on Solaris 2.3 and SunOS 4.1.3 using the native
+	support (again, see the README file for details).  It is also
+	possible to build the gdb based version on these systems but
+	there is not much point doing this.
+	
+ - Emacs-like key mappings
+
+   	You can use most of the common emacs key mappings when editing
+	text (e.g. in the typing line, when adding breakpoints etc).
+	See EDITABLE FIELDS in the manual page for details.
+
+		  
+ - Cut and paste
+
+	You can select text with highlighting in the source window,
+	the output window and in fields you are editing.  To select
+	text, press the left mouse button and drag.  Releasing the
+	left mouse button sets the X selection and clears the
+	highlighting.
+
+	You can paste text into an edit with control-Y (currently you
+	can't paste with the mouse - this will be done soon).  In the
+	source window there are some extra shortcuts:
+
+	       - pressing and releasing the left mouse button (without
+	         dragging) adds a variable name to the display as in
+		 previous versions of ups.  Only if you move the mouse
+		 to a different character with the left button down do
+		 you get a plain X selection.
+
+	       - doing a press-left-and-drag selection with the SHIFT
+	         key pressed automatically pastes the selected text as
+		 an expression into the appropriate place in the stack
+		 trace.  It is equivalent to selecting some text,
+		 selecting `add expr' for the appropriate entry in the
+		 stack trace, pressing ^Y to paste the text and
+		 hitting RETURN.
+
+	      -  If you hold the shift key down, the press and release
+		 the left mouse button without moving the mouse, ups
+		 adds the expression under the mouse to the display
+		 area.  It makes a reasonable attempt to select what
+		 to display.  Try it out to see what I mean.
+
+	See PASTING EXPRESSIONS FROM THE SOURCE WINDOW in the manual
+	page for more information.
+	
+	
+ - State save and restore
+
+	 If the file ups-state exists in the current directory, ups
+	 will write state information to it when you exit, and reload
+	 state when you start.  This includes breakpoint locations
+	 (and the interpreted code, if any), and the state of the
+	 variables display.  See SAVING STATE in the manual page.
+
+
+ - Loading and saving breakpoints
+
+	You can explicitly load and save breakpoints to files.  To save
+	breakpoints, select one or more in the display area, then
+	select `save' from the menu.  You will be prompted for a file
+	name.  If the file already exists you will be asked whether
+	you want to cancel the save, overwrite the file or append to
+	it.
+
+	Saved breakpoints can be reloaded by selecting `Load' from the
+	`Breakpoints' header menu.
+
+
+ - Editing in the output window
+
+	You can now edit in the output window (the window where
+	$printf output goes.  Click with the middle mouse button to
+	display a cursor.  You can then append or delete text.  This
+	is useful for tidying up output to make it clearer, or for
+	deleting uninteresting stuff.
+
+	You can also dump objects (like the stack trace) to the
+	output window (the `Snapshot' menu item to the left of `Quit'),
+	and save or restore the output window contents from/to files
+	(`Load' and `Save' in the output window menu).
+
+  - Code in header files
+
+	Ups now handles code #included from header files.
+
+  - Plus various other things, which will be described in the full
+    release.
+

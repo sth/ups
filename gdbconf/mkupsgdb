@@ -1,0 +1,101 @@
+#!/bin/sh 
+
+# @(#)mkupsgdb	1.3 09 Apr 1995 (UKC)
+
+# Build a munged gdb source tree suitable for linking with ups.
+# This script is a driver for the various perl scripts that do the work.
+# You must have perl in your path to run this.
+
+# Path names
+conf=upsconf
+upsgdb=upsgdb
+
+# [ "X$1" = X-k ] && shift || set -e
+# false
+
+[ "X$1" = X-from -a $# -ge 2 ] && {
+	gdbpath="$2"
+	[ -d $gdbpath ] || { echo "No directory $gdbpath" 1>&2; exit 1; }
+	shift; shift;
+}
+
+if [ "X$1" = X-gcc ]
+then
+	gcc=-gcc
+	makegccflag="CC=gcc"
+	shift
+else
+	gcc=
+	makegccflag=
+fi
+
+upsroot="$1";
+
+[ $# = 1 ] || { echo "Usage: mkupsgdb [-k] [-from gdbpath] [-gcc] upspath" 1>&2; exit 1; }
+expr "$upsroot" : '^/' > /dev/null || upsroot=`pwd`/$upsroot
+
+[ -d $upsroot/gdbconf ] || {
+	echo "Missing directory $upsroot/gdbconf" 1>&2
+	exit 1
+}
+
+# We have to trust the path we inherit, because we can't come up with a
+# path that works on all machines.
+
+scriptsdir=$upsroot/gdbconf
+
+if [ -n "$gdbpath" ]; then
+	expr "$gdbpath" : '^/' > /dev/null || gdbpath=`pwd`/$gdbpath
+
+	dir=`echo $gdbpath | sed -e 's@.*/@@' -e 's/$/.munged/'`
+	dirpath=`pwd`/$dir
+	mkdir $dir
+
+	echo Making symlinks from $dir to $gdbpath
+	ln -s $gdbpath/* $dir
+	cd $dir
+
+	echo Making symlink from $upsroot/ups/gdb to $dirpath
+	rm -f $upsroot/ups/gdb
+	ln -s $dirpath $upsroot/ups/gdb
+fi
+
+echo Creating $upsgdb and $upsgdb/conf
+mkdir $upsgdb
+cd $upsgdb
+
+echo Making symlinks from $upsgdb to gdb ...
+ln -s ../gdb/* .
+mkdir $conf
+
+echo Generating C compilation information ...
+rm -f *.o gdb	# Don't use make clean - we want init.c kept
+make -n $makegccflag gdb > $conf/stdmake.out
+perl -w $scriptsdir/mkccinfo $conf stdmake.out
+cfiles=`cat $conf/cfiles`
+
+echo Copying the zapcalls and initlist files.
+(cd $upsroot/gdbconf && tar cf - zapcalls initlist) | (cd $conf && tar xfp -)
+
+echo Generating the allfuncs file ...
+perl -w $scriptsdir/mkcalltree -f $cfiles > $conf/allfuncs
+
+echo Generating the calltree file
+perl -w $scriptsdir/mkcalltree $cfiles > $conf/calltree
+
+echo Munging init.c
+rm init.c
+perl -w $scriptsdir/mungeinit ../gdb/init.c > init.c
+
+echo Making the funclist file ...
+perl -w $scriptsdir/mkfunclist $conf/calltree > $conf/funclist
+
+echo Munging the .c files ...
+perl -w $scriptsdir/srcmunge $cfiles symtab.h
+
+echo Munging Makefile ...
+rm Makefile
+perl -w $scriptsdir/mungemakefile $gcc ../gdb/Makefile > Makefile
+
+echo Building libgdb.a
+make

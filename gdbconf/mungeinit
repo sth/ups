@@ -1,0 +1,45 @@
+#! /usr/local/bin/perl -w
+
+# @(#)mungeinit	1.2 07 Jan 1995 (UKC)
+
+# #ifdef out initialise functions not listed in upsconf/initlist
+
+$conf = 'upsconf';
+$initlist = "$conf/initlist";
+
+
+open(INITLIST, $initlist) || die("Can't open $initlist ($!)\n");
+
+$bad = 0;
+while (<INITLIST>) {
+	chop;
+	s/#.*//;
+	next if (/^\s*$/);
+	
+	if (defined($want{$_})) {
+		print STDERR "$initlist,$.: Duplicate entry for `$_'\n";
+		$bad = 1;
+	}
+	
+	$want{$_} = 1;
+}
+	
+close(INITLIST) || die("Error reading $initlist ($!)\n");
+
+exit 1 if $bad;
+
+$wanted = '';
+$out = '';
+
+while (<>) {
+	(/_initialize_([-\w]+)/ && $want{$1}) ? ($wanted .= $_) : ($out .= $_);
+}
+
+$out =~ s@\nvoid@\n/* This version has been modified by mungeinit */$&@;
+$out =~ s/\{\n/\{\n$wanted\#if 0\n/;
+$out =~ s@\n}@\n#endif /* 0 */\n}@;
+print $out;
+
+# Local Variables:
+# mode: perl
+# End:

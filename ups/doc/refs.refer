@@ -1,0 +1,286 @@
+@(#)refs.refer	1.2 31/7/94 (UKC)
+
+%S Local info
+%A J. D. Bovey
+%T A Debugger for a Graphical Workstation
+%J Software - Practice and Experience
+%V 17
+%N 9
+%P 647-662
+%D September 1987
+
+%A Larry Wall
+%A Randal L. Schwartz
+%T Programming perl
+%I O'Reilly and Associates, Inc
+%D 1990
+
+%S Local info
+%A Richard M. Stallman
+%A Roland H. Pesch
+%T Debugging with GDB
+%R Technical report, Free Software Foundation, Edition 4.12 for GDB version 4.12
+%D 1994
+%C Cambridge, MA
+
+%S Local info
+%A Richard Stallman
+%T GNU Emacs Manual
+%O Section 23.2: Running Debuggers Under Emacs
+%R Technical report, Free Software Foundation, Ninth Edition, Emacs version 19.21
+%D November 1993
+%C Cambridge, MA
+
+%S Local info
+%A Steve Chamberlain
+%T The Binary File Descriptor Library
+%R Technical report, Free Software Foundation, First Edition, BFD version < 3.0
+%D April 1991
+
+%A Po Cheung
+%T Xdbx
+%R Manual page from xdbx source distribution
+%D 1990
+
+%S Local info
+%A Richard M. Stallman
+%T Using and porting GNU CC
+%R Technical report, Free Software Foundation
+%D October 1993
+%C Cambridge, MA
+
+%Q Sun Microsystems, Inc
+%T SPARCompiler C 2.0 Programmer's Guide
+%D July 1992
+%R User manual
+
+%S Paxson [6]
+%A Evan Adams
+%A Steven S. Muchnick
+%T Dbxtool: A window-based symbolic debugger for Sun workstations
+%J Software - Practice and Experience
+%V 16
+%N 7
+%P 653-669
+%D July 1986
+%X Dbxtool is window layer over dbx.  Mouse eliminates typing of
+names and line numbers.  Profiled dbx use to find commands to put on
+buttons.  Used own source window so they could annotate it (e.g. to
+show breakpoints).  Var display to be like dbx print command, and
+dbx interaction area retained.  Description of dbxtool UI.  User can
+add buttons, with specified interpretation of the currently selected
+source (e.g. expand to get all of var name).  Benefits of dbx
+wrapper approach: only one debugger to maintain, teletype user gets
+benefits of fixes to dbx, can interact with dbxtool while target is
+running, and dbxtool ignorant of dbx internals.  Enhancements to
+dbx: file:typenum symbol table format, extra C operators, source
+searching, stack walking, display command, attach to running
+processes, kernel debugging, extra ptrace calls (read/write,
+getregs/setregs), defined core file interface.
+
+%T A Survey of Support for Implementing Debuggers
+%A Vern Paxson
+%J Unspecified (came off the net)
+%D October 1990
+%X Some bugs are hard to find with traditional breakpoint
+debuggers (e.g. corrupted data structures, sporadic bugs).
+Conditional breakpoints and watchpoints good.  [Description of
+various forms of hardware debugging support].  Same-process vs
+seperate-process debuggers.  ptrace() and /proc.  Remote debugging.
+Debugger agents.  Checkpointing (e.g. by fork()) and reverse
+execution.  TTD[39] and Ndb[2].  Dalek
+%S Paper pulled from the net
+
+%A Mark A. Linton
+%T The Evolution of Dbx
+%J Proceedings of the 1990 USENIX Summer Conference
+%D July 1990
+%S Paxson [2] XXX
+
+%A Multiple
+%T Proceedings of the ACM SIGSOFT/SIGOPS Workshop on Parallel and Distributed Debugging
+%J SIGPLAN Notices 24(1)
+%D January 1989
+%S Paxson [17]
+
+%A Bert Beander
+%T VAX DEBUG: An interactive, symbolic, multilingual debugger
+%J Proceedings of the ACM SIGSOFT/SIGPLAN Software Engineering Symposium on High Level Debugging, SIGPLAN Notices
+%V 18
+%N 8
+%D August 1983
+%S Paxson [11]
+%X Description of interface.  Language support: symbol name rules,
+expressions, type conversions, value display format, scope rules.
+Expressions parsed in approriate source language.  Other debugger
+commands are language independent.  Multilingual because apps are,
+and also to save effort.  Language dependent parts are quite
+localised.  SET SCOPE command to change scope for var name lookups;
+can also specify scope explicitly in var name.  Breakpoints,
+watchpoints and single stepping.  SHOW CALLS to get stack trace.  GO
+[location] to continue target.  Source text displayed when stepping.
+DEBUG commands are fixed; could benifit from extension mechanism.
+Two types of address specifiers: raw addresses and language
+expressions.  Description of different rules for parsing value and
+address expressions.  Description of how symbol table is written by
+compiler and read by DEBUG.  Description of symbol table format.
+Description of debugging via VAX exceptions, BPT instruction and
+trace bit.  WATCH instruction implemented by write protecting
+individual pages (and not announcing false hits).  DEBUG is actually
+a collection of exception handlers.
+
+%A J. R. Cardell
+%T Multilingual debugging with the SWAT high-level debugger
+%J <debug symposium>
+%D August 1983
+%S Cargill
+
+%A Tom Lord
+%T Re: Is anyone working on a libgdb.a
+%R USENET News Article in gnu.bug.gdb
+%O Message-ID <199407031848.LAA13679@cygnus.com>
+%D July 1994
+
+%A Thomas A. Cargill
+%T Implementation of the Blit Debugger
+%J Software - Practice and Experience
+%V 15
+%N 2
+%P 153-168
+%D February 1985
+%S Paxson [12]
+%X Description of Blit: a terminal that can download processes.
+Blit debugger (joff) is for the downloaded processes.  Runs in own
+layer (window), asynchronously to target.  Has menu commands.
+Blit scheduling is non-preemptive.  Authors control all the Blit code.
+Vanilla debugger with traps and 68k trace bit for single step.
+Debugger is split into host process (6K LOC: object file semantics) and
+terminal process (1K LOC: UI and process control).  Long description
+of symbol table handling.  Mentions hassle of flattened compiler
+symbol tables.  Discusses difficulties caused by split debugger
+design.  Mentions stack trace parsing problems.  Parses subset of C
+expressions.  Can trace down lists using menus offering struct
+fields.  Can display graphical data (points, lines etc) graphically.
+
+%A Stephen Kaufer, Russell Lopez, and Sasha Pratap
+%T Saber-C: An interpreter-based programming environment for the C language
+%J 1988 Summer Usenix
+%D June 1988
+%S Paxson [13]
+
+%A W.Y.P. Wong and C.R. Snow
+%T Implementation of and interactive remote source-level debugger for C programs
+%J Technical report, Univ. of Newcastle, January 1987
+%D January 1987
+%S Paxson [24]
+
+%A Micheal Farley and Trevor Thompson
+%T A C source language debugger
+%J 1983 Summer Usenix
+%D July 1983
+%S Paxson [29] XXX
+
+%A R.E. Sweet
+%T The Mesa Programming Environment
+%J ACM Symposium on Language Issues in Programming Environments, p. 216-219.  SIGPLAN Notices 20(7), July 1985 
+%D July 1985
+%S Paxson [30]
+
+%A Ronald A. Olsson, Richard H. Crawford, W. Wilson Ho
+%T Dalek: A GNU, improved programmable debugger
+%J 1990 Summer Usenix
+%D June 1990
+%S Paxson [31] XXX
+
+%A Ronald A. Olsson, Richard H. Crawford, W. Wilson Ho, and C.E.Wee
+%T Sequential debugging at a high level of abstraction
+%J IEEE Software, 8(3):27-35, May 1991
+%D May 1991
+%S Golan [12]
+
+%A Ronald A. Olsson, Richard H. Crawford, W. Wilson Ho, and C.E.Wee
+%T Semantic issues in the design of languages for debugging
+%J Proceedings of the international conference on Computer Languages, p 252-261, Oakland, CA, April 1992
+%D April 1992
+%S Golan [3]
+
+%A Deborah Caswell and David Black
+%T Implementing a Mach Debugger for multithreaded applications
+%J Proceedings of the 1990 USENIX Winter Conference
+%D January 1990
+%S Paxson [34]
+
+%A I.J.P. Elshoff
+%T A distributed debugger for Amoeba
+%J Technical report, Center for Maths and CS, Amsterdam CS-R8828
+%D July 1988
+%S Paxson [36]
+
+%A Micheal Golan
+%A David R. Hanson
+%T DUEL - A Very High-Level Debugging Language
+%J Proceedings of the 1993 USENIX Winter Conference
+%D January 1993
+%S Scanning journal
+%X A very high level debugger language is more useful than just
+using the source language for debugger expressions.  DUEL is concise
+language for tests like `are all elements of array >0'.  Derived
+from C, Icon (+ APL and Lisp).  Implemented on top of gdb.
+Description of language using generators, and operators which
+produce all combinations of operands.  Nice output format.
+I get the impression that people don't use it because the syntax is
+too complicated.
+
+%A M.S. Johnson
+%T The design of a high-level, language independent symbolic debugging system
+%J Proceedings of the ACM Annual Conference, pp. 315-322, Seattle
+%D October 1977
+%S Golan [7]
+
+%A David B. Baskerville
+%T Graphic presentation of data structures in the DBX debugger
+%J MS thesis, Computer Science Division, UCB, July 1985
+%D July 1985
+%S ADBX [10]
+
+%A Polle T. Zellweger
+%T Interactive source-level debugging of optimized code
+%J Research report CSL-84-5 Xerox PARC, Palo Alto, CA
+%D May 1984
+%S ADBX [8]
+
+%A John Henessy
+%T Symbolic debugging of optimized code
+%J ACM Transactions on Programming Languages and Systems, 4, (3), 323-344 (1982)
+%D 1982
+%S ADBX [9]
+
+%A Warren Teitelman
+%T The Cedar programming environment: a midterm report and examination
+%J Research report CSL-83-11 Xerox PARC, Palo Alto, CA
+%D June 1984
+%S ADBX [11]
+
+%A Hiralal Agrawal
+%A Richard A. Demillo
+%A Eugene H. Spafford
+%T Debugging with Dynamic Slicing and Backtracking
+%J Software - Practice and Experience
+%V 23
+%N 6
+%P 589-616
+%D June 1993
+%S scanning SP&E
+%X Debugging task characterised as: find which statements affect
+var value, select a statement at which to examine state, then
+recreate state to check vars.  Dynamic slicing: take a variable and
+location, and find all statements in program that affected value of
+var at that location for a given test case.  Restores program state
+by backtracking.  Slices have other uses (verification etc).
+Dynamic slices (based on specific test cases) better for debugging
+than a static slice.  Various definitions of slice.  A complete
+slice is often overwhelming - need analysis of how slice arrived at.
+Analysis of fault causes, starting from (1) incorrect expr value,
+(2) control reaching where it should not and (3) control not
+reaching where it should.  Following through recursive induction
+manually is tedious.

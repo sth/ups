@@ -1,0 +1,88 @@
+#! /usr/local/bin/perl -w
+
+# @(#)mkccinfo	1.4 09 Apr 1995 (UKC)
+
+# Run as mkccinfo confdir makeoutput
+#
+# Generate the following files from the output of a vanilla make:
+#
+#	 cfiles: which .c files are needed to build gdb
+#	  cccmd: cc command to compile gd_driver.c
+#        cppcmd: cpp command to use from mkcalltree etc
+#	gdblibs: gdb libraries to link against
+
+(@ARGV == 2) || die("Usage: mkccinfo confdir makeoutput\n");
+($conf, $makeoutput) = @ARGV;
+
+chdir($conf) || die("Can't change directory to $conf ($!)\n");
+
+open(MAKEOUTPUT, $makeoutput) || die("Can't open $makeoutput ($!)\n");
+
+while (<MAKEOUTPUT>) {
+	chop;
+	
+	while (/\\$/) {
+		chop;
+		$_ .= <MAKEOUTPUT>;
+		chop;
+	}
+
+	/(.*)main.c\s*$/ && ($cccmd = $1);
+	/ -o gdb / && ($ldcmd = $_);
+	
+	s/\s([-\w]+\.)o/$cfiles{"$1c"}=1/ge;
+
+}
+
+defined($cccmd) || die("No cc line for main.c found in $conf/$makeoutput\n");
+
+$srcdir = '${SRCDIR}${SLASH}';
+
+$cccmd =~ s@\s+@ @g;
+$cccmd =~ s@ \./$@@g;
+$cccmd =~ s/-I\. -I\. /-I. /;
+$cccmd =~ s@-I\./@-I@g;
+$cccmd =~ s@(-I\.\./bfd )-I\.\./bfd @$1@;
+$cccmd =~ s/-[cg] //g;
+$cccmd =~ s/^cc /cc -xs / if (`uname -sr` =~ /^SunOS 5/);
+
+&writefile('cppcmd', "$cccmd -E");
+
+$cccmd =~ s@-I\.\./readline( )?@@g;
+$cccmd =~ s@-I([^/])@-I${srcdir}gdb/upsgdb/$1@g;
+$cccmd =~ s@/upsgdb/../@/@g;
+
+&writefile('cccmd', $cccmd);
+
+
+defined($ldcmd) || die("No link line for gdb found in $conf/$makeoutput\n");
+
+$libs = '';
+
+# Add explicit xxx.a arguments.
+$ldcmd =~ s/\S+\.a /$libs .= $&/ge;
+
+# Add -Llibdir and -lfoo arguments
+$ldcmd =~ s/-L\S+\s+\S+\s+/$libs .= $&/ge;
+
+chop $libs;
+$libs =~ s@ \./@ @;
+$libs =~ s@ \S+libreadline\.a@ @;
+$libs =~ s@( |^)\.\./@$1gdb/@g;
+$libs =~ s/\s+/\n/g;
+&writefile('gdblibs', $libs);
+
+&writefile('cfiles', sort keys %cfiles);
+
+sub writefile {
+	local($file, @lines) = @_;
+
+	open(OUT, ">$file") || die("Can't create $file ($!)\n");
+	grep((print OUT "$_\n"), @lines);
+	close(OUT) || die("Error writing to $file ($!)\n");
+}
+
+# Local Variables:
+# mode: perl
+# End:
+

@@ -1,0 +1,32 @@
+# @(#)initlist	1.3 09 Apr 1995 (UKC)
+
+# Which gdb init functions we don't want
+
+# Generic functions
+targets
+thread
+stabsread
+nlmread
+mipsread
+elfread
+dbxread
+gdbtypes
+infrun
+procfs
+corelow
+stack
+
+# For SunOS 4 and the like
+inftarg
+
+# For MIPS
+mips_tdep
+coffread
+
+# For HP
+hppa_tdep
+paread
+
+# For FreeBSD
+kcorelow
+kernel_u_addr

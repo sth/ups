@@ -1,0 +1,182 @@
+# $Id$
+# @(#)Makefile	1.9 04 Jun 1995 (UKC)
+
+# -----------------------------------------------------------------------------
+#  Makefile for the edit library.
+# -----------------------------------------------------------------------------
+
+SHELL		= /bin/sh
+@SET_MAKE@
+
+srcdir		= @srcdir@
+topdir		= @top_srcdir@
+VPATH		= @srcdir@
+S		= ${srcdir}/
+
+CC		= @CC@
+CPP		= @CPP@
+INSTALL		= @INSTALL@
+RANLIB		= @RANLIB@
+
+CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.
+CFLAGS		= @CFLAGS@  ${CPPFLAGS}
+LDFLAGS		= @LDFLAGS@  ${X11_LIB}  @LIBS@
+LIBS		= @LIBS@
+
+# -----------------------------------------------------------------------------
+
+LIB_HEADERS	= -Idevelhdrs
+LIB_CFLAGS	= ${CFLAGS} ${LIB_HEADERS} ${ARCH_CFLAGS} ${MORE_CFLAGS}
+
+CCLINE		= ${CC} -c ${LIB_CFLAGS} $S
+
+LINKCC		= ${CC}
+LINKCFLAGS	= ${LIB_CFLAGS}
+LINKFLAGS	= ${LDFLAGS} ${LIBS}
+
+MAKE_LIBRARY	= ar cq
+
+# -----------------------------------------------------------------------------
+
+LIBSRC = ..
+
+LIBNAME = edit
+HDRNAME = ${LIBNAME}
+LIBDIRNAME = ${LIBNAME}
+LINTLIBS = -lwn
+
+MTRLIB = ${LIBSRC}/libmtrprog/libmtrprog.a	# Development mtrprog library
+UKCLIB = ${LIBSRC}/libukcprog/libukcprog.a	# Development ukcprog library
+X11WNLIB = ${LIBSRC}/libx11wn/libwn.a		# Development X11 wn library
+X11LIB = -lX11					# Installed X11 Xlib library.
+
+TESTSRCS =  testedit.c
+TESTLIBDEPS = ${MTRLIB} ${UKCLIB} ${X11WNLIB}
+TESTLIBS = ${TESTLIBDEPS} ${X11LIB}
+
+LIBSRCS =   edit.c   display.c   simplebuf.c   win.c  lbuf.c   filebuf.c  \
+            props.c   util.c   version.c   flines.c   sline.c   render.c  \
+	    keymap.c
+
+   OBJS = edit.o display.o simplebuf.o win.o lbuf.o filebuf.o \
+	  props.o util.o version.o flines.o sline.o render.o  \
+	  keymap.o sccsdata.o
+
+HDRS = display.h edit.h filebuf.h lbuf.h sccsdata.h simplebuf.h \
+       win.h props.h textbuf.h render.h
+
+DOCS = README
+
+SCCSCHECK_DIRS = ../libukcprog ../libmtrprog
+
+# Begin common part of Makefile
+target: lib${LIBNAME}.a
+
+SRCS = ${LIBSRCS} ${TESTSRCS}
+FILES = ${SRCS} ${HDRS} ${DOCS} Makefile.in
+
+test${LIBNAME}: lib${LIBNAME}.a test${LIBNAME}.o ${TESTLIBDEPS}
+	${CC} ${CFLAGS} ${LINKFLAGS} -o test${LIBNAME} test${LIBNAME}.o lib${LIBNAME}.a ${TESTLIBS} ${STDLIBS}
+
+lib${LIBNAME}.a: ${OBJS}
+	rm -f $@
+	${MAKE_LIBRARY} $@ ${OBJS}
+	${IN_OBJDIR}${RANLIB} lib${LIBNAME}.a
+
+all: lib${LIBNAME}.a
+
+TAGS: ${SRCS} ${HDRS}
+	etags ${SRCS} ${HDRS}
+
+list:
+	@echo ${FILES} sccsdata.c | tr ' ' '\012'
+
+count:
+	wc ${HDRS} ${SRCS}
+
+SCCS_CHECK = sccsinfo ${SCCSCHECK_DIRS} ${FILES} && newer sccsdata.c ${FILES}
+
+sccs_check:
+	@${SCCS_CHECK}
+
+sccssnapshot:
+	@mksccs -changefile CHANGES -wh -c t_snapshot.c -h t_snapshot.h ${LIBNAME} ${FILES}
+
+sccsfile:
+	@sccsinfo ${SCCSCHECK_DIRS} ${FILES}
+	@checklist
+	@newer CHANGES ${FILES}
+	@sccs edit sccsdata.c
+	@mksccs -changefile CHANGES -wh ${LIBNAME} ${FILES}
+	@sccs delget sccsdata.c
+
+
+install: ${LIB}/lib${LIBNAME}.a ${INCLUDE}/${HDRNAME}.h
+
+${LIB}/lib${LIBNAME}.a: lib${LIBNAME}.a
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+	cd ${LIB}; ${RANLIB} $@
+
+${INCLUDE}/${HDRNAME}.h: ${HDRNAME}.h
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+clean:
+	rm -f ${OBJS} lib${LIBNAME}.a llib-l${LIBNAME}.ln core
+
+veryclean: clean
+	rm -f TAGS
+	sccs clean
+
+lintf:
+	lint ${LINTFLAGS} ${ARCH_CFLAGS} ${SRCS} ${LINTLIBS} | .lintf > t_lintf
+
+llib: llib-l${LIBNAME}.ln
+
+llib-l${LIBNAME}.ln: ${LIBSRCS}
+	lint -C${LIBNAME} ${ARCH_CFLAGS} ${LIBSRCS}
+	mv llib-l${LIBNAME}.ln $@
+
+install_lint: ${LIB}/lint/llib-l${LIBNAME}.ln
+
+${LIB}/lint/llib-l${LIBNAME}.ln: llib-l${LIBNAME}.ln
+	${SCCS_CHECK}
+	${INSTALL} -c -m 644 -o root $? $@
+
+deps: ${SRCS} sccsdata.c
+	@deps ${LIB_HEADERS} ${SRCS} sccsdata.c
+
+# End common part of Makefile
+
+# Machine generated .o file dependencies
+edit.o: edit.c edit.h textbuf.h display.h 
+	${CCLINE}edit.c
+display.o: display.c edit.h textbuf.h display.h props.h 
+	${CCLINE}display.c
+simplebuf.o: simplebuf.c textbuf.h simplebuf.h 
+	${CCLINE}simplebuf.c
+win.o: win.c edit.h win.h 
+	${CCLINE}win.c
+lbuf.o: lbuf.c textbuf.h lbuf.h 
+	${CCLINE}lbuf.c
+filebuf.o: filebuf.c textbuf.h lbuf.h filebuf.h 
+	${CCLINE}filebuf.c
+props.o: props.c edit.h textbuf.h display.h props.h 
+	${CCLINE}props.c
+util.o: util.c edit.h 
+	${CCLINE}util.c
+version.o: version.c edit.h sccsdata.h 
+	${CCLINE}version.c
+flines.o: flines.c edit.h display.h props.h render.h 
+	${CCLINE}flines.c
+sline.o: sline.c edit.h display.h props.h render.h 
+	${CCLINE}sline.c
+render.o: render.c edit.h display.h props.h render.h 
+	${CCLINE}render.c
+testedit.o: testedit.c edit.h textbuf.h simplebuf.h lbuf.h filebuf.h win.h 
+	${CCLINE}testedit.c
+keymap.o: keymap.c edit.h 
+	${CCLINE}keymap.c
+sccsdata.o: sccsdata.c sccsdata.h 
+	${CCLINE}sccsdata.c

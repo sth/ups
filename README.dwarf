@@ -1,0 +1,96 @@
+# $Id$
+
+DWARF SUPPORT IN UPS
+====================
+
+The initial aim is to get something working that will debug 'C' programs
+with DWARF 2 debugging information as created by GCC 3.1.  Support for C++
+and Fortran will follow.  Initially no support for shared libraries using
+DWARF, though they may work.
+
+Support should be automatically built on FreeBSD and Linux.  On Sun use :
+
+    ./configure --enable-dwarf
+
+Use the 'configure' option --enable-debug to get output (to stderr) of what
+has been read from symbol tables.
+
+To generate DWARF 2 debugging information with GCC use "-gdwarf-2".
+This is the default for GCC 3.1 (and later) on FreeBSD and Linux.
+This option works on GCC 2.95.x but is not documented in the manual page.
+Note that the documented GCC 2.95.x option "-gdwarf2" (no hypen) generates
+DWARF 1 !
+
+Although GCC lets you combine "-O" and "-g" options this is not a good
+idea as it results in some odd behaviour, especially with Next and Step.
+
+The code has lots of "dwarfTODO:" comments indicating where work, bug fix,
+clarification etc. is required.
+
+The SGI program 'dwarfdump' to dump DWARF symbol tables is included.
+To build do "make dwarfdump" in the main UPS directory.  Run 'dwarfdump'
+to get a list of its options.  Note : "dwarfdump -a ups" generated 40 MB
+of output.
+
+Documentation for 'libdwarf' API is in lib/libdwarf/libdwarf2.1.mm
+
+Ignore these compiler warnings in 'libdwarf' - they are mentioned by
+comments in the source :
+  dwarf_frame.c: In function `dwarf_expand_frame_instructions':
+  dwarf_frame.c:2094: warning: cast from pointer to integer of different size
+  dwarf_frame.c:2094: warning: cast to pointer from integer of different size
+  pro_expr.c: In function `dwarf_add_expr_gen':
+  pro_expr.c:349: warning: cast to pointer from integer of different size
+  pro_expr.c:368: warning: cast to pointer from integer of different size
+  pro_expr.c: In function `dwarf_expr_into_block':
+  pro_expr.c:548: warning: cast from pointer to integer of different size
+
+
+Ian Edwards
+Updated : 25th Oct 2002
+
+CHANGE LOG
+==========
+
+dwarf-01
+--------
+This should load C programs and allow you to set breakpoints and move
+around the source code by clicking on function names.
+Start/Cont/Next/Step should work.
+You cannot display variables; expect a crash if you try.
+
+dwarf-02
+--------
+Loads struct/union/enum types.
+Loads array types.
+Displays global and automatic variables.
+lno->ln_addr fix from Tom Hughes.
+
+dwarf-03
+--------
+Displays procedure parameters.
+Typedef names should be used where applicable.
+Arrays can be displayed.
+Fixes for void typedefs and vaddr->v_addr from Tom Hughes.
+
+dwarf-04
+--------
+Fixes for bitfield types and empty '.debug_line' section from Tom Hughes.
+
+dwarf-05 aka 3.38beta1
+----------------------
+Code in header files should be handled.
+Some support for C++.
+
+known bugs
+----------
+- Incorrectly steps onto the closing "}" in a function with a "return()".
+- C++ support is *very* unstable.
+
+data stored but not used by UPS
+-------------------------------
+- Declaration file and line for types and variables saved to 'lexinfo_t'
+  structures which were previously only set by the 'C' interpreter.
+- Any type, not just a basic type, can have a name (type_t.ty_name).
+  Probably only of use in languages other than C/C++.
+______________________________________________________________________________

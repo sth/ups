@@ -1,0 +1,1239 @@
+dnl $Id$
+
+dnl ---------------------------------------------------------------------------
+dnl  Configure for building 'ups', 'med3' and libraries
+dnl ---------------------------------------------------------------------------
+
+dnl  Process this file with 'autoconf' to produce a configuration script
+dnl  called "configure".  This is a shell script that the user building
+dnl  UPS runs before doing 'make'.
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Initialisation.
+dnl ---------------------------------------------------------------------------
+AC_INIT(upsconf.c)
+AC_CONFIG_HEADER(ifdefs.h)
+AC_REVISION($Id$)dnl
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for system type and C compiler
+dnl ---------------------------------------------------------------------------
+AC_PROG_CC
+
+AC_CANONICAL_HOST
+AC_SUBST(host)
+AC_SUBST(host_cpu)
+AC_SUBST(host_vendor)
+AC_SUBST(host_os)
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Change the compiler flags ?
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if want to debug ups)
+AC_ARG_ENABLE(debug,
+[  --enable-debug          use this when debugging UPS [no] ])
+case "$enable_ups_debug" in
+    yes|YES)	enable_debug=yes ;;
+esac
+case "$enable_debug" in
+    no|NO|'')	enable_debug=no
+		;;
+    yes|YES)	enable_debug=yes
+		AC_DEFINE(WANT_DEBUG)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_debug})
+
+# -O2 is (probably) not a good idea when debugging UPS
+
+if test "$enable_debug" = "yes"
+then
+    upsCFLAGS=
+    for flag in $CFLAGS
+    do
+	case "$flag" in
+	    -O|-O?)	;;
+	    *)		upsCFLAGS="$upsCFLAGS $flag" ;;
+	esac
+    done
+    CFLAGS="$upsCFLAGS"
+fi
+
+# -ansi useful with 'gcc' on SunOS4
+
+if test "$GCC" = "yes"
+then
+    case "${host_os}" in
+	sunos4*)	CFLAGS="$CFLAGS -ansi" ;;
+    esac
+fi
+
+# -pipe supported ?  Speeds up building with 'gcc' a lot if it is.
+
+AC_MSG_CHECKING(whether compiler supports -pipe)
+pipe=no
+case "$CC" in
+    acc|*/acc)	;;
+    cxx)	;;
+    *)		oldCFLAGS="$CFLAGS"
+		CFLAGS="-pipe $CFLAGS"
+		AC_TRY_LINK([#include <stdio.h>], [int i;],pipe=yes)
+		if test $pipe != yes ; then
+		    CFLAGS="$oldCFLAGS"
+		fi
+		;;
+esac
+AC_MSG_RESULT(${pipe})
+
+# Yacc output is meant to be portable.  It is not so we now supply two
+# variants, Sun and the rest.
+
+CI_PARSE=ci_parse_new
+case "${host_os}" in
+    sunos*|solaris*)	CI_PARSE=ci_parse_sun ;;
+esac
+AC_SUBST(CI_PARSE)
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Build as front-end to GDB ?  This is for use if it ever gets fixed.
+dnl ---------------------------------------------------------------------------
+AC_MSG_CHECKING(if using GDB back end)
+AC_ARG_WITH(gdb,
+[  --with-gdb=DIR          build UPS as an interface to GDB [n/a] ])
+DEF_BINARY='${UPS_BINARY}'
+GDB_DIR=
+case "$with_gdb" in
+    no|'')
+	AC_DEFINE(DEF_BINARY, "${UPS_BINARY}")
+	with_gdb=no
+	;;
+    yes)
+	echo "You must specify the location of the GDB files, e.g."
+	echo
+	echo "  --with-gdb=../gdb-4.18"
+	echo
+	exit 1
+	;;
+    *)
+	if test -f "$with_gdb/gdb/gdb-stabs.h"
+	then
+	    GDB_DIR=`cd $with_gdb ; pwd`
+	else
+	    echo
+	    echo "Directory '$with_gdb' does not seem to contain GDB"
+	    echo
+	    exit 1
+	fi
+	AC_DEFINE(WANT_GDB)
+	DEF_BINARY='${UDB_BINARY}'
+	;;
+esac
+AC_SUBST(DEF_BINARY)
+AC_SUBST(GDB_DIR)
+AC_MSG_RESULT(${with_gdb})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for programs.
+dnl ---------------------------------------------------------------------------
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+dnl  For MAKE= in Makefile
+AC_PROG_MAKE_SET
+
+dnl  For RANLIB in Makefile
+AC_PROG_RANLIB
+
+AC_PROG_LEX
+AC_PROG_YACC
+AC_DECL_YYTEXT
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for X Windows
+dnl ---------------------------------------------------------------------------
+AC_PATH_XTRA
+if test -z "$no_x"
+then
+    AC_DEFINE(HAVE_X_WINDOWS)
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl  Include features requiring Xt ?
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if want to use Xt)
+AC_ARG_WITH(xt,
+[  --with-xt               include Xt dependent features [no] ])
+case "$with_xt" in
+    no|NO)	with_xt=no
+		;;
+    yes|YES|'')	with_xt=yes
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${with_xt})
+
+dnl if test "$with_xt" = "yes"
+dnl then
+dnl     AC_CHECK_LIB(Xt,XtToolkitInitialize,,,$X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS)
+dnl fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Build for debugging executables with DWARF symbol tables ?
+dnl ---------------------------------------------------------------------------
+
+dnl  The included libdwarf is from Silicon Graphics, Inc., released under
+dnl  GNU Lesser General Public License
+
+# Set UPS_DWARFLIB to 'libdwarf' to use the one shipped with UPS.
+# DWARFLIB is the library itself.
+
+AC_MSG_CHECKING(if want support for DWARF symbol tables)
+UPS_DWARFLIB=
+DWARFLIB=
+ups_cv_sys_symtab_maybe_dwarf=no
+case "$host" in
+    *-*-linux*)		ups_cv_sys_symtab_maybe_dwarf=yes ;;
+    *-*-freebsd*)
+	if test -x /usr/bin/objformat
+	then
+	    case "`/usr/bin/objformat`" in
+		elf) ups_cv_sys_symtab_maybe_dwarf=yes ;;
+	    esac
+	fi
+	;;
+esac
+# Allow user override
+AC_ARG_ENABLE(dwarf,
+[  --enable-dwarf          include support for DWARF symbol tables [auto] ])
+case "$enable_dwarf" in
+    no|NO)	ups_cv_sys_symtab_maybe_dwarf=no ;;
+    yes|YES|'') ups_cv_sys_symtab_maybe_dwarf=yes ;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
+    UPS_DWARFLIB=libdwarf
+    DWARFLIB='${LIBOBJ}/libdwarf/libdwarf.a'
+    AC_DEFINE(WANT_DWARF)
+fi
+AC_SUBST(UPS_DWARFLIB)
+AC_SUBST(DWARFLIB)
+AC_MSG_RESULT(${ups_cv_sys_symtab_maybe_dwarf})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  ELF library ?
+dnl ---------------------------------------------------------------------------
+
+dnl  libdwarf needs libelf; on FreeBSD and Linux using the one included
+dnl  with UPS is best; on Solaris the one from Sun may be a better choice.
+dnl  (If you fix this check the fudge after AC_CHECK_HEADERS is still OK)
+
+# Set UPS_ELFLIB to 'libelf' to use the one shipped with UPS.
+# ELFLIB is the library itself.
+
+ELFLIB=
+UPS_ELFLIB=
+if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
+    UPS_ELFLIB=libelf
+    ELFLIB='${LIBOBJ}/libelf/lib/libelf.a'
+    AC_DEFINE(WANT_OWN_ELFLIB)
+fi
+AC_SUBST(UPS_ELFLIB)
+AC_SUBST(ELFLIB)
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Multi-screen support wanted ?
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if want multi-screen support)
+AC_ARG_ENABLE(multiscreen,
+[  --enable-multiscreen    allows the '-split' option to put each window on
+                             a different X screen [yes] ])
+case "$enable_multiscreen" in
+    no|NO)	enable_multiscreen=no
+		;;
+    yes|YES|'') enable_multiscreen=yes
+		AC_DEFINE(WANT_MULTI_SCREEN)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_multiscreen})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Extras required in C interpreter ?
+dnl ---------------------------------------------------------------------------
+
+# Want C library routines in the interpreter ?
+
+AC_MSG_CHECKING(if want C library routines in C interpreter)
+AC_ARG_ENABLE(clibrary,
+[  --enable-clibrary       C library routines in the C interpreter [yes] ])
+case "$enable_clibrary" in
+    no|NO)	enable_clibrary=no
+		;;
+    yes|YES|'') enable_clibrary=yes
+		AC_DEFINE(WANT_CLIB)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_clibrary})
+
+# Want gets() routine in the interpreter ?
+
+AC_MSG_CHECKING(if want gets() routine in C interpreter)
+AC_ARG_ENABLE(gets,
+[  --enable-gets           gets() routine in the C interpreter [no] ])
+case "$enable_gets" in
+    no|NO|'')	enable_gets=no
+		;;
+    yes|YES)	enable_gets=yes
+		AC_DEFINE(WANT_GETS)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_gets})
+
+# Want math library routines in the interpreter ?
+
+AC_MSG_CHECKING(if want math library routines in C interpreter)
+AC_ARG_ENABLE(math,
+[  --enable-math           math library routines in the C interpreter [no] ])
+case "$enable_math" in
+    no|NO|'')	enable_math=no
+		;;
+    yes|YES)	enable_math=yes
+		AC_DEFINE(WANT_MATH)
+		AC_CHECK_LIB(m,sin)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_math})
+
+# Want to allow 'long long' in the interpreter ?
+
+AC_MSG_CHECKING(whether to allow 'long long' in C interpreter)
+AC_ARG_ENABLE(longlong,
+[  --enable-longlong       allow 'long long' in the C interpreter [no] ])
+case "$enable_longlong" in
+    no|NO|'')	enable_longlong=no
+		;;
+    yes|YES)	enable_longlong=yes
+		AC_DEFINE(WANT_LL)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_longlong})
+
+# Want to allow 'long double' in the interpreter ?
+
+AC_MSG_CHECKING(whether to allow 'long double' in C interpreter)
+AC_ARG_ENABLE(longdouble,
+[  --enable-longdouble     allow 'long double' in the C interpreter [no] ])
+case "$enable_longdouble" in
+    no|NO|'')	enable_longdouble=no
+		;;
+    yes|YES)	enable_longdouble=yes
+		AC_DEFINE(WANT_LDBL)
+		;;
+    *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
+esac
+AC_MSG_RESULT(${enable_longdouble})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for header files.
+dnl ---------------------------------------------------------------------------
+AC_HEADER_DIRENT
+AC_HEADER_STAT
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(\
+ a.out.h ar.h elf.h fcntl.h grp.h limits.h link.h memory.h \
+ netdb.h poll.h procfs.h ptrace.h stab.h stdlib.h string.h stropts.h \
+ termios.h time.h unistd.h varargs.h \
+ asm/debugreg.h \
+ libelf/libelf.h \
+ linux/elf.h  linux/debugreg.h \
+ machine/cpu.h machine/frame.h machine/inst.h machine/machparam.h \
+ machine/reg.h machine/sysarch.h \
+ machine/tss.h machine/vmparam.h \
+ sys/core.h sys/dir.h sys/errno.h sys/fault.h sys/file.h sys/frame.h \
+ sys/ioctl.h \
+ sys/param.h sys/poll.h sys/procfs.h sys/ptrace.h sys/reg.h sys/resource.h \
+ sys/socket.h sys/stat.h sys/time.h sys/types.h \
+ sys/ucontext.h sys/user.h sys/utsname.h sys/vmparam.h \
+ )
+
+
+# (IDE) This is nasty but I can't think of a better way.
+# If we are using our supplied 'libelf' the above check will not find
+# <libelf/libelf.h> but it *will* be available using "-Idevelhdrs",
+
+if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
+    ac_cv_header_libelf_libelf_h=yes
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for libraries.
+dnl ---------------------------------------------------------------------------
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for standard typedefs, structures, and compiler characteristics.
+dnl ---------------------------------------------------------------------------
+AC_C_CONST
+AC_TYPE_GETGROUPS
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIGNAL
+AC_TYPE_SIZE_T
+AC_TYPE_UID_T
+
+AC_DECL_SYS_SIGLIST
+AC_SYS_RESTARTABLE_SYSCALLS
+
+AC_STRUCT_ST_BLKSIZE
+AC_STRUCT_TM
+
+AC_C_BIGENDIAN
+AC_C_CHAR_UNSIGNED
+AC_C_LONG_DOUBLE
+AC_CHECK_SIZEOF(short, 2)
+AC_CHECK_SIZEOF(int, 4)
+AC_CHECK_SIZEOF(long, 4)
+AC_CHECK_SIZEOF(long long, 0)
+AC_CHECK_SIZEOF(float, 4)
+AC_CHECK_SIZEOF(double, 8)
+AC_CHECK_SIZEOF(long double, 0)
+
+# Is 'environ' declared in <stdlib.h> ?
+
+AC_MSG_CHECKING(environ declared in <stdlib.h>)
+AC_CACHE_VAL(ups_cv_header_environ_decl,[
+    ups_cv_header_environ_decl=no
+    if test $ups_cv_header_environ_decl = no ; then
+	AC_TRY_COMPILE([#include <stdlib.h>], [char **e = environ;],ups_cv_header_environ_decl=yes)
+    fi
+])
+if test $ups_cv_header_environ_decl != no ; then
+    AC_DEFINE(HAVE_DEFINED_ENVIRON)
+fi
+AC_MSG_RESULT(${ups_cv_header_environ_decl})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for possible typedefs, structures, etc.
+dnl ---------------------------------------------------------------------------
+
+# Format of Solaris core files kept changing between 2.5, 2.6 and 2.7.
+# Figure out what bits of code are required.
+
+AC_MSG_CHECKING(psinfo_t declared in <sys/procfs.h>)
+AC_CACHE_VAL(ups_cv_psinfo_type_decl,[
+    ups_cv_psinfo_type_decl=no
+    if test $ups_cv_psinfo_type_decl = no ; then
+	AC_TRY_COMPILE([#include <sys/procfs.h>], [psinfo_t p;],ups_cv_psinfo_type_decl=yes)
+    fi
+])
+if test $ups_cv_psinfo_type_decl != no ; then
+    AC_DEFINE(HAVE_PSINFO_T)
+fi
+AC_MSG_RESULT(${ups_cv_psinfo_type_decl})
+
+AC_MSG_CHECKING(pstatus_t declared in <sys/procfs.h>)
+AC_CACHE_VAL(ups_cv_pstatus_type_decl,[
+    ups_cv_pstatus_type_decl=no
+    if test $ups_cv_pstatus_type_decl = no ; then
+	AC_TRY_COMPILE([#include <sys/procfs.h>], [pstatus_t p;],ups_cv_pstatus_type_decl=yes)
+    fi
+])
+if test $ups_cv_pstatus_type_decl != no ; then
+    AC_DEFINE(HAVE_PSTATUS_T)
+fi
+AC_MSG_RESULT(${ups_cv_pstatus_type_decl})
+
+AC_MSG_CHECKING(greg_t declared in <sys/procfs.h>)
+AC_CACHE_VAL(ups_cv_greg_type_decl,[
+    ups_cv_greg_type_decl=no
+    if test $ups_cv_greg_type_decl = no ; then
+	AC_TRY_COMPILE([#include <sys/procfs.h>], [greg_t p;],ups_cv_greg_type_decl=yes)
+    fi
+])
+if test $ups_cv_greg_type_decl != no ; then
+    AC_DEFINE(HAVE_GREG_T)
+fi
+AC_MSG_RESULT(${ups_cv_greg_type_decl})
+
+AC_MSG_CHECKING(gregset_t declared in <sys/procfs.h>)
+AC_CACHE_VAL(ups_cv_gregset_type_decl,[
+    ups_cv_gregset_type_decl=no
+    if test $ups_cv_gregset_type_decl = no ; then
+	AC_TRY_COMPILE([#include <sys/procfs.h>], [gregset_t p;],ups_cv_gregset_type_decl=yes)
+    fi
+])
+if test $ups_cv_gregset_type_decl != no ; then
+    AC_DEFINE(HAVE_GREGSET_T)
+fi
+AC_MSG_RESULT(${ups_cv_gregset_type_decl})
+
+AC_MSG_CHECKING(prgreg_t declared in <sys/procfs.h>)
+AC_CACHE_VAL(ups_cv_prgreg_type_decl,[
+    ups_cv_prgreg_type_decl=no
+    if test $ups_cv_prgreg_type_decl = no ; then
+	AC_TRY_COMPILE([#include <sys/procfs.h>], [prgreg_t p;],ups_cv_prgreg_type_decl=yes)
+    fi
+])
+if test $ups_cv_prgreg_type_decl != no ; then
+    AC_DEFINE(HAVE_PRGREG_T)
+fi
+AC_MSG_RESULT(${ups_cv_prgreg_type_decl})
+
+# link_map.l_phnum structure member not always present (Linux)
+
+AC_MSG_CHECKING(l_phnum in link_map in <link.h>)
+AC_CACHE_VAL(ups_cv_l_phnum_field,[
+    ups_cv_l_phnum_field=no
+    if test $ups_cv_l_phnum_field = no ; then
+	AC_TRY_COMPILE([#include <link.h>], [struct link_map l; l.l_phnum = 0;],ups_cv_l_phnum_field=yes)
+    fi
+])
+if test $ups_cv_l_phnum_field != no ; then
+    AC_DEFINE(HAVE_L_PHNUM_F)
+fi
+AC_MSG_RESULT(${ups_cv_l_phnum_field})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Checks for library functions.
+dnl ---------------------------------------------------------------------------
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_FNMATCH
+AC_FUNC_GETPGRP
+AC_FUNC_MEMCMP
+AC_FUNC_GETMNTENT
+AC_FUNC_MMAP
+AC_FUNC_SETPGRP
+AC_FUNC_SETVBUF_REVERSED
+AC_FUNC_STRCOLL
+AC_FUNC_STRFTIME
+AC_FUNC_UTIME_NULL
+AC_FUNC_VFORK
+AC_FUNC_VPRINTF
+AC_FUNC_WAIT3
+
+AC_CHECK_FUNCS(\
+ getpgrp setpgrp labs \
+ atexit getcwd adjtime difftime gettimeofday getwd mkdir rmdir seekdir putenv \
+ select strerror \
+ strcspn strspn strstr strtod strtol strtoul \
+ socket gethostbyname ptrace poll select \
+ bcopy strchr memcmp memcpy memmove \
+ bsearch flock fgetpos fsetpos getgrgid getdtablesize getrusage gets \
+ i386_clr_watch i386_set_watch \
+ killpg remove rename setgrent setgroups setvbuf srandom tmpfile \
+ sigaddset sigemptyset sigprocmask symlink readlink lstat \
+ sys_nerr sys_errlist \
+ setlinebuf utimes clock uname \
+ siglongjmp _longjmp _setjmp _xustat __error __errno_location \
+ )
+
+AC_MSG_CHECKING(for sigsetjmp)
+AC_CACHE_VAL(ups_cv_func_sigsetjmp,[
+    ups_cv_func_sigsetjmp=no
+    if test $ups_cv_func_sigsetjmp = no ; then
+    AC_TRY_LINK([#include <setjmp.h>], [
+        sigsetjmp(0, 0);
+    ],ups_cv_func_sigsetjmp=yes)
+    fi
+])
+case "$ups_cv_func_sigsetjmp" in
+    yes)	AC_DEFINE(HAVE_SIGSETJMP)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_func_sigsetjmp})
+
+# Check if certain functions have declarations in the standard headers.
+# Solaris 2.x lacks definitions (for some reason).
+
+# getdtablesize()
+
+AC_MSG_CHECKING(if getdtablesize declared)
+AC_CACHE_VAL(ups_cv_decl_getdtablesize,[
+    ups_cv_decl_getdtablesize=no
+    if test $ups_cv_decl_getdtablesize = no ; then
+	AC_EGREP_HEADER( [getdtablesize.*\(], unistd.h, ups_cv_decl_getdtablesize=yes)
+    fi
+])
+case "$ups_cv_decl_getdtablesize" in
+    yes)	AC_DEFINE(HAVE_GETDTABLESIZE_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_getdtablesize})
+
+# getrusage()
+
+AC_MSG_CHECKING(if getrusage declared)
+AC_CACHE_VAL(ups_cv_decl_getrusage,[
+    ups_cv_decl_getrusage=no
+    if test $ups_cv_decl_getrusage = no ; then
+	AC_EGREP_HEADER( [getrusage.*\(], sys/resource.h, ups_cv_decl_getrusage=yes)
+    fi
+])
+case "$ups_cv_decl_getrusage" in
+    yes)	AC_DEFINE(HAVE_GETRUSAGE_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_getrusage})
+
+# killpg()
+
+AC_MSG_CHECKING(if killpg declared)
+AC_CACHE_VAL(ups_cv_decl_killpg,[
+    ups_cv_decl_killpg=no
+    if test $ups_cv_decl_killpg = no ; then
+	AC_EGREP_HEADER( [killpg.*\(], signal.h, ups_cv_decl_killpg=yes)
+    fi
+])
+case "$ups_cv_decl_killpg" in
+    yes)	AC_DEFINE(HAVE_KILLPG_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_killpg})
+
+# srandom()
+
+AC_MSG_CHECKING(if srandom declared)
+AC_CACHE_VAL(ups_cv_decl_srandom,[
+    ups_cv_decl_srandom=no
+    if test $ups_cv_decl_srandom = no ; then
+	AC_EGREP_HEADER( [srandom.*\(], stdlib.h, ups_cv_decl_srandom=yes)
+    fi
+])
+case "$ups_cv_decl_srandom" in
+    yes)	AC_DEFINE(HAVE_SRANDOM_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_srandom})
+
+# setlinebuf()
+
+AC_MSG_CHECKING(if setlinebuf declared)
+AC_CACHE_VAL(ups_cv_decl_setlinebuf,[
+    ups_cv_decl_setlinebuf=no
+    if test $ups_cv_decl_setlinebuf = no ; then
+	AC_EGREP_HEADER( [setlinebuf.*\(], stdio.h, ups_cv_decl_setlinebuf=yes)
+    fi
+])
+case "$ups_cv_decl_setlinebuf" in
+    yes)	AC_DEFINE(HAVE_SETLINEBUF_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_setlinebuf})
+
+# sys_nerr
+
+AC_MSG_CHECKING(if sys_nerr declared)
+AC_CACHE_VAL(ups_cv_decl_sys_nerr,[
+    ups_cv_decl_sys_nerr=no
+    if test $ups_cv_decl_sys_nerr = no ; then
+	AC_EGREP_HEADER( sys_nerr.*;, stdio.h, ups_cv_decl_sys_nerr=yes)
+    fi
+    if test $ups_cv_decl_sys_nerr = no ; then
+	AC_EGREP_HEADER( sys_nerr.*;, errno.h, ups_cv_decl_sys_nerr=yes)
+    fi
+])
+case "$ups_cv_decl_sys_nerr" in
+    yes)	AC_DEFINE(HAVE_SYS_NERR_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_sys_nerr})
+
+# sys_errlist
+
+AC_MSG_CHECKING(if sys_errlist declared)
+AC_CACHE_VAL(ups_cv_decl_sys_errlist,[
+    ups_cv_decl_sys_errlist=no
+    if test $ups_cv_decl_sys_errlist = no ; then
+	AC_EGREP_HEADER( sys_errlist.*;, stdio.h, ups_cv_decl_sys_errlist=yes)
+    fi
+    if test $ups_cv_decl_sys_errlist = no ; then
+	AC_EGREP_HEADER( sys_errlist.*;, errno.h, ups_cv_decl_sys_errlist=yes)
+    fi
+])
+case "$ups_cv_decl_sys_errlist" in
+    yes)	AC_DEFINE(HAVE_SYS_ERRLIST_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_sys_errlist})
+
+# utimes()
+
+AC_MSG_CHECKING(if utimes declared)
+AC_CACHE_VAL(ups_cv_decl_utimes,[
+    ups_cv_decl_utimes=no
+    if test $ups_cv_decl_utimes = no ; then
+	AC_EGREP_HEADER( [utimes.*\(], sys/time.h, ups_cv_decl_utimes=yes)
+    fi
+])
+case "$ups_cv_decl_utimes" in
+    yes)	AC_DEFINE(HAVE_UTIMES_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_utimes})
+
+# wait3()
+
+AC_MSG_CHECKING(if wait3 declared)
+AC_CACHE_VAL(ups_cv_decl_wait3,[
+    ups_cv_decl_wait3=no
+    if test $ups_cv_decl_wait3 = no ; then
+	AC_EGREP_HEADER( [wait3.*\(], sys/wait.h, ups_cv_decl_wait3=yes)
+    fi
+])
+case "$ups_cv_decl_wait3" in
+    yes)	AC_DEFINE(HAVE_WAIT3_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl_wait3})
+
+# __errno_location()
+
+AC_MSG_CHECKING(if __errno_location declared)
+AC_CACHE_VAL(ups_cv_decl___errno_location,[
+    ups_cv_decl___errno_location=no
+    if test $ups_cv_decl___errno_location = no ; then
+	AC_TRY_COMPILE([#include <errno.h>], [int (*f)() = __errno_location;],ups_cv_decl___errno_location=yes)
+    fi
+])
+case "$ups_cv_decl___errno_location" in
+    yes)	AC_DEFINE(HAVE_ERRNO_LOCATION_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl___errno_location})
+
+# __errno()
+# FreeBSD only ?
+# Use '...errno_rtn' so not a substring of above test.
+
+AC_MSG_CHECKING(if __errno declared)
+AC_CACHE_VAL(ups_cv_decl___errno_rtn,[
+    ups_cv_decl___errno_rtn=no
+    if test $ups_cv_decl___errno_rtn = no ; then
+	AC_TRY_COMPILE([#include <errno.h>], [int (*f)() = __errno;],ups_cv_decl___errno_rtn=yes)
+    fi
+])
+case "$ups_cv_decl___errno_rtn" in
+    yes)	AC_DEFINE(HAVE___ERRNO_DECL)
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_decl___errno_rtn})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  SET OS_... AND ARCH_... DEFINITIONS
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(the architecture)
+ups_arch=unknown
+case "$host" in
+    i386-sun-sunos4.0.2)ups_arch=ARCH_SUN386 ;; # Obsolete Sun386i
+    m68k-*-sunos*)	ups_arch=ARCH_SUN3 ;;
+    sparc-*-*)		ups_arch=ARCH_SUN4 ;;
+    i?86-*-solaris*)	ups_arch=ARCH_386 ;; # Not yet supported
+    i?86-*-freebsd1*)	ups_arch=ARCH_BSDI386 ;;
+    i?86-*-freebsd*)	ups_arch=ARCH_FREEBSD386 ;;
+    i?86-*-openbsd*)	ups_arch=ARCH_OPENBSD386 ;;
+    i?86-*-netbsd*)	ups_arch=ARCH_NETBSD386 ;;
+    i?86-*-*bsd*)	ups_arch=ARCH_BSDI386 ;;
+    i?86-*-linux*)	ups_arch=ARCH_LINUX386 ;;
+    alpha-*-*)		ups_arch=ARCH_ALPHA ;;
+    clipper-*-*)	ups_arch=ARCH_CLIPPER ;;
+    mips-dec-*)		ups_arch=ARCH_MIPS_ULTRIX ;;
+    mips-*-*)		ups_arch=ARCH_MIPS_MIPS ;;
+    vax-*-*)		ups_arch=ARCH_VAX ;;
+esac
+AC_DEFINE_UNQUOTED(${ups_arch})
+AC_MSG_RESULT(${ups_arch})
+
+AC_MSG_CHECKING(the operating system)
+ups_os=unknown
+case "$host" in
+    *-*-sunos3*)	ups_os=OS_SUNOS_3 ;;
+    *-*-sunos4*)	ups_os=OS_SUNOS_4 ;;
+    *-*-solaris2*)	ups_os=OS_SUNOS_5 ;;
+    *-*-freebsd*)	ups_os=OS_FREEBSD ;;
+    *-*-*bsd*)		ups_os=OS_BSD44 ;; # Assume 4.4 derived.
+    *-*-linux*)		ups_os=OS_LINUX ;;
+    *-*-riscos*)	ups_os=OS_RISCOS ;;
+    *-*-osf*)		ups_os=OS_OSF ;;
+    *-*-ultrix*)	ups_os=OS_ULTRIX ;;
+esac
+AC_DEFINE_UNQUOTED(${ups_os})
+AC_MSG_RESULT(${ups_os})
+
+AC_DEFINE_UNQUOTED(HOST_CPU, "$host_cpu")
+AC_DEFINE_UNQUOTED(HOST_VENDOR, "$host_vendor")
+AC_DEFINE_UNQUOTED(HOST_OS, "$host_os")
+AC_DEFINE_UNQUOTED(THIS_ARCH, "$host")
+
+AC_DEFINE_UNQUOTED(C_PREPROCESSOR, "$CPP")
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Build for debugging ELF or a.out format executables ?
+dnl ---------------------------------------------------------------------------
+
+# ELF executables ?
+
+AC_MSG_CHECKING(if uses ELF executables)
+ups_cv_sys_is_elf=no
+case "$host" in
+    *-*-solaris2*)	ups_cv_sys_is_elf=yes ;;
+    *-*-linux*)		ups_cv_sys_is_elf=yes ;;
+    *-*-freebsd*)
+	if test -x /usr/bin/objformat
+	then
+	    case "`/usr/bin/objformat`" in
+		elf) ups_cv_sys_is_elf=yes ;;
+	    esac
+	fi
+	;;
+esac
+# Allow user override
+AC_ARG_ENABLE(aout,
+[  --enable-aout           debug 'aout' executables [auto] ])
+case "$enable_aout" in
+    yes) ups_cv_sys_is_elf=no ;;
+esac
+AC_ARG_ENABLE(elf,
+[  --enable-elf            debug ELF executables [auto] ])
+case "$enable_elf" in
+    yes) ups_cv_sys_is_elf=yes ;;
+esac
+if test $ups_cv_sys_is_elf = yes ; then
+    AC_DEFINE(WANT_ELF)
+fi
+AC_MSG_RESULT(${ups_cv_sys_is_elf})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  STUFF FOR `C' INTERPRETER
+dnl ---------------------------------------------------------------------------
+
+# ANSI C says that 'isalnum()' etc. in <ctype.h> should be available as
+# functions even if normally implemented as macros.  Need to know for sure.
+# Also applies to some functions in <stdio.h>.
+
+AC_MSG_CHECKING(if <ctype.h> macros available as functions)
+AC_CACHE_VAL(ups_cv_func_ctype_funcs,[
+    ups_cv_func_ctype_funcs=no
+    if test $ups_cv_func_ctype_funcs = no ; then
+    AC_TRY_LINK([#include <ctype.h>], [
+	#undef isalnum
+	isalnum('a');
+    ],ups_cv_func_ctype_funcs=yes)
+    fi
+])
+if test $ups_cv_func_ctype_funcs != no ; then
+    AC_DEFINE(HAVE_CTYPE_FUNCTIONS)
+fi
+AC_MSG_RESULT(${ups_cv_func_ctype_funcs})
+
+AC_MSG_CHECKING(if feof() etc. available as functions)
+AC_CACHE_VAL(ups_cv_func_feof_funcs,[
+    ups_cv_func_feof_funcs=no
+    if test $ups_cv_func_feof_funcs = no ; then
+    AC_TRY_LINK([#include <stdio.h>], [
+	#undef feof
+	feof((FILE *)NULL);
+    ],ups_cv_func_feof_funcs=yes)
+    fi
+])
+if test $ups_cv_func_feof_funcs != no ; then
+    AC_DEFINE(HAVE_FEOF_FUNCTIONS)
+fi
+AC_MSG_RESULT(${ups_cv_func_feof_funcs})
+
+
+# If 'putc()' and 'getc()' are macros we need to know the routines they call.
+# This used to be pretty standard but every system now seems to have it's own
+# routines.  It is sufficient just to try and compile with a reference to
+# the helper routine name.
+
+AC_MSG_CHECKING(routine putc() uses)
+AC_CACHE_VAL(ups_cv_func_putc_helper,[
+    ups_cv_func_putc_helper=unknown
+    if test $ups_cv_func_putc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [_flsbuf;],ups_cv_func_putc_helper=_flsbuf)
+    fi
+    if test $ups_cv_func_putc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__flsbuf;],ups_cv_func_putc_helper=__flsbuf)
+    fi
+    if test $ups_cv_func_putc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__swbuf;],ups_cv_func_putc_helper=__swbuf)
+    fi
+    if test $ups_cv_func_putc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__overflow;],ups_cv_func_putc_helper=__overflow)
+    fi
+    if test $ups_cv_func_putc_helper = unknown ; then
+	AC_TRY_LINK([#include <stdio.h>], [_flsbuf();],ups_cv_func_putc_helper=_flsbuf)
+    fi
+])
+case "$ups_cv_func_putc_helper" in
+    unknown)	;;
+    *)		AC_DEFINE(HAVE_PUTC_HELPER)
+		AC_DEFINE_UNQUOTED(PUTC_HELPER,$ups_cv_func_putc_helper) 
+		AC_DEFINE_UNQUOTED(PUTC_H_NAME,"$ups_cv_func_putc_helper") 
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_func_putc_helper})
+
+AC_MSG_CHECKING(routine getc() uses)
+AC_CACHE_VAL(ups_cv_func_getc_helper,[
+    ups_cv_func_getc_helper=unknown
+    if test $ups_cv_func_getc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [_filbuf;],ups_cv_func_getc_helper=_filbuf)
+    fi
+    if test $ups_cv_func_getc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__filbuf;],ups_cv_func_getc_helper=__filbuf)
+    fi
+    if test $ups_cv_func_getc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__srget;],ups_cv_func_getc_helper=__srget)
+    fi
+    if test $ups_cv_func_getc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__uflow;],ups_cv_func_getc_helper=__uflow)
+    fi
+    if test $ups_cv_func_getc_helper = unknown ; then
+	AC_TRY_LINK([#include <stdio.h>], [_filbuf();],ups_cv_func_getc_helper=_filbuf)
+    fi
+])
+case "$ups_cv_func_getc_helper" in
+    unknown)	;;
+    *)		AC_DEFINE(HAVE_GETC_HELPER)
+		AC_DEFINE_UNQUOTED(GETC_HELPER,$ups_cv_func_getc_helper) 
+		AC_DEFINE_UNQUOTED(GETC_H_NAME,"$ups_cv_func_getc_helper") 
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_func_getc_helper})
+
+AC_MSG_CHECKING(routine peekc() uses)
+AC_CACHE_VAL(ups_cv_func_peekc_helper,[
+    ups_cv_func_peekc_helper=unknown
+    if test $ups_cv_func_peekc_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdio.h>], [__underflow;],ups_cv_func_peekc_helper=__underflow)
+    fi
+])
+case "$ups_cv_func_peekc_helper" in
+    unknown)	;;
+    *)		AC_DEFINE(HAVE_PEEKC_HELPER)
+		AC_DEFINE_UNQUOTED(PEEKC_HELPER,$ups_cv_func_peekc_helper) 
+		AC_DEFINE_UNQUOTED(PEEKC_H_NAME,"$ups_cv_func_peekc_helper") 
+    		;;
+esac
+AC_MSG_RESULT(${ups_cv_func_peekc_helper})
+
+
+# This stuff looks for the "character classification array" (often _ctype)
+# and the "open files array" (often _iob).  These now seem to differ on
+# each system.
+
+AC_MSG_CHECKING(global character type array)
+AC_CACHE_VAL(ups_cv_var_global_ctype,[
+    ups_cv_var_global_ctype=no
+    if test $ups_cv_var_global_ctype = no ; then
+	AC_TRY_COMPILE([#include <ctype.h>], [char *c[] = {(char *)__ctype};],ups_cv_var_global_ctype=__ctype)
+    fi
+    if test $ups_cv_var_global_ctype = no ; then
+	AC_TRY_COMPILE([#include <ctype.h>], [char *c[] = {(char *)_ctype};],ups_cv_var_global_ctype=_ctype)
+    fi
+    if test $ups_cv_var_global_ctype = no ; then
+	AC_TRY_COMPILE([#include <ctype.h>], [char *c[] = {(char *)_ctype__};],ups_cv_var_global_ctype=_ctype__)
+    fi
+    if test $ups_cv_var_global_ctype = no ; then
+	AC_TRY_COMPILE([#include <ctype.h>], [char *c[] = {(char *)_ctype_};],ups_cv_var_global_ctype=_ctype_)
+    fi
+])
+case "$ups_cv_var_global_ctype" in
+    no)	;;
+    *)	AC_DEFINE(HAVE_GLOBAL_CTYPE)
+	AC_DEFINE_UNQUOTED(GLOBAL_CTYPE, $ups_cv_var_global_ctype)
+	AC_DEFINE_UNQUOTED(NAME_CTYPE, "$ups_cv_var_global_ctype")
+	;;
+esac
+AC_MSG_RESULT(${ups_cv_var_global_ctype})
+
+AC_MSG_CHECKING(global file array)
+AC_CACHE_VAL(ups_cv_var_global_files,[
+    ups_cv_var_global_files=no
+    if test $ups_cv_var_global_files = no ; then
+	AC_EGREP_HEADER( __iob.*;, stdio.h, ups_cv_var_global_files=__iob)
+    fi
+    if test $ups_cv_var_global_files = no ; then
+	AC_EGREP_HEADER( _iob.*;, stdio.h, ups_cv_var_global_files=_iob)
+    fi
+    if test $ups_cv_var_global_files = no ; then
+	AC_EGREP_HEADER( __sF.*;, stdio.h, ups_cv_var_global_files=__sF)
+    fi
+])
+case "$ups_cv_var_global_files" in
+    no)	;;
+    *)	AC_DEFINE(HAVE_GLOBAL_IOB)
+	AC_DEFINE_UNQUOTED(GLOBAL_IOB, $ups_cv_var_global_files)
+	AC_DEFINE_UNQUOTED(NAME_IOB, "$ups_cv_var_global_files")
+	;;
+esac
+AC_MSG_RESULT(${ups_cv_var_global_files})
+
+
+# Support for 'asert()'.  As usual routine name varies.
+
+AC_MSG_CHECKING(assert helper)
+AC_CACHE_VAL(ups_cv_func_assert_helper,[
+    ups_cv_func_assert_helper=unknown
+    if test $ups_cv_func_assert_helper = unknown ; then
+	AC_TRY_COMPILE([#include <assert.h>], [__assert_fail;],ups_cv_func_assert_helper=__assert_fail)
+    fi
+    if test $ups_cv_func_assert_helper = unknown ; then
+	AC_TRY_COMPILE([#include <assert.h>], [__assert;],ups_cv_func_assert_helper=__assert)
+    fi
+])
+case "$ups_cv_func_assert_helper" in
+    unknown)		;;
+    __assert_fail)	AC_DEFINE(HAVE___ASSERT_FAIL) ;;
+    __assert)		AC_DEFINE(HAVE___ASSERT) ;;
+esac
+AC_MSG_RESULT(${ups_cv_func_assert_helper})
+
+
+# Support for variable argument lists.  With __GNUC__ undefined some systems
+# work straight off.  As usual Linux is not one.
+
+AC_MSG_CHECKING(varargs helper)
+AC_CACHE_VAL(ups_cv_func_vararg_helper,[
+    ups_cv_func_vararg_helper=unknown
+    if test $ups_cv_func_vararg_helper = unknown ; then
+	AC_TRY_COMPILE([#include <stdarg.h>], [va_list ap = __builtin_next_arg;],ups_cv_func_vararg_helper=__builtin_next_arg)
+    fi
+])
+case "$ups_cv_func_vararg_helper" in
+    unknown)	;;
+    __builtin_next_arg)	AC_DEFINE(HAVE___BUILTIN_NEXT_ARG) ;;
+esac
+AC_MSG_RESULT(${ups_cv_func_vararg_helper})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  CHECK FOR cplus_demangle
+dnl ---------------------------------------------------------------------------
+#   Does the compiler supply a demangling routine?
+#     If so, is it linked with -ldemangle, -lC, or do we already have it?
+AC_MSG_CHECKING(for C++ name demangling routine)
+AC_CACHE_VAL(ups_cv_demangle_lib,[
+ups_cv_demangle_lib=unknown
+ups_cv_demangle=no
+ups_save_LIBS="$LIBS"
+
+if test "$ups_cv_demangle" = no ; then
+    ups_cv_demangle_lib="-ldemangle"
+    LIBS="$ups_cv_demangle_lib $ups_save_LIBS"
+    AC_TRY_LINK([ #include <demangle.h>],
+    [char *a,*b; cplus_demangle(a,b,DEMANGLE_ENAME+DEMANGLE_ESPACE);],
+    ups_cv_demangle=yes)
+fi
+if test "$ups_cv_demangle" = no ; then
+    ups_cv_demangle_lib=""
+    LIBS="$ups_cv_demangle_lib $ups_save_LIBS"
+    AC_TRY_LINK([ #include <demangle.h>],
+    [char *a,*b; cplus_demangle(a,b,DEMANGLE_ENAME+DEMANGLE_ESPACE);],
+    ups_cv_demangle=yes)
+fi
+if test "$ups_cv_demangle" = no ; then
+    ups_cv_demangle_lib=-lC
+    LIBS="$ups_cv_demangle_lib $ups_save_LIBS"
+    AC_TRY_LINK([ #include <demangle.h>],
+    [char* a,*b; cplus_demangle(a,b,DEMANGLE_ENAME+DEMANGLE_ESPACE);],
+    ups_cv_demangle=yes)
+fi
+])
+if test "$ups_cv_demangle" = no ; then
+    LIBS="$ups_save_LIBS"
+    AC_MSG_RESULT(${ups_cv_demangle})
+else
+    AC_DEFINE(HAVE_CPLUS_DEMANGLE)
+    if test "$ups_cv_demangle_lib" ; then
+	AC_MSG_RESULT(${ups_cv_demangle_lib})
+    else
+	AC_MSG_RESULT(${ups_cv_demangle})
+    fi
+fi
+
+if test "$ups_cv_demangle" = yes ; then
+    AC_MSG_CHECKING(for cplus_demangle_noret)
+    AC_CACHE_VAL(ups_cv_demangle_noret,[
+    ups_cv_demangle_noret=no
+    AC_TRY_LINK([ #include <demangle.h>],
+    [char* a,*b; cplus_demangle_noret(a,b,DEMANGLE_ENAME+DEMANGLE_ESPACE);],
+    ups_cv_demangle_noret=yes)
+    ])
+    if test $ups_cv_demangle_noret != no ; then
+	AC_DEFINE(HAVE_CPLUS_DEMANGLE_NORET)
+    fi
+    AC_MSG_RESULT(${ups_cv_demangle_noret})
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl  FORMAT STRING FOR long long
+dnl ---------------------------------------------------------------------------
+
+# Does %lld or %qd print 'long long' integers ?
+# %qd works with 'gcc' (except on SunOS 4.x)
+# %lld works with Sun's SPARCompiler
+
+AC_MSG_CHECKING(format string for 'long long')
+AC_CACHE_VAL(ups_cv_func_printf_ll_fmt,[
+ups_cv_func_printf_ll_fmt=unknown
+
+if test $ups_cv_func_printf_ll_fmt = unknown ; then
+    AC_TRY_RUN([
+    #include <stdio.h>
+    #ifdef __cplusplus
+    int main (void)
+    #else
+    int main ()
+    #endif
+    {
+    /* If the format string is recognised 16 characters are generated. */
+    long long l = -1; char s[64] = "";
+      sprintf (s, "%llx", l);
+      if (strlen (s) == sizeof(l) * 2)
+          exit(0);
+      else
+          exit (1);
+    }
+    ], ups_cv_func_printf_ll_fmt=ll)
+fi
+
+if test $ups_cv_func_printf_ll_fmt = unknown ; then
+    AC_TRY_RUN([
+    #include <stdio.h>
+    #ifdef __cplusplus
+    int main (void)
+    #else
+    int main ()
+    #endif
+    {
+    /* If the format string is recognised 16 characters are generated. */
+    long long l = -1; char s[64] = "";
+      sprintf (s, "%qx", l);
+      if (strlen (s) == sizeof(l) * 2)
+          exit(0);
+      else
+	  exit (1);
+    }
+    ], ups_cv_func_printf_ll_fmt=q)
+fi
+])
+case "$ups_cv_func_printf_ll_fmt" in
+    unknown)	;;
+    *)		AC_DEFINE_UNQUOTED(LONG_LONG_FMT, "$ups_cv_func_printf_ll_fmt")
+		;;
+esac
+AC_MSG_RESULT(${ups_cv_func_printf_ll_fmt})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  MAXIMUM VALUE FOR long long
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(maximum value for 'long long')
+AC_CACHE_VAL(ups_cv_llong_max,[
+ups_cv_llong_max=unknown
+
+AC_EGREP_CPP(yes,[
+#include <limits.h>
+#ifdef LLONG_MAX
+yes
+#endif
+], ups_cv_llong_max=LLONG_MAX)
+
+if test $ups_cv_llong_max = unknown ; then
+    AC_EGREP_CPP(yes,[
+    #include <limits.h>
+    #ifdef LONG_LONG_MAX
+    yes
+    #endif
+    ], ups_cv_llong_max=LONG_LONG_MAX)
+fi
+
+if test $ups_cv_llong_max = unknown ; then
+    AC_EGREP_CPP(yes,[
+    #include <limits.h>
+    #ifdef __LONG_LONG_MAX__
+    yes
+    #endif
+    ], ups_cv_llong_max=__LONG_LONG_MAX__)
+fi
+])
+case "$ups_cv_llong_max" in
+    unknown)	;;
+    LLONG_MAX)  ;;
+    *)		AC_DEFINE_UNQUOTED(LLONG_MAX, $ups_cv_llong_max)
+		;;
+esac
+AC_MSG_RESULT(${ups_cv_llong_max})
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Configure other libraries...
+dnl ---------------------------------------------------------------------------
+
+if test $ups_cv_sys_symtab_maybe_dwarf = yes; then
+    AC_CONFIG_SUBDIRS(lib/libelf lib/libdwarf lib/dwarfdump)
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl  Output header and convert these files...
+dnl ---------------------------------------------------------------------------
+AC_OUTPUT(
+    Makefile
+    Makefile.conf
+    ups/Makefile
+    ups-state/Makefile
+    med3/Makefile
+    interpreter/Makefile
+    interpreter/tutorial/Makefile
+    lib/Makefile
+    lib/libobj/Makefile
+    lib/libarg/Makefile
+    lib/libgnu/Makefile
+    lib/libMen3/Makefile
+    lib/libedit/Makefile
+    lib/libx11wn/Makefile
+    lib/libmtrprog/Makefile
+    lib/libukcprog/Makefile
+    lib/libelf/UpsMakefile
+    lib/libdwarf/UpsMakefile
+    lib/dwarfdump/UpsMakefile
+    tests/Makefile
+    packaging/Makefile
+)
+
+
+dnl ---------------------------------------------------------------------------
