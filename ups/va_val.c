@@ -207,9 +207,12 @@ vformat_t format;
 		
 		if ((f = addr_to_func(addr)) == NULL)
 			strnf(buf, bufsize - 1, "(%x)()", (int)addr);
-		else if (f->fu_addr == addr)
-			strnf(buf, bufsize - 1, "%s()", f->fu_name);
-		else
+		else if (f->fu_addr == addr) {
+			if (f->fu_language == LANG_CC)
+			    strnf(buf, bufsize - 1, "%s", f->fu_demangled_name);
+			else
+			    strnf(buf, bufsize - 1, "%s()", f->fu_name);
+		} else
 			strnf(buf, bufsize - 1, "(%s+%lx)()", f->fu_name,
 							   addr - f->fu_addr);
 	}
