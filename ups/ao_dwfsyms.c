@@ -295,7 +295,8 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
 
 	if (f->fu_fil == NULL) {
 	    f->fu_fil = fil;
-	    f->fu_language = fil->fi_language;
+            if (fil != NULL)
+		f->fu_language = fil->fi_language;
 	}
 	else if (f->fu_fil != fil)
 	    panic("File mismatch");
