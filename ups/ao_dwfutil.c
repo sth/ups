@@ -622,11 +622,13 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
 	    if (dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, CFA_COL, &cfa) &&
 		dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, RA_COL, &new_pc)) {
 		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, FP_COL, &new_fp))
-		    *fp = cfa - 16;
+		    new_fp = cfa - 16;
 		
 		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, SP_COL, &new_sp))
-		    *sp = cfa;
+		    new_sp = cfa;
 
+		*fp = new_fp;
+		*sp = new_sp;
 		*pc = new_pc;
 	    }
 	}
