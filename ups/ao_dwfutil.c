@@ -42,7 +42,7 @@ char ups_ao_dwfutil_c_rcsid[] = "$Id$";
 #include "ao_syms.h"
 #include "ao_symscan.h"
 #include "ao_dwfutil.h"
-
+#include "state.h"
 
 /*
  * Normalise a path - where possible eliminate any "..".
@@ -495,9 +495,22 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     Dwarf_Signed count = 0;
     Dwarf_Small op;
     vaddr_t *head = NULL, *vaddr;
+    unsigned char fb_regop;
 
     if ((loclist = dwf_get_locdesc(dbg, die, id, &count)) == NULL)
 	return (vaddr_t *)NULL;
+
+    switch (xp_get_addrsize(get_current_target()))
+    {
+    case 32:
+	fb_regop = DW_OP_breg5;
+	break;
+    case 64:
+	fb_regop = DW_OP_breg6;
+	break;
+    default:
+	panic("Unsupported address size");
+    }
 
     for (i = 0; i < count; i++) {
 
@@ -532,7 +545,7 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     */
 	    vaddr->v_op = OP_U_OFFSET;
 	    vaddr->v_u_offset = loclist[i].ld_s->lr_number;
-	} else if (op == DW_OP_fbreg) {
+	} else if (op == DW_OP_fbreg || op == fb_regop) {
 	    /*
 	     * Relative to frame base.
 	     */
