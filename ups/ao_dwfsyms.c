@@ -286,7 +286,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
 
     addr = fs->fs_low_pc;
 
-    if (addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
+    if (st->st_functab && addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
 	if (strcmp(f->fu_name, name) != 0)
 	    f->fu_name = name;
 
@@ -1279,6 +1279,11 @@ Dwarf_Debug dbg;
     ap = st->st_apool;
 
     /*
+     * Give up if we have already scanned this symbol table
+     */
+    if (ast->st_dw_scanned) return TRUE;
+
+    /*
      * Enable checking for user stop requests
      */
     dwf_next_stop_check = time(NULL) + DWF_STOP_CHECK_INTERVAL;
@@ -1368,6 +1373,8 @@ Dwarf_Debug dbg;
 	dwarf_dealloc(dbg, globals, DW_DLA_LIST);
 
     *p_flist = flist;
+
+    ast->st_dw_scanned = TRUE;
 
     return TRUE;
 }

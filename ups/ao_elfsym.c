@@ -66,6 +66,7 @@ char ups_ao_elfsym_c_rcsid[] = "$Id$";
 #include "ao_elfsym.h"
 #include "ao_elfread.h"
 #include "ao_elflib.h"
+#include "ao_dwfsyms.h"
 #include "elfstab.h"
 #include "srcpath.h"
 #include "util.h"
@@ -1018,6 +1019,8 @@ bool reattach_with_rescan;
 		 * 2) it sets function addresses even if already set from
 		 *    the DWARF info.
 		 */
+		if (el->stripped)
+			dwf_scan_symtab(st, NULL, NULL, &flist, p_mainfunc_name, dw_dbg);
 		set_function_addresses(el, st, &flist);
 	} else {
 		scan_stab_index(st, el, &st->st_sfiles, &flist, p_mainfunc_name);

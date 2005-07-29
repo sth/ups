@@ -467,6 +467,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	}
 
 	if (elf_lookup_section(el, ".symtab", &el->symtab_sh)) {
+		el->stripped = FALSE;
 		symtab_secname = ".symtab";
 	}
 	else {
@@ -482,6 +483,7 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		if (get_message_wn() != -1)
 		  errf("Warning: no .symtab section in %s - "
 		       "using .dynsym instead", el->path);
+		el->stripped = TRUE;
 		symtab_secname = ".dynsym";
 	}
 

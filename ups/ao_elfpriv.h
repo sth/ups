@@ -71,6 +71,7 @@ struct Elfinfo {
 	const char *sec_strings;
 
 	Elf_Shdr *symtab_sh;
+	bool stripped;
 	
 	Elf_Shdr *indexsh;
 	Elf_Shdr *indexstrsh;

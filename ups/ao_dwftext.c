@@ -130,16 +130,10 @@ func_t *f;
 {
     symtab_t *st = f->fu_symtab;
     ao_stdata_t *ast = AO_STDATA(st);
+    func_t *flist;
 
-    if (!ast->st_dw_scanned) {
-	Dwarf_Debug dbg = ast->st_dw_dbg;
-	func_t *flist;
-   
-	dwf_scan_symtab(st, NULL, NULL, &flist, NULL, dbg);
+    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_dbg);
 
-	ast->st_dw_scanned = TRUE;
-    }
-    
     return f;
 }
 
@@ -148,16 +142,10 @@ dw_get_fi(st)
 symtab_t *st;
 {
     ao_stdata_t *ast = AO_STDATA(st);
+    func_t *flist;
 
-    if (!ast->st_dw_scanned) {
-	Dwarf_Debug dbg = ast->st_dw_dbg;
-	func_t *flist;
-   
-	dwf_scan_symtab(st, NULL, NULL, &flist, NULL, dbg);
+    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_dbg);
 
-	ast->st_dw_scanned = TRUE;
-    }
-    
     return st->st_sfiles;
 }
 
