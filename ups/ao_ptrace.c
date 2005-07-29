@@ -780,7 +780,8 @@ size_t nbytes;
 #else
 	const char *iptr;
 	taddr_t lim;
-	int word, trailing_nbytes;
+	long word;
+	int trailing_nbytes;
 	int pid;
 
 	pid = ip->ip_pid;
