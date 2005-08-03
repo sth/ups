@@ -437,7 +437,8 @@ cont_type_t ctype;
     last_sig = ip->ip_lastsig;
   }
   while (ip->ip_stopres == SR_SIG &&
-	 !sig_stops_target(last_sig));
+	 !sig_stops_target(last_sig) &&
+         xp_get_sigstate(xp, last_sig) != SGH_CAUGHT);
 
 #ifdef AO_ELF
   if (ip->ip_stopres == SR_BPT)
