@@ -26,11 +26,11 @@
 /*  A debugging symbol in an ELF file.
  */
 struct  nlist {
-        long n_offset;
+        int n_offset;
         unsigned char n_type;
         char n_other;
         short n_desc;
-        unsigned long n_value;
+        unsigned int n_value;
 };
  
 #define N_EXT   1
