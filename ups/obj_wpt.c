@@ -134,7 +134,7 @@ void
 wpaddr_draw(dets)
 struct drawst *dets;
 {
-	char buf[12];
+	char buf[20];
 
 	buf[0] = 0;
 	if ((long)dets->dr_fval)
