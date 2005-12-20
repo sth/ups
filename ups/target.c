@@ -375,6 +375,7 @@ Stack *last;
 	/* fp */
 	/* sp */
 	/* ap */
+	stk->stk_cfa = 0;
 	stk->stk_fil = fil;
 	stk->stk_lnum = lnum;
 	stk->stk_siginfo = NULL;

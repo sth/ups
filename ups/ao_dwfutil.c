@@ -495,7 +495,8 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     Dwarf_Signed count = 0;
     Dwarf_Small op;
     vaddr_t *head = NULL, *vaddr;
-    unsigned char fb_regop;
+    unsigned char fp_regop;
+    unsigned char sp_regop;
 
     if ((loclist = dwf_get_locdesc(dbg, die, id, &count)) == NULL)
 	return (vaddr_t *)NULL;
@@ -503,10 +504,12 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     switch (xp_get_addrsize(get_current_target()))
     {
     case 32:
-	fb_regop = DW_OP_breg5;
+	fp_regop = DW_OP_breg5;
+	sp_regop = DW_OP_breg4;
 	break;
     case 64:
-	fb_regop = DW_OP_breg6;
+	fp_regop = DW_OP_breg6;
+	sp_regop = DW_OP_breg7;
 	break;
     default:
 	panic("Unsupported address size");
@@ -545,12 +548,24 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     */
 	    vaddr->v_op = OP_U_OFFSET;
 	    vaddr->v_u_offset = loclist[i].ld_s->lr_number;
-	} else if (op == DW_OP_fbreg || op == fb_regop) {
+	} else if (op == DW_OP_fbreg) {
 	    /*
-	     * Relative to frame base.
+	     * Relative to canonical frame address.
 	     */
-	    vaddr->v_op = OP_FRAME_BASE;
-	    vaddr->v_frame_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	    vaddr->v_op = OP_CFA_RELATIVE;
+	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	} else if (op == fp_regop) {
+	    /*
+	     * Relative to frame pointer.
+	     */
+	    vaddr->v_op = OP_FP_RELATIVE;
+	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	} else if (op == sp_regop) {
+	    /*
+	     * Relative to stack pointer.
+	     */
+	    vaddr->v_op = OP_SP_RELATIVE;
+	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
 	}
 
 	dwarf_dealloc(dbg, loclist[i].ld_s, DW_DLA_LOC_BLOCK);
@@ -621,7 +636,7 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
  * Unwind a stack frame.
  */
 bool
-dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
+dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc, taddr_t *cfa)
 {
     int rv;
     Dwarf_Error err;
@@ -655,18 +670,17 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc)
 	Dwarf_Fde fde;
        
 	if ((rv = dwarf_get_fde_at_pc(fde_data, *pc, &fde, NULL, NULL, &err)) == DW_DLV_OK) {
-	    taddr_t cfa;
 	    taddr_t new_fp;
 	    taddr_t new_sp;
 	    taddr_t new_pc;
 	    
-	    if (dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, &cfa) &&
-		dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, ra_col, &new_pc)) {
-                if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, fp_col, &new_fp))
+	    if (dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, cfa) &&
+		dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, ra_col, &new_pc)) {
+                if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, fp_col, &new_fp))
 		    new_fp = 0;
                    
-		if (!dwf_unwind_reg(fde, xp, cfa, *fp, *sp, *pc, sp_col, &new_sp))
-		    new_sp = cfa;
+		if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, sp_col, &new_sp))
+		    new_sp = *cfa;
 
 		*fp = new_fp;
 		*sp = new_sp;

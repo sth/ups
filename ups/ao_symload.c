@@ -810,12 +810,13 @@ fil_t *fil;
 }
 
 bool
-ao_unwind(xp, st, fp, sp, pc)
+ao_unwind(xp, st, fp, sp, pc, cfa)
 target_t *xp;
 symtab_t *st;
 taddr_t *fp;
 taddr_t *sp;
 taddr_t *pc;
+taddr_t *cfa;
 {
 	return FALSE;
 }

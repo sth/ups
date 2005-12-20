@@ -459,13 +459,15 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
 	class = class_hint;
 	addr = 0;
 
-    } else if (vaddr->v_op == OP_FRAME_BASE) {
+    } else if (vaddr->v_op == OP_CFA_RELATIVE ||
+	       vaddr->v_op == OP_FP_RELATIVE ||
+	       vaddr->v_op == OP_SP_RELATIVE ) {
 
 	if (class_hint == CL_ARG)
 	    class = CL_ARG;
 	else if (class_hint == CL_AUTO)
 	    class = CL_AUTO;
-	addr = vaddr->v_frame_offset;
+	addr = vaddr->v_offset;
 
     } else if (vaddr->v_op == OP_REGISTER) {
 
@@ -488,6 +490,7 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
 
 	class = CL_NOCLASS;
 	addr = vaddr->v_u_offset;
+	vaddr = NULL;
 
     }
 
@@ -498,6 +501,7 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
     v = ci_make_var(ap, name, class, type, addr);
     v->va_language = stf->stf_language;
     v->va_lexinfo = dwf_make_lexinfo(dbg, spec_die, ap, stf);
+    v->va_location = vaddr;
     v->va_next = *p_vars;
     *p_vars = v;
     if (dt)

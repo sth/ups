@@ -1208,7 +1208,7 @@ objid_t par;
 	block_t *blocks;
 	taddr_t junk;
 
-	f = get_stack_func(par, &junk, &junk);
+	f = get_stack_func(par, &junk, &junk, &junk, &junk);
 #ifdef ARCH_MIPS
 	if (!(f->fu_language == LANG_C || f->fu_language == LANG_CC)) {
 		errf("Sorry, can only show variables of C functions");
@@ -1273,15 +1273,17 @@ block_t *parblock;
 }
 
 func_t *
-get_stack_func(obj, p_fp, p_ap)
+get_stack_func(obj, p_fp, p_ap, p_sp, p_cfa)
 objid_t obj;
-taddr_t *p_fp, *p_ap;
+taddr_t *p_fp, *p_ap, *p_sp, *p_cfa;
 {
 	Stack *stk;
 
 	stk = obj_to_stack(obj);
 	*p_fp = stk->stk_fp;
 	*p_ap = stk->stk_ap;
+	*p_sp = stk->stk_sp;
+	*p_cfa = stk->stk_cfa;
 	return stk->stk_func;
 }
 
@@ -1460,7 +1462,7 @@ int **obj_var;
   par = (objid_t) Current_stack;
   if (!par)
     return found;
-  f = get_stack_func(par, &junk, &junk);
+  f = get_stack_func(par, &junk, &junk, &junk, &junk);
   
 #ifdef ARCH_MIPS
   if (!(f->fu_language == LANG_C || f->fu_language == LANG_CC)) {

@@ -238,35 +238,6 @@ typedef struct typename_s {
 	struct typename_s *tn_next;	/* Next with the same name. */
 } typename_t;
 
-#if WANT_DWARF
-/*
- * Extended address description, abstracted from DWARF location description.
- *
- * dwarfTODO: this was a quick kludge to get things working; the proper
- * solution is probably to use what is in the 'C' interpreter.
- */
-typedef enum {
-    OP_ADDR,		/* Address. */
-    OP_REGISTER,	/* Register number. */
-    OP_U_OFFSET,	/* Unsigned offset. */
-    OP_FRAME_BASE,	/* Relative to frame base. */
-} vaddr_op_t;
-typedef struct vaddr_s {
-	vaddr_op_t v_op;		/* Operation. */
-	struct vaddr_s *v_next;
-	union {
-	    taddr_t vu_addr;		/* Address or unsigned offset. */
-	    long vu_const;		/* Constant. */
-	    unsigned char vu_byte;	/* e.g. register number */
-	} v_u;
-} vaddr_t;
-#define v_addr		v_u.vu_addr
-#define v_register	v_u.vu_byte
-#define v_u_offset	v_u.vu_addr
-#define v_const		v_u.vu_const
-#define v_frame_offset	v_u.vu_const
-#endif
-
 /*
  * Symbol table information dependent on symbol table types being supported.
  *

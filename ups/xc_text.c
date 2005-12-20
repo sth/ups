@@ -106,7 +106,7 @@ static void xc_close_symtab_data PROTO((symtab_t *st));
 static var_t *xc_get_fi_vars PROTO((fil_t *fil));
 static macro_t *xc_get_fi_macros PROTO((fil_t *fil));
 static bool xc_unwind PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
-                             taddr_t *sp, taddr_t *pc));
+                             taddr_t *sp, taddr_t *pc, taddr_t *cfa));
 static func_t *xc_ensure_fu PROTO((func_t *f));
 static fil_t *xc_get_fi PROTO((symtab_t *st));
 static block_t *xc_get_fu_blocks PROTO((func_t *f));
@@ -1339,12 +1339,13 @@ fil_t *fil;
 }
 
 static bool
-xc_unwind(xp, st, fp, sp, pc)
+xc_unwind(xp, st, fp, sp, pc, cfa)
 target_t *xp;
 symtab_t *st;
 taddr_t *fp;
 taddr_t *sp;
 taddr_t *pc;
+taddr_t *cfa;
 {
 	return FALSE;
 }

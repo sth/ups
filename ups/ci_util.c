@@ -359,6 +359,7 @@ taddr_t addr;
 	v->va_addr = addr;
 	v->va_next = NULL;
 	v->va_lexinfo = NULL;
+	v->va_location = NULL;
 	return v;
 }
 

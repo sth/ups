@@ -485,7 +485,7 @@ target_t *xp;
 		/*  Get the next stack frame
 		 */
 
-		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &prevpc)) {
+		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &prevpc, &stk->stk_cfa)) {
 			pc = prevpc;
 		}
 		else if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {

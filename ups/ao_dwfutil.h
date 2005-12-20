@@ -48,6 +48,6 @@ vaddr_t *	dwf_get_location PROTO((Dwarf_Debug dbg, alloc_pool_t *ap,
 					Dwarf_Die die, Dwarf_Half id));
 
 bool		dwf_unwind PROTO((Dwarf_Debug dbg, target_t *xp, taddr_t *fp,
-				  taddr_t *sp, taddr_t *pc));
+				  taddr_t *sp, taddr_t *pc, taddr_t *cfa));
 
 #endif /* WANT_DWARF */

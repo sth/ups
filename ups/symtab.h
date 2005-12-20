@@ -298,6 +298,35 @@ typedef enum classen {
 	CL_TAGNAME	/* struct/union tag */
 } class_t;
 
+/*
+ * Extended address description, abstracted from DWARF location description.
+ *
+ * dwarfTODO: this was a quick kludge to get things working; the proper
+ * solution is probably to use what is in the 'C' interpreter.
+ */
+typedef enum {
+    OP_ADDR,		/* Address. */
+    OP_REGISTER,	/* Register number. */
+    OP_U_OFFSET,	/* Unsigned offset. */
+    OP_CFA_RELATIVE,	/* Relative to canonical frame address. */
+    OP_FP_RELATIVE,	/* Relative to frame pointer. */
+    OP_SP_RELATIVE,	/* Relative to stack pointer. */
+} vaddr_op_t;
+typedef struct vaddr_s {
+	vaddr_op_t v_op;		/* Operation. */
+	struct vaddr_s *v_next;
+	union {
+	    taddr_t vu_addr;		/* Address or unsigned offset. */
+	    long vu_const;		/* Constant. */
+	    unsigned char vu_byte;	/* e.g. register number */
+	} v_u;
+} vaddr_t;
+#define v_addr		v_u.vu_addr
+#define v_register	v_u.vu_byte
+#define v_u_offset	v_u.vu_addr
+#define v_const		v_u.vu_const
+#define v_offset	v_u.vu_const
+
 /*  Variable, also used for struct/union members and function parameters.
  */
 typedef struct var_s {
@@ -308,7 +337,8 @@ typedef struct var_s {
 	type_t *va_type;	/* variable type */
 	taddr_t va_addr;	/* variable address */
 	struct var_s *va_next;	/* next variable */
-	lexinfo_t *va_lexinfo;
+	lexinfo_t *va_lexinfo;  /* lexical information */
+	vaddr_t *va_location;   /* variable location */
 } var_t;
 
 /*  Flags describing a variable.

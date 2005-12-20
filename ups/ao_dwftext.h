@@ -42,6 +42,6 @@ var_t * dw_get_fi_vars PROTO((fil_t *fil));
 macro_t * dw_get_fi_macros PROTO((fil_t *fil));
 
 bool dw_unwind PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
-                      taddr_t *sp, taddr_t *pc));
+                      taddr_t *sp, taddr_t *pc, taddr_t *cfa));
 
 #endif /* WANT_DWARF */

@@ -398,7 +398,7 @@ const char *estr;
 int *p_cnum;
 {
 	objid_t par;
-	taddr_t fp, ap;
+	taddr_t junk;
 	fil_t *fil;
 	int lnum;
 	char *expansion;
@@ -409,7 +409,7 @@ int *p_cnum;
         if (ups_get_object_type(par) == OT_SFILE)
            fil = (fil_t *)par;
         else
-           fil = get_stack_func(par, &fp, &ap)->fu_fil;
+           fil = get_stack_func(par, &junk, &junk, &junk, &junk)->fu_fil;
 
 	lnum = de->de_block->bl_start_lnum;
         
@@ -916,7 +916,7 @@ objid_t obj;
 vformat_t new_format;
 bool change_caused_by_edit;
 {
-	taddr_t fp, ap;
+	taddr_t fp, ap, junk;
 	dexpr_t *de;
 	bool lose_descendents;
 	type_t *type;
@@ -942,7 +942,7 @@ bool change_caused_by_edit;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fp = ap = 0;
 	else
-		get_stack_func(par, &fp, &ap);
+		get_stack_func(par, &fp, &ap, &junk, &junk);
 
 	Expr_type = NULL;
 	ci_initialise_machine(de->de_machine, TRUE, FALSE,
@@ -1306,7 +1306,7 @@ get_expr_address(de)
 dexpr_t *de;
 {
 	objid_t par;
-	taddr_t fp, ap;
+	taddr_t fp, ap, junk;
 	fil_t *fil;
 	int lnum;
 	compile_res_t *cr;
@@ -1324,7 +1324,7 @@ dexpr_t *de;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fil = (fil_t *)par;
         else
-		fil = get_stack_func(par, &fp, &ap)->fu_fil;
+		fil = get_stack_func(par, &fp, &ap, &junk, &junk)->fu_fil;
 
 	lnum = de->de_block->bl_start_lnum;
 
@@ -1340,7 +1340,7 @@ dexpr_t *de;
 	retval = 0;
 
 	if (cr->cr_machine != NULL && cr->cr_parse_id != NULL) {
-		taddr_t fp, ap;
+		taddr_t fp, ap, junk;
 		ci_exec_result_t res;
 		objid_t par;
 		
@@ -1348,7 +1348,7 @@ dexpr_t *de;
 		if (ups_get_object_type(par) == OT_SFILE)
                 	fp = ap = 0;
 		else
-			get_stack_func(par, &fp, &ap);
+			get_stack_func(par, &fp, &ap, &junk, &junk);
 		
 		Expr_type = NULL;
 		ci_initialise_machine(cr->cr_machine, TRUE, FALSE,
@@ -1387,7 +1387,7 @@ get_expr_size(de)
 dexpr_t *de;
 {
 	objid_t par;
-	taddr_t fp, ap;
+	taddr_t fp, ap, junk;
 	fil_t *fil;
 	int lnum;
 	compile_res_t *cr;
@@ -1400,7 +1400,7 @@ dexpr_t *de;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fil = (fil_t *)par;
         else
-		fil = get_stack_func(par, &fp, &ap)->fu_fil;
+		fil = get_stack_func(par, &fp, &ap, &junk, &junk)->fu_fil;
 
 	lnum = de->de_block->bl_start_lnum;
 
@@ -1423,7 +1423,7 @@ dexpr_t *de;
 	retval = 0;
 
 	if (cr->cr_machine != NULL && cr->cr_parse_id != NULL) {
-		taddr_t fp, ap;
+		taddr_t fp, ap, junk;
 		ci_exec_result_t res;
 		objid_t par;
 		
@@ -1431,7 +1431,7 @@ dexpr_t *de;
 		if (ups_get_object_type(par) == OT_SFILE)
                 	fp = ap = 0;
 		else
-			get_stack_func(par, &fp, &ap);
+			get_stack_func(par, &fp, &ap, &junk, &junk);
 		
 		Expr_type = NULL;
 		ci_initialise_machine(cr->cr_machine, TRUE, FALSE,

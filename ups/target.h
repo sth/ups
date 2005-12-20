@@ -117,6 +117,7 @@ struct stack_s {
 	taddr_t stk_fp;			/* frame pointer */
 	taddr_t stk_sp;			/* stack pointer (only for $sp) */
 	taddr_t stk_ap;			/* argument pointer (VAX a.out only) */
+	taddr_t stk_cfa;		/* canonical frame address (DWARF only) */
 	fil_t *stk_fil;
 	int stk_lnum;			/* source lnum matching stk_pc */
 	Siginfo *stk_siginfo;		/* signal that caused func call, or 0 */

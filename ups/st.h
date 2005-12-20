@@ -77,7 +77,7 @@ typedef struct st_ops_s {
 	macro_t *(*so_get_fi_macros)PROTO((fil_t *fil));
 
 	bool (*so_unwind)PROTO((target_t *xp, symtab_t *st, taddr_t *fp,
-                                taddr_t *sp, taddr_t *pc));
+                                taddr_t *sp, taddr_t *pc, taddr_t *cfa));
 
 	const char *(*so_disassemble_instruction)PROTO((func_t *f, taddr_t addr,
 						        const char *text,
@@ -129,8 +129,8 @@ typedef struct st_ops_s {
 #define st_get_fi_macros(fil) \
 	(fil->fi_symtab->st_ops->so_get_fi_macros)(fil)
 
-#define st_unwind(xp, st, fp, sp, pc) \
-	(st->st_ops->so_unwind)(xp, st, fp, sp, pc)
+#define st_unwind(xp, st, fp, sp, pc, cfa)                  \
+   (st->st_ops->so_unwind)(xp, st, fp, sp, pc, cfa)
 
 #define st_disassemble_instruction(f, addr, text, len) \
 	(f->fu_symtab->st_ops->so_disassemble_instruction)(f, addr, text, len)

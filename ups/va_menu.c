@@ -600,69 +600,96 @@ var_t *v;
 ilist_t *ilist;
 int *p_decl_may_have_changed;
 {
-	taddr_t addr, fp, ap;
+	taddr_t addr, fp, ap, sp, cfa;
 	target_t *xp;
 
 	xp = get_current_target();
 
-	switch (v->va_class) {
-	case CL_REF:
-		(void) get_stack_func(par, &fp, &ap);
-                
-		if (dread(xp, ap+v->va_addr, (char *)&addr, sizeof(addr)) != 0)
-			addr = BAD_ADDR;
-                
-		break;
-	case CL_ARG:
-		(void) get_stack_func(par, &fp, &ap);
-		addr = ap + v->va_addr;
-		break;
-	case CL_AUTO:
-                get_stack_func(par, &fp, &ap);
-		addr = fp + v->va_addr;
-                
-		break;
-	case CL_MOS:
-	case CL_MOU:
-		addr = var_or_expr_addr(par);
-		if ( v->va_flags & VA_VTBLBASED)
-		{
-		    /* SC5 virtual base class.  True offset
-		    ** is in the vtable.
-		    */
-		    type_t* type = 0;
-		    switch (get_object_type(par))
-		    {
-		    case OT_VAR:
-			type = deref_aggr((dvar_t*)par);
+	if (v->va_location) {
+		switch (v->va_location->v_op) {
+		case OP_ADDR:
+			addr = v->va_location->v_addr;
 			break;
-		    case OT_EXPR:
-			type = get_expr_type(par);
-			if ( type->ty_code == DT_PTR_TO)
-			    type = type->ty_base;
+		case OP_REGISTER:
+			addr = get_reg_addr(xp, par, (int)v->va_location->v_register,
+					    (size_t)dynamic_type_size(v->va_type,
+								      ilist));
 			break;
-		    default:
-			panic("bad parent type in get_dv_addr");
-		    }
-		    addr = get_vtbl_based_addr(addr, type, v->va_addr);
+		case OP_CFA_RELATIVE:
+			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
+			addr = cfa + v->va_location->v_offset;
+			break;
+		case OP_FP_RELATIVE:
+			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
+			addr = fp + v->va_location->v_offset;
+			break;
+		case OP_SP_RELATIVE:
+			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
+			addr = sp + v->va_location->v_offset;
+			break;
+		default:
+			panic("unknown op in gda");
 		}
-		else
-		{
-		    addr = addr + v->va_addr;
+	} else {
+		switch (v->va_class) {
+		case CL_REF:
+			(void) get_stack_func(par, &fp, &ap, &sp, &cfa);
+                
+			if (dread(xp, ap+v->va_addr, (char *)&addr, sizeof(addr)) != 0)
+				addr = BAD_ADDR;
+                
+			break;
+		case CL_ARG:
+			(void) get_stack_func(par, &fp, &ap, &sp, &cfa);
+			addr = ap + v->va_addr;
+			break;
+		case CL_AUTO:
+	                get_stack_func(par, &fp, &ap, &sp, &cfa);
+			addr = fp + v->va_addr;
+                
+			break;
+		case CL_MOS:
+		case CL_MOU:
+			addr = var_or_expr_addr(par);
+			if ( v->va_flags & VA_VTBLBASED)
+			{
+			    /* SC5 virtual base class.  True offset
+			    ** is in the vtable.
+			    */
+			    type_t* type = 0;
+			    switch (get_object_type(par))
+			    {
+			    case OT_VAR:
+				type = deref_aggr((dvar_t*)par);
+				break;
+			    case OT_EXPR:
+				type = get_expr_type(par);
+				if ( type->ty_code == DT_PTR_TO)
+				    type = type->ty_base;
+				break;
+			    default:
+				panic("bad parent type in get_dv_addr");
+			    }
+			    addr = get_vtbl_based_addr(addr, type, v->va_addr);
+			}
+			else
+			{
+			    addr = addr + v->va_addr;
+			}
+			break;
+		case CL_EXT:
+		case CL_STAT:
+		case CL_LSTAT:
+			addr = v->va_addr;
+			break;
+		case CL_REG:
+			addr = get_reg_addr(xp, par, (int)v->va_addr,
+					    (size_t)dynamic_type_size(v->va_type,
+								      ilist));
+			break;
+		default:
+			panic("unknown class in gda");
 		}
-		break;
-	case CL_EXT:
-	case CL_STAT:
-	case CL_LSTAT:
-		addr = v->va_addr;
-		break;
-	case CL_REG:
-		addr = get_reg_addr(xp, par, (int)v->va_addr,
-				    (size_t)dynamic_type_size(v->va_type,
-							      ilist));
-		break;
-	default:
-		panic("unknown class in gda");
 	}
 
 	if (addr != BAD_ADDR) {

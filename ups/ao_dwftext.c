@@ -378,17 +378,18 @@ fil_t *fil;
  * Unwind a stack frame.
  */
 bool
-dw_unwind(xp, st, fp, sp, pc)
+dw_unwind(xp, st, fp, sp, pc, cfa)
 target_t *xp;
 symtab_t *st;
 taddr_t *fp;
 taddr_t *sp;
 taddr_t *pc;
+taddr_t *cfa;
 {
     ao_stdata_t *ast = AO_STDATA(st);
     taddr_t adjusted_pc = *pc - ast->st_dw_base_address;
     
-    if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc)) {
+    if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc, cfa)) {
 	*pc = adjusted_pc;
 	return TRUE;
     }
