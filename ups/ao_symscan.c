@@ -1953,8 +1953,12 @@ long delta;
 		if (fil->fi_flags & FI_DONE_VARS) {
 			for (v = fil->fi_block->bl_vars;
 			     v != NULL;
-			     v = v->va_next)
+			     v = v->va_next) {
 				v->va_addr += delta;
+				if (v->va_location &&
+				    v->va_location->v_op == OP_ADDR)
+				   v->va_location->v_addr += delta;
+			}
 		}
 	}
 }

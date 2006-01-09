@@ -484,7 +484,7 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
 	    class = CL_STAT;
 	else
 	    class = CL_LSTAT;
-	addr = vaddr->v_addr + stf->stf_addr;
+	addr = vaddr->v_addr = vaddr->v_addr + stf->stf_addr;
 
     } else if (vaddr->v_op == OP_U_OFFSET) {
 
