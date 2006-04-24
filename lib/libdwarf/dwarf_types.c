@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -57,19 +57,33 @@ dwarf_get_types(Dwarf_Debug dbg,
 	return res;
     }
 
-    return _dwarf_internal_get_pubnames_like_data(dbg, dbg->de_debug_typenames, dbg->de_debug_typenames_size, (Dwarf_Global **) types,	/* type 
-																	   punning,
-																	   Dwarf_Type 
-																	   is never
-																	   a
-																	   completed 
-																	   type */
+    return _dwarf_internal_get_pubnames_like_data(dbg, dbg->de_debug_typenames, dbg->de_debug_typenames_size, 
+	(Dwarf_Global **) types,	/* type punning, Dwarf_Type 
+	is never a completed type */
+
 						  ret_type_count,
 						  error,
 						  DW_DLA_TYPENAME_CONTEXT,
+						  DW_DLA_TYPENAME,
 						  DW_DLE_DEBUG_TYPENAMES_LENGTH_BAD,
 						  DW_DLE_DEBUG_TYPENAMES_VERSION_ERROR);
 
+}
+
+/* Deallocating fully requires deallocating the list
+   and all entries.  But some internal data is
+   not exposed, so we need a function with internal knowledge.
+*/
+
+void
+dwarf_types_dealloc(Dwarf_Debug dbg, Dwarf_Type *dwgl, Dwarf_Signed count)
+{
+   _dwarf_internal_globals_dealloc(dbg, (Dwarf_Global *)dwgl,
+                count,
+        DW_DLA_TYPENAME_CONTEXT,
+        DW_DLA_TYPENAME,
+        DW_DLA_LIST);
+   return;
 }
 
 

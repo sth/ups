@@ -59,7 +59,8 @@ RANLIB =	@RANLIB@
 DEFS =		@DEFS@
 LIBS =		@LIBS@
 INCLUDES =	-I. -I$(srcdir)
-CFLAGS =	@CFLAGS@ $(INCLUDES)
+CFLAGS =	@CPPFLAGS@ @CFLAGS@ $(INCLUDES)
+# For more checking add -DWANT_LIBBDWARF_MALLOC_CHECK=1 to CFLAGS
 LDFLAGS =	@LDFLAGS@
 
 
@@ -72,14 +73,18 @@ OBJS= dwarf_abbrev.o \
         dwarf_error.o \
         dwarf_form.o \
         dwarf_frame.o \
+        dwarf_frame2.o \
+        dwarf_frame3.o \
         dwarf_funcs.o \
         dwarf_global.o \
         dwarf_init_finish.o  \
         dwarf_line.o \
+        dwarf_line2.o \
         dwarf_loc.o \
         dwarf_query.o \
         dwarf_string.o \
         dwarf_stubs.o \
+        dwarf_pubtypes.o \
         dwarf_types.o \
         dwarf_util.o \
         dwarf_leb.o \
@@ -89,6 +94,7 @@ OBJS= dwarf_abbrev.o \
 	dwarf_sort_line.o \
 	dwarf_print_lines.o \
 	dwarf_macro.o \
+	malloc_check.o \
         pro_alloc.o \
         pro_arange.o \
         pro_die.o \

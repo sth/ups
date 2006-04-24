@@ -1,6 +1,6 @@
 #
 #
-#  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
+#  Copyright (C) 2000,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -22,7 +22,7 @@
 #  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
 #  USA.
 #
-#  Contact information:  Silicon Graphics, Inc., 1600 Amphitheatre Pky,
+#  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
 #  Mountain View, CA 94043, or:
 #
 #  http://www.sgi.com
@@ -42,7 +42,7 @@
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 
-prefix =	@prefix@l
+prefix =	@prefix@
 exec_prefix =	@exec_prefix@
 bindir =	$(exec_prefix)/bin
 libdir =	$(exec_prefix)/lib
@@ -60,10 +60,10 @@ DEFS =		@DEFS@
 LIBS =		@LIBS@
 INCLUDES =	-I. -I$(srcdir)
 CFLAGS =	@CFLAGS@ $(INCLUDES)
+# For more checking add -DWANT_LIBBDWARF_MALLOC_CHECK=1 to CFLAGS
 LDFLAGS =	@LDFLAGS@
 
 
-LIBS	= -L ../libdwarf -ldwarf -lelf
 BUILD_BASE = .
 
 OBJS= dwarf_abbrev.o \
@@ -73,14 +73,18 @@ OBJS= dwarf_abbrev.o \
         dwarf_error.o \
         dwarf_form.o \
         dwarf_frame.o \
+        dwarf_frame2.o \
+        dwarf_frame3.o \
         dwarf_funcs.o \
         dwarf_global.o \
         dwarf_init_finish.o  \
         dwarf_line.o \
+        dwarf_line2.o \
         dwarf_loc.o \
         dwarf_query.o \
         dwarf_string.o \
         dwarf_stubs.o \
+        dwarf_pubtypes.o \
         dwarf_types.o \
         dwarf_util.o \
         dwarf_leb.o \
@@ -90,6 +94,7 @@ OBJS= dwarf_abbrev.o \
 	dwarf_sort_line.o \
 	dwarf_print_lines.o \
 	dwarf_macro.o \
+	malloc_check.o \
         pro_alloc.o \
         pro_arange.o \
         pro_die.o \
@@ -148,7 +153,7 @@ dwarf.v2.ps:	$(BUILD_BASE)/dwarf.v2.mm
 
 # the index is only useful till the document changes: it is
 # not autmatically correct. It was prepared by tools internal
-# to use/Novell
+# to USL/Novell
 
 index.v2.ps:  index.v2.mm
 		pic index.v2.mm | tbl | psroff -t -mm >index.v2.ps

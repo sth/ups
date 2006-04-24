@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2000,2002,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
+  Copyright (C) 2000,2002,2003,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -57,9 +57,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h>
 
 #include "dwarf_incl.h"
+#include "malloc_check.h"
 
 #define DWARF_DBG_ERROR(dbg,errval,retval) \
      _dwarf_error(dbg, error, errval); return(retval);
@@ -206,7 +206,7 @@ _dwarf_setup(Dwarf_Debug dbg, dwarf_elf_handle elf, Dwarf_Error * error)
 #endif /* !WORDS_BIGENDIAN */
 
     /* The following de_length_size is Not Too Significant.
-	Only used one calculation, and an appoximate one at that. */
+	Only used one calculation, and an approximate one at that. */
     dbg->de_length_size = is_64bit ? 8 : 4;
     dbg->de_pointer_size = is_64bit ? 8 : 4;
 
@@ -448,6 +448,8 @@ _dwarf_setup(Dwarf_Debug dbg, dwarf_elf_handle elf, Dwarf_Error * error)
 	}
 
 	else if (strcmp(scn_name, ".debug_typenames") == 0) {
+	    /* SGI IRIX-only, created years before DWARF3. 
+	       Content essentially identical to .debug_pubtypes.  */
 	    if (dbg->de_debug_typenames_index != 0) {
 		DWARF_DBG_ERROR(dbg,
 				DW_DLE_DEBUG_TYPENAMES_DUPLICATE,
@@ -459,6 +461,20 @@ _dwarf_setup(Dwarf_Debug dbg, dwarf_elf_handle elf, Dwarf_Error * error)
 	    }
 	    dbg->de_debug_typenames_index = section_index;
 	    dbg->de_debug_typenames_size = section_size;
+	}
+	else if (strcmp(scn_name, ".debug_pubtypes") == 0) {
+	    /* Section new in DWARF3.  */
+	    if (dbg->de_debug_pubtypes_index != 0) {
+		DWARF_DBG_ERROR(dbg,
+				DW_DLE_DEBUG_PUBTYPES_DUPLICATE,
+				DW_DLV_ERROR);
+	    }
+	    if (section_size == 0) {
+		/* a zero size section is just empty. Ok, no error */
+		continue;
+	    }
+	    dbg->de_debug_pubtypes_index = section_index;
+	    dbg->de_debug_pubtypes_size = section_size;
 	}
 
 	else if (strcmp(scn_name, ".debug_varnames") == 0) {
@@ -556,20 +572,21 @@ dwarf_init(int fd,
 
     sres = elf_sgi_begin_fd(elf, fd, 0);
     if (sres != ELF_SGI_ERROR_OK) {
+        elf_sgi_free(elf);
 	DWARF_DBG_ERROR(dbg, _dwarf_error_code_from_elf_sgi_error_code(sres),
 			DW_DLV_ERROR);
     }
-#else
+#else /* ! __SGI_FAST_LIBELF */
     elf_version(EV_CURRENT);
     /* changed to mmap request per bug 281217. 6/95 */
 #ifdef HAVE_ELF_C_READ_MMAP
     /* ELF_C_READ_MMAP is an SGI IRIX specific enum value from IRIX
        libelf.h meaning read but use mmap */
     what_kind_of_elf_read = ELF_C_READ_MMAP;
-#else
+#else /* !HAVE_ELF_C_READ_MMAP */
     /* ELF_C_READ is a portable value */
     what_kind_of_elf_read  = ELF_C_READ;
-#endif
+#endif /* HAVE_ELF_C_READ_MMAP */
 
     if ((elf = elf_begin(fd, what_kind_of_elf_read, 0)) == NULL) {
 	DWARF_DBG_ERROR(dbg, DW_DLE_ELF_BEGIN_ERROR, DW_DLV_ERROR);
@@ -578,6 +595,11 @@ dwarf_init(int fd,
 
     dbg->de_elf_must_close = 1;
     if ((res = _dwarf_setup(dbg, elf, error)) != DW_DLV_OK) {
+#ifdef __SGI_FAST_LIBELF
+        elf_sgi_free(elf);
+#else
+        elf_end(elf);
+#endif
 	free(dbg);
 	return (res);
     }
@@ -653,6 +675,7 @@ dwarf_finish(Dwarf_Debug dbg, Dwarf_Error * error)
     if (res == DW_DLV_ERROR) {
 	DWARF_DBG_ERROR(dbg, DW_DLE_DBG_ALLOC, DW_DLV_ERROR);
     }
+    dwarf_malloc_check_complete("After Final free");
 
     return res;
 
@@ -737,3 +760,41 @@ _dwarf_load_section(Dwarf_Debug dbg,
 
     return DW_DLV_OK;
 }
+
+/* This is a hack so clients can verify offsets.
+   Added April 2005 so that debugger can detect broken offsets
+   (which happened in an IRIX  -64 executable larger than 2GB
+    using MIPSpro 7.3.1.3 compilers. A couple .debug_pubnames
+    offsets were wrong.).
+*/
+int
+dwarf_get_section_max_offsets(Dwarf_Debug dbg,
+    Dwarf_Unsigned *debug_info_size,
+    Dwarf_Unsigned *debug_abbrev_size,
+    Dwarf_Unsigned *debug_line_size,
+    Dwarf_Unsigned *debug_loc_size,
+    Dwarf_Unsigned *debug_aranges_size,
+    Dwarf_Unsigned *debug_macinfo_size,
+    Dwarf_Unsigned *debug_pubnames_size,
+    Dwarf_Unsigned *debug_str_size,
+    Dwarf_Unsigned *debug_frame_size,
+	Dwarf_Unsigned *debug_ranges_size,
+	Dwarf_Unsigned *debug_typenames_size)
+{
+    *debug_info_size = dbg->de_debug_info_size;
+    *debug_abbrev_size = dbg->de_debug_abbrev_size;
+    *debug_line_size = dbg->de_debug_line_size;
+    *debug_loc_size =dbg->de_debug_loc_size;
+    *debug_aranges_size = dbg->de_debug_aranges_size;
+    *debug_macinfo_size  =dbg->de_debug_macinfo_size;
+    *debug_pubnames_size  = dbg->de_debug_pubnames_size;
+    *debug_str_size = dbg->de_debug_str_size;
+    *debug_frame_size = dbg->de_debug_frame_size;
+    *debug_ranges_size = 0; /* Not yet supported. */
+    *debug_typenames_size = dbg->de_debug_typenames_size;
+
+	
+   return DW_DLV_OK;
+}
+
+

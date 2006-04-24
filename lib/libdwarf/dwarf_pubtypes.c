@@ -33,41 +33,44 @@
 
 */
 
+/* Reads DWARF3 .debug_pubtypes section. */
 
 
 #include "config.h"
 #include "dwarf_incl.h"
 #include <stdio.h>
-#include "dwarf_funcs.h"
+#include "dwarf_types.h"
 #include "dwarf_global.h"
 
 int
-dwarf_get_funcs(Dwarf_Debug dbg,
-		Dwarf_Func ** funcs,
-		Dwarf_Signed * ret_func_count, Dwarf_Error * error)
+dwarf_get_pubtypes(Dwarf_Debug dbg,
+		Dwarf_Type ** types,
+		Dwarf_Signed * ret_type_count, Dwarf_Error * error)
 {
     int res;
 
     res =
-	_dwarf_load_section(dbg,
-			    dbg->de_debug_funcnames_index,
-			    &dbg->de_debug_funcnames,
-			    error);
+       _dwarf_load_section(dbg,
+		           dbg->de_debug_pubtypes_index,
+			   &dbg->de_debug_pubtypes,
+			   error);
     if (res != DW_DLV_OK) {
 	return res;
     }
 
     return _dwarf_internal_get_pubnames_like_data(dbg, 
-	dbg->de_debug_funcnames, 
-	dbg->de_debug_funcnames_size, (Dwarf_Global **) funcs,	/* type 
-		punning, Dwarf_Type is never a completed type */
-	ret_func_count,
-	error,
-	DW_DLA_FUNC_CONTEXT,
-	DW_DLA_FUNC,
-	DW_DLE_DEBUG_FUNCNAMES_LENGTH_BAD,
-	DW_DLE_DEBUG_FUNCNAMES_VERSION_ERROR);
+	dbg->de_debug_pubtypes, 
+	dbg->de_debug_pubtypes_size, 
+	(Dwarf_Global **) types,	/* type punning,
+	Dwarf_Type is never a completed type */
 
+	ret_type_count,
+	error,
+	DW_DLA_PUBTYPES_CONTEXT,
+	DW_DLA_GLOBAL,  /* We don't have DW_DLA_PUBTYPES,
+		so use DW_DLA_GLOBAL. */
+	DW_DLE_DEBUG_PUBTYPES_LENGTH_BAD,
+	DW_DLE_DEBUG_PUBTYPES_VERSION_ERROR);
 }
 /* Deallocating fully requires deallocating the list
    and all entries.  But some internal data is
@@ -75,12 +78,13 @@ dwarf_get_funcs(Dwarf_Debug dbg,
 */
 
 void
-dwarf_funcs_dealloc(Dwarf_Debug dbg, Dwarf_Func *dwgl, Dwarf_Signed count)
+dwarf_pubtypes_dealloc(Dwarf_Debug dbg, Dwarf_Type *dwgl, Dwarf_Signed count)
 {
    _dwarf_internal_globals_dealloc(dbg, (Dwarf_Global *)dwgl,
                 count,
-        DW_DLA_FUNC_CONTEXT,
-        DW_DLA_FUNC,
+        DW_DLA_PUBTYPES_CONTEXT,
+        DW_DLA_GLOBAL,  /* We don't have DW_DLA_PUBTYPES,
+                so use DW_DLA_GLOBAL. */
         DW_DLA_LIST);
    return;
 }
@@ -88,48 +92,50 @@ dwarf_funcs_dealloc(Dwarf_Debug dbg, Dwarf_Func *dwgl, Dwarf_Signed count)
 
 
 int
-dwarf_funcname(Dwarf_Func func_in, char **ret_name, Dwarf_Error * error)
+dwarf_pubtypename(Dwarf_Type type_in, char **ret_name, Dwarf_Error * error)
 {
-    Dwarf_Global func = (Dwarf_Global) func_in;
+    Dwarf_Global type = (Dwarf_Global) type_in;
 
-    if (func == NULL) {
-	_dwarf_error(NULL, error, DW_DLE_FUNC_NULL);
+    if (type == NULL) {
+	_dwarf_error(NULL, error, DW_DLE_TYPE_NULL);
 	return (DW_DLV_ERROR);
     }
 
-    *ret_name = (char *) (func->gl_name);
+    *ret_name = (char *) (type->gl_name);
     return DW_DLV_OK;
 }
 
-int
-dwarf_func_die_offset(Dwarf_Func func_in,
-		      Dwarf_Off * return_offset, Dwarf_Error * error)
-{
-    Dwarf_Global func = (Dwarf_Global) func_in;
 
-    return dwarf_global_die_offset(func, return_offset, error);
+int
+dwarf_pubtype_type_die_offset(Dwarf_Type type_in,
+		      Dwarf_Off * ret_offset, Dwarf_Error * error)
+{
+    Dwarf_Global type = (Dwarf_Global) type_in;
+
+    return dwarf_global_die_offset(type, ret_offset, error);
 }
 
 
 int
-dwarf_func_cu_offset(Dwarf_Func func_in,
-		     Dwarf_Off * return_offset, Dwarf_Error * error)
+dwarf_pubtype_cu_offset(Dwarf_Type type_in,
+		     Dwarf_Off * ret_offset, Dwarf_Error * error)
 {
-    Dwarf_Global func = (Dwarf_Global) func_in;
+    Dwarf_Global type = (Dwarf_Global) type_in;
 
-    return dwarf_global_cu_offset(func, return_offset, error);
+    return dwarf_global_cu_offset(type, ret_offset, error);
+
 }
 
 
 int
-dwarf_func_name_offsets(Dwarf_Func func_in,
-			char **ret_func_name,
+dwarf_pubtype_name_offsets(Dwarf_Type type_in,
+			char **returned_name,
 			Dwarf_Off * die_offset,
 			Dwarf_Off * cu_die_offset, Dwarf_Error * error)
 {
-    Dwarf_Global func = (Dwarf_Global) func_in;
+    Dwarf_Global type = (Dwarf_Global) type_in;
 
-    return dwarf_global_name_offsets(func,
-				     ret_func_name,
+    return dwarf_global_name_offsets(type,
+				     returned_name,
 				     die_offset, cu_die_offset, error);
 }

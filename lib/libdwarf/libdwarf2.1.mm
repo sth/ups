@@ -1,3 +1,8 @@
+.ll 6.5i
+.nr ll 6.5i
+.PGFORM 6.5i
+.po 0.25i
+.nr po 0.25i
 \."
 \." the following line may be removed if the ff ligature works on your machine
 .lg 0
@@ -62,6 +67,14 @@ This document are subject to change.
 
 .AE
 .MT 4
+
+.ll 7.5i
+.nr ll 7.5i
+.PGFORM 7.5i
+.po 0.35i
+.nr po 0.35i
+.nr pg*top-margin 0
+.nr pg*top-enabled 0
 
 .H 1 "INTRODUCTION"
 This document describes an interface to \fIlibdwarf\fP, a
@@ -245,6 +258,7 @@ typedef signed long long   Dwarf_Signed;
 typedef unsigned long long Dwarf_Addr;
 typedef void 		   *Dwarf_Ptr;
 typedef void   (*Dwarf_Handler)(Dwarf_Error *error, Dwarf_Ptr errarg);
+\fP
 .DE
 
 .nr aX \n(Fg+1
@@ -398,7 +412,7 @@ Consumers trying to print everything in detail.
 	Dwarf_Half   fp_register;
 	Dwarf_Signed fp_offset;
 	Dwarf_Offset fp_instr_offset;
-} Dwarf_Frame_Op;
+} Dwarf_Frame_Op;\fP
 .DE
 
 \f(CWfp_base_op\fP is the 2-bit basic op code.  \f(CWfp_extended_op\fP is 
@@ -434,7 +448,7 @@ a single entry in the .debug.macinfo section.
   Dwarf_Signed dmd_lineno;
   Dwarf_Signed dmd_fileindex;
   char *       dmd_macro;
-};
+};\fP
 typedef struct Dwarf_Macro_Details_s Dwarf_Macro_Details;
 .DE
 .P
@@ -1042,7 +1056,7 @@ entries.
         Dwarf_Unsigned *abbrev_offset,
         Dwarf_Half     *address_size,
         Dwarf_Unsigned *next_cu_header,
-        Dwarf_Error    *error);
+        Dwarf_Error    *error);\fP
 .DE
 The function
 \f(CWdwarf_next_cu_header()\fP returns \f(CWDW_DLV_ERROR\fP 
@@ -1362,9 +1376,9 @@ the function \f(CWdwarf_attr()\fP
 sets 
 \f(CW*return_attr\fP to the  \f(CWDwarf_Attribute\fP 
 descriptor of \f(CWdie\fP having the attribute \f(CWattr\fP.
-It returns \f(CDW_DLV_NO_ENTRY\fP if \f(CWattr\fP is not contained 
+It returns \f(CWDW_DLV_NO_ENTRY\fP if \f(CWattr\fP is not contained 
 in \f(CWdie\fP. 
-It returns \f(CDW_DLV_ERROR\fP if an error occurred.
+It returns \f(CWDW_DLV_ERROR\fP if an error occurred.
 
 .\"#if 0
 .\".DS
@@ -3581,7 +3595,7 @@ unit.
 \f(CWint dwarf_get_abbrev_tag(
         Dwarf_abbrev abbrev,
 	Dwarf_Half  *return_tag,
-        Dwarf_Error *error);\P
+        Dwarf_Error *error);\fP
 .DE
 If successful,
 \f(CWdwarf_get_abbrev_tag()\fP returns
@@ -3596,7 +3610,7 @@ It never returns \f(CWDW_DLV_NO_ENTRY\fP.
 \f(CWint dwarf_get_abbrev_code(
         Dwarf_abbrev     abbrev,
 	Dwarf_Unsigned  *return_code,
-        Dwarf_Error     *error);\P
+        Dwarf_Error     *error);\fP
 .DE
 If successful,
 \f(CWdwarf_get_abbrev_code()\fP returns
