@@ -132,7 +132,7 @@ static void save_interpreted_code_to_file PROTO((const char *path, FILE *fp,
 static void save_breakpoint_to_file PROTO((const char *path, FILE *fp, 
                                            bpdesc_t *bd));
 static bool execute_bp_code_internal PROTO((breakpoint_t *bp,
-					    taddr_t fp, taddr_t ap,
+					    taddr_t fp, taddr_t ap, taddr_t cfa,
 					    int button));
 static void set_bpt_location PROTO((fval_t *fields, func_t *f, int lnum));
 static void null_ofunc PROTO((const char *s));
@@ -1601,9 +1601,9 @@ global_bp_enabled(set, reset)
 }
 
 static bool
-execute_bp_code_internal(bp, fp, ap, button)
+execute_bp_code_internal(bp, fp, ap, cfa, button)
 breakpoint_t *bp;
-taddr_t fp, ap;
+taddr_t fp, ap, cfa;
 int button;
 {
 	objid_t obj;
@@ -1641,7 +1641,7 @@ int button;
 						(char **)NULL, (char **)NULL);
 	}
 
-	res = ci_execute_machine(bd->machine, fp, ap, read_data, write_data,
+	res = ci_execute_machine(bd->machine, fp, ap, cfa, read_data, write_data,
 							call_target_function);
 
 	if (res != CI_ER_TRAP && res != STOP)
@@ -1651,9 +1651,9 @@ int button;
 }
 
 bool
-execute_bp_code(bp, fp, ap)
+execute_bp_code(bp, fp, ap, cfa)
 breakpoint_t *bp;
-taddr_t fp, ap;
+taddr_t fp, ap, cfa;
 {
  	if (!global_bp_enabled(0, 0))
  		return FALSE;
@@ -1661,7 +1661,7 @@ taddr_t fp, ap;
 	if ((get_breakpoint_data(bp) == 0))
 		return TRUE;
 
-	return (execute_bp_code_internal(bp, fp, ap, 0));
+	return (execute_bp_code_internal(bp, fp, ap, cfa, 0));
 }
 
 static int
@@ -1942,7 +1942,8 @@ char *arg;
 		{
 		  execute_bp_code_internal(bd->breakpoint,
 					   xp_getreg(xp, UPSREG_FP),
-					   xp_getreg(xp, UPSREG_AP), 1);
+					   xp_getreg(xp, UPSREG_AP),
+					   xp_getcfa(xp), 1);
 		  update_variable_values();
 		}
 		else

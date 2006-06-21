@@ -209,8 +209,9 @@ rtype_t rtype;
 			bp = dx_addr_to_breakpoint(xp, xp_getreg(xp, UPSREG_PC));
 			if (bp != NULL) {
 				bp_wants_stop = execute_bp_code(bp,
-							xp_getreg(xp, UPSREG_FP),
-						     xp_getreg(xp, UPSREG_AP));
+								xp_getreg(xp, UPSREG_FP),
+								xp_getreg(xp, UPSREG_AP),
+								xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 				if (breakpoint_is_solib_event(bp))
 				  xp->xp_hit_solib_event = TRUE;
@@ -251,7 +252,8 @@ rtype_t rtype;
 				panic("bpt botch in rt");
 			bp_wants_stop = execute_bp_code(bp,
 							xp_getreg(xp, UPSREG_FP),
-							xp_getreg(xp, UPSREG_AP));
+							xp_getreg(xp, UPSREG_AP),
+							xp_getcfa(xp));
 			stopres = xp_get_stopres(xp);
 			if (breakpoint_is_solib_event(bp))
 			  xp->xp_hit_solib_event = TRUE;

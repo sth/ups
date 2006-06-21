@@ -534,7 +534,7 @@ cont_type_t ctype;
 	switch (ctype) {
 	case CT_CONT:
 		res = ci_execute_machine(ma,
-			(textaddr_t)0, (textaddr_t)0,
+			(textaddr_t)0, (textaddr_t)0, (textaddr_t)0,
 			(ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 		        (ci_indirect_call_proc_t)NULL);
 		break;
@@ -583,7 +583,7 @@ machine_t *ma;
 	*npc = (textword_t)OC_TRAP;
 
 	res = ci_execute_machine(ma,
-			(textaddr_t)0, (textaddr_t)0,
+			(textaddr_t)0, (textaddr_t)0, (textaddr_t)0,
 			(ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 		        (ci_indirect_call_proc_t)NULL);
 
@@ -1056,7 +1056,7 @@ const char **p_mesg;
 	ma->ma_pc = fpc;
 	ma->ma_codefile = fcf;
 
-	ci_execute_machine(ma, (textaddr_t)NULL, (textaddr_t)NULL,
+	ci_execute_machine(ma, (textaddr_t)NULL, (textaddr_t)NULL, (textaddr_t)NULL,
 			   (ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 			   (ci_indirect_call_proc_t)NULL);
 

@@ -440,24 +440,54 @@ int sig;
 }
 
 
+static void
+abort_cleanup(int signo)
+{
+	target_t *xp = get_current_target();
+	iproc_t *ip = GET_IPROC(xp);
+
+	kill(ip->ip_pid, SIGTRAP);
+}
+
+
 /*  Kill off the target process
  */
 void
 ptrace_kill(xp)
 target_t *xp;
 {
+	struct sigaction sa;
 	wait_arg_t status;
 	iproc_t *ip;
 
 	ip = GET_IPROC(xp);
 
 	uninstall_all_breakpoints(xp);
-	std_ptrace(PTRACE_SINGLESTEP, ip->ip_pid, (char *)NULL, SIGTERM);
+
+	sa.sa_handler = abort_cleanup;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_ONESHOT;
+	sa.sa_restorer = NULL;
+
+	sigaction(SIGALRM, &sa, &sa);
+
+	alarm(5);
+
+	std_ptrace(PTRACE_CONT, ip->ip_pid, (char *)NULL, SIGTERM);
 	ptrace_wait_for_target(xp);
 
-	std_ptrace(PTRACE_KILL, ip->ip_pid, (char *)NULL, 0);
+	while (ip->ip_stopres == SR_SIG) {
+		std_ptrace(PTRACE_CONT, ip->ip_pid, (char *)NULL, ip->ip_lastsig);
+		ptrace_wait_for_target(xp);
+	}
+
+	alarm(0);
+  
+	sigaction(SIGALRM, &sa, NULL);
 
 	if (ip->ip_stopres != SR_DIED) {
+		std_ptrace(PTRACE_KILL, ip->ip_pid, (char *)NULL, 0);
+
 		if (ip->ip_attached) {
 			/*  wait() hangs on a PTRACE_ATTACH process which
 			 *  has been killed, so fake the status.

@@ -716,7 +716,18 @@ expr_context_t context;
 		if (IS_LOCAL_CLASS(v->va_class)) {
 			if (is_civar)
 				generic_opcode = OC_PUSH_STACKADDR_B;
-			else {
+			else if (v->va_location) {
+				switch (v->va_location->v_op) {
+				case OP_CFA_RELATIVE:
+					generic_opcode = OC_PROC_PUSH_CFA_ADDR_B;
+					break;
+				case OP_FP_RELATIVE:
+					generic_opcode = OC_PROC_PUSH_FP_ADDR_B;
+					break;
+				default:
+					panic("unhandled op in cvr");
+				}
+			} else {
 				generic_opcode = (v->va_class == CL_ARG)
 							? OC_PROC_PUSH_AP_ADDR_B
 							: OC_PROC_PUSH_FP_ADDR_B;
@@ -748,11 +759,24 @@ expr_context_t context;
 						opcode_offset(v->va_type->ty_code));
 		}
 		else {
-			if (IS_LOCAL_CLASS(v->va_class))
-				generic_opcode = (v->va_class == CL_ARG)
-							? OC_PROC_PUSH_AP_ADDR_B
-							: OC_PROC_PUSH_FP_ADDR_B;
-			else
+			if (IS_LOCAL_CLASS(v->va_class)) {
+				if (v->va_location) {
+					switch (v->va_location->v_op) {
+					case OP_CFA_RELATIVE:
+						generic_opcode = OC_PROC_PUSH_CFA_ADDR_B;
+						break;
+					case OP_FP_RELATIVE:
+						generic_opcode = OC_PROC_PUSH_FP_ADDR_B;
+						break;
+					default:
+						panic("unhandled op in cvr");
+					}
+				} else {
+					generic_opcode = (v->va_class == CL_ARG)
+							 ? OC_PROC_PUSH_AP_ADDR_B
+							 : OC_PROC_PUSH_FP_ADDR_B;
+				}
+			} else
 				generic_opcode = OC_CONSTPUSH_B;
 			need_deref = TRUE;
 		}

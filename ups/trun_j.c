@@ -186,7 +186,8 @@ stopres_t *p_stopres;
 			else
 			{
 			    stop = execute_bp_code(bp, xp_getreg(xp, UPSREG_FP),
-						       xp_getreg(xp, UPSREG_AP));
+						   xp_getreg(xp, UPSREG_AP),
+						   xp_getcfa(xp));
 			    stopres = xp_get_stopres(xp);
 			    if (stopres != SR_BPT)
 				    stop = TRUE;
@@ -652,7 +653,8 @@ stopres_t *p_stopres;
 			bp_at_nextline = dx_addr_to_breakpoint(xp, pc);
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
-							xp_getreg(xp, UPSREG_AP));
+						xp_getreg(xp, UPSREG_AP),
+						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
 			break;
@@ -782,8 +784,9 @@ stopres_t *p_stopres;
 			}
 			if (bp_at_start_of_func != NULL) {
 				execute_bp_code(bp_at_start_of_func,
-							xp_getreg(xp, UPSREG_FP),
-							xp_getreg(xp, UPSREG_AP));
+						xp_getreg(xp, UPSREG_FP),
+						xp_getreg(xp, UPSREG_AP),
+						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
 			break;
@@ -1115,7 +1118,8 @@ retry:
 			bp_at_nextline = dx_addr_to_breakpoint(xp, pc);
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
-							xp_getreg(xp, UPSREG_AP));
+						xp_getreg(xp, UPSREG_AP),
+						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
 			break;
@@ -1276,8 +1280,9 @@ set_bpt:
 			    errf("\bStepping into `%s'", buff);
 			if (bp_at_start_of_func != NULL) {
 				execute_bp_code(bp_at_start_of_func,
-							xp_getreg(xp, UPSREG_FP),
-							xp_getreg(xp, UPSREG_AP));
+						xp_getreg(xp, UPSREG_FP),
+						xp_getreg(xp, UPSREG_AP),
+						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
 			break;

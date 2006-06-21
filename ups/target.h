@@ -442,6 +442,7 @@ int make_target PROTO((const char *textpath, const char *corename,
 		       bool target_updated));
 
 taddr_t xp_getreg PROTO((target_t *xp, int regno));
+taddr_t xp_getcfa PROTO((target_t *xp));
 
 taddr_t xp_get_entryaddr PROTO((target_t *xp));
 

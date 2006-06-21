@@ -133,7 +133,7 @@ preinitialise_target_drivers()
 
 	return 0;
 }
-	
+
 int
 initialise_target_drivers(usage_eb, argv)
 ebuf_t *usage_eb;
@@ -152,7 +152,7 @@ char **argv;
 
 	return 0;
 }
-	    
+
 void
 show_target_driver_info(name_only)
 bool name_only;
@@ -161,11 +161,11 @@ bool name_only;
 	xp_ops_t **drivers;
 
 	drivers = get_target_drivers();
-	
+
 	for (i = 0; drivers[i] != NULL; ++i)
 		(*drivers[i]->xo_show_target_driver_info)(name_only);
 }
-	    
+
 bool
 extract_bool_arg(usage_eb, argv, flag)
 ebuf_t *usage_eb;
@@ -174,7 +174,7 @@ const char *flag;
 {
 	bool seen_flag;
 	char **iptr, **optr;
-	
+
 	optr = argv;
 	seen_flag = FALSE;
 
@@ -358,6 +358,24 @@ int regno;
 	return val;
 }
 
+taddr_t
+xp_getcfa(xp)
+target_t *xp;
+{
+	taddr_t pc = xp_getreg(xp, UPSREG_PC);
+	taddr_t fp = xp_getreg(xp, UPSREG_FP);
+	taddr_t sp = xp_getreg(xp, UPSREG_SP);
+	taddr_t cfa = 0;
+	func_t  *f;
+
+	if ((f = addr_to_func(pc)) != NULL && f->fu_symtab)
+	{
+	   st_unwind(xp, f->fu_symtab, &fp, &sp, &pc, &cfa);
+	}
+
+	return cfa;
+}
+
 Stack *
 make_stk(f, pc, fil, lnum, last)
 func_t *f;
@@ -392,7 +410,7 @@ func_t *
 make_badfunc()
 {
 	static func_t badfunc;
-	
+
 	if (badfunc.fu_flags == 0) {
 		badfunc.fu_flags = FU_NOSYM | FU_DONE_LNOS |
 				   FU_DONE_BLOCKS | FU_BAD;
@@ -409,7 +427,7 @@ make_badfunc()
 
 	return &badfunc;
 }
-	
+
 void
 destroy_stk(stk)
 Stack *stk;
@@ -460,10 +478,10 @@ tstate_t tstate;
 {
 	if (!td_have_window())
 		return;
-	
+
 	if (Old_cursor == 0)
 		panic("dup call of its");
-	
+
 	wn_define_cursor(WN_STDWIN, Old_cursor);
 	update_target_menu_state(tstate, xp_is_attached(get_current_target()));
 
@@ -546,7 +564,7 @@ bool new_target_name;
     alloc_free_pool(xp->xp_apool);
     errf("\bFreeing old data...done");
     wn_do_flush();
-   
+
     if (make_target(textpath, pid_str, user_gave_core, &xp, &args, restore_bpts,
 		    target_updated) == -1)
       return -1;
@@ -563,7 +581,7 @@ bool new_target_name;
       find_func_by_name("main", &f, &f1, TRUE);
     }
     errf_set_ofunc(oldf);
-    
+
     xp_set_mainfunc(xp, f);
   }
   return 0;
@@ -631,7 +649,7 @@ bool check_textfile;
 		if ((*drivers[i]->xo_match)(textpath, &tbuf, n_read))
 			break;
 	}
-	
+
 	if (drivers[i] == NULL) {
 		errf("%s: File format unrecognised", textpath);
 		return -1;
