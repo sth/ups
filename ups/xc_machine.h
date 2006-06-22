@@ -84,8 +84,8 @@ typedef union {
 	char d_char;
 	unsigned short d_ushort;
 	short d_short;
-	unsigned long d_ulong;
-	long d_long;
+	unsigned int d_ulong;
+	int d_long;
 	float d_float;
 	stackword_t d_word;
 #if WANT_LDBL

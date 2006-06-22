@@ -70,8 +70,8 @@ static void compile_logical_expression PROTO((text_t *tx,
 					      expr_t *left, expr_t *right,
 					      optype_t op, expr_context_t context));
 
-static int opcode_offset PROTO((typecode_t typecode));
-static void code_deref PROTO((text_t *tx, typecode_t typecode, addrtype_t addrtype));
+static int opcode_offset PROTO((typecode_t typecode, long typesize));
+static void code_deref PROTO((text_t *tx, typecode_t typecode, long typesize, addrtype_t addrtype));
 static opcode_t operator_to_opcode PROTO((text_t *tx, optype_t op, type_t *ltype, type_t *rtype));
 static bool is_aggregate PROTO((type_t *type));
 
@@ -574,8 +574,9 @@ long val;
 }
 
 static int
-opcode_offset(typecode)
+opcode_offset(typecode, typesize)
 typecode_t typecode;
+long typesize;
 {
 	switch (ci_effective_typecode(typecode)) {
 #if WANT_LL
@@ -591,7 +592,15 @@ typecode_t typecode;
 	case TY_U_ENUM:
 	case TY_BOOLEAN:
 	case DT_PTR_TO:
-		return LONG_FORM_OFFSET;
+		switch (typesize) {
+		case 4:
+			return LONG_FORM_OFFSET;
+		case 8:
+			return LONGLONG_FORM_OFFSET;
+		default:
+			ci_panic("bad size in oo");
+			return 0; /* to satisfy gcc */
+		}
 	case TY_FLOAT:
 		return FLOAT_FORM_OFFSET;
 #if WANT_LDBL
@@ -620,9 +629,10 @@ text_t *tx;
 }
 
 static void
-code_deref(tx, typecode, addrtype)
+code_deref(tx, typecode, typesize, addrtype)
 text_t *tx;
 typecode_t typecode;
+long typesize;
 addrtype_t addrtype;
 {
 	opcode_t opcode;
@@ -634,7 +644,7 @@ addrtype_t addrtype;
 		opcode = (addrtype == AT_PROC_ADDR) ? OC_PROC_DEREF_UNSIGNED_BYTE
 						    : OC_DEREF_UNSIGNED_BYTE;
 
-	ci_code_opcode(tx, (opcode_t)((int)opcode + opcode_offset(typecode)));
+	ci_code_opcode(tx, (opcode_t)((int)opcode + opcode_offset(typecode, typesize)));
 }
 
 static void
@@ -685,7 +695,7 @@ addrtype_t addrtype;
 	else
 		opcode = want_value ? OC_ASSIGN_AND_PUSH_BYTE
 				    : OC_ASSIGN_BYTE;
-	ci_code_opcode(tx, (opcode_t)((int)opcode + opcode_offset(typecode)));
+	ci_code_opcode(tx, (opcode_t)((int)opcode + opcode_offset(typecode, type->ty_size)));
 
 	if (want_value && type->ty_code == TY_BITFIELD)
 		code_bitfield_op(tx, type->ty_bitfield, OC_EXTRACT_SIGNED_BITFIELD);
@@ -756,7 +766,7 @@ expr_context_t context;
 			}
 			generic_opcode = (opcode_t)((int)generic_byte_opcode +
 						N_OPCODE_SIZES *
-						opcode_offset(v->va_type->ty_code));
+						    opcode_offset(v->va_type->ty_code, v->va_type->ty_size));
 		}
 		else {
 			if (IS_LOCAL_CLASS(v->va_class)) {
@@ -822,7 +832,7 @@ expr_context_t context;
 		ci_code_generic_opcode(tx, generic_opcode, (stackword_t)addr);
 
 	if (need_deref)
-		code_deref(tx, v->va_type->ty_code, AT_PROC_ADDR);
+		code_deref(tx, v->va_type->ty_code, v->va_type->ty_size, AT_PROC_ADDR);
 
 	return addrtype;
 }
@@ -1085,12 +1095,15 @@ expr_context_t context;
 
 				bf = v->va_type->ty_bitfield;
 				code_deref(tx, bf->bf_type->ty_code,
+					   bf->bf_type->ty_size,
 					   expr_addrtype);
 				code_bitfield_op(tx, bf,
 						 OC_EXTRACT_SIGNED_BITFIELD);
 			}
 			else
-				code_deref(tx, v->va_type->ty_code, expr_addrtype);
+				code_deref(tx, v->va_type->ty_code,
+					   v->va_type->ty_size,
+					   expr_addrtype);
 			addrtype = unknown_addrtype(tx);
 		}
 		else
@@ -1271,7 +1284,8 @@ expr_context_t context;
 						OC_EXTRACT_SIGNED_BITFIELD);
 		}
 		else
-			code_deref(tx, addrleft->ex_type->ty_code, left_at);
+			code_deref(tx, addrleft->ex_type->ty_code,
+				   addrleft->ex_type->ty_size, left_at);
 
 		if (left != addrleft) {
 			code_conversion(tx, left_at,
@@ -1394,7 +1408,7 @@ expr_context_t context;
 			base = expr->ex_type->ty_base;
 			if (context == EC_VALUE && !is_aggregate(base) &&
 					      base->ty_code != DT_FUNC_RETURNING) {
-				code_deref(tx, base->ty_code, expr_addrtype);
+				code_deref(tx, base->ty_code, base->ty_size, expr_addrtype);
 				addrtype = unknown_addrtype(tx);
 			}
 			else
@@ -1419,7 +1433,8 @@ expr_context_t context;
 							OC_EXTRACT_SIGNED_BITFIELD);
 		}
 		else
-			code_deref(tx, expr->ex_type->ty_code, expr_addrtype);
+			code_deref(tx, expr->ex_type->ty_code,
+				   expr->ex_type->ty_size, expr_addrtype);
 
 		if (context == EC_VALUE && !is_preop)
 			ci_code_opcode(tx, OC_DUP_BACK_ONE);
