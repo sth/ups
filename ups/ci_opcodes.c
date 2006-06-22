@@ -203,7 +203,7 @@ opcode_t opcode;
 	if (tx->tx_sp + tmpspace > tx->tx_max_sp)
 		tx->tx_max_sp = tx->tx_sp + tmpspace;
 
-	ci_code_byte(tx, (int)opcode);
+	ci_code_word(tx, (int)opcode);
 }
 
 static void

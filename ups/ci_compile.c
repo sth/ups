@@ -1303,10 +1303,10 @@ ci_install_trap_instruction(ma, location)
 machine_t *ma;
 long location;
 {
-	int res;
+	ci_opcode_t res;
 
-	res = ma->ma_codefile->cf_text_and_data[location];
-	ma->ma_codefile->cf_text_and_data[location] = (int)OC_TRAP;
+	res = GETOPCODE(ma->ma_codefile->cf_text_and_data + location);
+	PUTOPCODE(ma->ma_codefile->cf_text_and_data + location, OC_TRAP);
 	return res;
 }
 
@@ -1319,10 +1319,10 @@ ci_opcode_t opcode;
 	if (opcode >= NUM_OPCODES)
 		ci_panic("opcode botch in cuti");
 
-	if (ma->ma_codefile->cf_text_and_data[location] != (int)OC_TRAP)
+	if (GETOPCODE(ma->ma_codefile->cf_text_and_data + location) != OC_TRAP)
 		ci_panic("missing bpt in cuti");
 
-	ma->ma_codefile->cf_text_and_data[location] = (int)opcode;
+	PUTOPCODE(ma->ma_codefile->cf_text_and_data + location, opcode);
 }
 
 static taddr_t

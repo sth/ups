@@ -579,15 +579,15 @@ machine_t *ma;
 
 	ci_get_next_pc_and_cf(ma, &ncf, &npc);
 
-	saved_opcode = *npc;
-	*npc = (textword_t)OC_TRAP;
+	saved_opcode = GETOPCODE(npc);
+	PUTOPCODE(npc, OC_TRAP);
 
 	res = ci_execute_machine(ma,
 			(textaddr_t)0, (textaddr_t)0, (textaddr_t)0,
 			(ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 		        (ci_indirect_call_proc_t)NULL);
 
-	*npc = saved_opcode;
+	PUTOPCODE(npc, saved_opcode);
 
 	return res;
 }
@@ -949,8 +949,8 @@ xp_opcode_t xp_opcode, *p_old_opcode;
 
 	opcode = (p_old_opcode != NULL) ? OC_TRAP : (opcode_t)xp_opcode;
 
-	old_opcode = (opcode_t)*pc;
-	*pc = (textword_t)opcode;
+	old_opcode = GETOPCODE(pc);
+	PUTOPCODE(pc, opcode);
 
 	if ((opcode == OC_TRAP) == (old_opcode == OC_TRAP)) {
 		if (opcode == OC_TRAP)
@@ -1616,7 +1616,7 @@ bool want_calls;
 	while (text < lim) {
 		opcode_t opcode;
 
-		opcode = (opcode_t)*text++;
+		opcode = READOPCODE(text);
 
 		switch (opcode) {
 		case OC_JUMP:

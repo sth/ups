@@ -214,6 +214,16 @@ typedef struct machine_s machine_t;
 #else
 #define GETQUAD(pc)	(0UL)
 #endif
+#define GETOPCODE(pc)	((opcode_t)GETWORD(pc))
+#define PREVOPCODE(pc)	(GETOPCODE((pc) - 2))
+#define READOPCODE(pc)	((pc) += 2, PREVOPCODE(pc))
+
+#define PUTOPCODE(pc, op) \
+	(pc)[0] = ((unsigned long)(op) & 0xff); \
+	(pc)[1] = (((unsigned long)(op) >> 8 ) & 0xff);
+#define WRITEOPCODE(pc, op) \
+	*(pc)++ = ((unsigned long)(op) & 0xff); \
+	*(pc)++ = (((unsigned long)(op) >> 8 ) & 0xff);
 
 typedef struct {
 	textword_t *su_text;

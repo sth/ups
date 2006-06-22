@@ -629,7 +629,7 @@ machine_t *ma;
 
 	cf = ma->ma_entry_codefile;
 
-	if ((opcode_t)*cf->cf_text_and_data != OC_TRAP)
+	if (GETOPCODE(cf->cf_text_and_data) != OC_TRAP)
 		panic("missing OC_TRAP");
 	
 	*--ma->ma_initial_sp = (stackword_t)cf;
@@ -878,17 +878,19 @@ machine_t *ma;
 stackword_t *sp, func;
 int nargs;
 {
-	static textword_t text[5];
+	static textword_t text[8];
 	ci_exec_result_t res;
-	int i = 0;
+	textword_t *textptr = text;
+	textword_t *trapptr;
 
-	text[i++] = (int)OC_CALL_INDIRECT;
-	text[i++] = nargs;
+	WRITEOPCODE(textptr, OC_CALL_INDIRECT);
+	*textptr++ = nargs;
 #if WANT_TYPE_PUSHED
-	text[i++] = TY_INT_ASSUMED;
+	*textptr++ = TY_INT_ASSUMED;
 #endif
-	text[i++] = (int)OC_PUSH_WORD_RETVAL;
-	text[i] = (int)OC_TRAP;
+	WRITEOPCODE(textptr, OC_PUSH_WORD_RETVAL);
+	trapptr = textptr;
+	WRITEOPCODE(textptr, OC_TRAP);
 
 	*--sp = func;
 
@@ -898,7 +900,7 @@ int nargs;
 			      (ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 			      (ci_indirect_call_proc_t)NULL);
 	
-	if (res != CI_ER_TRAP || ma->ma_pc != &text[i])
+	if (res != CI_ER_TRAP || ma->ma_pc != trapptr)
 		panic("bad callback");
 }
 
@@ -929,17 +931,19 @@ int nargs;
 { int i; for (i=0; i<LONGLONG_NSLOTS; i++) d.d_words[i] = (p)[i];}
 #endif
 
-#define PUSH_DOUBLE(d, sp)	(PUSH(d.d_words[1], sp), PUSH(d.d_words[0], sp))
-#define POP_DOUBLE(d, sp)	(d.d_words[0] = POP(sp), d.d_words[1] = POP(sp))
-
-#define GET_FLOAT(d, p)		(d.d_word = *(p))
-#define GET_DOUBLE(d, p)	(d.d_words[0] = (p)[0], d.d_words[1] = (p)[1])
-
-#define PUT_FLOAT(d, p)		(*(p) = d.d_word)
-#define PUT_DOUBLE(d, p)	((p)[0] = d.d_words[0], (p)[1] = d.d_words[1])
+#define PUSH_DOUBLE(d, sp)	\
+{ int i; for (i=DOUBLE_NSLOTS-1; i>=0; i--) PUSH(d.d_words[i], sp);}
+#define POP_DOUBLE(d, sp)	\
+{ int i; for (i=0; i<DOUBLE_NSLOTS; i++) d.d_words[i] = POP(sp);}
+#define PUT_DOUBLE(d, p)	\
+{ int i; for (i=DOUBLE_NSLOTS-1; i>=0; i--) (p)[i] = d.d_words[i];}
+#define GET_DOUBLE(d, p)	\
+{ int i; for (i=0; i<DOUBLE_NSLOTS; i++) d.d_words[i] = (p)[i];}
 
 #define PUSH_FLOAT(d, sp)	PUSH(d.d_word, sp)
 #define POP_FLOAT(d, sp)	(d.d_word = POP(sp))
+#define PUT_FLOAT(d, p)		(*(p) = d.d_word)
+#define GET_FLOAT(d, p)		(d.d_word = *(p))
 
 ci_exec_result_t
 ci_execute_machine(ma, procfp, procap, proccfa, readproc, writeproc, indirect_call_proc)
@@ -956,7 +960,7 @@ ci_indirect_call_proc_t indirect_call_proc;
 	};
 	register void **jtab;
 #define SWITCH(n)	goto *jtab[n];
-#define BREAK		goto *jtab[*pc++]
+#define BREAK		goto *jtab[READOPCODE(pc)]
 #define CASE		
 #else
 #define SWITCH(n)	switch((opcode_t)n)
@@ -1039,10 +1043,10 @@ ci_indirect_call_proc_t indirect_call_proc;
 	ma->ma_stopres = CI_ER_CONTINUE;
 
 	for (;;) {
-		SWITCH (*pc++) {
+		SWITCH (READOPCODE(pc)) {
 #if WANT_JUMPTAB
-update_count:	++ma->ma_opcounts[pc[-1]];
-		goto *jumptab[pc[-1]];
+update_count:	++ma->ma_opcounts[PREVOPCODE(pc)];
+		goto *jumptab[PREVOPCODE(pc)];
 #endif
 
 		CASE OC_PUSH_WORD_RETVAL:
