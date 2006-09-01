@@ -761,18 +761,20 @@ int signo;
 					res = SGH_DEFAULT;
 			}
 			else {
-				panic("Can't parse process status file");
-				res = SGH_DEFAULT; /* to satisfy gcc */
+				errf("Can't parse process status file: %s", strerror(errno));
+				res = SGH_DEFAULT; /* guess */
 			}
 		}
 		else {
-			panic("Can't read process status file");
-			res = SGH_DEFAULT; /* to satisfy gcc */
+			errf("Can't read process status file: %s", strerror(errno));
+			res = SGH_DEFAULT; /* guess */
 		}
+
+		fclose(f);
 	}
 	else {
-	   panic("Can't open process status file");
-	   res = SGH_DEFAULT; /* to satisfy gcc */
+		errf("Can't open process status file: %s", strerror(errno));
+		res = SGH_DEFAULT; /* guess */
 	}
 
 	return res;
