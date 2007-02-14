@@ -699,28 +699,51 @@ dwf_get_opt_flag(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 }
 
 /*
- * Get a DWARF 'location description'
+ * Get a DWARF 'location list'
  * You should probably be calling dwf_get_location().
  */
-Dwarf_Locdesc *
-dwf_get_locdesc(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Signed *p_count)
+Dwarf_Locdesc **
+dwf_get_loclist(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Signed *p_count)
 {
     int rv;
     Dwarf_Error err;
     Dwarf_Attribute attribute;
-    Dwarf_Locdesc *loclist;
+    Dwarf_Locdesc **loclist;
 
     if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
 	return NULL;
     }
-    if ((rv = dwarf_loclist(attribute, &loclist, p_count, &err)) != DW_DLV_OK) {
+    if ((rv = dwarf_loclist_n(attribute, &loclist, p_count, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_loclist", rv, die, err);
 	return NULL;
     }
     dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
     return loclist;
+}
+
+/*
+ * Get the length of a DWARF 'location list'
+ */
+Dwarf_Signed
+dwf_get_loclist_length(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
+{
+    Dwarf_Locdesc **loclist = NULL;
+    Dwarf_Signed count = 0;
+
+    if ((loclist = dwf_get_loclist(dbg, die, id, &count)) != NULL) {
+	int i;
+
+	for (i = 0; i < count; i++) {
+	   dwarf_dealloc(dbg, loclist[i]->ld_s, DW_DLA_LOC_BLOCK);
+	   dwarf_dealloc(dbg, loclist[i], DW_DLA_LOCDESC);
+	}
+
+	dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
+    }
+
+    return count;
 }
 
 

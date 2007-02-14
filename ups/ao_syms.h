@@ -65,6 +65,7 @@ typedef struct fsyminfo {
 	off_t fs_die_offset;		/* Offset of this function's DIE */
 	taddr_t fs_low_pc;		/* Function code start addr. */
 	taddr_t fs_high_pc;		/* Function code end addr. */
+	vaddr_t *fs_frame_base;		/* Frame base location */
 #endif
 } fsyminfo_t;
 

@@ -284,6 +284,10 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc) + stf->stf_addr;
     fs->fs_die_offset = dwf_offset_of_die(dbg, addr_die);
 
+    if (dwf_has_attribute(dbg, addr_die, DW_AT_frame_base) &&
+	dwf_get_loclist_length(dbg, addr_die, DW_AT_frame_base) == 1)
+	fs->fs_frame_base = dwf_get_location(dbg, st->st_apool, addr_die, DW_AT_frame_base, NULL);
+
     addr = fs->fs_low_pc;
 
     if (st->st_functab && addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
@@ -572,7 +576,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * Routine parameter
 		 */
 		dwf_make_variable(dbg, die, ap, stf, &(parent_bl->bl_vars),
-				  dw_level, CL_ARG);
+				  dw_level, CL_ARG, f);
 	    }
 	    break;
 
@@ -623,13 +627,13 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * dwarfTODO:
 		 */
 		dwf_make_variable(dbg, die, ap, stf, &(parent_bl->bl_vars),
-				  dw_level, CL_AUTO);
+				  dw_level, CL_AUTO, f);
 	    } else if ((dw_level > 1) && (dw_what & DWL_LOCAL_VARS)) {
 		/*
 		 * dwarfTODO:
 		 */
 		dwf_make_variable(dbg, die, ap, stf, &(parent_bl->bl_vars),
-				  dw_level, CL_AUTO);
+				  dw_level, CL_AUTO, f);
 	    }
 	    break;
 
@@ -791,7 +795,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		else
 		    hint = CL_MOS;
 		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
-				      dw_level, hint);
+				      dw_level, hint, NULL);
 		if (dwf_has_attribute(dbg, die, DW_AT_artificial)) {
 		    /*
 		     * GCC virtual function table ?
@@ -811,7 +815,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		 */
 		ae = parent_dt->dt_type->ty_aggr_or_enum;
 		v = dwf_make_variable(dbg, die, ap, stf, &(ae->ae_aggr_members),
-				      dw_level, CL_MOS);
+				      dw_level, CL_MOS, NULL);
 		v->va_flags = VA_BASECLASS;
 	    }
 	    break;

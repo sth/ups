@@ -353,7 +353,7 @@ aggr_or_enum_def_t *ae;
  * and routine parameters (CL_ARG).
  */
 var_t *
-dwf_make_variable(dbg, die, ap, stf, p_vars, dw_level, class_hint)
+dwf_make_variable(dbg, die, ap, stf, p_vars, dw_level, class_hint, f)
 Dwarf_Debug dbg;
 Dwarf_Die die;
 stf_t *stf;
@@ -361,6 +361,7 @@ alloc_pool_t *ap;
 var_t **p_vars;
 int dw_level;
 class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
+func_t *f;
 {
     Dwarf_Die spec_die;
     var_t *v;
@@ -371,15 +372,25 @@ class_t class_hint;	/* CL_AUTO, CL_MOS, CL_MOU or CL_ARG */
     class_t class = CL_NOCLASS;
     vaddr_t *vaddr = NULL;
     taddr_t addr = 0;
+    fsyminfo_t *fs = NULL;
+    vaddr_t *frame_base = NULL;
+
+    /*
+     * Find the frame base address.
+     */
+    if (f) {
+	fs = (fsyminfo_t *)f->fu_symdata;
+        frame_base = fs->fs_frame_base;
+    }
 
     /*
      * If there is an address it is a definition.
      * Union members don't have addresses.
      */
     if (dwf_has_attribute(dbg, die, DW_AT_location)) {
-	vaddr = dwf_get_location(dbg, ap, die, DW_AT_location);
+	vaddr = dwf_get_location(dbg, ap, die, DW_AT_location, frame_base);
     } else if (dwf_has_attribute(dbg, die, DW_AT_data_member_location)) {
-	vaddr = dwf_get_location(dbg, ap, die, DW_AT_data_member_location);
+	vaddr = dwf_get_location(dbg, ap, die, DW_AT_data_member_location, frame_base);
     } else if (class_hint != CL_MOU)
 	return (var_t *)NULL;
 

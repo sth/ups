@@ -442,6 +442,7 @@ int symno;
 #if WANT_DWARF
 	fs->fs_low_pc = 0;
 	fs->fs_high_pc = 0;
+	fs->fs_frame_base = NULL;
 #endif
 	return fs;
 }

@@ -488,17 +488,19 @@ stf_t *stf;
  * dwarfTODO: only handles the bare minimum required to get UPS working
  */
 vaddr_t *
-dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
+dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id, vaddr_t *frame_base)
 {
     int i;
-    Dwarf_Locdesc *loclist;
+    Dwarf_Locdesc **loclist;
     Dwarf_Signed count = 0;
     Dwarf_Small op;
     vaddr_t *head = NULL, *vaddr;
     unsigned char fp_regop;
     unsigned char sp_regop;
+    unsigned char fp_reg;
+    unsigned char sp_reg;
 
-    if ((loclist = dwf_get_locdesc(dbg, die, id, &count)) == NULL)
+    if ((loclist = dwf_get_loclist(dbg, die, id, &count)) == NULL)
 	return (vaddr_t *)NULL;
 
     switch (xp_get_addrsize(get_current_target()))
@@ -506,13 +508,17 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     case 32:
 	fp_regop = DW_OP_breg5;
 	sp_regop = DW_OP_breg4;
+	fp_reg = 5;
+	sp_reg = 4;
 	break;
     case 64:
 	fp_regop = DW_OP_breg6;
 	sp_regop = DW_OP_breg7;
+	fp_reg = 6;
+	sp_reg = 7;
 	break;
     default:
-	panic("Unsupported address size");
+	panic("dwf_get_location : unsupported address size");
     }
 
     for (i = 0; i < count; i++) {
@@ -521,15 +527,18 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	if (head == NULL)
 	    head = vaddr;
 	else
-	    errf("dwf_get_location : too many entries");
+	    panic("dwf_get_location : location list too long");
 
-	op = loclist[i].ld_s->lr_atom;
+	if (loclist[i]->ld_cents != 1)
+	    panic("dwf_get_location : location expression too complicated");
+
+	op = loclist[i]->ld_s->lr_atom;
 	if (op == DW_OP_addr) {
 	    /*
 	     * Address
 	     */
 	    vaddr->v_op = OP_ADDR;
-	    vaddr->v_addr = loclist[i].ld_s->lr_number;
+	    vaddr->v_addr = loclist[i]->ld_s->lr_number;
 	} else if ((op >= DW_OP_reg0) && (op <= DW_OP_reg31)) {
 	    /*
 	     * Register 0..31
@@ -541,36 +550,51 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     * Register
 	     */
 	    vaddr->v_op = OP_REGISTER;
-	    vaddr->v_register = loclist[i].ld_s->lr_number;
+	    vaddr->v_register = loclist[i]->ld_s->lr_number;
 	} else if (op == DW_OP_plus_uconst) {
 	    /*
 	     * Unsigned offset.
 	     */
 	    vaddr->v_op = OP_U_OFFSET;
-	    vaddr->v_u_offset = loclist[i].ld_s->lr_number;
+	    vaddr->v_u_offset = loclist[i]->ld_s->lr_number;
 	} else if (op == DW_OP_fbreg) {
 	    /*
-	     * Relative to canonical frame address.
+	     * Relative to frame base address.
 	     */
-	    vaddr->v_op = OP_CFA_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	    if (frame_base && frame_base->v_op == OP_REGISTER) {
+		if (frame_base->v_register == fp_reg) {
+		    vaddr->v_op = OP_FP_RELATIVE;
+		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+		} else if (frame_base->v_register == sp_reg) {
+		    vaddr->v_op = OP_SP_RELATIVE;
+		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+		} else {
+		    panic("dwf_get_location : frame base register not fp or sp");
+		}
+	    } else {
+		vaddr->v_op = OP_CFA_RELATIVE;
+		vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+	    }
 	} else if (op == fp_regop) {
 	    /*
 	     * Relative to frame pointer.
 	     */
 	    vaddr->v_op = OP_FP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
 	} else if (op == sp_regop) {
 	    /*
 	     * Relative to stack pointer.
 	     */
 	    vaddr->v_op = OP_SP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i].ld_s->lr_number;
+	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+	} else {
+	    panic("dwf_get_location : unsupported opcode in location expression");
 	}
 
-	dwarf_dealloc(dbg, loclist[i].ld_s, DW_DLA_LOC_BLOCK);
+	dwarf_dealloc(dbg, loclist[i]->ld_s, DW_DLA_LOC_BLOCK);
+	dwarf_dealloc(dbg, loclist[i], DW_DLA_LOCDESC);
     }
-    dwarf_dealloc(dbg, loclist, DW_DLA_LOCDESC);
+    dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
 
     return head;
 }

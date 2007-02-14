@@ -45,7 +45,8 @@ lexinfo_t *	dwf_make_lexinfo PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 					alloc_pool_t *ap, stf_t *stf));
 
 vaddr_t *	dwf_get_location PROTO((Dwarf_Debug dbg, alloc_pool_t *ap,
-					Dwarf_Die die, Dwarf_Half id));
+					Dwarf_Die die, Dwarf_Half id,
+					vaddr_t *frame_base));
 
 bool		dwf_unwind PROTO((Dwarf_Debug dbg, target_t *xp, taddr_t *fp,
 				  taddr_t *sp, taddr_t *pc, taddr_t *cfa));

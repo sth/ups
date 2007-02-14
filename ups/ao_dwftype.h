@@ -34,7 +34,7 @@ dim_t *		dwf_make_subrange PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 var_t *		dwf_make_variable PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 					 alloc_pool_t *ap, stf_t *stf,
 					 var_t **p_vars, int dw_level,
-					 class_t class_hint));
+					 class_t class_hint, func_t *f));
 block_t *	dwf_make_block PROTO((Dwarf_Debug dbg, Dwarf_Die cu_die,
 				      alloc_pool_t *ap, stf_t *stf,
 				      block_t *parent, func_t *f));
