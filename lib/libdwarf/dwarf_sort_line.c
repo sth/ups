@@ -275,9 +275,9 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
     Dwarf_Debug dbg = &dbg_data;
 
     /* These are the state machine state variables. */
-    Dwarf_Addr address;
-    Dwarf_Word line;
-    Dwarf_Bool is_stmt;
+    Dwarf_Addr address = 0;
+    Dwarf_Word line = 1;
+    Dwarf_Bool is_stmt = false;
 
     /* Dwarf_Bool prologue_end; Dwarf_Bool epilogue_begin; */
     Dwarf_Small isa;
@@ -358,9 +358,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 
 
     /* Initialize the state machine.  */
-    address = 0;
     /* file = 1; */
-    line = 1;
     /* column = 0; */
     is_stmt = prefix.pf_default_is_stmt;
     /* basic_block = false; */
@@ -396,7 +394,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		 */
 		Dwarf_Unsigned utmp2;
 
-		DECODE_LEB128_UWORD(line_ptr, utmp2)
+		DECODE_LEB128_UWORD(line_ptr, utmp2);
 	    }
 
 	} else if (type == LOP_SPECIAL) {
@@ -426,8 +424,8 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		    Dwarf_Unsigned utmp2;
 
 
-		    DECODE_LEB128_UWORD(line_ptr, utmp2)
-			leb128_num = (Dwarf_Word) utmp2;
+		    DECODE_LEB128_UWORD(line_ptr, utmp2);
+		    leb128_num = (Dwarf_Word) utmp2;
 		    address =
 			address +
 			prefix.pf_minimum_instruction_length *
@@ -439,8 +437,8 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		    Dwarf_Signed stmp;
 
 
-		    DECODE_LEB128_SWORD(line_ptr, stmp)
-			advance_line = (Dwarf_Sword) stmp;
+		    DECODE_LEB128_SWORD(line_ptr, stmp);
+		    advance_line = (Dwarf_Sword) stmp;
 		    line = line + advance_line;
 		    break;
 		}
@@ -449,18 +447,18 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		    Dwarf_Unsigned utmp2;
 
 
-		    DECODE_LEB128_UWORD(line_ptr, utmp2)
-			/* file = (Dwarf_Word)utmp2; */
-			break;
+		    DECODE_LEB128_UWORD(line_ptr, utmp2);
+		    /* file = (Dwarf_Word)utmp2; */
+		    break;
 		}
 
 	    case DW_LNS_set_column:{
 		    Dwarf_Unsigned utmp2;
 
 
-		    DECODE_LEB128_UWORD(line_ptr, utmp2)
-			/* column = (Dwarf_Word)utmp2; */
-			break;
+		    DECODE_LEB128_UWORD(line_ptr, utmp2);
+		    /* column = (Dwarf_Word)utmp2; */
+		    break;
 		}
 
 	    case DW_LNS_negate_stmt:{
@@ -512,8 +510,8 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 	    case DW_LNS_set_isa:{
 		    Dwarf_Unsigned utmp2;
 
-		    DECODE_LEB128_UWORD(line_ptr, utmp2)
-			isa = utmp2;
+		    DECODE_LEB128_UWORD(line_ptr, utmp2);
+		    isa = utmp2;
 		    if (isa != utmp2) {
 			/* The value of the isa did not fit in our
 			   local so we record it wrong. declare an
@@ -532,8 +530,8 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 
 	    Dwarf_Unsigned utmp3;
 
-	    DECODE_LEB128_UWORD(line_ptr, utmp3)
-		instr_length = (Dwarf_Word) utmp3;
+	    DECODE_LEB128_UWORD(line_ptr, utmp3);
+	    instr_length = (Dwarf_Word) utmp3;
 	    ext_opcode = *(Dwarf_Small *) line_ptr;
 	    line_ptr++;
 	    switch (ext_opcode) {

@@ -309,8 +309,7 @@ dwarf_add_AT_signed_const(Dwarf_P_Debug dbg,
     new_attr->ar_attribute = attr;
     new_attr->ar_attribute_form = attr_form;
     new_attr->ar_rel_type = R_MIPS_NONE;
-    new_attr->ar_reloc_len = 0;	/* irrelevant: unused with R_MIPS_NONE 
-				 */
+    new_attr->ar_reloc_len = 0;	/* irrelevant: unused with R_MIPS_NONE */
     new_attr->ar_nbytes = size;
     new_attr->ar_next = 0;
 
@@ -343,7 +342,7 @@ dwarf_add_AT_location_expr(Dwarf_P_Debug dbg,
     int res;
     Dwarf_P_Attribute new_attr;
     Dwarf_Half attr_form;
-    char *len_str;
+    char *len_str = 0;
     int len_size;
     int block_size;
     char *block_dest_ptr;
@@ -447,7 +446,7 @@ dwarf_add_AT_location_expr(Dwarf_P_Debug dbg,
 	WRITE_UNALIGNED(dbg, block_dest_ptr, (const void *) &block_size,
 			sizeof(block_size), len_size);
     } else {
-	/* is uleb number form */
+	/* Is uleb number form, DW_FORM_block. See above. */
 	memcpy(block_dest_ptr, len_str, len_size);
     }
     block_dest_ptr += len_size;

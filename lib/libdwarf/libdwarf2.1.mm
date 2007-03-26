@@ -1,8 +1,3 @@
-.ll 6.5i
-.nr ll 6.5i
-.PGFORM 6.5i
-.po 0.25i
-.nr po 0.25i
 \."
 \." the following line may be removed if the ff ligature works on your machine
 .lg 0
@@ -13,7 +8,7 @@
 .nr Hb 5
 \." ==============================================
 \." Put current date in the following at each rev
-.ds vE rev 1.52, 02 Oct 2003
+.ds vE rev 1.63, 01 Sep 2006
 \." ==============================================
 \." ==============================================
 .ds | |
@@ -38,9 +33,9 @@
 .TL
 A Consumer Library Interface to DWARF 
 .AF ""
-.AU "UNIX International Programming Languages Special Interest Group" 
+.AU "UNIX International Programming Languages Special Interest Group"
 .PF "'\*(vE'- \\\\nP -''"
-.PM ""
+\.".PM ""
 .AS 1
 This document describes an interface to a library of functions
 .FS 
@@ -48,33 +43,29 @@ UNIX is a registered trademark of UNIX System Laboratories, Inc.
 in the United States and other countries.
 .FE
 to access DWARF debugging information entries and DWARF line number
-information. It does not make recommendations as to how the functions
+information (and other DWARF2/3 information). 
+It does not make recommendations as to how the functions
 described in this document should be implemented nor does it
 suggest possible optimizations. 
 .P
-The document is oriented to reading DWARF version 2.
+The document is oriented to reading DWARF version 2 
+and version 3.
 There are certain sections which are SGI-specific (those
 are clearly identified in the document).
-We would propose this 
-to the PLSIG committee
-as the basis for a
-standard libdwarf interface, but as of this
-writing, the committee is dormant.
+The DWARF Committee has not finalized DWARF3 at this writing.
 .P
-This document are subject to change.
+In the mid 1990's this document and the library it describes
+was made available on the Internet.
+Unix International was disbanded in the 1990's and no longer exists.
+In 2005  the DWARF committee began an affiliation with FreeStandards.org.
+See "http://www.freestandards.org" and "http://dwarf.freestandards.org".
+.P
+This document is subject to change.
 .P
 \*(vE
 
 .AE
 .MT 4
-
-.ll 7.5i
-.nr ll 7.5i
-.PGFORM 7.5i
-.po 0.35i
-.nr po 0.35i
-.nr pg*top-margin 0
-.nr pg*top-enabled 0
 
 .H 1 "INTRODUCTION"
 This document describes an interface to \fIlibdwarf\fP, a
@@ -95,6 +86,21 @@ issues are addressed separately.
 Additionally, the focus of this document is the functional interface,
 and as such, implementation as well as optimization issues are
 intentionally ignored.
+
+
+.H 2 "Document History"
+.P
+A document was written about 1991 which had similar
+layout and interfaces. It was for reading DWARF1.
+The authors distributed paper copies to the committee
+with the clearly expressed intent to propose the document as
+a supported interface definition.
+.P
+SGI wrote the document you are now reading in 1993
+with a similar layout and content and organization, but 
+is a complete rewrite, and with the intent to read DWARF2.
+The intent is to also cover DWARF3, but DWARF3 is not fully
+covered by this document at this time.
 
 .H 2 "Definitions"
 DWARF debugging information entries (DIE) are the segments of information 
@@ -157,8 +163,25 @@ The miscellaneous interface is just what is left over: the error handler
 functions.
 .P
 The following is a brief mention of the changes in this libdwarf from 
-the libdwarf draft for DWARF Version 1.
+the libdwarf draft for DWARF Version 1 and recent changes.
 .H 2 "Items Changed"
+.P
+Added support for various DWARF3 features, but primarily
+a new frame-information interface tailorable at run-time
+to more than a single ABI.
+See dwarf_set_frame_rule_inital_value() and dwarf_set_frame_rule_table_size().
+See also dwarf_get_fde_info_for_reg3() and
+dwarf_get_fde_info_for_cfa_reg3().  (April 2006)
+.P
+Added support for DWARF3 .debug_pubtypes section.
+Corrected various leaks (revising dealloc() calls, adding
+new functions) and corrected dwarf_formstring() documentation.
+.P 
+Added dwarf_srclines_dealloc() as the previous deallocation
+method documented for data returned by
+dwarf_srclines() was incapable of freeing
+all the allocated storage (14 July 2005).
+.P
 dwarf_nextglob(), dwarf_globname(), and dwarf_globdie() were all changed 
 to operate on the items in the .debug_pubnames section.
 .P
@@ -185,7 +208,7 @@ was removed since bounds have been generalized.
 .P
 dwarf_nextdie()
 was replaced by dwarf_next_cu_header() to reflect the
-real way dwarf is organized.
+real way DWARF is organized.
 The dwarf_nextdie() was only useful for getting to compilation
 unit beginnings, so it does not seem harmful to remove it in favor
 of a more direct function.
@@ -198,7 +221,7 @@ is better left to a debugger to do.
 Similarly, dwarf_dieline() was removed.
 .P
 dwarf_is1stline() was removed as it was not meaningful for the
-revised dwarf line operations.
+revised DWARF line operations.
 .P
 Any libdwarf implementation might well decide to support all the
 removed functionality and to retain the DWARF Version 1 meanings
@@ -212,10 +235,12 @@ exceptional conditions like failures and 'no more data' indications.
 .H 2 "Revision History"
 .VL 15
 .LI "March 93"
-Work on dwarf2 SGI draft begins
+Work on DWARF2 SGI draft begins
 .LI "June 94"
 The function returns are changed to return an error/success code
 only.
+.LI "April 2006:
+Support for DWARF3 consumer operations is close to completion.
 .LE
 
 .H 1 "Types Definitions"
@@ -258,7 +283,6 @@ typedef signed long long   Dwarf_Signed;
 typedef unsigned long long Dwarf_Addr;
 typedef void 		   *Dwarf_Ptr;
 typedef void   (*Dwarf_Handler)(Dwarf_Error *error, Dwarf_Ptr errarg);
-\fP
 .DE
 
 .nr aX \n(Fg+1
@@ -304,6 +328,7 @@ the SGI
 \f(CWDwarf_Locdesc\fP,
 \f(CWDwarf_Block\fP, 
 \f(CWDwarf_Frame_Op\fP. 
+\f(CWDwarf_Regtable\fP. 
 While most of \f(CWlibdwarf\fP acts on or returns simple values or
 opaque pointer types, this small set of structures seems useful.
 
@@ -398,12 +423,14 @@ other type (typically an \f(CWunsigned char *\fP) so one can add increments
 to index through the data.  The data pointed to by \f(CWbl_data\fP is not 
 necessarily at any useful alignment.
 
-.H 3 "Frame Operation Codes"
-The \f(CWDwarf_Frame_Op\fP type is used to contain the data of a single
+.H 3 "Frame Operation Codes: DWARF 2"
+This interface is adequate for DWARF2 but not for DWARF3.
+A separate interface usable for DWARF3 and for DWARF2 is described below.
+.P
+The DWARF2 \f(CWDwarf_Frame_Op\fP type is used to contain the data of a single
 instruction of an instruction-sequence of low-level information from the 
 section containing frame information.  This is ordinarily used by 
-Internal-level 
-Consumers trying to print everything in detail.
+Internal-level Consumers trying to print everything in detail.
 
 .DS
 \f(CWtypedef struct {
@@ -412,7 +439,7 @@ Consumers trying to print everything in detail.
 	Dwarf_Half   fp_register;
 	Dwarf_Signed fp_offset;
 	Dwarf_Offset fp_instr_offset;
-} Dwarf_Frame_Op;\fP
+} Dwarf_Frame_Op;
 .DE
 
 \f(CWfp_base_op\fP is the 2-bit basic op code.  \f(CWfp_extended_op\fP is 
@@ -438,6 +465,227 @@ If not used with the op it is 0.
 \f(CWfp_instr_offset\fP is the byte_offset (within the instruction
 stream of the frame instructions) of this operation.  It starts at 0
 for a given frame descriptor.
+
+.H 3 "Frame Regtable: DWARF 2"
+This interface is adequate for DWARF2 but not for DWARF3.
+A separate interface usable for DWARF3 and for DWARF2 is described below.
+.P
+The \f(CWDwarf_Regtable\fP type is used to contain the 
+register-restore information for all registers at a given
+PC value.
+Normally used by debuggers.
+.DS
+/* DW_REG_TABLE_SIZE must reflect the number of registers
+ *(DW_FRAME_LAST_REG_NUM) as defined in dwarf.h
+ */
+#define DW_REG_TABLE_SIZE  <fill in size here, 66 for MIPS/IRIX>
+\f(CWtypedef struct {
+    struct {
+        Dwarf_Small         dw_offset_relevant;
+        Dwarf_Half          dw_regnum;
+        Dwarf_Addr          dw_offset;
+    }                       rules[DW_REG_TABLE_SIZE];
+} Dwarf_Regtable;\fP
+.DE
+.P
+The array is indexed by register number.
+The field values for each index are described next.
+For clarity we describe the field values for index rules[M]
+(M being any legal array element index).
+.P
+\f(CWdw_offset_relevant\fP is non-zero to indicate the \f(CWdw_offset\fP
+field is meaningful. If zero then the \f(CWdw_offset\fP is zero
+and should be ignored.
+.P
+\f(CWdw_regnum \fPis the register number\fP applicable.
+If \f(CWdw_offset_relevant\fP is zero, then this is the register
+number of the register containing the value for register M.
+If \f(CWdw_offset_relevant\fP is non-zero, then this is
+the register number of the register to use as a base (M may be
+DW_FRAME_CFA_COL, for example) and the \f(CWdw_offset\fP
+value applies.  The value of register M is therefore
+the value of register \f(CWdw_regnum\vP .
+.P
+\f(CWdw_offset\fP should be ignored if \f(CWdw_offset_relevant\fP is zero.
+If \f(CWdw_offset_relevant\fP is non-zero, then 
+the consumer code should add the value to
+the value of the register \f(CWdw_regnum\fP to produce the
+value.  
+
+.H 3 "Frame Operation Codes: DWARF 3 (and DWARF2)"
+This interface is adequate for DWARF3 and for DWARF2.
+It is new in libdwarf in April 2006.
+.P
+The DWARF2 \f(CWDwarf_Frame_Op3\fP type is used to contain the data of a single
+instruction of an instruction-sequence of low-level information from the 
+section containing frame information.  This is ordinarily used by 
+Internal-level Consumers trying to print everything in detail.
+
+.DS
+\f(CWtypedef struct {
+        Dwarf_Small     fp_base_op;
+        Dwarf_Small     fp_extended_op;
+        Dwarf_Half      fp_register;
+
+        /* Value may be signed, depends on op.
+           Any applicable data_alignment_factor has
+           not been applied, this is the  raw offset. */
+        Dwarf_Unsigned  fp_offset_or_block_len;
+        Dwarf_Small     *fp_expr_block;
+
+        Dwarf_Off       fp_instr_offset;
+} Dwarf_Frame_Op3;\fP
+.DE
+
+\f(CWfp_base_op\fP is the 2-bit basic op code.  \f(CWfp_extended_op\fP is 
+the 6-bit extended opcode (if \f(CWfp_base_op\fP indicated there was an 
+extended op code) and is zero otherwise.
+.P
+\f(CWfp_register\fP 
+is any (or the first) register value as defined
+in the \f(CWCall Frame Instruction Encodings\fP figure
+in the \f(CWdwarf\fP document.
+If not used with the Op it is 0.
+.P
+\f(CWfp_offset_or_block_len\fP
+is the address, delta, offset, or second register as defined
+in the \f(CWCall Frame Instruction Encodings\fP figure
+in the \f(CWdwarf\fP document. Or (depending on the op, it
+may be the length of the dwarf-expression block pointed to
+by \f(CWfp_expr_block\fP.
+If this is an \f(CWaddress\fP then the value should be cast to
+\f(CW(Dwarf_Addr)\fP before being used.
+In any implementation this field *must* be as large as the
+larger of Dwarf_Signed and Dwarf_Addr for this to work properly.
+If not used with the op it is 0.
+.P
+\f(CWfp_expr_block\fP (if applicable to the op)
+points to a dwarf-expression block whch is \f(CWfp_offset_or_block_len\fP
+bytes long.
+.P
+\f(CWfp_instr_offset\fP is the byte_offset (within the instruction
+stream of the frame instructions) of this operation.  It starts at 0
+for a given frame descriptor.
+
+.H 3 "Frame Regtable: DWARF 3"
+This interface is adequate for DWARF3 and for DWARF2.
+It is new in libdwarf as of April 2006.
+.P
+The \f(CWDwarf_Regtable3\fP type is used to contain the 
+register-restore information for all registers at a given
+PC value.
+Normally used by debuggers.
+.DS
+\f(CWtypedef struct Dwarf_Regtable_Entry3_s {
+        Dwarf_Small         dw_offset_relevant;
+        Dwarf_Small         dw_value_type;
+        Dwarf_Half          dw_regnum;
+        Dwarf_Unsigned      dw_offset_or_block_len;
+        Dwarf_Ptr           dw_block_ptr;
+}Dwarf_Regtable_Entry3;
+
+typedef struct Dwarf_Regtable3_s {
+    struct Dwarf_Regtable_Entry3_s   rt3_cfa_rule;
+
+    Dwarf_Half                       rt3_reg_table_size;
+    struct Dwarf_Regtable_Entry3_s * rt3_rules;
+} Dwarf_Regtable3;\fP
+
+.DE
+.P
+The array is indexed by register number.
+The field values for each index are described next.
+For clarity we describe the field values for index rules[M]
+(M being any legal array element index).
+(DW_FRAME_CFA_COL3  DW_FRAME_SAME_VAL, DW_FRAME_UNDEFINED_VAL
+are not legal array indexes, nor is any index < 0 or >
+rt3_reg_table_size);
+The caller  of routines using this
+struct must create data space for rt3_reg_table_size entries
+of struct Dwarf_Regtable_Entry3_s and arrange that
+rt3_rules points to that space and that rt3_reg_table_size
+is set correctly.  The caller need not (but may)
+initialize the contents of the rt3_cfa_rule or the rt3_rules array.
+The following applies to each rt3_rules rule M:
+.P
+.in +4
+\f(CWdw_regnum\fP is the register number applicable.
+If \f(CWdw_regnum\fP is DW_FRAME_UNDEFINED_VAL, then the
+register I has undefined value.
+If \f(CWdw_regnum\fP is DW_FRAME_SAME_VAL, then the
+register I has the same value as in the previous frame.
+.P
+If \f(CWdw_regnum\fP is neither of these two, then the following apply:
+.P
+.P
+\f(CWdw_value_type\fP determines the meaning of the other fields.
+It is one of DW_EXPR_OFFSET (0),
+DW_EXPR_VAL_OFFSET(1), DW_EXPR_EXPRESSION(2) or 
+DW_EXPR_VAL_EXPRESSION(3).
+
+.P
+If \f(CWdw_value_type\fP  is DW_EXPR_OFFSET (0) then
+this is as in DWARF2 and the offset(N) rule  or the register(R)
+rule
+of the DWARF3 and DWARF2 document applies.
+The value is either:
+.in +4
+If \f(CWdw_offset_relevant\fP is non-zero, then \f(CWdw_regnum\fP  
+is effectively ignored but must be identical to
+DW_FRAME_CFA_COL3 and the \f(CWdw_offset\fP value applies. 
+The value of register M is therefore
+the value of CFA plus the value
+of \f(CWdw_offset\fP.   The result of the calculation
+is the address in memory where the value of register M resides.
+This is the offset(N) rule of the DWARF2 and DWARF3 documents.
+.P
+\f(CWdw_offset_relevant\fP is zero it indicates the \f(CWdw_offset\fP
+field is not meaningful. 
+The value of register M is 
+the value currently in register \f(CWdw_regnum\fP (the
+value DW_FRAME_CFA_COL3 must not appear, only real registers).
+This is the register(R) rule of the DWARF3 spec.
+.in -4
+
+.P
+If \f(CWdw_value_type\fP  is DW_EXPR_OFFSET (1) then
+this is the the val_offset(N) rule of the DWARF3 spec applies.
+The calculation is identical to that of DW_EXPR_OFFSET (0) 
+but the value is interpreted as the value of register M
+(rather than the address where register M's value is stored).
+.P
+If \f(CWdw_value_type\fP  is DW_EXPR_EXPRESSION (2) then
+this is the the expression(E) rule of the DWARF3 document.
+.P
+.in +4
+\f(CWdw_offset_or_block_len\fP is the length in bytes of
+the in-memory block  pointed at by \f(CWdw_block_ptr\fP.
+\f(CWdw_block_ptr\fP is a DWARF expression.
+Evaluate that expression and the result is the address
+where the previous value of register M is found.
+.in -4
+.P
+If \f(CWdw_value_type\fP  is DW_EXPR_VAL_EXPRESSION (3) then
+this is the the val_expression(E) rule of the DWARF3 spec.
+.P
+.in +4
+\f(CWdw_offset_or_block_len\fP is the length in bytes of
+the in-memory block  pointed at by \f(CWdw_block_ptr\fP.
+\f(CWdw_block_ptr\fP is a DWARF expression.
+Evaluate that expression and the result is the 
+previous value of register M.
+.in -4
+.P
+The rule \f(CWrt3_cfa_rule\fP is the current value of
+the CFA. It is interpreted exactly like
+any register M rule (as described just above) except that 
+\f(CWdw_regnum\fP cannot be CW_FRAME_CFA_REG3 or
+DW_FRAME_UNDEFINED_VAL or DW_FRAME_SAME_VAL but must
+be a real register number.
+.in -4
+
+
+
 .H 3 "Macro Details Record"
 The \f(CWDwarf_Macro_Details\fP type gives information about
 a single entry in the .debug.macinfo section.
@@ -448,7 +696,7 @@ a single entry in the .debug.macinfo section.
   Dwarf_Signed dmd_lineno;
   Dwarf_Signed dmd_fileindex;
   char *       dmd_macro;
-};\fP
+};
 typedef struct Dwarf_Macro_Details_s Dwarf_Macro_Details;
 .DE
 .P
@@ -481,11 +729,14 @@ For other \f(CWdmd_type\fPs this is 0.
 
 .H 2 "Opaque Types"
 The opaque types declared in \fIlibdwarf.h\fP are used as descriptors
-for queries against dwarf information stored in various debugging 
+for queries against DWARF information stored in various debugging 
 sections.  Each time an instance of an opaque type is returned as a 
 result of a \fIlibdwarf\fP operation (\f(CWDwarf_Debug\fP excepted), 
 it should be free'd, using \f(CWdwarf_dealloc()\fP when it is no longer 
-of use.  
+of use (read the following documentation for details, as in at least
+one case there is a special routine provided for deallocation
+and \f(CWdwarf_dealloc()\fP is not directly called: 
+see \f(CWdwarf_srclines()\fP).
 Some functions return a number of instances of an opaque type 
 in a block, by means of a pointer to the block and a count of the number
 of opaque descriptors in the block:
@@ -529,10 +780,7 @@ allocation type \f(CWDW_DLA_LINE\fP when no longer needed.
 .DE
 Instances of \f(CWDwarf_Global\fP type are returned from a successful 
 call to the \f(CWdwarf_get_globals()\fP function, and are used as 
-descriptors for queries about global names (pubnames).  The storage 
-pointed to by these descriptors should be individually free'd, using 
-\f(CWdwarf_dealloc()\fP with the allocation type \f(CWDW_DLA_GLOBAL\fP, 
-when no longer needed.
+descriptors for queries about global names (pubnames).
 
 .DS
 \f(CWtypedef struct Dwarf_Weak_s* Dwarf_Weak;\fP
@@ -543,7 +791,11 @@ SGI-specific \f(CWdwarf_get_weaks()\fP
 function, and are used as descriptors for 
 queries about weak names.  The storage pointed to by these descriptors 
 should be individually free'd, using \f(CWdwarf_dealloc()\fP with the 
-allocation type \f(CWDW_DLA_WEAK\fP when no longer needed.
+allocation type 
+\f(CWDW_DLA_WEAK_CONTEXT\fP 
+(or
+\f(CWDW_DLA_WEAK\fP, an older name, supported for compatibility)
+when no longer needed.
 
 .DS
 \f(CWtypedef struct Dwarf_Func_s* Dwarf_Func;\fP
@@ -553,10 +805,6 @@ call to the
 SGI-specific \f(CWdwarf_get_funcs()\fP
 function, and are used as 
 descriptors for queries about static function names.  
-The storage 
-pointed to by these descriptors should be individually free'd, using 
-\f(CWdwarf_dealloc()\fP with the allocation type \f(CWDW_DLA_FUNC\fP, 
-when no longer needed.
 
 .DS
 \f(CWtypedef struct Dwarf_Type_s* Dwarf_Type;\fP
@@ -566,9 +814,6 @@ to the
 SGI-specific \f(CWdwarf_get_types()\fP
 function, and are used as descriptors for 
 queries about user defined types.  
-The storage pointed to by this descriptor 
-should be individually free'd, using \f(CWdwarf_dealloc()\fP with the 
-allocation type \f(CWDW_DLA_TYPENAME\fP when no longer needed.
 
 .DS
 \f(CWtypedef struct Dwarf_Var_s* Dwarf_Var;\fP
@@ -577,9 +822,6 @@ Instances of \f(CWDwarf_Var\fP type are returned from a successful call
 to the SGI-specific \f(CWdwarf_get_vars()\fP
 function, and are used as descriptors for 
 queries about static variables.  
-The storage pointed to by this descriptor 
-should be individually free'd, using \f(CWdwarf_dealloc()\fP with the 
-allocation type \f(CWDW_DLA_VAR\fP when no longer needed.
 
 .DS
 \f(CWtypedef struct Dwarf_Error_s* Dwarf_Error;\fP
@@ -616,19 +858,14 @@ allocation type \f(CWDW_DLA_ABBREV\fP when no longer needed.
 Instances of \f(CWDwarf_Fde\fP type are returned from a successful call 
 to the \f(CWdwarf_get_fde_list()\fP, \f(CWdwarf_get_fde_for_die()\fP, or
 \f(CWdwarf_get_fde_at_pc()\fP functions, and are used as descriptors for 
-queries about frames descriptors.  The storage pointed to by these 
-descriptors should be individually free'd, using \f(CWdwarf_dealloc()\fP 
-with the allocation type \f(CWDW_DLA_FDE\fP when no longer needed.
+queries about frames descriptors.
 
 .DS
 \f(CWtypedef struct Dwarf_Cie_s* Dwarf_Cie;\fP
 .DE
 Instances of \f(CWDwarf_Cie\fP type are returned from a successful call 
 to the \f(CWdwarf_get_fde_list()\fP function, and are used as descriptors 
-for queries about information that is common to several frames.  The 
-storage pointed to by this descriptor should be individually free'd, using 
-\f(CWdwarf_dealloc()\fP with the allocation type \f(CWDW_DLA_CIE\fP when 
-no longer needed.
+for queries about information that is common to several frames.
 
 .DS
 \f(CWtypedef struct Dwarf_Arange_s* Dwarf_Arange;\fP
@@ -840,7 +1077,8 @@ routine that returns a list:
 Dwarf_Attribute *atlist;
 int errv;
 
-if ((errv = dwarf_attrlist(somedie, &atlist,&atcnt, &error)) == DW_DLV_OK) {
+errv = dwarf_attrlist(somedie, &atlist,&atcnt, &error);
+if (errv == DW_DLV_OK) {
 
         for (i = 0; i < atcnt; ++i) {
                 /* use atlist[i] */
@@ -892,7 +1130,7 @@ DW_DLA_LINE             :     Dwarf_Line
 DW_DLA_ATTR             :     Dwarf_Attribute 
 DW_DLA_TYPE             :     Dwarf_Type  (not used) 
 DW_DLA_SUBSCR           :     Dwarf_Subscr (not used) 
-DW_DLA_GLOBAL           :     Dwarf_Global 
+DW_DLA_GLOBAL_CONTEXT   :     Dwarf_Global 
 DW_DLA_ERROR            :     Dwarf_Error 
 DW_DLA_LIST             :     a list of opaque descriptors
 DW_DLA_LINEBUF          :     Dwarf_Line* (not used) 
@@ -903,10 +1141,11 @@ DW_DLA_CIE              :     Dwarf_Cie
 DW_DLA_FDE              :     Dwarf_Fde
 DW_DLA_LOC_BLOCK        :     Dwarf_Loc Block
 DW_DLA_FRAME_BLOCK      :     Dwarf_Frame Block (not used) 
-DW_DLA_FUNC             :     Dwarf_Func 
-DW_DLA_TYPENAME         :     Dwarf_Type
-DW_DLA_VAR              :     Dwarf_Var
-DW_DLA_WEAK		:     Dwarf_Weak
+DW_DLA_FUNC_CONTEXT     :     Dwarf_Func 
+DW_DLA_TYPENAME_CONTEXT :     Dwarf_Type
+DW_DLA_VAR_CONTEXT      :     Dwarf_Var
+DW_DLA_WEAK_CONTEXT	:     Dwarf_Weak
+DW_DLA_PUBTYPES_CONTEXT	:     Dwarf_Pubtype
 .TE
 .FG "Allocation/Deallocation Identifiers"
 .DE
@@ -1019,7 +1258,7 @@ descriptor, an app should use \f(CWdwarf_get_elf\fP
 and should call \f(CWelf_end\fP with the pointer returned
 thru the \f(CWElf**\fP handle created by \f(CWint dwarf_init()\fP.
 
-This function is not meaningful for a system that does not used the
+This function is not meaningful for a system that does not use the
 Elf format for objects.
 
 .H 3 "dwarf_finish()"
@@ -1056,7 +1295,7 @@ entries.
         Dwarf_Unsigned *abbrev_offset,
         Dwarf_Half     *address_size,
         Dwarf_Unsigned *next_cu_header,
-        Dwarf_Error    *error);\fP
+        Dwarf_Error    *error);
 .DE
 The function
 \f(CWdwarf_next_cu_header()\fP returns \f(CWDW_DLV_ERROR\fP 
@@ -1338,7 +1577,8 @@ Freeing the attrlist:
 Dwarf_Attribute *atlist;
 int errv;
 
-if ((errv = dwarf_attrlist(somedie, &atlist,&atcnt, &error)) == DW_DLV_OK) {
+errv = dwarf_attrlist(somedie, &atlist,&atcnt, &error);
+if (errv == DW_DLV_OK) {
 
         for (i = 0; i < atcnt; ++i) {
                 /* use atlist[i] */
@@ -1801,10 +2041,11 @@ attribute belongs to the \f(CWSTRING\fP class.
 It is an error
 for the form to not belong to this class.  
 The storage pointed 
-to by a successful return of \f(CWdwarf_formstring()\fP should 
-be free'd using the allocation type \f(CWDW_DLA_STRING\fP when 
-no longer of interest (see \f(CWdwarf_dealloc()\fP).  
-It returns \f(CWDW_DLV_ERROR\fP on error.
+to by a successful return of \f(CWdwarf_formstring()\fP 
+should not be free'd.  The pointer points into
+existing DWARF memory and the pointer becomes stale/invalid
+after a call to \f(CWdwarf_finish\fP.
+\f(CWdwarf_formstring()\fP returns \f(CWDW_DLV_ERROR\fP on error.
 
 .H 4 "dwarf_loclist_n()"
 .DS
@@ -1829,6 +2070,18 @@ suggested as the better interface, though
 \f(CWdwarf_loclist()\fP is still
 supported.)
 .P
+If the attribute is a reference to a location list
+(DW_FORM_data4 or DW_FORM_data8)
+the location list entries are used to fill
+in all the fields of the \f(CWDwarf_Locdesc\fP(s) returned.
+.P
+If the attribute is a location description
+(DW_FORM_block2 or DW_FORM_block4)
+then some of the \f(CWDwarf_Locdesc\fP values of the single
+\f(CWDwarf_Locdesc\fP record are set to 'sensible'
+but arbitrary values.  Specifically, ld_lopc is set to 0 and
+ld_hipc is set to all-bits-on. And \f(CW*listlen\fP is set to 1.
+.P
 It returns \f(CWDW_DLV_ERROR\fP on error. 
 \f(CWdwarf_loclist_n()\fP works on \f(CWDW_AT_location\fP, 
 \f(CWDW_AT_data_member_location\fP, \f(CWDW_AT_vtable_elem_location\fP,
@@ -1851,7 +2104,8 @@ using the allocation type \f(CWDW_DLA_LIST\fP.
 Dwarf_Locdesc **llbuf;
 int lres;
 
-if ((lres = dwarf_loclist_n(someattr, &llbuf,&lcnt &error)) == DW_DLV_OK) {
+lres = dwarf_loclist_n(someattr, &llbuf,&lcnt &error);
+if (lres == DW_DLV_OK) {
         for (i = 0; i < lcnt; ++i) {
             /* use llbuf[i] */
 
@@ -1907,7 +2161,8 @@ using the allocation type \f(CWDW_DLA_LOCDESC\fP.
 Dwarf_Locdesc *llbuf;
 int lres;
 
-if ((lres = dwarf_loclist(someattr, &llbuf,&lcnt &error)) == DW_DLV_OK) {
+lres = dwarf_loclist(someattr, &llbuf,&lcnt &error);
+if (lres == DW_DLV_OK) {
 	/* lcnt is always 1, (and has always been 1) */ */
 	/* use llbuf */
 
@@ -1967,11 +2222,9 @@ The compilation-unit is indicated by the given \f(CWdie\fP which must be
 a compilation-unit die.  
 It returns \f(CWDW_DLV_ERROR\fP on error.  
 On
-successful return, each line number information structure pointed to by 
-an entry in the block should be free'd using \f(CWdwarf_dealloc()\fP with 
-the allocation type \f(CWDW_DLA_LINE\fP when no longer of interest.  Also 
-the block of descriptors itself should be free'd using \f(CWdwarf_dealloc()\fP
-with the allocation type \f(CWDW_DLA_LIST\fP when no longer of interest.
+successful return, line number information 
+should be free'd using \f(CWdwarf_srclines_dealloc()\fP
+when no longer of interest. 
 .P
 .in +2
 .DS
@@ -1979,8 +2232,30 @@ with the allocation type \f(CWDW_DLA_LIST\fP when no longer of interest.
 Dwarf_Line *linebuf;
 int sres;
 
-if ((sres = dwarf_srclines(somedie, &linebuf,&cnt, &error)) == DW_DLV_OK) {
+sres = dwarf_srclines(somedie, &linebuf,&cnt, &error);
+if (sres == DW_DLV_OK) {
+        for (i = 0; i < cnt; ++i) {
+                /* use linebuf[i] */
+        }
+        dwarf_srclines_dealloc(dbg, linebuf, cnt);
+}\fP
+.DE
 
+.in -2
+.P
+The following dealloc code (the only documented method before July 2005)
+still works, but does not completely free all data allocated.
+The \f(CWdwarf_srclines_dealloc()\fP routine was created
+to fix the problem of incomplete deallocation.
+.P
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Line *linebuf;
+int sres;
+
+sres = dwarf_srclines(somedie, &linebuf,&cnt, &error);
+if (sres == DW_DLV_OK) {
         for (i = 0; i < cnt; ++i) {
                 /* use linebuf[i] */
                 dwarf_dealloc(dbg, linebuf[i], DW_DLA_LINE);
@@ -2034,7 +2309,8 @@ corresponding statement program (i.e., if there is no line information).
 char **srcfiles;
 int res;
 
-if ((res = dwarf_srcfiles(somedie, &srcfiles,&cnt &error)) == DW_DLV_OK) {
+res = dwarf_srcfiles(somedie, &srcfiles,&cnt &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use srcfiles[i] */
@@ -2079,12 +2355,21 @@ It never returns \f(CWDW_DLV_NO_ENTRY\fP.
 The function \f(CWdwarf_lineendsequence()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CW*return_bool\fP
 \fInon-zero\fP
-if \f(CWline\fP represents a line number entry that is marked as
+(in which case 
+\f(CWline\fP represents a line number entry that is marked as
 ending a text sequence)
 or
-\fIzero\fP ((if \f(CWline\fP represents a line number entry
+\fIzero\fP (in which case 
+\f(CWline\fP represents a line number entry
 that is not marked as ending a text sequence).
-It returns \f(CWDW_DLV_ERROR\fP on error.
+A line number entry that is marked as
+ending a text sequence is an entry with an address 
+one beyond the highest address used by the current
+sequence of line table entries (that is, the table entry is
+a DW_LNE_end_sequence entry (see the DWARF specification)).
+.P
+The function \f(CWdwarf_lineendsequence()\fP 
+returns \f(CWDW_DLV_ERROR\fP on error.
 It never returns \f(CWDW_DLV_NO_ENTRY\fP.
 
 .P
@@ -2100,6 +2385,34 @@ The function \f(CWdwarf_lineno()\fP returns
 the source statement line 
 number corresponding to the descriptor \f(CWline\fP.  
 It returns \f(CWDW_DLV_ERROR\fP on error.
+It never returns \f(CWDW_DLV_NO_ENTRY\fP.
+
+.P
+.H 4 "dwarf_line_srcfileno()"
+.DS
+\f(CWint dwarf_line_srcfileno(
+        Dwarf_Line       line, 
+	Dwarf_Unsigned * returned_fileno,
+        Dwarf_Error    * error)\fP
+.DE
+The function \f(CWdwarf_line_srcfileno()\fP returns 
+\f(CWDW_DLV_OK\fP and sets \f(CW*returned_fileno\fP to
+the source statement line 
+number corresponding to the descriptor \f(CWfile number\fP.  
+When the number returned thru \f(CW*returned_fileno\fP is zero it means
+the file name is unknown (see the DWARF2/3 line table specification).
+When the number returned thru \f(CW*returned_fileno\fP is non-zero
+it is a file number:
+subtract 1 from this file number
+to get an
+index into the array of strings returned by \f(CWdwarf_srcfiles()\fP
+(verify the resulting index is in range for the array of strings
+before indexing into the array of strings).
+The file number may exceed the size of 
+the array of strings returned by \f(CWdwarf_srcfiles()\fP
+because \f(CWdwarf_srcfiles()\fP does not return files names defined with
+the  \f(CWDW_DLE_define_file\fP  operator.
+The function \f(CWdwarf_line_srcfileno()\fP returns \f(CWDW_DLV_ERROR\fP on error.
 It never returns \f(CWDW_DLV_NO_ENTRY\fP.
 
 .P
@@ -2240,10 +2553,44 @@ It returns \f(CWDW_DLV_ERROR\fP on error.
 It returns \f(CWDW_DLV_NO_ENTRY\fP if the .debug_pubnames 
 section does not exist.
 
+.P
+On a successful return from
+\f(CWdwarf_get_globals()\fP, the \f(CWDwarf_Global\fP 
+descriptors should be
+free'd using \f(CWdwarf_globals_dealloc()\fP.
+\f(CWdwarf_globals_dealloc()\fP is new as of July 15, 2005
+and is the preferred approach to freeing this memory..
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Global *globs;
+int res;
+
+res = dwarf_get_globals(dbg, &globs,&cnt, &error);
+if (res == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use globs[i] */
+        }
+        dwarf_globals_dealloc(dbg, globs, cnt);
+}\fP
+.DE
+.in -2
+
+
+.P
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
 On a successful return from 
-this function, the \f(CWDwarf_Global\fP descriptors should be individually 
+\f(CWdwarf_get_globals()\fP, the \f(CWDwarf_Global\fP 
+descriptors should be individually 
 free'd using \f(CWdwarf_dealloc()\fP with the allocation type 
-\f(CWDW_DLA_GLOBAL\fP, followed by the deallocation of the list itself 
+\f(CWDW_DLA_GLOBAL_CONTEXT\fP, 
+(or
+\f(CWDW_DLA_GLOBAL\fP, an older name, supported for compatibility)
+followed by the deallocation of the list itself 
 with the allocation type \f(CWDW_DLA_LIST\fP when the descriptors are 
 no longer of interest.
 
@@ -2253,11 +2600,12 @@ no longer of interest.
 Dwarf_Global *globs;
 int res;
 
-if ((res = dwarf_get_globals(dbg, &globs,&cnt, &error)) == DW_DLV_OK) {
+res = dwarf_get_globals(dbg, &globs,&cnt, &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use globs[i] */
-                dwarf_dealloc(dbg, globs[i], DW_DLA_GLOBAL);
+                dwarf_dealloc(dbg, globs[i], DW_DLA_GLOBAL_CONTEXT);
         }
         dwarf_dealloc(dbg, globs, DW_DLA_LIST);
 }\fP
@@ -2378,6 +2726,154 @@ pointed to by \f(CWreturn_name\fP
 should be free'd using \f(CWdwarf_dealloc()\fP, 
 with the allocation type \f(CWDW_DLA_STRING\fP when no longer of interest.
 
+
+.H 2 "DWARF3 Type Names Operations"
+Section ".debug_pubtypes"  is new in DWARF3.
+.P
+These functions operate on the .debug_pubtypes section of the debugging
+information.  The .debug_pubtypes section contains the names of file-scope
+user-defined types, the offsets of the \f(CWDIE\fPs that represent the
+definitions of those types, and the offsets of the compilation-units 
+that contain the definitions of those types.
+
+.H 3 "Debugger Interface Operations"
+
+.H 4 "dwarf_get_pubtypes()"
+.DS
+\f(CWint dwarf_get_pubtypes(
+        Dwarf_Debug dbg,
+        Dwarf_Type **types,
+        Dwarf_Signed *typecount,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_get_pubtypes()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*typecount\fP to
+the count of user-defined
+type names represented in the section containing user-defined type names,
+i.e. .debug_pubtypes.  
+It also stores at \f(CW*types\fP, 
+a pointer to a list of \f(CWDwarf_Pubtype\fP descriptors, one for each of the 
+user-defined type names in the .debug_pubtypes section.  
+It returns \f(CWDW_DLV_NOCOUNT\fP on error. 
+It returns \f(CWDW_DLV_NO_ENTRY\fP if 
+the .debug_pubtypes section does not exist.  
+
+.P
+On a successful 
+return from \f(CWdwarf_get_pubtypes()\fP, 
+the \f(CWDwarf_Type\fP descriptors should be 
+free'd using \f(CWdwarf_types_dealloc()\fP.
+\f(CWdwarf_types_dealloc()\fP is used for both
+\f(CWdwarf_get_pubtypes()\fP and \f(CWdwarf_get_types()\fP
+as the data types are the same.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Pubtype *types;
+int res;
+
+res = dwarf_get_pubtypes(dbg, &types,&cnt, &error);
+if (res == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use types[i] */
+        }
+        dwarf_types_dealloc(dbg, types, cnt);
+}\fP
+.DE
+.in -2
+
+.H 4 "dwarf_pubtypename()"
+.DS
+\f(CWint dwarf_pubtypename(
+        Dwarf_Pubtype   type,
+        char       **return_name,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_pubtypename()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*return_name\fP to
+a pointer to a
+null-terminated string that names the user-defined type represented by the
+\f(CWDwarf_Pubtype\fP descriptor, \f(CWtype\fP.  
+It returns \f(CWDW_DLV_ERROR\fP on error.  
+It never returns \f(CWDW_DLV_NO_ENTRY\fP.
+On a successful return from this function, the string should
+be free'd using \f(CWdwarf_dealloc()\fP, with the allocation type
+\f(CWDW_DLA_STRING\fP when no longer of interest.
+
+.H 4 "dwarf_pubtype_die_offset()"
+.DS
+\f(CWint dwarf_pubtype_die_offset(
+        Dwarf_Pubtype type,
+        Dwarf_Off  *return_offset,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_pubtype_die_offset()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*return_offset\fP to
+the offset in
+the section containing DIE's, i.e. .debug_info, of the DIE representing
+the user-defined type that is described by the \f(CWDwarf_Pubtype\fP 
+descriptor, \f(CWtype\fP.  
+It returns \f(CWDW_DLV_ERROR\fP on error.
+It never returns \f(CWDW_DLV_NO_ENTRY\fP.
+
+.H 4 "dwarf_pubtype_cu_offset()"
+.DS
+\f(CWint dwarf_pubtype_cu_offset(
+        Dwarf_Pubtype type,
+        Dwarf_Off  *return_offset,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_pubtype_cu_offset()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*return_offset\fP to
+the offset in
+the section containing DIE's, i.e. .debug_info, of the compilation-unit
+header of the compilation-unit that contains the user-defined type
+described by the \f(CWDwarf_Pubtype\fP descriptor, \f(CWtype\fP.  
+It returns \f(CWDW_DLV_ERROR\fP on error.
+It never returns \f(CWDW_DLV_NO_ENTRY\fP.
+
+.H 4 "dwarf_pubtype_name_offsets()"
+.DS
+\f(CWint dwarf_pubtype_name_offsets(
+        Dwarf_Pubtype   type,
+        char      ** returned_name,
+        Dwarf_Off *  die_offset,
+        Dwarf_Off *  cu_offset,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_pubtype_name_offsets()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*returned_name\fP to
+a pointer to
+a null-terminated string that gives the name of the user-defined
+type described by the \f(CWDwarf_Pubtype\fP descriptor \f(CWtype\fP.
+It also returns in the locations
+pointed to by \f(CWdie_offset\fP, and \f(CWcu_offset\fP, the offsets
+of the DIE representing the 
+user-defined type, and the DIE
+representing the compilation-unit containing the 
+user-defined type, respectively.
+It returns \f(CWDW_DLV_ERROR\fP on error.  
+It never returns \f(CWDW_DLV_NO_ENTRY\fP.
+On a successful return from \f(CWdwarf_pubtype_name_offsets()\fP
+the storage pointed to by \f(CWreturned_name\fP should
+be free'd using
+\f(CWdwarf_dealloc()\fP, with the allocation type \f(CWDW_DLA_STRING\fP
+when no longer of interest.
+
+
+.H 2 "User Defined Static Variable Names Operations"
+This section is SGI specific and is not part of standard DWARF version 2.
+.P
+These functions operate on the .debug_varnames section of the debugging
+information.  The .debug_varnames section contains the names of file-scope
+static variables, the offsets of the \f(CWDIE\fPs that represent the 
+definitions of those variables, and the offsets of the compilation-units
+that contain the definitions of those variables.
+.P
+
+
 .H 2 "Weak Name Space Operations" 
 These operations operate on the .debug_weaknames section of the debugging 
 information.
@@ -2404,9 +2900,42 @@ It returns \f(CWDW_DLV_NO_ENTRY\fP if the section does not exist.
 It also stores in \f(CW*weaks\fP, a pointer to 
 a list of \f(CWDwarf_Weak\fP descriptors, one for each of the weak names 
 in the .debug_weaknames section.  
-On a successful return from this function, 
+
+.P
+On a successful return from this function,
+the \f(CWDwarf_Weak\fP descriptors should be free'd using
+\f(CWdwarf_weaks_dealloc()\fP when the data is no longer of
+interest.  \f(CWdwarf_weaks_dealloc()\fPis new as of July 15, 2005.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Weak *weaks;
+int res;
+
+res = dwarf_get_weaks(dbg, &weaks,&cnt, &error);
+if (res == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use weaks[i] */
+        }
+        dwarf_weaks_dealloc(dbg, weaks, cnt);
+}\fP
+.DE
+.in -2
+
+
+
+.P
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
+On a successful return from \f(CWdwarf_get_weaks()\fP
 the \f(CWDwarf_Weak\fP descriptors should be individually free'd using 
-\f(CWdwarf_dealloc()\fP with the allocation type \f(CWDW_DLA_WEAK\fP, 
+\f(CWdwarf_dealloc()\fP with the allocation type 
+\f(CWDW_DLA_WEAK_CONTEXT\fP, 
+(or
+\f(CWDW_DLA_WEAK\fP, an older name, supported for compatibility)
 followed by the deallocation of the list itself with the allocation type 
 \f(CWDW_DLA_LIST\fP when the descriptors are no longer of interest.
 
@@ -2416,11 +2945,12 @@ followed by the deallocation of the list itself with the allocation type
 Dwarf_Weak *weaks;
 int res;
 
-if ((res = dwarf_get_weaks(dbg, &weaks,&cnt, &error)) == DW_DLV_OK) {
+res = dwarf_get_weaks(dbg, &weaks,&cnt, &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use weaks[i] */
-                dwarf_dealloc(dbg, weaks[i], DW_DLA_WEAK);
+                dwarf_dealloc(dbg, weaks[i], DW_DLA_WEAK_CONTEXT);
         }
         dwarf_dealloc(dbg, weaks, DW_DLA_LIST);
 }\fP
@@ -2534,9 +3064,42 @@ section.
 It returns \f(CWDW_DLV_NOCOUNT\fP on error.
 It returns \f(CWDW_DLV_NO_ENTRY\fP
 if the .debug_funcnames section does not exist.  
-On a successful return from this function, the \f(CWDwarf_Func\fP 
+.P
+On a successful return from \f(CWdwarf_get_funcs()\fP, 
+the \f(CWDwarf_Func\fP
+descriptors should be free'd using \f(CWdwarf_funcs_dealloc()\fP.
+\f(CWdwarf_funcs_dealloc()\fP is new as of July 15, 2005.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Func *funcs;
+int fres;
+
+fres = dwarf_get_funcs(dbg, &funcs, &error);
+if (fres == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use funcs[i] */
+        }
+        dwarf_funcs_dealloc(dbg, funcs, cnt);
+}\fP
+.DE
+.in -2
+
+
+.P
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
+On a successful return from \f(CWdwarf_get_funcs()\fP, 
+the \f(CWDwarf_Func\fP 
 descriptors should be individually free'd using \f(CWdwarf_dealloc()\fP 
-with the allocation type \f(CWDW_DLA_FUNC\fP, followed by the deallocation 
+with the allocation type 
+\f(CWDW_DLA_FUNC_CONTEXT\fP, 
+(or
+\f(CWDW_DLA_FUNC\fP, an older name, supported for compatibility)
+followed by the deallocation 
 of the list itself with the allocation type \f(CWDW_DLA_LIST\fP when 
 the descriptors are no longer of interest.
 
@@ -2546,11 +3109,12 @@ the descriptors are no longer of interest.
 Dwarf_Func *funcs;
 int fres;
 
-if ((fres = dwarf_get_funcs(dbg, &funcs, &error)) == DW_DLV_OK) {
+fres = dwarf_get_funcs(dbg, &funcs, &error);
+if (fres == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use funcs[i] */
-                dwarf_dealloc(dbg, funcs[i], DW_DLA_FUNC);
+                dwarf_dealloc(dbg, funcs[i], DW_DLA_FUNC_CONTEXT);
         }
         dwarf_dealloc(dbg, funcs, DW_DLA_LIST);
 }\fP
@@ -2636,7 +3200,10 @@ the storage pointed to by  \f(CWfunc_name\fP should be free'd using
 when no longer of interest.
 
 .H 2 "User Defined Type Names Operations"
-This section is SGI specific and is not part of standard DWARF version 2.
+Section "debug_typenames"  is SGI specific 
+and is not part of standard DWARF version 2.
+(However, an identical section is part of DWARF version 3
+named ".debug_pubtypes", see  \f(CWdwarf_get_pubtypes()\fP above.)
 .P
 These functions operate on the .debug_typenames section of the debugging
 information.  The .debug_typenames section contains the names of file-scope
@@ -2665,10 +3232,47 @@ user-defined type names in the .debug_typenames section.
 It returns \f(CWDW_DLV_NOCOUNT\fP on error. 
 It returns \f(CWDW_DLV_NO_ENTRY\fP if 
 the .debug_typenames section does not exist.  
+
+.P
+
+On a successful
+return from \f(CWdwarf_get_types()\fP, 
+the \f(CWDwarf_Type\fP descriptors should be
+free'd using \f(CWdwarf_types_dealloc()\fP.
+\f(CWdwarf_types_dealloc()\fP is new as of July 15, 2005
+and frees all memory allocated by \f(CWdwarf_get_types()\fP.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Type *types;
+int res;
+
+res = dwarf_get_types(dbg, &types,&cnt, &error);
+if (res == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use types[i] */
+        }
+        dwarf_types_dealloc(dbg, types, cnt);
+}\fP
+.DE
+.in -2
+
+
+
+.P
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
 On a successful 
-return from this function, the \f(CWDwarf_Type\fP descriptors should be 
+return from \f(CWdwarf_get_types()\fP, 
+the \f(CWDwarf_Type\fP descriptors should be 
 individually free'd using \f(CWdwarf_dealloc()\fP with the allocation type 
-\f(CWDW_DLA_TYPENAME\fP, followed by the deallocation of the list itself 
+\f(CWDW_DLA_TYPENAME_CONTEXT\fP, 
+(or
+\f(CWDW_DLA_TYPENAME\fP, an older name, supported for compatibility)
+followed by the deallocation of the list itself 
 with the allocation type \f(CWDW_DLA_LIST\fP when the descriptors are no 
 longer of interest.
 
@@ -2678,11 +3282,12 @@ longer of interest.
 Dwarf_Type *types;
 int res;
 
-if ((res = dwarf_get_types(dbg, &types,&cnt, &error)) == DW_DLV_OK) {
+res = dwarf_get_types(dbg, &types,&cnt, &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use types[i] */
-                dwarf_dealloc(dbg, types[i], DW_DLA_TYPENAME);
+                dwarf_dealloc(dbg, types[i], DW_DLA_TYPENAME_CONTEXT);
         }
         dwarf_dealloc(dbg, types, DW_DLA_LIST);
 }\fP
@@ -2800,10 +3405,41 @@ variable names in the .debug_varnames section.
 It returns \f(CWDW_DLV_ERROR\fP on error.
 It returns \f(CWDW_DLV_NO_ENTRY\fP if the .debug_varnames section does 
 not exist.  
+
+.P 
+The following is new as of July 15, 2005.
+On a successful return
+from \f(CWdwarf_get_vars()\fP, the \f(CWDwarf_Var\fP descriptors should be
+free'd using \f(CWdwarf_vars_dealloc()\fP.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Var *vars;
+int res;
+
+res = dwarf_get_vars(dbg, &vars,&cnt &error);
+if (res == DW_DLV_OK) {
+
+        for (i = 0; i < cnt; ++i) {
+                /* use vars[i] */
+        }
+        dwarf_vars_dealloc(dbg, vars, cnt);
+}\fP
+.DE
+.in -2
+
+.P 
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
 On a successful return 
-from this function, the \f(CWDwarf_Var\fP descriptors should be individually 
+from \f(CWdwarf_get_vars()\fP, the \f(CWDwarf_Var\fP descriptors should be individually 
 free'd using \f(CWdwarf_dealloc()\fP with the allocation type 
-\f(CWDW_DLA_VAR\fP, followed by the deallocation of the list itself with 
+\f(CWDW_DLA_VAR_CONTEXT\fP, 
+(or
+\f(CWDW_DLA_VAR\fP, an older name, supported for compatibility)
+followed by the deallocation of the list itself with 
 the allocation type \f(CWDW_DLA_LIST\fP when the descriptors are no 
 longer of interest.
 
@@ -2813,11 +3449,12 @@ longer of interest.
 Dwarf_Var *vars;
 int res;
 
-if ((res = dwarf_get_vars(dbg, &vars,&cnt &error)) == DW_DLV_OK) {
+res = dwarf_get_vars(dbg, &vars,&cnt &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use vars[i] */
-                dwarf_dealloc(dbg, vars[i], DW_DLA_VAR);
+                dwarf_dealloc(dbg, vars[i], DW_DLA_VAR_CONTEXT);
         }
         dwarf_dealloc(dbg, vars, DW_DLA_LIST);
 }\fP
@@ -2988,6 +3625,28 @@ of a table with a row per instruction and a column per register
 and a column for the canonical frame address (CFA, which corresponds
 to the notion of a frame pointer), 
 as well as a column for the return address.  
+.P
+From 1993-2006 the interface we'll here refer to as DWARF2
+made the CFA be a column in the matrix, but left
+DW_FRAME_UNDEFINED_VAL, and DW_FRAME_SAME_VAL out of the matrix
+(giving them high numbers). As of the DWARF3 interfaces
+introduced in this document in April 2006, there are *two*
+interfaces. 
+.P
+The original still exists (see.
+dwarf_get_fde_info_for_reg() and dwarf_get_fde_info_for_all_regs() below)
+and works adequately for MIPS/IRIX DWARF2 and ABI/ISA sets
+that are sufficiently similar (but the settings for non-MIPS
+must be set into libdwarf.h and cannot be changed at runtime).
+.P
+A new interface  set of dwarf_get_fde_info_for_reg3(),
+dwarf_get_fde_info_for_cfa_reg3(), dwarf_get_fde_info_for_all_regs3()
+dwarf_set_frame_rule_inital_value(), dwarf_set_frame_rule_table_size()
+is more flexible
+and should work for many more architectures
+and the setting of  DW_FRAME_CFA_COL and the size of
+the table can be set at runtime.
+.P
 Each cell in the table contains one of the following:
 
 .AL 
@@ -2997,6 +3656,7 @@ A register + offset(a)(b)
 .LI
 A register(c)(d)
 
+
 .LI
 A marker (DW_FRAME_UNDEFINED_VAL) meaning \fIregister value undefined\fP
 
@@ -3004,7 +3664,7 @@ A marker (DW_FRAME_UNDEFINED_VAL) meaning \fIregister value undefined\fP
 A marker (DW_FRAME_SAME_VAL) meaning \fIregister value same as in caller\fP
 .LE
 .P
-(a) When  the column is DW_FRAME_CFA_COL: the register
+(a old DWARF2 interface) When  the column is DW_FRAME_CFA_COL: the register
 number is a real hardware register, not a reference
 to DW_FRAME_CFA_COL, not  DW_FRAME_UNDEFINED_VAL,
 and not DW_FRAME_SAME_VAL. 
@@ -3021,6 +3681,13 @@ so those real registers should be marked DW_FRAME_UNDEFINED_VAL,
 and the CFA column content (whatever register it
 specifies) becomes unreferenced by anything.
 .P
+(a new April 2006 DWARF2/3 interface): The CFA is
+separately accessible and not part of the table.
+The 'rule number' for the CFA is a number outside the table. 
+So the CFA is a marker, not a register number.
+See  DW_FRAME_CFA_COL3 in libdwarf.h and
+dwarf_get_fde_info_for_cfa_reg3().
+.P
 (b) When the column is not DW_FRAME_CFA_COL, the 'register'
 will and must be DW_FRAME_CFA_COL, implying that
 to get the final location for the column one must add
@@ -3036,7 +3703,6 @@ may be a hardware register.
 It will not be DW_FRAME_CFA_COL.
 .P
 There is no 'column' for DW_FRAME_UNDEFINED_VAL or DW_FRAME_SAME_VAL.
-
 
 Figure \n(aX
 is machine dependent and represents MIPS cpu register
@@ -3074,6 +3740,8 @@ special cell values: these values mean
 that the cell has the value \fIundefined\fP or \fIsame value\fP
 respectively, rather than containing a \fIregister\fP or
 \fIregister+offset\fP.  
+It assumes DW_FRAME_CFA_COL is a table rule, which
+is not readily accomplished or sensible for some architectures.
 .P
 .DS
 .TS
@@ -3091,6 +3759,34 @@ DW_FRAME_SAME_VAL:1035:means 'same value' as
 .FG "Frame Information Special Values"
 .DE
 
+.P
+The following table shows more general special cell values. 
+These values mean
+that the cell register-number refers to the \fIcfa-register\fP or 
+\fIundefined-value\fP or \fIsame-value\fP
+respectively, rather than referring to a \fIregister in the table\fP.
+The generality arises from making DW_FRAME_CFA_COL3 be
+outside the set of registers and making the cfa rule accessible
+from outside the rule-table.
+.P
+.DS
+.TS
+center box, tab(:);
+lfB lfB lfB
+l c l.
+NAME:value:PURPOSE
+_
+DW_FRAME_UNDEFINED_VAL:1034:means undefined value.
+::Not a column or register value
+DW_FRAME_SAME_VAL:1035:means 'same value' as
+::caller had. Not a column or
+::register value
+DW_FRAME_CFA_COL3:1036:means 'cfa register'is referred to,
+::not a real register, not a column, but the cfa (the cfa
+::does have a value, but in the DWARF3 libdwarf interface
+::it does not have a 'real register number').
+.TE
+.DE
 .\"#if 0
 .\".P
 .\"Since the cie and fde entries are not "organized" by anything
@@ -3121,14 +3817,10 @@ descriptor per FDE in the .debug_frame section.
 \f(CWdwarf_get_fde_list()\fP  returns \f(CWDW_DLV_EROR\fP on error.
 It returns \f(CWDW_DLV_NO_ENTRY\fP if it cannot find frame entries.
 It returns \f(CWDW_DLV_OK\fP on a successful return.
-
-On successful return, each of the structures pointed to by a 
-descriptor should be individually free'd using \f(CWdwarf_dealloc()\fP 
-with either the allocation type \f(CWDW_DLA_CIE\fP, or \f(CWDW_DLA_FDE\fP 
-as appropriate when no longer of interest.  Each of the blocks 
-of descriptors should be free'd using \f(CWdwarf_dealloc()\fP with 
-the allocation type \f(CWDW_DLA_LIST\fP when no longer of interest.
-
+.P
+On successful return, structures pointed to by a
+descriptor should be free'd using \f(CWdwarf_fde_cie_list_dealloc()\fP.
+This dealloc approach is new as of July 15, 2005.
 
 .in +2
 .DS
@@ -3139,8 +3831,33 @@ Dwarf_Fde *fde_data;
 Dwarf_Signed fde_count;
 int fres;
 
-if ((fres = dwarf_get_fde_list(dbg,&cie_data,&cie_count, 
-		&fde_data,&fde_count,&error)) == DW_DLV_OK) {
+fres = dwarf_get_fde_list(dbg,&cie_data,&cie_count,
+                &fde_data,&fde_count,&error);
+if (fres == DW_DLV_OK) {
+        dwarf_fde_cie_list_dealloc(dbg, cie_data, cie_count,
+		fde_data,fde_count);
+}\fP
+.DE
+.in -2
+
+
+
+.P
+The following code is deprecated as of July 15, 2005 as it does not
+free all relevant memory.
+This approach  still works as well as it ever did.
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Cie *cie_data;
+Dwarf_Signed cie_count;
+Dwarf_Fde *fde_data;
+Dwarf_Signed fde_count;
+int fres;
+
+fres = dwarf_get_fde_list(dbg,&cie_data,&cie_count, 
+		&fde_data,&fde_count,&error);
+if (fres == DW_DLV_OK) {
 
         for (i = 0; i < cie_count; ++i) {
                 /* use cie[i] */
@@ -3185,12 +3902,28 @@ It returns \f(CWDW_DLV_NO_ENTRY\fP if it cannot find
 exception handling entries.
 It returns \f(CWDW_DLV_OK\fP on a successful return.
 
-On successful return, each of the structures pointed to by a
-descriptor should be individually free'd using \f(CWdwarf_dealloc()\fP
-with either the allocation type \f(CWDW_DLA_CIE\fP, or \f(CWDW_DLA_FDE\fP
-as appropriate when no longer of interest.  Each of the blocks
-of descriptors should be free'd using \f(CWdwarf_dealloc()\fP with
-the allocation type \f(CWDW_DLA_LIST\fP when no longer of interest.
+.P
+On successful return, structures pointed to by a
+descriptor should be free'd using \f(CWdwarf_fde_cie_list_dealloc()\fP.
+This dealloc approach is new as of July 15, 2005.
+
+.in +2
+.DS
+\f(CWDwarf_Signed cnt;
+Dwarf_Cie *cie_data;
+Dwarf_Signed cie_count;
+Dwarf_Fde *fde_data;
+Dwarf_Signed fde_count;
+int fres;
+
+fres = dwarf_get_fde_list(dbg,&cie_data,&cie_count,
+                &fde_data,&fde_count,&error);
+if (fres == DW_DLV_OK) {
+        dwarf_fde_cie_list_dealloc(dbg, cie_data, cie_count,
+                fde_data,fde_count);
+}\fP
+.DE
+.in -2
 
 
 .P
@@ -3345,6 +4078,8 @@ must not be changed and there
 is nothing to free.
 
 .H 4 "dwarf_get_fde_info_for_reg()"
+This interface is suitable for DWARF2 but is not
+sufficient for DWARF3.  See \f(CWint dwarf_get_fde_info_for_reg3\fP.
 .DS
 \f(CWint dwarf_get_fde_info_for_reg(
         Dwarf_Fde fde,
@@ -3401,7 +4136,9 @@ It is usable with either
 .DE
 \f(CWdwarf_get_fde_info_for_all_regs()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CW*reg_table\fP for the row specified by
-\f(CWpc_requested\fP for the FDE specified by \f(CWfde\fP. The intent is
+\f(CWpc_requested\fP for the FDE specified by \f(CWfde\fP. 
+.P
+The intent is
 to return the rules for decoding all the registers, given a pc value.
 \f(CWreg_table\fP is an array of rules, one for each register specified in
 \f(CWdwarf.h\fP. The rule for each register contains three items - 
@@ -3410,17 +4147,238 @@ to return the rules for decoding all the registers, given a pc value.
 \f(CWdw_offset_relevant\fP which is set to zero if offset is not relevant 
 for that rule. See \f(CWdwarf_get_fde_info_fo_reg()\fP for a description 
 of \f(CWrow_pc\fP.
+.P
+\f(CWdwarf_get_fde_info_for_all_regs\fP returns \f(CWDW_DLV_ERROR\fP if there is an error. 
+.P
+\f(CWint dwarf_get_fde_info_for_all_regs\fP is SGI/MIPS specific.
+
+
+.H 4 "dwarf_set_frame_rule_table_size()"
+.P
+This allows consumers to set the size of the (internal to libdwarf)
+rule table.  It should be at least as large as the
+number of real registers in the ABI which is to be read in
+for the dwarf_get_fde_info_for_reg3() or dwarf_get_fde_info_for_all_regs3()
+functions to work properly.
+It must be less than the marker values
+DW_FRAME_UNDEFINED_VAL, DW_FRAME_SAME_VAL, DW_FRAME_CFA_COL3.
+.P
+.DS
+\f(CWDwarf_Half
+dwarf_set_frame_rule_table_size(Dwarf_Debug dbg,
+         Dwarf_Half value);\fP
+
+.DE
+\f(CWddwarf_set_frame_rule_table_size()\fP sets the
+value \f(CWvalue\fP as the size of libdwarf-internal
+rules tables  of \f(CWdbg\fP.
+The function returns
+the previous value of the rules table size setting (taken from the 
+\f(CWdbg\fP structure).
+
+.H 4 "dwarf_set_frame_rule_inital_value()"
+This allows consumers to set the initial value
+for rows in the frame tables.  By default it
+is taken from libdwarf.h and is DW_FRAME_REG_INITIAL_VALUE
+(which itself is either DW_FRAME_SAME_VAL or DW_FRAME_UNDEFINED_VAL).
+The MIPS/IRIX default is DW_FRAME_SAME_VAL.
+Comsumer code should set this appropriately and for
+many architectures (but probably not MIPS) DW_FRAME_UNDEFINED_VAL is an
+appropriate setting.
+.DS
+\f(CWDwarf_Half
+dwarf_set_frame_rule_inital_value(Dwarf_Debug dbg,
+         Dwarf_Half value);\fP
+
+.DE
+\f(CWdwarf_set_frame_rule_inital_value()\fP sets the
+value \f(CWvalue\fP as the initial value for this \f(CWdbg\fP
+when initializing rules tables.  The function returns
+the previous value of the initial setting (taken from the 
+\f(CWdbg\fP structure).
+
+
+
+.H 4 "dwarf_get_fde_info_for_reg3()"
+This interface is suitable for DWARF3 and DWARF2.
+It returns the values for a particular real register
+(Not for the CFA register, see dwarf_get_fde_info_for_cfa_reg3()
+below).
+.DS
+\f(CWint dwarf_get_fde_info_for_reg3(
+        Dwarf_Fde fde,
+        Dwarf_Half table_column,
+        Dwarf_Addr pc_requested,
+	Dwarf_Small  *value_type,
+	Dwarf_Signed *offset_relevant,
+        Dwarf_Signed *register_num,
+        Dwarf_Signed *offset_or_block_len,
+	Dwarf_Ptr    *block_ptr,
+        Dwarf_Addr   *row_pc,
+        Dwarf_Error  *error);\fP
+.DE
+\f(CWdwarf_get_fde_info_for_re3()\fP returns
+\f(CWDW_DLV_OK\fP on success. 
+It sets \f(CW*value_type\fP
+to one of  DW_EXPR_OFFSET (0),
+DW_EXPR_VAL_OFFSET(1), DW_EXPR_EXPRESSION(2) or
+DW_EXPR_VAL_EXPRESSION(3).
+On call, \f(CWtable_column\fP must be set to the
+register number of a real register. Not
+the cfa 'register' or DW_FRAME_SAME_VALUE or
+DW_FRAME_UNDEFINED_VALUE.
+
+
+if \f(CW*value_type\fP has the value DW_EXPR_OFFSET (0) then:
+.in +4
+.P
+It sets \f(CW*offset_relevant\fP to
+non-zero if the offset is relevant for the
+row specified by \f(CWpc_requested\fP and column specified by
+\f(CWtable_column\fP or, for the FDE specified by \f(CWfde\fP.  
+In this case  the  \f(CW*register_num\fP will be set
+to DW_FRAME_CFA_COL3.  This is an offset(N) rule
+as specified in the DWARF3/2 documents.
+Adding the value of \f(CW*offset_or_block_len\fP
+to the value of the CFA register gives the address
+of a location holding the previous value of 
+register \f(CWtable_column\fP.
+
+.P
+If offset is not relevant for this rule, \f(CW*offset_relevant\fP is
+set to zero.  \f(CW*register_num\fP will be set
+to the number of the real register holding the value of 
+the \f(CWtable_column\fP register.
+This is the register(R) rule as specifified in DWARF3/2 documents.
+.P
+The
+intent is to return the rule for the given pc value and register.
+The location pointed to by \f(CWregister_num\fP is set to the register
+value for the rule.  
+The location pointed to by \f(CWoffset\fP 
+is set to the offset value for the rule.  
+Since more than one pc 
+value will have rows with identical entries, the user may want to
+know the earliest pc value after which the rules for all the columns
+remained unchanged.  
+Recall that in the virtual table that the frame information
+represents there may be one or more table rows with identical data
+(each such table row at a different pc value).
+Given a \f(CWpc_requested\fP which refers to a pc in such a group
+of identical rows, 
+the location pointed to by \f(CWrow_pc\fP is set 
+to the lowest pc value
+within the group of  identical rows.
+
+.in -4
+
+.P
+If \f(CW*value_type\fP has the value DW_EXPR_VAL_OFFSET (1) then:
+.in +4
+This will be a val_offset(N) rule as specified in the
+DWARF3/2 documents so  \f(CW*offset_relevant\fP will
+be non zero. 
+The calculation  is identical to the  DW_EXPR_OFFSET (0)
+calculation with  \f(CW*offset_relevant\fP non-zero, 
+but the value  resulting is the actual \f(CWtable_column\fP
+value (rather than the address where the value may be found).
+.in -4
+.P
+If \f(CW*value_type\fP has the value DW_EXPR_EXPRESSION (1) then:
+.in+4
+ \f(CW*offset_or_block_len\fP
+is set to the length in bytes of a block of memory
+with a DWARF expression in the block.
+\f(CW*block_ptr\fP is set to point at the block of memory.
+The consumer code should  evaluate the block as
+a DWARF-expression. The result is the address where
+the previous value of the register may be found.
+This is a DWARF3/2 expression(E) rule.
+.in -4
+.P
+If \f(CW*value_type\fP has the value DW_EXPR_VAL_EXPRESSION (1) then:
+.in +4
+The calculation is exactly as for DW_EXPR_EXPRESSION (1)
+but the result of the DWARF-expression evaluation is
+the value of the   \f(CWtable_column\fP (not
+the address of the value).
+This is a DWARF3/2 val_expression(E) rule.
+.in -4
+
+\f(CWdwarf_get_fde_info_for_reg\fP 
+returns \f(CWDW_DLV_ERROR\fP if there is an error and
+if there is an error only the \f(CWerror\fP pointer is set, none
+of the other output arguments are touched.
+
+It is usable with either 
+\f(CWdwarf_get_fde_n()\fP or \f(CWdwarf_get_fde_at_pc()\fP.
+
+
+.H 4 "dwarf_get_fde_info_for_cfa_reg3()"
+.DS
+ \f(CWint dwarf_get_fde_info_for_cfa_reg3(Dwarf_Fde fde,
+      Dwarf_Addr          pc_requested,
+      Dwarf_Small *       value_type,
+      Dwarf_Signed*       offset_relevant,
+      Dwarf_Signed*       register_num,
+      Dwarf_Signed*       offset_or_block_len,
+      Dwarf_Ptr   *       block_ptr ,
+      Dwarf_Addr  *       row_pc_out,
+      Dwarf_Error *       error)\fP
+.DE
+.P
+This is identical to  \f(CWdwarf_get_fde_info_for_reg3()\fP
+except the returned values are for the CFA rule.
+So register number \f(CW*register_num\fP will be set
+to a real register, not 
+DW_FRAME_CFA_COL3, DW_FRAME_SAME_VALUE, or
+DW_FRAME_UNDEFINED_VALUE.
+
+
+
+.H 4 "dwarf_get_fde_info_for_all_regs3()"
+.DS
+\f(CWint dwarf_get_fde_info_for_all_regs3(
+        Dwarf_Fde fde,
+        Dwarf_Addr pc_requested,
+	Dwarf_Regtable3 *reg_table,
+        Dwarf_Addr *row_pc,
+        Dwarf_Error *error)\fP
+.DE
+\f(CWdwarf_get_fde_info_for_all_regs3()\fP returns
+\f(CWDW_DLV_OK\fP and sets \f(CW*reg_table\fP 
+for the row specified by
+\f(CWpc_requested\fP for the FDE specified by \f(CWfde\fP. 
+The intent is
+to return the rules for decoding all the registers, given a pc
+value.  
+\f(CWreg_table\fP is an array of rules, the 
+array size specifed by the caller.
+plus a rule for the CFA.
+The rule for the cfa returned in  \f(CW*reg_table\fP
+defines the CFA value at  \f(CWpc_requested\fP
+The rule for each
+register contains  several values that enable
+the consumer to determine the previous value
+of the register (see the earlier documentation of Dwarf_Regtable3).
+\f(CWdwarf_get_fde_info_for_reg3()\fP  and
+the Dwarf_Regtable3 documentation above for a description of
+the values for each row.
 
 \f(CWdwarf_get_fde_info_for_all_regs\fP returns \f(CWDW_DLV_ERROR\fP if there is an error. 
 
-\f(CWint dwarf_get_fde_info_for_all_regs\fP is SGI/MIPS specific.
+It's up to the caller to allocate space for 
+\f(CW*reg_table\fP and initialize it properly.
+
+
+
 .H 4 "dwarf_get_fde_n()"
 .DS
 \f(CWint   dwarf_get_fde_n(
         Dwarf_Fde *fde_data,
         Dwarf_Unsigned fde_index,
 	Dwarf_Fde      *returned_fde
-        Dwarf_Error *error);\fP
+        Dwarf_Error *error)\fP
 .DE
 \f(CWdwarf_get_fde_n()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CWreturned_fde\fP to
@@ -3444,7 +4402,7 @@ the block of \f(CWDwarf_Fde\fP descriptors has been created by a call to
         Dwarf_Fde *returned_fde,
         Dwarf_Addr *lopc,
         Dwarf_Addr *hipc,
-        Dwarf_Error *error);\fP
+        Dwarf_Error *error)\fP
 .DE
 \f(CWdwarf_get_fde_at_pc()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CWreturned_fde\fP to
@@ -3499,8 +4457,8 @@ Dwarf_Ptr instruction;
 Dwarf_Unsigned len;
 int res;
 
-if (expand_frame_instructions(dbg,instruction,len, &frameops,&cnt, &error)
-         == DW_DLV_OK) {
+res = expand_frame_instructions(dbg,instruction,len, &frameops,&cnt, &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use frameops[i] */
@@ -3509,7 +4467,25 @@ if (expand_frame_instructions(dbg,instruction,len, &frameops,&cnt, &error)
 }\fP
 .DE
 .in -2
-
+.H 4 "dwarf_get_fde_exception_info()"
+.DS
+\f(CWint dwarf_get_fde_exception_info(
+    Dwarf_Fde fde,
+    Dwarf_Signed * offset_into_exception_tables,
+    Dwarf_Error * error);
+.DE
+\f(CWdwarf_get_fde_exception_info()\fP is an IRIX specific
+function which returns an exception table signed offset
+thru \f(CWoffset_into_exception_tables\fP.
+The function never returns \f(CWDW_DLV_NO_ENTRY\fP.
+If \f(CWDW_DLV_NO_ENTRY\fP is NULL the function returns 
+\f(CWDW_DLV_ERROR\fP.
+For non-IRIX objects the offset returned will always be zero.
+For non-C++ objects the offset returned will always be zero.
+The meaning of the offset and the content of the tables
+is not defined in this document.
+The applicable CIE augmentation string (see above)
+determines whether the value returned has meaning.
 
 .H 2 "Location Expression Evaluation"
 
@@ -3589,6 +4565,11 @@ An abbreviation entry with a
 length of 1 is the 0 byte of the last abbreviation entry of a compilation 
 unit.
 \f(CWdwarf_get_abbrev()\fP returns \f(CWDW_DLV_ERROR\fP on error.  
+If the call succeeds, the storage pointed to
+by \f(CW*returned_abbrev\fP
+should be free'd, using \f(CWdwarf_dealloc()\fP with the
+allocation type \f(CWDW_DLA_ABBREV\fP when no longer needed.
+
 
 .H 3 "dwarf_get_abbrev_tag()"
 .DS
@@ -3719,8 +4700,10 @@ section.
 .DS
 \f(CWDwarf_Signed cnt;
 Dwarf_Arange *arang;
+int res;
 
-if ((dwarf_get_aranges(dbg, &arang,&cnt, &error)) == DW_DLV_OK) {
+res = dwarf_get_aranges(dbg, &arang,&cnt, &error);
+if (res == DW_DLV_OK) {
 
         for (i = 0; i < cnt; ++i) {
                 /* use arang[i] */
@@ -3737,8 +4720,8 @@ if ((dwarf_get_aranges(dbg, &arang,&cnt, &error)) == DW_DLV_OK) {
         Dwarf_Arange *aranges,
         Dwarf_Unsigned arange_count,
         Dwarf_Addr address,
-	Dwarf_Arange   *returned_arange,
-        Dwarf_Error *error)\fP
+	Dwarf_Arange *returned_arange,
+        Dwarf_Error *error);\fP
 .DE
 The function \f(CWdwarf_get_arange()\fP takes as input a pointer 
 to a block of \f(CWDwarf_Arange\fP pointers, and a count of the
@@ -3759,7 +4742,7 @@ entry covering that address.
 \f(CWint dwarf_get_cu_die_offset(
         Dwarf_Arange arange,
         Dwarf_Off   *returned_cu_die_offset,
-        Dwarf_Error *error)\fP
+        Dwarf_Error *error);\fP
 .DE
 The function \f(CWdwarf_get_cu_die_offset()\fP takes a
 \f(CWDwarf_Arange\fP descriptor as input, and 

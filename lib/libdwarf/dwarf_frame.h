@@ -153,6 +153,9 @@ typedef struct Dwarf_Frame_s *Dwarf_Frame;
     This structure represents a row of the frame table. 
     Fr_loc is the pc value for this row, and Fr_reg
     contains the rule for each column.
+
+    Entry DW_FRAME_CFA_COL of fr_reg was the tradional MIPS
+    way of setting CFA.  cfa_rule is the new one.
 */
 struct Dwarf_Frame_s {
 
@@ -160,7 +163,12 @@ struct Dwarf_Frame_s {
     Dwarf_Addr fr_loc;
 
     /* Rules for all the registers in this row. */
-    struct Dwarf_Reg_Rule_s fr_reg[DW_FRAME_LAST_REG_NUM];
+    struct Dwarf_Reg_Rule_s fr_cfa_rule;
+
+	/* fr_reg_count is the the number of
+	entries of the fr_reg array. */
+    unsigned long            fr_reg_count;
+    struct Dwarf_Reg_Rule_s *fr_reg;
 
     Dwarf_Frame fr_next;
 };
@@ -356,6 +364,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
                         Dwarf_Frame table,
                         Dwarf_Cie cie,
                         Dwarf_Debug dbg,
+			Dwarf_Half reg_num_of_cfa,
                         Dwarf_Sword * returned_count,
                         int *returned_error);
 
@@ -370,6 +379,7 @@ int dwarf_read_cie_fde_prefix(Dwarf_Debug dbg,
 
 int dwarf_create_fde_from_after_start(Dwarf_Debug dbg,
         struct cie_fde_prefix_s *  prefix,
+        Dwarf_Small *section_pointer,
         Dwarf_Small *frame_ptr,
         int use_gnu_cie_calc,
         Dwarf_Cie  cie_ptr_in,
@@ -378,9 +388,13 @@ int dwarf_create_fde_from_after_start(Dwarf_Debug dbg,
 
 int dwarf_create_cie_from_after_start(Dwarf_Debug dbg,
         struct cie_fde_prefix_s *prefix,
+        Dwarf_Small* section_pointer,
         Dwarf_Small* frame_ptr,
         Dwarf_Unsigned cie_count,
         int use_gnu_cie_calc,
         Dwarf_Cie *cie_ptr_out,
         Dwarf_Error *error);
 
+
+int _dwarf_frame_constructor(Dwarf_Debug dbg,void * );
+void _dwarf_frame_destructor (void *);

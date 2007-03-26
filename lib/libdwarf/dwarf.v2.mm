@@ -49,8 +49,8 @@
 '\"	UNIX International members.
 '\"
 '\" $Log$
-'\" Revision 1.2  2005/03/15 15:20:42  thughes
-'\" Update to 2005-02-16 release of libdwarf.
+'\" Revision 1.3  2007/03/26 12:52:51  thughes
+'\" Update to 2007-02-23 release of libdwarf.
 '\"
 '\" Revision 1.1  1994/05/18 18:50:42  davea
 '\" Initial revision

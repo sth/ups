@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS ELFLIB CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB AR ac_ct_AR LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB AR ac_ct_AR build_shared build_nonshared LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -837,6 +837,12 @@ if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
 
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-shared         build shared library libdwarf.so (default is NO)
+  --enable-nonshared      build archive library libdwarf.a (default is YES)
+
 Some influential environment variables:
   CC          C compiler command
   CFLAGS      C compiler flags
@@ -1285,66 +1291,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
           ac_config_headers="$ac_config_headers config.h"
-
-
-
-
-
-
-
-echo "$as_me:$LINENO: checking how to include libelf headers" >&5
-echo $ECHO_N "checking how to include libelf headers... $ECHO_C" >&6
-xtraCPPFLAGS=
-set -vx
-if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
-    xtraCPPFLAGS="-Idevelhdrs"
-elif test -d ../libelf/lib; then
-    xtraCPPFLAGS="-Idevelhdrs"
-    ac_cv_header_libelf_libelf_h=yes
-else
-    if test "x$prefix" != "xNONE"; then
-       eval xtraCPPFLAGS="-I${includedir}"
-    else
-       prefix=$ac_default_prefix
-       eval xtraCPPFLAGS="-I${includedir}"
-       prefix=NONE
-    fi
-fi
-CPPFLAGS="${CPPFLAGS} ${xtraCPPFLAGS}"
-set +vx
-echo "$as_me:$LINENO: result: $xtraCPPFLAGS" >&5
-echo "${ECHO_T}$xtraCPPFLAGS" >&6
-unset xtraCPPFLAGS
-
-echo "$as_me:$LINENO: checking where libelf is" >&5
-echo $ECHO_N "checking where libelf is... $ECHO_C" >&6
-xtraLDFLAGS=
-ELFLIB=-lelf
-msg=
-set -vx
-if test "X$ups_cv_sys_symtab_maybe_dwarf" = "Xyes"; then
-    msg="../libelf"
-    ELFLIB='../libelf/lib/libelf.a'
-elif test -d ../libelf/lib; then
-    msg="../libelf"
-    ELFLIB='../libelf/lib/libelf.a'
-else
-    if test "x$exec_prefix" != "xNONE"; then
-       eval xtraLDFLAGS="-L${libdir}"
-       msg=$xtraLDFLAGS
-    else
-       exec_prefix=$ac_default_prefix
-       eval xtraLDFLAGS="-L${libdir}"
-       exec_prefix=NONE
-       msg=$xtraLDFLAGS
-    fi
-    ELFLIB="$xtraLDFLAGS -lelf"
-    LDFLAGS="${LDFLAGS} ${xtraLDFLAGS}"
-fi
-set +xv
-echo "$as_me:$LINENO: result: $msg" >&5
-echo "${ECHO_T}$msg" >&6
-
 
 
 ac_ext=c
@@ -3951,6 +3897,27 @@ fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
+build_nonshared=libdwarf.a
+
+# Check whether --enable-shared or --disable-shared was given.
+if test "${enable_shared+set}" = set; then
+  enableval="$enable_shared"
+   build_shared=libdwarf.so
+
+else
+    build_shared=none
+
+fi;
+# Check whether --enable-nonshared or --disable-nonshared was given.
+if test "${enable_nonshared+set}" = set; then
+  enableval="$enable_nonshared"
+   build_nonshared=libdwarf.a
+
+		 build_nonshared=none
+
+fi;
+
+
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4617,7 +4584,6 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
-s,@ELFLIB@,$ELFLIB,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t
 s,@LDFLAGS@,$LDFLAGS,;t t
@@ -4634,6 +4600,8 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@AR@,$AR,;t t
 s,@ac_ct_AR@,$ac_ct_AR,;t t
+s,@build_shared@,$build_shared,;t t
+s,@build_nonshared@,$build_nonshared,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -5126,4 +5094,3 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
-
