@@ -984,14 +984,12 @@ bool reattach_with_rescan;
 				     &dw_dbg, &dw_err) == DW_DLV_ERROR)) {
 			dwf_fatal_error("dwarf_init", rv, NULL, dw_err);
 			free_elfinfo(el);
-			alloc_free_pool(st->st_apool);
 			return FALSE;
 		}
 		if (rv == DW_DLV_NO_ENTRY) {
 			errf("Can't debug %s: no DWARF debugging information",
 			      textpath);
 			free_elfinfo(el);
-			alloc_free_pool(st->st_apool);
 			return FALSE;
 		}
 	}
