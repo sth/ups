@@ -1266,6 +1266,7 @@ wn_abort_func_t func;
 	wn_abort_func_t old_abort_func;
 	int fd;
 	swin_t *w;
+	int flags;
 
 	W_CHECK(wn);
 	w = WN_TO_W(wn);
@@ -1290,8 +1291,11 @@ wn_abort_func_t func;
 			wn__panic("I_SETSIG S_RDNORM botch");
 		}
 #else
-		if (fcntl(fd, F_SETFL, FASYNC) != 0)
-			wn__panic("FASYNC on botch");
+		if ((flags = fcntl(fd, F_GETFL, 0)) != -1) {
+			flags |= FASYNC;
+			if (fcntl(fd, F_SETFL, flags) != 0)
+				wn__panic("FASYNC on botch");
+		}
 #endif
 #endif /* __hp9000s800 */
 	}
@@ -1305,8 +1309,11 @@ wn_abort_func_t func;
 			wn__panic("I_SETSIG 0 botch");
 		}
 #else
-		if (fcntl(fd, F_SETFL, 0) != 0)
-			wn__panic("FASYNC off botch");
+		if ((flags = fcntl(fd, F_GETFL, 0)) != -1) {
+			flags &= ~FASYNC;
+			if (fcntl(fd, F_SETFL, flags) != 0)
+				wn__panic("FASYNC off botch");
+		}
 #endif
 #endif /* __hp9000s800 */
 #endif /* RGA linux merge */
