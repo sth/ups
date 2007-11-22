@@ -1888,7 +1888,7 @@ proc_memcpy:
 			stackword_t addr;
 
 			addr = POP(sp);
-			if (IS_CI_ADDR(*sp)) {
+			if (IS_CI_ADDR(addr)) {
 				GET_LONGLONG(d0, (stackword_t *)addr);
 			}
 			else {
@@ -1937,7 +1937,7 @@ proc_memcpy:
 			stackword_t addr;
 
 			addr = POP(sp);
-			if (IS_CI_ADDR(*sp)) {
+			if (IS_CI_ADDR(addr)) {
 				GET_FLOAT(d0, (stackword_t *)addr);
 			}
 			else {
@@ -1952,7 +1952,7 @@ proc_memcpy:
 			stackword_t addr;
 
 			addr = POP(sp);
-			if (IS_CI_ADDR(*sp)) {
+			if (IS_CI_ADDR(addr)) {
 				GET_DOUBLE(d0, (stackword_t *)addr);
 			}
 			else {
@@ -1968,7 +1968,7 @@ proc_memcpy:
 			stackword_t addr;
 
 			addr = POP(sp);
-			if (IS_CI_ADDR(*sp)) {
+			if (IS_CI_ADDR(addr)) {
 				GET_LDOUBLE(d0, (stackword_t *)addr);
 			}
 			else {
@@ -1986,7 +1986,7 @@ proc_memcpy:
 			stackword_t addr;
 
 			addr = POP(sp);
-			if (IS_CI_ADDR(*sp)) {
+			if (IS_CI_ADDR(addr)) {
 				GET_LONGLONG(d0, (stackword_t *)addr);
 			}
 			else {
