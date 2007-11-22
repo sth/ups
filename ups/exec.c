@@ -804,9 +804,16 @@ typecode_t restype;
 	retval = xp_call_func(xp, (char *)ma, addr,
 			      args, argsizes_buf, nwords,
 			      p_res, restype, &mesg);
-	if (mesg != NULL)
-		errf("Call of function %s failed: %s: %s",
-		     addr_to_func(addr)->fu_demangled_name, mesg, get_errno_str());
+	if (mesg != NULL) {
+		func_t *f = addr_to_func(addr);
+
+		if (f) 
+			errf("Call of function %s failed: %s: %s",
+			     f->fu_demangled_name, mesg, get_errno_str());
+		else
+			errf("Call of function at address 0x%lx failed: %s: %s",
+			     addr, mesg, get_errno_str());
+	}
 
 	return (retval == 0) ? CI_ER_CONTINUE : CI_ER_INDIRECT_CALL_FAILED;
 }

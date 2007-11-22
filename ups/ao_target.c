@@ -1421,13 +1421,16 @@ const char **p_mesg;
 	 */
 	if (ip->ip_stopres != SR_DIED && bp != NULL) {
 		if (dx_remove_breakpoint(xp, bp) != 0)
+			*p_mesg = "Can't remove breakpoint at return address";
 			return -1;
 	}
 
 	/*  If we didn't get back to where we expected, stop now.
 	 */
-	if (ip->ip_stopres != SR_BPT || ip->ip_restart_pc != retpc)
+	if (ip->ip_stopres != SR_BPT || ip->ip_restart_pc != retpc) {
+		*p_mesg = "Call failed before reaching breakpoint";
 		return -1;
+	}
 
 	*p_res = xp_getreg(xp, RETURN_REGNO);
 #if defined(ARCH_386) && !defined(ARCH_386_64)
