@@ -1632,6 +1632,10 @@ int button;
 		return TRUE;
 	
 	if (bd->data_needs_initialising) {
+		if (bd->code_has_func_calls && bd->machine && bd->parse_id) {
+			ci_free_machine(bd->machine);
+			bd->machine = recompile_code(bd->parse_id, (char *)NULL);
+		}
 		ci_initialise_machine(bd->machine, TRUE, FALSE,
 						(char **)NULL, (char **)NULL);
 		bd->data_needs_initialising = FALSE;
