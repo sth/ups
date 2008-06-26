@@ -569,8 +569,14 @@ stopres_t *p_stopres;
 		/* don't save state */
 		elf_update_dynamic_solibs(xp->xp_apool, xp->xp_textpath,
 					  &ip->ip_solibs, TRUE);
+		if (get_startup_stop_addrs(xp, &main_addr, &main_min_bpt_addr) != 0)
+			return -1;
 #endif
-		*p_stopres = xp_execto(xp, main_min_bpt_addr);
+		do
+		{
+			*p_stopres = xp_execto(xp, main_min_bpt_addr);
+		}
+		while (xp->xp_hit_solib_event);
 #endif
 	}
 
