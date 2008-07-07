@@ -647,13 +647,13 @@ int recursed;		/* Recursion level, 0 = top. */
 		 * standard 'C' basic types, e.g. "fpos_t".
 		 * Extract the infomation and make a type.
 		 */
-		name = dwf_get_string(dbg, ap, die, DW_AT_name);
 		nbytes = dwf_get_number(dbg, die, DW_AT_byte_size);
 		typecode = dwf_get_typecode(dbg, die);
 
 		type = ci_make_type(ap, typecode);
 		type->ty_size = nbytes;
-		type->ty_name = name;
+		if (dwf_has_attribute(dbg, die, DW_AT_name))
+			type->ty_name = dwf_get_string(dbg, ap, die, DW_AT_name);
 		type->ty_lexinfo = dwf_make_lexinfo(dbg, die, ap, stf);
 
 		if (type->ty_code == TY_BOOLEAN)
