@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,6 +33,12 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
+/* The address of the Free Software Foundation is
+   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+   Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
+*/
+
 
 /*
 	This  implements _dwarf_get_fde_list_internal()
@@ -120,9 +127,9 @@ chain_up_fde(Dwarf_Fde newone, Dwarf_Fde * head, Dwarf_Fde * cur)
 static void
 chain_up_cie(Dwarf_Cie newone, Dwarf_Cie * head, Dwarf_Cie * cur)
 {
-    if (*head == NULL)
+    if (*head == NULL) {
 	*head = newone;
-    else {
+    } else {
 	(*cur)->ci_next = newone;
     }
     *cur = newone;
@@ -178,9 +185,14 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 
     /* 
        New_cie points to the Cie being read, and head_cie_ptr and
-       cur_cie_ptr are used for chaining them up in sequence. */
+       cur_cie_ptr are used for chaining them up in sequence. 
+       In case cie's are reused aggressively we need tail_cie_ptr
+       to add to the chain.  If we re-use an early cie
+       later on, that does not mean we chain a new cie to the early one,
+       we always chain it to the tail.  */
     Dwarf_Cie head_cie_ptr = NULL;
     Dwarf_Cie cur_cie_ptr = NULL;
+    Dwarf_Cie tail_cie_ptr = NULL;
     Dwarf_Word cie_count = 0;
 
     /* 
@@ -268,7 +280,8 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 		/* ASSERT res != DW_DLV_NO_ENTRY */
 		cie_count++;
 		chain_up_cie(cie_ptr_to_use, &head_cie_ptr,
-			     &cur_cie_ptr);
+			     &tail_cie_ptr);
+                cur_cie_ptr = tail_cie_ptr;
 	    } else {		/* res == DW_DLV_ERROR */
 
 		dealloc_fde_cie_list_internal(head_fde_ptr,
@@ -323,7 +336,8 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 		}
 		++cie_count;
 		chain_up_cie(cie_ptr_to_use, &head_cie_ptr,
-			     &cur_cie_ptr);
+			     &tail_cie_ptr);
+                cur_cie_ptr = tail_cie_ptr;
 
 	    } else {
 		/* DW_DLV_ERROR */
@@ -1017,7 +1031,7 @@ dwarf_create_cie_from_start(Dwarf_Debug dbg,
 */
 #if 0
 /* For debugging only. */
-static void
+void
 dump_bytes(Dwarf_Small * start, long len)
 {
     Dwarf_Small *end = start + len;
@@ -1046,8 +1060,27 @@ gnu_aug_encodings(Dwarf_Debug dbg, char *augmentation,
 
 	switch (c) {
 	case 'z':
+            /* Means that the augmentation data is present. */
 	    continue;
 
+	case 'S':
+            /* Indicates this is a signal stack frame.  Debuggers have to do 
+               special handling.  We don't need to do more than print this flag at 
+               the right time, though (see dwarfdump where it prints the augmentation
+               string). 
+               A signal stack frame (in some OS's) can only be
+               unwound (backtraced) by knowing it is a signal stack frame 
+               (perhaps by noticing the name of the function for the stack frame
+               if the name can be found somehow) and figuring
+               out (or knowing) how the kernel and libc pushed a structure
+               onto the stack and loading registers from that structure.
+               Totally different from normal stack unwinding.
+               This flag gives an unwinder a big leg up by decoupling the
+               'hint: this is a stack frame' from knowledge like
+               the function name (the name might be unavailable at unwind time).
+            */
+            break;
+            
 	case 'L':
 	    if (cur_aug_p > end_aug_p) {
 		return DW_DLV_ERROR;
@@ -1056,6 +1089,8 @@ gnu_aug_encodings(Dwarf_Debug dbg, char *augmentation,
 	    ++cur_aug_p;
 	    break;
 	case 'R':
+            /* Followed by a one byte argument giving the
+               pointer encoding for the address pointers in the fde. */
 	    if (cur_aug_p >= end_aug_p) {
 		return DW_DLV_ERROR;
 	    }

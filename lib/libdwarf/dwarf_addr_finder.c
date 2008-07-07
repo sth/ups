@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -423,10 +423,10 @@ process_this_die_attrs(Dwarf_Debug dbg, Dwarf_Die newdie, int *errval)
 	return tres;
     }
     if (DW_TAG_compile_unit == ltag) {
-	/* because of the way the dwarf_line code works, we ** do lines 
-	   only per compile unit. ** This may turn out to be wrong if
-	   we have lines ** left unconnected to a CU. ** of course such 
-	   lines will not, at present, be ** used by gnome ** This is
+	/* because of the way the dwarf_line code works, we do lines 
+	   only per compile unit. This may turn out to be wrong if
+	   we have lines left unconnected to a CU. of course such 
+	   lines will not, at present, be used by gnome. This is
 	   not ideal as coded due to the dwarf_line.c issue. */
 	int lres;
 

@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -288,6 +288,8 @@ const char *_dwarf_errmsgs[] = {
     "DW_DLE_FRAME_CIE_DECODE_ERROR(200)",
     "DW_DLE_FRAME_REGISTER_UNREPRESENTABLE(201)",
     "DW_DLE_FRAME_REGISTER_COUNT_MISMATCH(202)",
+    "DW_DLE_LINK_LOOP(203)",
+     
 
 
 };

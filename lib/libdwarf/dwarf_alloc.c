@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007,2008  David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,6 +33,13 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
+/* The address of the Free Software Foundation is
+   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+   Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
+*/
+
+
 #undef  DEBUG
 
 #include "config.h"
@@ -59,6 +67,7 @@
 #include "dwarf_types.h"
 #include "dwarf_vars.h"
 #include "dwarf_weaks.h"
+
 
 static void _dwarf_free_special_error(Dwarf_Ptr space);
 
@@ -233,11 +242,7 @@ struct ial_s index_into_allocated[ALLOC_AREA_INDEX_TABLE_MAX] = {
     {25, sizeof(struct Dwarf_Loc_Chain_s), BASE_ALLOC, 0, 0},	/* 36 */
     /* 36 DW_DLA_LOC_CHAIN */
 
-    /* See use of ABBREV_HASH_TABLE_SIZE below for final dealloc. */
-    {26, ABBREV_HASH_TABLE_SIZE * sizeof(struct Dwarf_Hash_Table_s),
-     BASE_ALLOC, 0, 0},		/* 37 */
-
-
+    {26, sizeof(struct Dwarf_Hash_Table_s),BASE_ALLOC, 0, 0},   /* 37 */
     /* 37 DW_DLA_HASH_TABLE */
 
 /* The following really use Global struct: used to be unique struct
@@ -258,6 +263,9 @@ struct ial_s index_into_allocated[ALLOC_AREA_INDEX_TABLE_MAX] = {
     /* 41 DW_DLA_WEAK_CONTEXT */
     {31, sizeof(struct Dwarf_Global_Context_s), BASE_ALLOC, 0, 0},
     /* 42 DW_DLA_PUBTYPES_CONTEXT DWARF3 */
+
+    {0,1,1,0,0 }
+    /* 43 DW_DLA_HASH_TABLE_ENTRY */
 
 };
 
@@ -494,6 +502,8 @@ _dwarf_get_alloc(Dwarf_Debug dbg,
 	    size = count * sizeof(Dwarf_Frame_Op);
 	} else if (alloc_type == DW_DLA_LOC_BLOCK) {
 	    size = count * sizeof(Dwarf_Loc);
+	} else if (alloc_type == DW_DLA_HASH_TABLE_ENTRY) {
+	    size = count * sizeof(struct Dwarf_Hash_Table_Entry_s);
 	} else if (alloc_type == DW_DLA_ADDR) {
 	    size = count *
 		(sizeof(Dwarf_Addr) > sizeof(Dwarf_Off) ?
@@ -717,14 +727,21 @@ dwarf_dealloc(Dwarf_Debug dbg,
 		dbg->de_debug_weaknames + dbg->de_debug_weaknames_size)
 		return;
 
+#ifdef DWARF_SIMPLE_MALLOC
+            _dwarf_simple_malloc_delete_from_list(dbg, space, type);
+#endif
 	    free(space);
 	    return;
 	}
 
 	if (type == DW_DLA_LIST ||
 	    type == DW_DLA_FRAME_BLOCK ||
-	    type == DW_DLA_LOC_BLOCK || type == DW_DLA_ADDR) {
+	    type == DW_DLA_LOC_BLOCK || type == DW_DLA_ADDR ||
+            type == DW_DLA_HASH_TABLE_ENTRY) {
 
+#ifdef DWARF_SIMPLE_MALLOC
+            _dwarf_simple_malloc_delete_from_list(dbg, space, type);
+#endif
 	    free(space);
 	    return;
 	}
@@ -940,7 +957,9 @@ dwarf_print_memory_stats(Dwarf_Debug dbg)
 	"DW_DLA_FUNC_CONTEXT",
 	"DW_DLA_TYPENAME_CONTEXT",
 	"DW_DLA_VAR_CONTEXT",
-	"DW_DLA_WEAK_CONTEXT" "DW_DLA_PUBTYPES_CONTEXT"
+	"DW_DLA_WEAK_CONTEXT",
+        "DW_DLA_PUBTYPES_CONTEXT",
+        "DW_DLA_HASH_TABLE_ENTRY",
     };
 
     if (dbg == NULL)
@@ -1018,23 +1037,9 @@ _dwarf_free_all_of_one_debug(Dwarf_Debug dbg)
     for (context = dbg->de_cu_context_list;
 	 context; context = nextcontext) {
 	Dwarf_Hash_Table hash_table = context->cc_abbrev_hash_table;
-
-	/* A Hash Table is an array with ABBREV_HASH_TABLE_SIZE struct
-	   Dwarf_Hash_Table_s entries in the array. */
-	int hashnum = 0;
-
-	for (; hashnum < ABBREV_HASH_TABLE_SIZE; ++hashnum) {
-	    struct Dwarf_Abbrev_List_s *abbrev = 0;
-	    struct Dwarf_Abbrev_List_s *nextabbrev = 0;
-
-	    abbrev = hash_table[hashnum].at_head;
-	    for (; abbrev; abbrev = nextabbrev) {
-		nextabbrev = abbrev->ab_next;
-		dwarf_dealloc(dbg, abbrev, DW_DLA_ABBREV_LIST);
-	    }
-	}
-	nextcontext = context->cc_next;
-	dwarf_dealloc(dbg, hash_table, DW_DLA_HASH_TABLE);
+        _dwarf_free_abbrev_hash_table_contents(dbg,hash_table);
+        nextcontext = context->cc_next;
+        dwarf_dealloc(dbg, hash_table, DW_DLA_HASH_TABLE);
 	dwarf_dealloc(dbg, context, DW_DLA_CU_CONTEXT);
     }
 
@@ -1062,7 +1067,6 @@ _dwarf_free_all_of_one_debug(Dwarf_Debug dbg)
 	    free(prev_smp);
 	}
 	dbg->de_simple_malloc_base = 0;
-	dbg->de_simple_malloc_current = 0;
     }
 #else
     for (i = 1; i < ALLOC_AREA_REAL_TABLE_MAX; i++) {
@@ -1076,8 +1080,7 @@ _dwarf_free_all_of_one_debug(Dwarf_Debug dbg)
 
 #endif
 
-    memset(dbg, 0, sizeof(*dbg));	/* prevent accidental use later 
-					 */
+    memset(dbg, 0, sizeof(*dbg)); /* Prevent accidental use later. */
     free(dbg);
     return (DW_DLV_OK);
 }
@@ -1131,6 +1134,7 @@ _dwarf_free_special_error(Dwarf_Ptr space)
 void
 _dwarf_simple_malloc_botch(int err)
 {
+       fprintf(stderr,"simple malloc botch %d\n",err);
 }
 static void
 _dwarf_simple_malloc_add_to_list(Dwarf_Debug dbg,
@@ -1140,18 +1144,18 @@ _dwarf_simple_malloc_add_to_list(Dwarf_Debug dbg,
     struct simple_malloc_record_s *cur;
     struct simple_malloc_entry_s *newentry;
 
-    if (!dbg->de_simple_malloc_current) {
+    if (!dbg->de_simple_malloc_base) {
 	/* First entry to this routine. */
-	dbg->de_simple_malloc_current =
+	dbg->de_simple_malloc_base =
 	    malloc(sizeof(struct simple_malloc_record_s));
-	if (!dbg->de_simple_malloc_current) {
+	if (!dbg->de_simple_malloc_base) {
+	    _dwarf_simple_malloc_botch(7);
 	    return;		/* no memory, give up */
 	}
-	memset(dbg->de_simple_malloc_current,
+	memset(dbg->de_simple_malloc_base,
 	       0, sizeof(struct simple_malloc_record_s));
-	dbg->de_simple_malloc_base = dbg->de_simple_malloc_current;
     }
-    cur = dbg->de_simple_malloc_current;
+    cur = dbg->de_simple_malloc_base;
 
     if (cur->sr_used >= DSM_BLOCK_COUNT) {
 	/* better not be > than as that means chaos */
@@ -1161,12 +1165,13 @@ _dwarf_simple_malloc_add_to_list(Dwarf_Debug dbg,
 	struct simple_malloc_record_s *newblock =
 	    malloc(sizeof(struct simple_malloc_record_s));
 	if (!newblock) {
+	    _dwarf_simple_malloc_botch(8);
 	    return;		/* Can do nothing, out of memory */
 	}
 	memset(newblock, 0, sizeof(struct simple_malloc_record_s));
 	/* Link the new block at the head of the chain, and make it
 	   'current' */
-	dbg->de_simple_malloc_current = newblock;
+	dbg->de_simple_malloc_base = newblock;
 	newblock->sr_next = cur;
 	cur = newblock;
     }
@@ -1178,8 +1183,8 @@ _dwarf_simple_malloc_add_to_list(Dwarf_Debug dbg,
 }
 
 /*
-   DWARF_SIMPLE_MALLOC is for testing the hypothesis that the existing
-   complex malloc scheme in libdwarf is pointless complexity.
+   DWARF_SIMPLE_MALLOC: testing the hypothesis that the existing
+   malloc scheme here (see _dwarf_get_alloc()) is pointless complexity.
 
    DWARF_SIMPLE_MALLOC also makes it easy for a malloc-tracing
    tool to verify libdwarf malloc has no botches (though of course

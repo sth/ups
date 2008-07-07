@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,12 +33,12 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
-/* Copyright (C) 2007 David Anderson
-   Same terms as the SGI copyright.
-   The address of the Free Software Foundation is 
+/* The address of the Free Software Foundation is
    Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
    Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
 */
+
 
 
 
@@ -46,9 +47,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dwarf_line.h"
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 
 /* 

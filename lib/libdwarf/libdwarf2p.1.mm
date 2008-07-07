@@ -11,7 +11,7 @@
 .nr Hb 5
 \." ==============================================
 \." Put current date in the following at each rev
-.ds vE rev 1.18, 10 Jan 2002
+.ds vE rev 1.22, 2 Feb 2008
 \." ==============================================
 \." ==============================================
 .ds | |
@@ -36,54 +36,95 @@
 .TL
 A Producer Library Interface to DWARF
 .AF ""
-.AU "UNIX International Programming Languages Special Interest Group" 
+.AU "David Anderson"
 .PF "'\*(vE '- \\\\nP -''"
-.PM ""
 .AS 1
 This document describes an interface to a library of functions
-.FS \(rg
-UNIX is a registered trademark of UNIX System Laboratories, Inc.
-in the United States and other countries.
-.FE
 to create DWARF debugging information entries and DWARF line number
 information. It does not make recommendations as to how the functions
 described in this document should be implemented nor does it
 suggest possible optimizations. 
 .P
 The document is oriented to creating DWARF version 2.
-It was intended be proposed to the PLSIG DWARF committee
-but that committee is now dormant.
-.P
-The library interfaces documented 
-in this document are subject to change.
+Support for creating DWARF3 is intended but such support
+is not yet fully present.
 .P
 \*(vE 
 .AE
 .MT 4
 .H 1 "INTRODUCTION"
-This document describes the proposed interface to \f(CWlibdwarf\fP, a
+This document describes an interface to \f(CWlibdwarf\fP, a
 library of functions to provide creation of DWARF debugging information
 records, DWARF line number information, DWARF address range and
 pubnames information, weak names information, and DWARF frame description 
 information.
 
+
+.H 2 "Copyright"
+Copyright 1993-2006 Silicon Graphics, Inc.
+
+Copyright 2007-2008 David Anderson.
+
+Permission is hereby granted to
+copy or republish or use any or all of this document without
+restriction except that when publishing more than a small amount
+of the document
+please acknowledge Silicon Graphics, Inc and David Anderson.
+
+This document is distributed in the hope that it would be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 .H 2 "Purpose and Scope"
 The purpose of this document is to propose a library of functions to 
 create DWARF debugging information.  Reading (consuming) of such records 
 is discussed in a separate document.
 
-The functions in this document have been implemented at Silicon Graphics
+The functions in this document have mostly been implemented at 
+Silicon Graphics
 and are being used by the code generator to provide debugging information.
+Some functions (and support for some extensions) were provided
+by Sun Microsystems.
 
 .P
-Additionally, the focus of this document is the functional interface,
+The focus of this document is the functional interface,
 and as such, implementation and optimization issues are
 intentionally ignored.
 
 .P
 Error handling, error codes, and certain \f(CWLibdwarf\fP codes are discussed
-in the "\fIProposed Interface to DWARF Consumer Library\fP", which should 
+in the "\fIA Consumer Library Interface to DWARF\fP", which should 
 be read (or at least skimmed) before reading this document.
+.P
+However the general style of functions here 
+in the producer librar is rather C-traditional
+with various types as return values (quite different
+from the consumer library interfaces).   The style
+generally follows the style of the original DWARF1 reader
+proposed as an interface to DWARF.
+When the style of the reader interfaces was changed (1994) in the
+dwarf reader ( See the "Document History"
+section of "A Consumer Library Interface to DWARF")
+the interfaces here were not changed as it seemed like
+too much of a change for the two applications then using
+the interface!  So this interface remains in the traditional C style
+of returning various data types with various (somewhat inconsistent)
+means of indicating failure.
+
+.H 2 "Document History"
+This document originally prominently referenced
+"UNIX International Programming Languages Special Interest Group " 
+(PLSIG).
+Both  UNIX International and the
+affiliated  Programming Languages Special Interest Group
+are defunct
+(UNIX is a registered trademark of UNIX System Laboratories, Inc.
+in the United States and other countries).
+Nothing except the general interface style is actually
+related to anything shown to the PLSIG
+(this document was open sourced with libdwarf in the mid 1990's).
+.P
+See "http://www.dwarfstd.org" for information on current
+DWARF standards and committee activities.
 
 .H 2 "Definitions"
 DWARF debugging information entries (DIEs) are the segments of information 
@@ -98,7 +139,7 @@ description of these entries.
 .P
 This document adopts all the terms and definitions in
 "\fIDWARF Debugging Information Format\fP" version 2.
-and the "\fIProposed Interface to DWARF Consumer Library\fP".
+and the "\fIA Consumer Library Interface to DWARF\fP".
 
 .P
 In addition, this document refers to Elf, the ATT/USL System V
@@ -117,7 +158,7 @@ This document assumes you
 are thoroughly familiar with the information contained in the 
 \fIDWARF 
 Debugging Information Format\fP document, and 
-"\fIProposed Interface to DWARF Consumer Library\fP".
+"\fIA Consumer Library Interface to DWARF\fP".
 
 .P
 The interface necessarily knows a little bit about the object format
@@ -140,6 +181,10 @@ simpler provision for differences in ABI.
 .LI "Sep 1, 1999"
 Added support for little- and cross- endian
 debug info creation.
+.LI "May 7  2007"
+This library interface now cleans up, deallocating
+all memory it uses (the application simply calls
+dwarf_producer_finish(dbg)).
 .LE
 
 .H 1 "Type Definitions"
@@ -295,22 +340,12 @@ of the symbol handles.
 
 .H 1 "Memory Management"
 
-Several of the functions that comprise the \fILibdwarf\fP interface 
-return values that have been dynamically allocated by the library.  
+Several of the functions that comprise the \fILibdwarf\fP 
+producer interface dynamically allocate values and some
+return pointers to those spaces.
 The dynamically allocated spaces 
-can not be reclaimed except by \f(CWdwarf_producer_finish()\fP.  
-This function is supposed to
-reclaim all the space, and invalidate all descriptors 
-returned from \f(CWLibdwarf\fP functions that add information to be 
-object specified.  
-After \f(CWdwarf_producer_finish()\fP is called, 
-the \f(CWDwarf_P_Debug\fP descriptor specified is also invalid.
-
-The present version of the producer library mostly
-ignores memory management: it leaks memory a great deal.
-For existing clients this is not a problem (they are
-short lived) but is contrary to the intent, which was
-that memory should be freed by \f(CWdwarf_producer_finish()\fP.
+can not be reclaimed  (and must
+not be freed)  except by \f(CWdwarf_producer_finish(dbg)\fP.  
 
 All data for a particular \f(CWDwarf_P_Debug\fP descriptor
 is separate from the data for any other 
@@ -429,6 +464,27 @@ then
 \f(CWDW_DLC_SIZE_32\fP
 is assumed.
 Oring in both is an error.
+
+If 
+\f(CWDW_DLC_OFFSET_SIZE_64\fP
+is not OR'd into \f(CWflags\fP
+then 64 bit offsets (as defined in the 1999 DWARF3)
+may be used (see next paragraph) to generate DWARF (if and only if
+DW_DLC_SIZE_64 is also OR'd into \f(CWflags\fP).
+
+If \f(CWHAVE_STRICT_32BIT_OFFSET\fP is set at configure time
+only 32bit DWARF offsets are generated 
+(use configure option --enable-dwarf-format-strict-32bit)
+and \f(CWDW_DLC_OFFSET_SIZE_64\fP is ignored. 
+If \f(CWHAVE_SGI_IRIX_OFFSETS\fP is set at configure time
+SGI IRIX offsets (standard 32bit, a special 64bit offset
+for 64bit address objects) are generated
+(use configure option --enable-dwarf-format-sgi-irix)
+and \f(CWDW_DLC_OFFSET_SIZE_64\fP is ignored.
+If neither \f(CWHAVE_STRICT_32BIT_OFFSET\fP nor \f(CWHAVE_SGI_IRIX_OFFSETS\fP
+is set at configure time then standard 
+offset sizes are used ( and \f(CWHAVE_DWARF2_99_EXTENSION\fP is
+set) and \f(CWDW_DLC_OFFSET_SIZE_64\fP is honored.
 
 If
 \f(CWDW_DLC_ISA_IA64\fP
@@ -931,7 +987,7 @@ this is an ordinary relocation.
 The relocation type means either
 (R_MIPS_64) or (R_MIPS_32) (or the like for
 the particular ABI.
-f(CWdrd_length\fP gives the length of the field to be relocated.
+\f(CWdrd_length\fP gives the length of the field to be relocated.
 \f(CWdrd_offset\fP is an offset (of the
 value to be relocated) in
 the section this relocation stuff is linked to.
@@ -1276,6 +1332,82 @@ The \f(CWpc_value\fP
 is put into the section stream output and
 the \f(CWsym_index\fP is applied to the relocation
 information.
+
+Do not use this function for attr \f(CWDW_AT_high_pc\fP
+if the value to be recorded is an offset (not a pc)
+[ use \f(CWdwarf_add_AT_unsigned_const()\fP  (for example)
+instead].
+
+.H 3 "dwarf_add_AT_dataref()"
+.DS
+\f(CWDwarf_P_Attribute dwarf_add_AT_dataref(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Die ownerdie,
+        Dwarf_Half attr,
+        Dwarf_Unsigned pc_value,
+        Dwarf_Unsigned sym_index,
+        Dwarf_Error *error) \fP
+.DE
+This is very similar to \f(CWdwarf_add_AT_targ_address_b() \fP
+but results in a different FORM (results in DW_FORM_data4
+or DW_FORM_data8).
+
+Useful for adding relocatable addresses in location lists.
+
+\f(CWsym_index() \fP is guaranteed to
+be large enough that it can contain a pointer to
+arbitrary data (so the caller can pass in a real elf
+symbol index, an arbitrary number, or a pointer
+to arbitrary data).
+The ability to pass in a pointer thru \f(CWsym_index() \fP
+is only usable with
+\f(CWDW_DLC_SYMBOLIC_RELOCATIONS\fP.
+
+The \f(CWpc_value\fP
+is put into the section stream output and
+the \f(CWsym_index\fP is applied to the relocation
+information.
+
+Do not use this function for \f(CWDW_AT_high_pc\fP, use
+\f(CWdwarf_add_AT_unsigned_const()\fP  [ (for example)
+if the value to be recorded is
+an offset of \f(CWDW_AT_low_pc\fP]
+or \f(CWdwarf_add_AT_targ_address_b()\fP [ if the value
+to be recorded is an address].
+
+.H 3 "dwarf_add_AT_ref_address()"
+.DS
+\f(CWDwarf_P_Attribute dwarf_add_AT_ref_address(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Die ownerdie,
+        Dwarf_Half attr,
+        Dwarf_Unsigned pc_value,
+        Dwarf_Unsigned sym_index,
+        Dwarf_Error *error) \fP
+.DE
+
+This is very similar to \f(CWdwarf_add_AT_targ_address_b() \fP
+but results in a different FORM (results in \f(CWDW_FORM_ref_addr\fP
+being generated).
+
+Useful for  \f(CWDW_AT_type\fP and \f(CWDW_AT_import\fP attributes.
+
+\f(CWsym_index() \fP is guaranteed to
+be large enough that it can contain a pointer to
+arbitrary data (so the caller can pass in a real elf
+symbol index, an arbitrary number, or a pointer
+to arbitrary data).
+The ability to pass in a pointer thru \f(CWsym_index() \fP
+is only usable with
+\f(CWDW_DLC_SYMBOLIC_RELOCATIONS\fP.
+
+The \f(CWpc_value\fP
+is put into the section stream output and
+the \f(CWsym_index\fP is applied to the relocation
+information.
+
+Do not use this function for \f(CWDW_AT_high_pc\fP.
+
 
 .H 3 "dwarf_add_AT_unsigned_const()"
 .DS

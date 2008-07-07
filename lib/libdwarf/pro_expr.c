@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2004,2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright 2007 Sun Microsystems, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -558,6 +559,16 @@ dwarf_expr_current_offset(Dwarf_P_Expr expr, Dwarf_Error * error)
     }
 
     return (expr->ex_next_byte_offset);
+}
+
+void
+dwarf_expr_reset(Dwarf_P_Expr expr, Dwarf_Error * error)
+{
+   if (expr == NULL) {
+      _dwarf_p_error(NULL, error, DW_DLE_EXPR_NULL);
+      return;
+   }
+   expr->ex_next_byte_offset=0;
 }
 
 

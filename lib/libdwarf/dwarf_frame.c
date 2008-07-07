@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,6 +33,13 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
+/* The address of the Free Software Foundation is
+   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+   Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
+*/
+
+
 
 
 
@@ -153,24 +161,21 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 {
 #define ERROR_IF_REG_NUM_TOO_HIGH(macreg,machigh_reg)               \
      do {                                             \
-       if ((macreg) >= (machigh_reg)) {            \
+       if ((macreg) >= (machigh_reg) || (macreg) < 0) {            \
 	SIMPLE_ERROR_RETURN(DW_DLE_DF_REG_NUM_TOO_HIGH); \
        }                                              \
      } /*CONSTCOND */ while(0)
 #define SIMPLE_ERROR_RETURN(code) \
-        free(reg); \
+        free(localregtab); \
         *returned_error = code; \
         return DW_DLV_ERROR
 
     /* Sweeps the frame instructions. */
     Dwarf_Small *instr_ptr;
 
-    Dwarf_Small instr, opcode;
-
     /* Register numbers not limited to just 255, thus not using
        Dwarf_Small. */
     typedef int reg_num_type;
-    reg_num_type reg_no;
 
     Dwarf_Unsigned factored_N_value;
     Dwarf_Signed signed_factored_N_value;
@@ -187,7 +192,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     Dwarf_Unsigned adv_loc;
 
     int reg_count = dbg->de_frame_reg_rules_entry_count;
-    struct Dwarf_Reg_Rule_s *reg = calloc(reg_count,
+    struct Dwarf_Reg_Rule_s *localregtab = calloc(reg_count,
 					  sizeof(struct
 						 Dwarf_Reg_Rule_s));
 
@@ -263,11 +268,11 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
        explicity */
 
 
-    if (reg == 0) {
+    if (localregtab == 0) {
 	SIMPLE_ERROR_RETURN(DW_DLE_ALLOC_FAIL);
     }
     {
-	struct Dwarf_Reg_Rule_s *t1reg = reg;
+	struct Dwarf_Reg_Rule_s *t1reg = localregtab;
 	struct Dwarf_Reg_Rule_s *t1end = t1reg + reg_count;
 
 	if (cie != NULL && cie->ci_initial_table != NULL) {
@@ -306,11 +311,15 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     if (cie != NULL && cie->ci_augmentation != NULL) {
 	code_alignment_factor = cie->ci_code_alignment_factor;
 	data_alignment_factor = cie->ci_data_alignment_factor;
-    } else
+    } else {
 	need_augmentation = !make_instr;
+    }
 
     instr_ptr = start_instr_ptr;
     while ((instr_ptr < final_instr_ptr) && (!search_over)) {
+        Dwarf_Small instr = 0;
+        Dwarf_Small opcode = 0;
+        reg_num_type reg_no = 0;
 
 
 	fp_instr_offset = instr_ptr - start_instr_ptr;
@@ -329,7 +338,6 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 	fp_register = 0;
 	fp_offset = 0;
 	switch (opcode) {
-
 	case DW_CFA_advance_loc:
 	    {
 		/* base op */
@@ -365,10 +373,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		    SIMPLE_ERROR_RETURN(DW_DLE_DF_NO_CIE_AUGMENTATION);
 		}
 
-		reg[reg_no].ru_is_off = 1;
-		reg[reg_no].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_no].ru_register = reg_num_of_cfa;
-		reg[reg_no].ru_offset_or_block_len =
+		localregtab[reg_no].ru_is_off = 1;
+		localregtab[reg_no].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_no].ru_register = reg_num_of_cfa;
+		localregtab[reg_no].ru_offset_or_block_len =
 		    factored_N_value * data_alignment_factor;
 
 		break;
@@ -382,7 +390,8 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		fp_register = reg_no;
 
 		if (cie != NULL && cie->ci_initial_table != NULL)
-		    reg[reg_no] = cie->ci_initial_table->fr_reg[reg_no];
+		    localregtab[reg_no] = 
+                       cie->ci_initial_table->fr_reg[reg_no];
 		else if (!make_instr) {
 		    SIMPLE_ERROR_RETURN(DW_DLE_DF_MAKE_INSTR_NO_INIT);
 		}
@@ -495,10 +504,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		if (need_augmentation) {
 		    SIMPLE_ERROR_RETURN(DW_DLE_DF_NO_CIE_AUGMENTATION);
 		}
-		reg[reg_no].ru_is_off = 1;
-		reg[reg_no].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_no].ru_register = reg_num_of_cfa;
-		reg[reg_no].ru_offset_or_block_len = factored_N_value *
+		localregtab[reg_no].ru_is_off = 1;
+		localregtab[reg_no].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_no].ru_register = reg_num_of_cfa;
+		localregtab[reg_no].ru_offset_or_block_len = factored_N_value *
 		    data_alignment_factor;
 
 		fp_register = reg_no;
@@ -516,7 +525,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		ERROR_IF_REG_NUM_TOO_HIGH(reg_no, reg_count);
 
 		if (cie != NULL && cie->ci_initial_table != NULL) {
-		    reg[reg_no] = cie->ci_initial_table->fr_reg[reg_no];
+		    localregtab[reg_no] = cie->ci_initial_table->fr_reg[reg_no];
 		} else {
 		    if (!make_instr) {
 			SIMPLE_ERROR_RETURN
@@ -536,10 +545,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		reg_no = (reg_num_type) lreg;
 		ERROR_IF_REG_NUM_TOO_HIGH(reg_no, reg_count);
 
-		reg[reg_no].ru_is_off = 0;
-		reg[reg_no].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_no].ru_register = DW_FRAME_UNDEFINED_VAL;
-		reg[reg_no].ru_offset_or_block_len = 0;
+		localregtab[reg_no].ru_is_off = 0;
+		localregtab[reg_no].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_no].ru_register = DW_FRAME_UNDEFINED_VAL;
+		localregtab[reg_no].ru_offset_or_block_len = 0;
 
 		fp_register = reg_no;
 		break;
@@ -553,10 +562,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		reg_no = (reg_num_type) lreg;
 		ERROR_IF_REG_NUM_TOO_HIGH(reg_no, reg_count);
 
-		reg[reg_no].ru_is_off = 0;
-		reg[reg_no].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_no].ru_register = DW_FRAME_SAME_VAL;
-		reg[reg_no].ru_offset_or_block_len = 0;
+		localregtab[reg_no].ru_is_off = 0;
+		localregtab[reg_no].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_no].ru_register = DW_FRAME_SAME_VAL;
+		localregtab[reg_no].ru_offset_or_block_len = 0;
 		fp_register = reg_no;
 		break;
 	    }
@@ -580,10 +589,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		}
 
 
-		reg[reg_noA].ru_is_off = 0;
-		reg[reg_noA].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_noA].ru_register = reg_noB;
-		reg[reg_noA].ru_offset_or_block_len = 0;
+		localregtab[reg_noA].ru_is_off = 0;
+		localregtab[reg_noA].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_noA].ru_register = reg_noB;
+		localregtab[reg_noA].ru_offset_or_block_len = 0;
 
 		fp_register = reg_noA;
 		fp_offset = reg_noB;
@@ -599,7 +608,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		}
 
 		for (i = 0; i < reg_count; i++)
-		    stack_table->fr_reg[i] = reg[i];
+		    stack_table->fr_reg[i] = localregtab[i];
 
 		if (top_stack != NULL)
 		    stack_table->fr_next = top_stack;
@@ -617,7 +626,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		top_stack = stack_table->fr_next;
 
 		for (i = 0; i < reg_count; i++)
-		    reg[i] = stack_table->fr_reg[i];
+		    localregtab[i] = stack_table->fr_reg[i];
 
 		dwarf_dealloc(dbg, stack_table, DW_DLA_FRAME);
 		break;
@@ -718,10 +727,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		reg_no = (reg_num_type) lreg;
 		ERROR_IF_REG_NUM_TOO_HIGH(reg_no, reg_count);
 		DECODE_LEB128_UWORD(instr_ptr, block_len);
-		reg[lreg].ru_is_off = 0;	/* arbitrary */
-		reg[lreg].ru_value_type = DW_EXPR_EXPRESSION;
-		reg[lreg].ru_offset_or_block_len = block_len;
-		reg[lreg].ru_block = instr_ptr;
+		localregtab[lreg].ru_is_off = 0;	/* arbitrary */
+		localregtab[lreg].ru_value_type = DW_EXPR_EXPRESSION;
+		localregtab[lreg].ru_offset_or_block_len = block_len;
+		localregtab[lreg].ru_block = instr_ptr;
 		fp_offset = (Dwarf_Unsigned) instr_ptr;
 		fp_register = reg_no;
 
@@ -745,10 +754,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		if (need_augmentation) {
 		    SIMPLE_ERROR_RETURN(DW_DLE_DF_NO_CIE_AUGMENTATION);
 		}
-		reg[reg_no].ru_is_off = 1;
-		reg[reg_no].ru_value_type = DW_EXPR_OFFSET;
-		reg[reg_no].ru_register = reg_num_of_cfa;
-		reg[reg_no].ru_offset_or_block_len =
+		localregtab[reg_no].ru_is_off = 1;
+		localregtab[reg_no].ru_value_type = DW_EXPR_OFFSET;
+		localregtab[reg_no].ru_register = reg_num_of_cfa;
+		localregtab[reg_no].ru_offset_or_block_len =
 		    signed_factored_N_value * data_alignment_factor;
 
 		fp_register = reg_no;
@@ -831,10 +840,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		}
 		/* Do set ru_is_off here, as here factored_N_value
 		   counts.  */
-		reg[reg_no].ru_is_off = 1;
-		reg[reg_no].ru_register = reg_num_of_cfa;
-		reg[reg_no].ru_value_type = DW_EXPR_VAL_OFFSET;
-		reg[reg_no].ru_offset_or_block_len =
+		localregtab[reg_no].ru_is_off = 1;
+		localregtab[reg_no].ru_register = reg_num_of_cfa;
+		localregtab[reg_no].ru_value_type = DW_EXPR_VAL_OFFSET;
+		localregtab[reg_no].ru_offset_or_block_len =
 		    factored_N_value * data_alignment_factor;
 
 		fp_offset = factored_N_value;
@@ -861,9 +870,9 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		}
 		/* Do set ru_is_off here, as here factored_N_value
 		   counts.  */
-		reg[reg_no].ru_is_off = 1;
-		reg[reg_no].ru_value_type = DW_EXPR_VAL_OFFSET;
-		reg[reg_no].ru_offset_or_block_len =
+		localregtab[reg_no].ru_is_off = 1;
+		localregtab[reg_no].ru_value_type = DW_EXPR_VAL_OFFSET;
+		localregtab[reg_no].ru_offset_or_block_len =
 		    signed_factored_N_value * data_alignment_factor;
 
 		fp_offset = signed_factored_N_value;
@@ -883,11 +892,13 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
 		reg_no = (reg_num_type) lreg;
 		ERROR_IF_REG_NUM_TOO_HIGH(reg_no, reg_count);
 		DECODE_LEB128_UWORD(instr_ptr, block_len);
-		reg[lreg].ru_is_off = 0;	/* arbitrary */
-		reg[lreg].ru_value_type = DW_EXPR_VAL_EXPRESSION;
-		reg[lreg].ru_offset_or_block_len = block_len;
-		reg[lreg].ru_block = instr_ptr;
+		localregtab[lreg].ru_is_off = 0;	/* arbitrary */
+		localregtab[lreg].ru_value_type = DW_EXPR_VAL_EXPRESSION;
+		localregtab[lreg].ru_offset_or_block_len = block_len;
+		localregtab[lreg].ru_block = instr_ptr;
 		fp_offset = (Dwarf_Unsigned) instr_ptr;
+
+                instr_ptr += block_len;
 		fp_register = reg_no;
 
 	    }
@@ -969,7 +980,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     if (table != NULL) {
 
 	struct Dwarf_Reg_Rule_s *t2reg = table->fr_reg;
-	struct Dwarf_Reg_Rule_s *t3reg = reg;
+	struct Dwarf_Reg_Rule_s *t3reg = localregtab;
 	struct Dwarf_Reg_Rule_s *t3end = t3reg + reg_count;
 
 	table->fr_loc = current_loc;
@@ -1022,7 +1033,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     } else {
 	*returned_count = 0;
     }
-    free(reg);
+    free(localregtab);
     return DW_DLV_OK;
 #undef ERROR_IF_REG_NUM_TOO_HIGH
 #undef SIMPLE_ERROR_RETURN
@@ -2050,11 +2061,22 @@ dwarf_expand_frame_instructions(Dwarf_Debug dbg,
 
 
 /* Used by dwarfdump -v to print offsets, for debugging
-   dwarf info
+   dwarf info.
+   The dwarf_ version is preferred over the obsolete _dwarf version.
+   _dwarf version kept for compatibility.
 */
 /* ARGSUSED 4 */
 int
 _dwarf_fde_section_offset(Dwarf_Debug dbg, Dwarf_Fde in_fde,
+			  Dwarf_Off * fde_off, Dwarf_Off * cie_off,
+			  Dwarf_Error * err) 
+{
+  return dwarf_fde_section_offset(dbg,in_fde,fde_off,
+     cie_off,err);
+}
+/* ARGSUSED 4 */
+int
+dwarf_fde_section_offset(Dwarf_Debug dbg, Dwarf_Fde in_fde,
 			  Dwarf_Off * fde_off, Dwarf_Off * cie_off,
 			  Dwarf_Error * err)
 {
@@ -2062,17 +2084,6 @@ _dwarf_fde_section_offset(Dwarf_Debug dbg, Dwarf_Fde in_fde,
     char *loc = 0;
 
 
-#if 0
-    /* de_debug_frame for .debug_frame, de_debug_frame_eh_gnu for
-       eh_frame. */
-    res =
-	_dwarf_load_section(dbg,
-			    dbg->de_debug_frame_index,
-			    &dbg->de_debug_frame, err);
-    if (res != DW_DLV_OK) {
-	return res;
-    }
-#endif
 
     start = (char *) in_fde->fd_section_ptr;
     loc = (char *) in_fde->fd_fde_start;
@@ -2083,27 +2094,25 @@ _dwarf_fde_section_offset(Dwarf_Debug dbg, Dwarf_Fde in_fde,
 }
 
 /* Used by dwarfdump -v to print offsets, for debugging
-   dwarf info
+   dwarf info.
+   The dwarf_ version is preferred over the obsolete _dwarf version.
+   _dwarf version kept for compatibility.
 */
 /* ARGSUSED 4 */
 int
 _dwarf_cie_section_offset(Dwarf_Debug dbg, Dwarf_Cie in_cie,
 			  Dwarf_Off * cie_off, Dwarf_Error * err)
 {
+    return dwarf_cie_section_offset(dbg,in_cie,cie_off,err);
+}
+/* ARGSUSED 4 */
+int
+dwarf_cie_section_offset(Dwarf_Debug dbg, Dwarf_Cie in_cie,
+			  Dwarf_Off * cie_off, Dwarf_Error * err)
+{
     char *start = 0;
     char *loc = 0;
 
-#if 0
-    /* de_debug_frame for .debug_frame, de_debug_frame_eh_gnu for
-       eh_frame. */
-    res =
-	_dwarf_load_section(dbg,
-			    dbg->de_debug_frame_index,
-			    &dbg->de_debug_frame, err);
-    if (res != DW_DLV_OK) {
-	return res;
-    }
-#endif
     start = (char *) in_cie->ci_section_ptr;
     loc = (char *) in_cie->ci_cie_start;
 

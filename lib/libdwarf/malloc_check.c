@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU Lesser General Public
   License along with this program; if not, write the Free Software
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307,
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -331,5 +331,9 @@ dwarf_malloc_check_complete(char *msg)
 	    (long) HASH_TABLE_SIZE, hash_slots_used, max_chain_length);
     return;
 }
+
+#else
+
+static void nothing(){}
 
 #endif /* WANT_LIBBDWARF_MALLOC_CHECK */

@@ -17,9 +17,9 @@
   any, provided herein do not apply to combinations of this program with 
   other software, or any other product whatsoever.  
 
-  You should have received a copy of the GNU Lesser General Public 
-  License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write the Free Software
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -123,4 +123,5 @@ struct Dwarf_P_Fde_s {
     Dwarf_Unsigned fde_end_symbol;
 
     int fde_uwordb_size;
+    Dwarf_P_Debug fde_dbg;
 };

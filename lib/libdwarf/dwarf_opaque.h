@@ -1,6 +1,8 @@
 /*
 
   Copyright (C) 2000,2002,2003,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007,2008  David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2008  Arxan Technologies, Inc. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +21,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301, 
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -33,18 +35,18 @@
 
 */
 /* The versions applicable by section are:
-                       DWARF2    DWARF3
- .debug_info             2         3
- .debug_abbrev           -         -
- .debug_frame            1         3
- .debug_str              -         -
- .debug_loc              -         -
- .debug_line             2         3
- .debug_aranges          2         2
- .debug_ranges           x         -
- .debug_pubtypes         x         2
- .debug_pubnames         2         2
- .debug_macinfo          -         -
+                       DWARF2    DWARF3 DWARF4
+ .debug_info             2         3     4
+ .debug_abbrev           -         -     -
+ .debug_frame            1         3     3
+ .debug_str              -         -     -
+ .debug_loc              -         -     -
+ .debug_line             2         3     3
+ .debug_aranges          2         2     2
+ .debug_ranges           x         -     -
+ .debug_pubtypes         x         2     2
+ .debug_pubnames         2         2     2
+ .debug_macinfo          -         -     -
 */
 
 #include <stddef.h>
@@ -56,6 +58,8 @@ struct Dwarf_Die_s {
        the .debug_info section. */
     Dwarf_Byte_Ptr di_debug_info_ptr;
 
+    /* Points to the abbreviation record for this DIE.
+    */
     Dwarf_Abbrev_List di_abbrev_list;
 
     /* Points to cu context for this die.  */
@@ -110,11 +114,13 @@ struct Dwarf_CU_Context_s {
     unsigned char cc_offset_length;
 };
 
-
 struct Dwarf_Debug_s {
-    dwarf_elf_handle de_elf; /* see de_elf_must_close at end of struct */
+    /* All file access methods and support data 
+       are hidden in this structure. 
+       We get a pointer, callers control the lifetime of the
+       structure and contents. */
+    struct Dwarf_Obj_Access_Interface_s *de_obj_file;
 
-    Dwarf_Unsigned de_access;
     Dwarf_Handler de_errhand;
     Dwarf_Ptr de_errarg;
 
@@ -164,7 +170,6 @@ struct Dwarf_Debug_s {
     struct Dwarf_Alloc_Hdr_s de_alloc_hdr[ALLOC_AREA_REAL_TABLE_MAX];
 #ifdef DWARF_SIMPLE_MALLOC
     struct simple_malloc_record_s *  de_simple_malloc_base;
-    struct simple_malloc_record_s *  de_simple_malloc_current;
 #endif
     
 
@@ -277,6 +282,7 @@ struct Dwarf_Chain_s {
 
 #define CURRENT_VERSION_STAMP		2 /* DWARF2 */
 #define CURRENT_VERSION_STAMP3		3 /* DWARF3 */
+#define CURRENT_VERSION_STAMP4		3 /* DWARF4 */
 
     /* Size of cu header version stamp field. */
 #define CU_VERSION_STAMP_SIZE   sizeof(Dwarf_Half)

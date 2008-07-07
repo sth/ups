@@ -1,6 +1,9 @@
+#ifndef DWARF_UTIL_H
+#define DWARF_UTIL_H
 /*
 
   Copyright (C) 2000,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -17,9 +20,9 @@
   any, provided herein do not apply to combinations of this program with 
   other software, or any other product whatsoever.  
 
-  You should have received a copy of the GNU Lesser General Public 
-  License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write the Free Software
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,6 +35,12 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
+/* The address of the Free Software Foundation is
+   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+   Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
+*/
+
 
 
 
@@ -248,18 +257,39 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
 		       Dwarf_Unsigned form,
 		       Dwarf_Small * val_ptr, int v_length_size);
 
+struct Dwarf_Hash_Table_Entry_s;
+/* This single struct is the base for the hash table.
+   The intent is that once the total_abbrev_count across
+   all the entries is greater than  10*current_table_entry_count
+   one should build a new Dwarf_Hash_Table_Base_s, rehash
+   all the existing entries, and delete the old table and entries. 
+   (10 is a heuristic, nothing magic about it, but once the
+   count gets to 30 or 40 times current_table_entry_count
+   things really slow down a lot. One (500MB) application had
+   127000 abbreviations in one compilation unit)
+   The incoming 'code' is an abbrev number and those simply
+   increase linearly so the hashing is perfect always.
+*/
+struct Dwarf_Hash_Table_s {
+      unsigned long       tb_table_entry_count;
+      unsigned long       tb_total_abbrev_count;
+      /* Each table entry is a list of abbreviations. */
+      struct  Dwarf_Hash_Table_Entry_s *tb_entries;
+};
+
 /*
     This struct is used to build a hash table for the
     abbreviation codes for a compile-unit.  
 */
-struct Dwarf_Hash_Table_s {
+struct Dwarf_Hash_Table_Entry_s {
     Dwarf_Abbrev_List at_head;
-    Dwarf_Abbrev_List at_tail;
 };
+
+
 
 Dwarf_Abbrev_List
 _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context,
-			   Dwarf_Word code);
+			   Dwarf_Unsigned code);
 
 
 /* return 1 if string ends before 'endptr' else
@@ -272,4 +302,8 @@ Dwarf_Unsigned _dwarf_length_of_cu_header(Dwarf_Debug,
 					  Dwarf_Unsigned offset);
 Dwarf_Unsigned _dwarf_length_of_cu_header_simple(Dwarf_Debug);
 
-int _dwarf_load_debug_info(Dwarf_Debug dbg, Dwarf_Error *error);
+int  _dwarf_load_debug_info(Dwarf_Debug dbg, Dwarf_Error *error);
+void _dwarf_free_abbrev_hash_table_contents(Dwarf_Debug dbg,
+    struct Dwarf_Hash_Table_s* hash_table);
+
+#endif /* DWARF_UTIL_H */

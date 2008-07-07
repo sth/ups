@@ -1,6 +1,8 @@
 /*
 
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2008 David Anderson, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +21,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -137,26 +139,10 @@ common_init(Dwarf_P_Debug dbg, Dwarf_Unsigned flags)
 
 
 
-#if  defined(HAVE_DWARF2_99_EXTENSION)
-    /* Revised 64 bit output, using distingushed values. Per 1999
-       dwarf2 revision This produces 64bit extension with ia64 objects.
-
-       Some might want library run time selection of offset size. Not
-       provided here at present. */
-    dbg->de_64bit_extension = (IS_64BIT(dbg) ? 1 : 0);
-    dbg->de_pointer_size = (IS_64BIT(dbg) ? 8 : 4);
-    dbg->de_offset_size = (IS_64BIT(dbg) ? 8 : 4);
-    dbg->de_ptr_reloc =
-	IS_64BIT(dbg) ? Get_REL64_isa(dbg) : Get_REL32_isa(dbg);
-    /* Non-MIPS, dwarf lengths and offsets are 32 bits even for 64bit
-       pointer environments. */
-    /* Get_REL??_isa here supports 64bit-offset dwarf. For 64bit, we
-       emit the extension bytes. */
-
-    dbg->de_offset_reloc = IS_64BIT(dbg) ? Get_REL64_isa(dbg)
-	: Get_REL32_isa(dbg);
-#elif defined(HAVE_OLD_DWARF2_32BIT_OFFSET)
-    /* This is cygnus 32bit offset, as specified in pure dwarf2 v2.0.0 */
+#if defined(HAVE_STRICT_DWARF2_32BIT_OFFSET)
+    /* This is cygnus 32bit offset, as specified in pure dwarf2 v2.0.0.
+       It is consistent with normal DWARF2/3 generation of always
+       generating 32 bit offsets. */
     dbg->de_64bit_extension = 0;
     dbg->de_pointer_size = (IS_64BIT(dbg) ? 8 : 4);
     dbg->de_offset_size = (IS_64BIT(dbg) ? 4 : 4);
@@ -169,8 +155,8 @@ common_init(Dwarf_P_Debug dbg, Dwarf_Unsigned flags)
        pure 32 bit offset dwarf for 32bit pointer apps. */
 
     dbg->de_offset_reloc = Get_REL32_isa(dbg);
-#else
-    /* MIPS-SGI 32 or 64, where offsets and lengths are both 64 bit for 
+#elif defined(HAVE_SGI_IRIX_OFFSETS) 
+    /* MIPS-SGI-IRIX 32 or 64, where offsets and lengths are both 64 bit for 
        64bit pointer objects and both 32 bit for 32bit pointer objects. 
        And a dwarf-reader must check elf info to tell which applies. */
     dbg->de_64bit_extension = 0;
@@ -179,7 +165,32 @@ common_init(Dwarf_P_Debug dbg, Dwarf_Unsigned flags)
     dbg->de_ptr_reloc =
 	IS_64BIT(dbg) ? Get_REL64_isa(dbg) : Get_REL32_isa(dbg);
     dbg->de_offset_reloc = dbg->de_ptr_reloc;
-#endif
+#else /* HAVE_DWARF2_99_EXTENSION or default. */ 
+    /* Revised 64 bit output, using distingushed values. Per 1999
+       dwarf3.  This allows run-time selection of offset size.  */
+    dbg->de_64bit_extension = (IS_64BIT(dbg) ? 1 : 0);
+    dbg->de_pointer_size = (IS_64BIT(dbg) ? 8 : 4);
+    if( flags & DW_DLC_OFFSET_SIZE_64 && (dbg->de_pointer_size == 8)) {
+        /* When it's 64 bit address, a 64bit offset is sensible.
+           Arguably a 32 bit address with 64 bit offset could be
+           sensible, but who would want that? */
+        dbg->de_offset_size = 8;
+        dbg->de_64bit_extension = 1;
+    }  else {
+        dbg->de_offset_size = 4;
+        dbg->de_64bit_extension = 0;
+    }
+    dbg->de_ptr_reloc =
+	IS_64BIT(dbg) ? Get_REL64_isa(dbg) : Get_REL32_isa(dbg);
+    /* Non-MIPS, dwarf lengths and offsets are 32 bits even for 64bit
+       pointer environments. */
+    /* Get_REL??_isa here supports 64bit-offset dwarf. For 64bit, we
+       emit the extension bytes. */
+
+    dbg->de_offset_reloc = IS_64BIT(dbg) ? Get_REL64_isa(dbg)
+	: Get_REL32_isa(dbg);
+#endif /*  HAVE_DWARF2_99_EXTENSION etc. */
+
     dbg->de_exc_reloc = Get_REL_SEGREL_isa(dbg);
 
     dbg->de_is_64bit = IS_64BIT(dbg);
@@ -189,12 +200,14 @@ common_init(Dwarf_P_Debug dbg, Dwarf_Unsigned flags)
 	dbg->de_relocation_record_size =
 	    sizeof(struct Dwarf_Relocation_Data_s);
     } else {
+	
 #if HAVE_ELF64_GETEHDR
 	dbg->de_relocation_record_size =
-	    IS_64BIT(dbg) ? sizeof(Elf64_Rel) : sizeof(Elf32_Rel);
+	    IS_64BIT(dbg)? sizeof(REL64) : sizeof(REL32);
 #else
-	dbg->de_relocation_record_size = sizeof(Elf32_Rel);
+	dbg->de_relocation_record_size = sizeof(REL32);
 #endif
+
     }
 
     if (dbg->de_offset_size == 8) {

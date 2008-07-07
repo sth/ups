@@ -1,6 +1,6 @@
 /*
-
   Copyright (C) 2000,2002,2004,2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -32,6 +32,20 @@
   http://oss.sgi.com/projects/GenInfo/NoticeExplan
 
 */
+/* The address of the Free Software Foundation is
+   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+   Boston, MA 02110-1301, USA.
+   SGI has moved from the Crittenden Lane address.
+*/
+
+
+/* This file was designed for SGI IRIX compiler use.
+   The static linker can rearrange the order of functions
+   in the layout in memory
+   and provided each has the right  form
+   this will (when called by the SGI IRIX
+   static linker) rearrange the table so the line table
+   is arranged in the same order as the memory layout. */
 
 
 
@@ -42,6 +56,9 @@
 #include "dwarf_line.h"
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
 #endif
 
 #define MINIMUM_POSSIBLE_PROLOG_LEN 10	/* 10 is based on */
@@ -71,9 +88,16 @@ struct a_line_area {
 };
 
 
+/*
+        Written to support the SGI IRIX static linker. 
+        It helps SGI IRIX ld 
+        rearrange lines in .debug_line in a .o created with a text
+        section per function.   The SGI IRIX linker option is: 
+                -OPT:procedure_reorder=ON
+        where ld-cord (cord(1)ing by ld, 
+        not by cord(1)) may have changed the function order.
 
-/* 
-	returns
+	Returns
 	DW_DLV_OK if nothing went wrong.
 	DW_DLV_ERROR if could not do anything due to
 		error.  the original buffer is unchanged.
@@ -92,10 +116,21 @@ struct a_line_area {
 		set 1 if some sorting (movement) done.
 	on all returns. On error return sets to 0.
 	
+        The _dwarf name form is now obsolete,
+        the dwarf_ name for is preferred.
+        Both names supported.
 
 */
 int
 _dwarf_ld_sort_lines(void *orig_buffer,
+		     unsigned long buffer_len,
+		     int is_64_bit, int *any_change, int *err_code)
+{
+    return dwarf_ld_sort_lines(orig_buffer,buffer_len,
+        is_64_bit,any_change,err_code);
+}
+int
+dwarf_ld_sort_lines(void *orig_buffer,
 		     unsigned long buffer_len,
 		     int is_64_bit, int *any_change, int *err_code)
 {
@@ -210,6 +245,17 @@ cmpr(const void *lin, const void *rin)
     return 0;			/* should never happen. */
 }
 
+/* The list of line area records is no longer needed.
+   Free the data allocated. */
+static void
+free_area_data(struct a_line_area *arp)
+{
+    while(arp) {
+        struct a_line_area *next = arp->ala_next;
+        free(arp);
+        arp = next;
+    }    
+}
 
 /*
 	On entry:
@@ -268,7 +314,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
        current cu, and serves to check that the prologue was correctly
        decoded. */
 
-    Dwarf_Small *orig_line_ptr;
+    Dwarf_Small *orig_line_ptr = 0;
 
     /* These are the fields of the statement program header. */
     struct Dwarf_Debug_s dbg_data;
@@ -280,7 +326,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
     Dwarf_Bool is_stmt = false;
 
     /* Dwarf_Bool prologue_end; Dwarf_Bool epilogue_begin; */
-    Dwarf_Small isa;
+    Dwarf_Small isa = 0;
 
 
     struct a_line_area *area_base = 0;
@@ -292,28 +338,29 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 
     /* 
        This is the current opcode read from the statement program. */
-    Dwarf_Small opcode;
+    Dwarf_Small opcode = 0;
 
 
     /* 
        These variables are used to decode leb128 numbers. Leb128_num
        holds the decoded number, and leb128_length is its length in
        bytes. */
-    Dwarf_Word leb128_num;
-    Dwarf_Sword advance_line;
+    Dwarf_Word leb128_num = 0;
+    Dwarf_Sword advance_line = 0;
 
     /* 
        This is the operand of the latest fixed_advance_pc extended
        opcode. */
-    Dwarf_Half fixed_advance_pc;
+    Dwarf_Half fixed_advance_pc = 0;
 
     /* This is the length of an extended opcode instr.  */
-    Dwarf_Word instr_length;
-    Dwarf_Small ext_opcode;
+    Dwarf_Word instr_length = 0;
+    Dwarf_Small ext_opcode = 0;
     struct Line_Table_Prefix_s prefix;
 
 
 
+    memset(dbg, 0, sizeof(struct Dwarf_Debug_s));
     dbg->de_copy_word = memcpy;
     /* 
        Following is a straightforward decoding of the statement program 
@@ -345,6 +392,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 	    dwarf_free_line_table_prefix(&prefix);
 	    *err_code = dwarf_errno(error);
 	    dwarf_dealloc(dbg, error, DW_DLA_ERROR);
+	    free_area_data(area_base);
 	    return dres;
 	}
 	if (dres == DW_DLV_NO_ENTRY) {
@@ -519,6 +567,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 			dwarf_free_line_table_prefix(&prefix);
 
 			*err_code = DW_DLE_LINE_NUM_OPERANDS_BAD;
+			free_area_data(area_base);
 			return (DW_DLV_ERROR);
 		    }
 		    break;
@@ -526,7 +575,6 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 
 	    }
 	} else if (type == LOP_EXTENDED) {
-
 
 	    Dwarf_Unsigned utmp3;
 
@@ -548,8 +596,6 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		    /* end_sequence = false; */
 		    /* prologue_end = false; */
 		    /* epilogue_begin = false; */
-
-
 		    break;
 		}
 
@@ -567,7 +613,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 			}
 			last_address = address;
 
-			area = alloca(sizeof(struct a_line_area));
+			area = malloc(sizeof(struct a_line_area));
 			area->ala_address = address;
 			area->ala_offset = stmt_prog_entry_start -
 			    orig_line_ptr;
@@ -590,21 +636,20 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 		    } else {
 			*err_code = DW_DLE_LINE_SET_ADDR_ERROR;
 			dwarf_free_line_table_prefix(&prefix);
+			free_area_data(area_base);
 			return (DW_DLV_ERROR);
 		    }
-
-
 		    break;
 		}
 
 	    case DW_LNE_define_file:{
-
 		    break;
 		}
 
 	    default:{
 		    *err_code = DW_DLE_LINE_EXT_OPCODE_BAD;
 		    dwarf_free_line_table_prefix(&prefix);
+		    free_area_data(area_base);
 		    return (DW_DLV_ERROR);
 		}
 	    }
@@ -616,14 +661,13 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
     *new_line_ptr = line_ptr;
     if (!need_to_sort) {
 	dwarf_free_line_table_prefix(&prefix);
+	free_area_data(area_base);
 	return (DW_DLV_OK);
     }
 
-    /* so now we have something to sort. First, finish off the last
+    /* So now we have something to sort. First, finish off the last
        area record: */
-    area_current->ala_length = (line_ptr - orig_line_ptr)	/* final 
-								   offset 
-								 */
+    area_current->ala_length = (line_ptr - orig_line_ptr)
 	-area_current->ala_offset;
 
     /* Build and sort a simple array of sections. Forcing a stable sort 
@@ -644,6 +688,7 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 	if (!ala_array) {
 	    dwarf_free_line_table_prefix(&prefix);
 	    *err_code = DW_DLE_ALLOC_FAIL;
+	    free_area_data(area_base);
 	    return DW_DLV_ERROR;
 	}
 
@@ -652,6 +697,10 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
 
 	    ala_array[i] = *local;
 	}
+	free_area_data(area_base);
+        /* Zero the stale pointers so we don't use them accidentally. */
+	area_base = 0;
+	area_current = 0;
 
 	qsort(ala_array, area_count, sizeof(struct a_line_area), cmpr);
 

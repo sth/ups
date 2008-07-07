@@ -1,6 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005  Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright 2007 Sun Microsystems, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -19,7 +20,7 @@
 
   You should have received a copy of the GNU Lesser General Public 
   License along with this program; if not, write the Free Software 
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
   Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
@@ -82,6 +83,101 @@ dwarf_whatform_direct(Dwarf_Attribute attr,
     *return_form = attr->ar_attribute_form_direct;
     return (DW_DLV_OK);
 }
+void *
+dwarf_uncompress_integer_block(
+    Dwarf_Debug      dbg,
+    Dwarf_Bool       unit_is_signed,
+    Dwarf_Small      unit_length_in_bits,
+    void*            input_block,
+    Dwarf_Unsigned   input_length_in_bytes,
+    Dwarf_Unsigned*  output_length_in_units_ptr,
+    Dwarf_Error*     error
+)
+{
+    Dwarf_Unsigned output_length_in_units;
+    void * output_block;
+    int i;
+    char * ptr;
+    int remain;
+    Dwarf_sfixed * array;
+
+    if (dbg == NULL) {
+        _dwarf_error(NULL, error, DW_DLE_DBG_NULL);
+        return((void *)DW_DLV_BADADDR);
+    }
+    
+    if (unit_is_signed == false ||
+	unit_length_in_bits != 32 ||
+	input_block == NULL ||
+	input_length_in_bytes == 0 ||
+	output_length_in_units_ptr == NULL) {
+	
+	_dwarf_error(NULL, error, DW_DLE_BADBITC);
+	return ((void *) DW_DLV_BADADDR);
+    }
+
+    /* At this point we assume the format is: signed 32 bit */
+
+    /* first uncompress everything to find the total size. */
+
+    output_length_in_units = 0;
+    remain = input_length_in_bytes;
+    ptr = input_block;
+    while (remain > 0) {
+	Dwarf_Signed num;
+	Dwarf_Word len;
+	num = _dwarf_decode_s_leb128((unsigned char *)ptr, &len);
+	ptr += len;
+	remain -= len;
+	output_length_in_units++;
+    }
+
+    if (remain != 0) {
+	_dwarf_error(NULL, error, DW_DLE_ALLOC_FAIL);
+	return((void *)DW_DLV_BADADDR);
+    }
+    
+    /* then alloc */
+
+    output_block = (void *)
+        _dwarf_get_alloc(dbg,
+			 DW_DLA_STRING,
+			 output_length_in_units * (unit_length_in_bits / 8));
+    if (output_block == NULL) {
+        _dwarf_error(dbg, error, DW_DLE_ALLOC_FAIL);
+        return((void*)DW_DLV_BADADDR);
+    }
+    
+    /* then uncompress again and copy into new buffer */
+
+    array = (Dwarf_sfixed *) output_block;
+    remain = input_length_in_bytes;
+    ptr = input_block;
+    for (i=0; i<output_length_in_units && remain>0; i++) {
+	Dwarf_Signed num;
+	Dwarf_Word len;
+	num = _dwarf_decode_s_leb128((unsigned char *)ptr, &len);
+	ptr += len;
+	remain -= len;
+	array[i] = num;
+    }
+
+    if (remain != 0) {
+	dwarf_dealloc(dbg, (unsigned char *)output_block, DW_DLA_STRING);
+	_dwarf_error(dbg, error, DW_DLE_ALLOC_FAIL);
+	return((Dwarf_P_Attribute)DW_DLV_BADADDR);
+    }
+
+    *output_length_in_units_ptr = output_length_in_units;
+    return output_block;
+}
+
+void
+dwarf_dealloc_uncompressed_block(Dwarf_Debug dbg, void * space)
+{
+    dwarf_dealloc(dbg, space, DW_DLA_STRING);
+}
+
 
 int
 dwarf_whatform(Dwarf_Attribute attr,
@@ -434,6 +530,9 @@ dwarf_formudata(Dwarf_Attribute attr,
 	*return_uval = ret_value;
 	return DW_DLV_OK;
 
+    /* READ_UNALIGNED does the right thing as it reads
+       the right number bits and generates host order. 
+       So we can just assign to *return_uval. */
     case DW_FORM_data2:{
 	    READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
 			   attr->ar_debug_info_ptr, sizeof(Dwarf_Half));
@@ -507,8 +606,11 @@ dwarf_formsdata(Dwarf_Attribute attr,
 	*return_sval = (*(Dwarf_Sbyte *) attr->ar_debug_info_ptr);
 	return DW_DLV_OK;
 
+    /* READ_UNALIGNED does not sign extend. 
+       So we have to use a cast to get the
+       value sign extended in the right way for each case. */
     case DW_FORM_data2:{
-	    READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
+	    READ_UNALIGNED(dbg, ret_value, Dwarf_Signed,
 			   attr->ar_debug_info_ptr,
 			   sizeof(Dwarf_Shalf));
 	    *return_sval = (Dwarf_Shalf) ret_value;
@@ -517,15 +619,15 @@ dwarf_formsdata(Dwarf_Attribute attr,
 	}
 
     case DW_FORM_data4:{
-	    READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
+	    READ_UNALIGNED(dbg, ret_value, Dwarf_Signed,
 			   attr->ar_debug_info_ptr,
 			   sizeof(Dwarf_sfixed));
-	    *return_sval = (Dwarf_Sword) ret_value;
+	    *return_sval = (Dwarf_sfixed) ret_value;
 	    return DW_DLV_OK;
 	}
 
     case DW_FORM_data8:{
-	    READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
+	    READ_UNALIGNED(dbg, ret_value, Dwarf_Signed,
 			   attr->ar_debug_info_ptr,
 			   sizeof(Dwarf_Signed));
 	    *return_sval = (Dwarf_Signed) ret_value;

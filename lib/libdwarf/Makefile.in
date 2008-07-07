@@ -19,8 +19,9 @@
 #
 #  You should have received a copy of the GNU Lesser General Public 
 #  License along with this program; if not, write the Free Software 
-#  Foundation, Inc., 59 Temple Place - Suite 330, Boston MA 02111-1307, 
+#  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
 #  USA.
+
 #
 #  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
 #  Mountain View, CA 94043, or:
@@ -70,6 +71,7 @@ OBJS= dwarf_abbrev.o \
         dwarf_alloc.o \
         dwarf_arange.o \
         dwarf_die_deliv.o \
+        dwarf_elf_access.o \
         dwarf_error.o \
         dwarf_form.o \
         dwarf_frame.o \
@@ -81,6 +83,7 @@ OBJS= dwarf_abbrev.o \
         dwarf_line.o \
         dwarf_line2.o \
         dwarf_loc.o \
+        dwarf_original_elf_init.o \
         dwarf_query.o \
         dwarf_string.o \
         dwarf_stubs.o \
@@ -135,39 +138,50 @@ none:
 # the .mm files are in ATT/USL/USG mm form.
 #
 
-psbld:		libdwarf2.1.ps libdwarf2p.1.ps dwarf.v2.ps index.v2.ps mips_extensions.ps
-
+docbld:pdfbld 
+pdfbld: libdwarf2.1.pdf libdwarf2p.1.pdf dwarf.v2.pdf index.v2.pdf mips_extensions.pdf
+#Oriented to using gsroff now.
+TROFF=/usr/bin/groff
+TROFFDEV="-T ps"
+TROFFDEV=
+PSTOPDF=/usr/bin/ps2pdf
 # pr expands tabs to spaces: this avoids problems with tab
 # interpretation
 
-libdwarf2.1.ps:  $(BUILD_BASE)/libdwarf2.1.mm
-		pr -t -e $(BUILD_BASE)/libdwarf2.1.mm \
-		  | tbl | psroff -t -mm >libdwarf2.1.ps
+# The warning about 'cant break line' is a too-long line used
+# in the table of contents.
+# Ignore the warning (and those like it).
+libdwarf2.1.pdf:  $(BUILD_BASE)/libdwarf2.1.mm
+	-pr -t -e $(BUILD_BASE)/libdwarf2.1.mm \
+		  | tbl | $(TROFF) $(TROFFDEV) -mm >libdwarf2.1.ps
+	$(PSTOPDF) libdwarf2.1.ps libdwarf2.1.pdf
 
-libdwarf2p.1.ps:  $(BUILD_BASE)/libdwarf2p.1.mm
-		pr -t -e  $(BUILD_BASE)/libdwarf2p.1.mm \
-		  | tbl | psroff -t -mm >libdwarf2p.1.ps
+libdwarf2p.1.pdf:  $(BUILD_BASE)/libdwarf2p.1.mm
+	-pr -t -e  $(BUILD_BASE)/libdwarf2p.1.mm \
+		  | tbl | $(TROFF) $(TROFFDEV) -mm >libdwarf2p.1.ps
+	$(PSTOPDF) libdwarf2p.1.ps libdwarf2p.1.pdf
 
 # At present, the newIndex is not usable: we have no tools
 # to build a new index page at the moment.
 
-dwarf.v2.ps:	$(BUILD_BASE)/dwarf.v2.mm
-		pic $(BUILD_BASE)/dwarf.v2.mm \
-		  | tbl | psroff -t -mm >dwarf.v2.ps 2> newIndex
-		-cp dwarf.v2.ps $(BUILD_BASE)
-		-cp newIndex $(BUILD_BASE)
+dwarf.v2.pdf:	$(BUILD_BASE)/dwarf.v2.mm
+	-pic $(BUILD_BASE)/dwarf.v2.mm \
+		  | tbl | $(TROFF) $(TROFFDEV) -mm >dwarf.v2.ps 2> newIndex
+	$(PSTOPDF) dwarf.v2.ps dwarf.v2.pdf
 
 # the index is only useful till the document changes: it is
 # not autmatically correct. It was prepared by tools internal
 # to USL/Novell
 
-index.v2.ps:  index.v2.mm
-		pic index.v2.mm | tbl | psroff -t -mm >index.v2.ps
+index.v2.pdf:  index.v2.mm
+	-pic index.v2.mm | tbl | $(TROFF) $(TROFFDEV) -mm >index.v2.ps
+	$(PSTOPDF) index.v2.ps  index.v2.pdf
 
 
-mips_extensions.ps: mips_extensions.mm
-		pr -t -e mips_extensions.mm | tbl | \
-                 psroff -t -mm >mips_extensions.ps
+mips_extensions.pdf: mips_extensions.mm
+	-pr $(TROFFDEV) -e mips_extensions.mm | tbl | \
+                 $(TROFF) $(TROFFDEV) -mm >mips_extensions.ps
+	$(PSTOPDF) mips_extensions.ps  mips_extensions.pdf
 
 clean:
 		rm -f *.o libdwarf.a 

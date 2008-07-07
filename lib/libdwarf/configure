@@ -842,6 +842,10 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-shared         build shared library libdwarf.so (default is NO)
   --enable-nonshared      build archive library libdwarf.a (default is YES)
+  --enable-dwarf-format-sgi-irix
+                          Force producer to SGI IRIX offset dwarf.
+  --enable-dwarf-format-strict-32bit
+                          Force producer to generate only DWARF format 32bit.
 
 Some influential environment variables:
   CC          C compiler command
@@ -3805,6 +3809,108 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+
+#include <libelf.h>
+
+int
+main ()
+{
+  int p; p = 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_RAW_LIBELF_OK 1
+_ACEOF
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#define _GNU_SOURCE
+#include <libelf.h>
+
+int
+main ()
+{
+  off64_t  p; p = 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBELF_OFF64_OK 1
+_ACEOF
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 #include <sgidefs.h>
 int
 main ()
@@ -3895,40 +4001,17 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
-build_nonshared=libdwarf.a
-
-# Check whether --enable-shared or --disable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval="$enable_shared"
-   build_shared=libdwarf.so
-
-else
-    build_shared=none
-
-fi;
-# Check whether --enable-nonshared or --disable-nonshared was given.
-if test "${enable_nonshared+set}" = set; then
-  enableval="$enable_nonshared"
-   build_nonshared=libdwarf.a
-
-		 build_nonshared=none
-
-fi;
-
-
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <elf.h>
+#include <sgidefs.h>
 int
 main ()
 {
-  int p; p = R_IA_64_DIR32LSB;
+  __uint64_t p; p = 27;
   ;
   return 0;
 }
@@ -3957,20 +4040,63 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (exit $ac_status); }; }; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_OLD_DWARF2_32BIT_OFFSET 1
+#define HAVE___UINT64_T_IN_SGIDEFS_H 1
 _ACEOF
 
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
+build_nonshared=libdwarf.a
+
+# Check whether --enable-shared or --disable-shared was given.
+if test "${enable_shared+set}" = set; then
+  enableval="$enable_shared"
+   build_shared=libdwarf.so
+
+else
+    build_shared=none
+
+fi;
+# Check whether --enable-nonshared or --disable-nonshared was given.
+if test "${enable_nonshared+set}" = set; then
+  enableval="$enable_nonshared"
+   build_nonshared=libdwarf.a
+
+		 build_nonshared=none
+
+fi;
+
+
+# Check whether --enable-dwarf_format_sgi_irix or --disable-dwarf_format_sgi_irix was given.
+if test "${enable_dwarf_format_sgi_irix+set}" = set; then
+  enableval="$enable_dwarf_format_sgi_irix"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SGI_IRIX_OFFSETS 1
+_ACEOF
+
+else
+  # Check whether --enable-dwarf_format_strict_32bit or --disable-dwarf_format_strict_32bit was given.
+if test "${enable_dwarf_format_strict_32bit+set}" = set; then
+  enableval="$enable_dwarf_format_strict_32bit"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STRICT_DWARF2_32BIT_OFFSET 1
+_ACEOF
+
+else
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_DWARF2_99_EXTENSION 1
 _ACEOF
 
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi;
+fi;
 
           ac_config_files="$ac_config_files Makefile"
 cat >confcache <<\_ACEOF
@@ -5094,3 +5220,4 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
+

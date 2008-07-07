@@ -1,3 +1,59 @@
+April 9, 2008
+  libdwarf would behave badly if one compilation unit had more than 64K
+  abbreviations: It was both very slow dealing with abbreviations and would
+  get mixed up and error-off.  Increased the size of some internal variables
+  and rewrote abbreviation lookup.
+February 18, 2008
+  It is now possible to write one's own access to objects, making it possible
+  to use a different library than libelf or even read a completely
+  different object format than ELF.
+  See dwarf_object_init() and see the new source files
+  dwarf_original_elf_init.c and dwarf_elf_access.c  for example
+  code using the new function-pointer approach as it's implementation.
+  Thanks to Josh Fuhs for doing the design and 99% of the work to make
+  this happen.
+February 2, 2008
+  Now pro_init() defaults to standard DWARF3 generated offset sizes.
+  But if a new flag DW_DLC_OFFSET_SIZE_64 or'd into flags passed to
+  dwarf_produser_init() or dwarf_producer_init_b, 
+  the DWARF3 extended offset size is generated (if the address size
+  is 64 bit).
+  The new configure option  --enable-dwarf-format-strict-32bit 
+  forces pro_init() to always cause 32bit offset dwarf generation.
+  The new configure option --enable-dwarf-format-sgi-irix forces
+  the old SGI IRIX 64bit offset generation for 64bit pointer size objects.
+
+  This is intended to simplify standard DWARF3 generation with
+  the now-normal use of 32bit DWARF offsets for both 32 and 64
+  bit pointer objects.
+ 
+  It does require that anyone wanting SGI IRIX dwarf generation
+  with its non-standard offsets for 64bit objects use the new
+  --enable-dwarf-format-sgi-irix configure time option.
+
+  This has no effect on dwarf reader code. It affects code calling
+  the libdwarf producer interfaces.
+
+December 8, 2007
+  Had to add an ugly configure conditional as libelf has
+  unconditional use of off64_t in recent libelf.h
+July 3, 2007
+  A new interface function, dwarf_loclist_from_expr(),
+  allows easy extraction of dwarf expression bytes from
+  expressions in frame data.
+May 8, 2007
+  Now documents released as .mm and .pdf (no longer as .ps).
+May 7, 2007
+  Incorporates Sun Microsystems  extensions to dwarf.h and
+  to the consumer and producer libraries.   The changes
+  include corrections so the producer library  cleans up it's memory
+  use on a call to dwarf_producer_finish(dbg).
+  Thanks to Chris Quenelle of Sun for these contributions.
+
+March 20, 2007
+  nroff/troff and the AT&T -mm package are not widely available,
+  so now the Makefile refers to groff, which works quite nicely.
+
 February 20, 2007
   Documented libdwarf thread safety in README.
   Fixed memory leak in  dwarf macro reading code.

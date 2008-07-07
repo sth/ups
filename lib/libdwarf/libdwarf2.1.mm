@@ -8,7 +8,7 @@
 .nr Hb 5
 \." ==============================================
 \." Put current date in the following at each rev
-.ds vE rev 1.63, 01 Sep 2006
+.ds vE rev 1.66, 04 July 2007
 \." ==============================================
 \." ==============================================
 .ds | |
@@ -33,9 +33,8 @@
 .TL
 A Consumer Library Interface to DWARF 
 .AF ""
-.AU "UNIX International Programming Languages Special Interest Group"
+.AU "David Anderson"
 .PF "'\*(vE'- \\\\nP -''"
-\.".PM ""
 .AS 1
 This document describes an interface to a library of functions
 .FS 
@@ -52,15 +51,6 @@ The document is oriented to reading DWARF version 2
 and version 3.
 There are certain sections which are SGI-specific (those
 are clearly identified in the document).
-The DWARF Committee has not finalized DWARF3 at this writing.
-.P
-In the mid 1990's this document and the library it describes
-was made available on the Internet.
-Unix International was disbanded in the 1990's and no longer exists.
-In 2005  the DWARF committee began an affiliation with FreeStandards.org.
-See "http://www.freestandards.org" and "http://dwarf.freestandards.org".
-.P
-This document is subject to change.
 .P
 \*(vE
 
@@ -75,12 +65,49 @@ names information, weak names information, DWARF frame description
 information, DWARF static function names, DWARF static variables, and 
 DWARF type information.
 .P
+The document has long mentioned the  
+"Unix International Programming Languages Special Interest Group" 
+(PLSIG), under whose auspices the
+DWARF committtee was formed around 1991.
+"Unix International"  
+was disbanded in the 1990's and no longer exists.
+.P
+The DWARF committee published DWARF2 July 27, 1993.
+.P
+In the mid 1990's this document and the library it describes
+(which the committee never endorsed, having decided
+not to endorse or approve any particular library interface)
+was made available on the internet by Silcon Graphics, Inc.
+.P
+In 2005 the DWARF committee began an affiliation with FreeStandards.org.
+In 2007 FreeStandards.org merged with The Linux Foundation.
+The DWARF committee dropped its affiliation with FreeStandards.org
+in 2007 and established the dwarfstd.org website.
+See "http://www.dwarfstd.org" for current
+information on standardization activities 
+and a copy of the standard.
+.H 2 "Copyright"
+Copyright 1993-2006 Silicon Graphics, Inc.
+
+Copyright 2007 David Anderson. 
+
+Permission is hereby granted to 
+copy or republish or use any or all of this document without
+restriction except that when publishing more than a small amount
+of the document
+please acknowledge Silicon Graphics, Inc and David Anderson.
+
+This document is distributed in the hope that it would be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+.P
 
 .H 2 "Purpose and Scope"
 The purpose of this document is to document a library of functions 
 to access DWARF debugging information. There is no effort made in 
 this document to address the creation of these records as those
-issues are addressed separately.
+issues are addressed separately 
+(see "A Producer Library Interface to DWARF").
 
 .P
 Additionally, the focus of this document is the functional interface,
@@ -91,31 +118,42 @@ intentionally ignored.
 .H 2 "Document History"
 .P
 A document was written about 1991 which had similar
-layout and interfaces. It was for reading DWARF1.
+layout and interfaces. 
+Written by people from Hal Corporation,
+That document described a library for reading DWARF1.
 The authors distributed paper copies to the committee
 with the clearly expressed intent to propose the document as
 a supported interface definition.
+The committee decided not to pursue a library definition.
 .P
 SGI wrote the document you are now reading in 1993
 with a similar layout and content and organization, but 
-is a complete rewrite, and with the intent to read DWARF2.
-The intent is to also cover DWARF3, but DWARF3 is not fully
-covered by this document at this time.
-
+it was complete document rewrite with the intent to read DWARF2
+(the DWARF version then in existence).
+The intent was (and is) to also cover
+future revisions of DWARF.
+All the function interfaces were changed 
+in 1994 to uniformly
+return a simple integer success-code (see DW_DLV_OK etc), 
+generally following
+the recomendations in the chapter titled "Candy Machine Interfaces"
+of "Writing Solid Code", a book by
+Steve Maguire (published by Microsoft Press).
 .H 2 "Definitions"
-DWARF debugging information entries (DIE) are the segments of information 
+DWARF debugging information entries (DIEs) are the segments of information 
 placed in the \f(CW.debug_*\fP sections by compilers, assemblers, and 
 linkage editors that, in conjunction with line number entries, are 
-necessary for symbolic source-level debugging.  Refer to the document 
-"\fIDWARF Debugging Information Format\fP" from UI PLSIG for a more 
+necessary for symbolic source-level debugging.  
+Refer to the latest
+"\fIDWARF Debugging Information Format\fP" from www.dwarfstd.org for a more 
 complete description of these entries.
 
 .P
 This document adopts all the terms and definitions in "\fIDWARF Debugging 
-Information Format\fP" version 2.  It focuses on the implementation at
-Silicon Graphics Computer Systems.  Although we believe the interface
-is general enough to be of interest to other vendors too, there are a
-few places where changes may need to be made.
+Information Format\fP" versions 2 and 3.  
+It originally focused on the implementation at
+Silicon Graphics, Inc., but now
+attempts to be more generally useful.
 
 .H 2 "Overview"
 The remaining sections of this document describe the proposed interface
@@ -322,13 +360,13 @@ Dwarf_Handler:4|8:4|8:Pointer to
 
 .H 2 "Aggregate Types"
 The following aggregate types are defined by 
-the SGI 
 \fIlibdwarf.h\fP:
 \f(CWDwarf_Loc\fP,
 \f(CWDwarf_Locdesc\fP,
 \f(CWDwarf_Block\fP, 
 \f(CWDwarf_Frame_Op\fP. 
 \f(CWDwarf_Regtable\fP. 
+\f(CWDwarf_Regtable3\fP. 
 While most of \f(CWlibdwarf\fP acts on or returns simple values or
 opaque pointer types, this small set of structures seems useful.
 
@@ -2161,14 +2199,16 @@ using the allocation type \f(CWDW_DLA_LOCDESC\fP.
 Dwarf_Locdesc *llbuf;
 int lres;
 
-lres = dwarf_loclist(someattr, &llbuf,&lcnt &error);
+lres = dwarf_loclist(someattr, &llbuf,&lcnt,&error);
 if (lres == DW_DLV_OK) {
 	/* lcnt is always 1, (and has always been 1) */ */
-	/* use llbuf */
+
+	/* Use llbuf here. */
+
 
         dwarf_dealloc(dbg, llbuf->ld_s, DW_DLA_LOC_BLOCK);
         dwarf_dealloc(dbg, llbuf, DW_DLA_LOCDESC);
-/*      Earlier version. It works because lcnt is always 1.
+/*      Earlier version. 
 *         for (i = 0; i < lcnt; ++i) {
 *             /* use llbuf[i] */
 * 
@@ -2182,6 +2222,60 @@ if (lres == DW_DLV_OK) {
 .DE
 .in -2
 .P
+
+.H 4 "dwarf_loclist_from_expr()"
+.DS
+\f(CWint dwarf_loclist_from_expr(
+        Dwarf_Ptr bytes_in, 
+        Dwarf_Unsigned bytes_len,
+        Dwarf_Locdesc **llbuf,
+        Dwarf_Signed  *listlen,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_loclist_from_expr()\fP sets \f(CW*llbuf\fP to point to 
+a \f(CWDwarf_Locdesc\fP pointer for the single location expression
+which is pointed to by \f(CW*bytes_in\fP (whose length is
+\f(CW*bytes_len\fP).
+It sets
+\f(CW*listlen\fP to 1.
+and returns \f(CWDW_DLV_OK\fP 
+if decoding is successful.
+Some sources of bytes of expressions are dwarf expressions
+in frame operations like \f(CWDW_CFA_def_cfa_expression\fP,
+\f(CWDW_CFA_expression\fP, and  \f(CWDW_CFA_val_expression\fP.
+.P
+It returns \f(CWDW_DLV_ERROR\fP on error. 
+.P
+Storage allocated by a successful call of \f(CWdwarf_loclist_from_expr()\fP should 
+be deallocated when no longer of interest (see \f(CWdwarf_dealloc()\fP).
+The block of \f(CWDwarf_Loc\fP structs pointed to by the \f(CWld_s\fP 
+field of each \f(CWDwarf_Locdesc\fP structure 
+should be deallocated with the allocation type \f(CWDW_DLA_LOC_BLOCK\fP. 
+This should be followed by deallocation of the \f(CWllbuf\fP
+using the allocation type \f(CWDW_DLA_LOCDESC\fP.
+.in +2
+.DS
+\f(CWDwarf_Signed lcnt;
+Dwarf_Locdesc *llbuf;
+int lres;
+/* Example with an empty buffer here. */
+Dwarf_Ptr data = "";
+Dwarf_Unsigned len = 0;
+
+lres = dwarf_loclist_from_expr(data,len, &llbuf,&lcnt, &error);
+if (lres == DW_DLV_OK) {
+	/* lcnt is always 1 */
+
+	/* Use llbuf  here.*/
+
+        dwarf_dealloc(dbg, llbuf->ld_s, DW_DLA_LOC_BLOCK);
+        dwarf_dealloc(dbg, llbuf, DW_DLA_LOCDESC);
+
+}\fP
+.DE
+.in -2
+.P
+
 
 .P
 .H 2 "Line Number Operations"
@@ -4285,7 +4379,7 @@ value (rather than the address where the value may be found).
 .in -4
 .P
 If \f(CW*value_type\fP has the value DW_EXPR_EXPRESSION (1) then:
-.in+4
+.in +4
  \f(CW*offset_or_block_len\fP
 is set to the length in bytes of a block of memory
 with a DWARF expression in the block.
@@ -4516,12 +4610,6 @@ It would be desirable to specify an interface.
         Dwarf_Unsigned *next_entry,
         Dwarf_Error *error)\fP
 .DE
-\f(CWdwarf_dwarf_get_loclist_entry()\fP returns 
-\f(CWDW_DLV_OK\fP if successful.
-\f(CWDW_DLV_NO_ENTRY\fP is returned when the offset passed
-in is beyond the end of the .debug_loc section (expected if
-you start at offset zero and proceed thru all the entries). 
-\f(CWDW_DLV_ERROR\fP is returned on error. 
 The function reads 
 a location list entry starting at \f(CWoffset\fP and returns 
 through pointers (when successful)
@@ -4530,10 +4618,52 @@ the high pc \f(CWhipc_offset\fP, low pc
 \f(CWdata\fP, the length of the location description data 
 \f(CWentry_len\fP, and the offset of the next location description 
 entry \f(CWnext_entry\fP.  
+\f(CWdwarf_dwarf_get_loclist_entry()\fP returns 
+\f(CWDW_DLV_OK\fP if successful.
+\f(CWDW_DLV_NO_ENTRY\fP is returned when the offset passed
+in is beyond the end of the .debug_loc section (expected if
+you start at offset zero and proceed thru all the entries). 
+\f(CWDW_DLV_ERROR\fP is returned on error. 
 .P
 The \f(CWhipc_offset\fP,
 low pc \f(CWlopc_offset\fP are offsets from the beginning of the
 current procedure, not genuine pc values.
+.in +2
+.DS
+\f(CW
+/* Looping thru the dwarf_loc section finding loclists:
+   an example.  */
+int res;
+Dwarf_Unsigned next_entry;
+Dwarf_unsigned offset=0;
+Dwarf_Addr hipc_off;
+Dwarf_Addr lopc_off;
+Dwarf_Ptr data;
+Dwarf_Unsigned entry_len;
+Dwarf_Unsigned next_entry;
+Dwarf_Error err;
+
+    for(;;) {      
+        res = dwarf_get_loclist_entry(dbg,newoffset,&hipc_off,
+            &lowpc_off, &data, &entry_len,&next_entry,&err);
+        if (res == DW_DLV_OK) {
+            /* A valid entry. */
+            newoffset = next_entry;
+            continue;
+        } else if (res ==DW_DLV_NO_ENTRY) {
+            /* Done! */
+            break;
+        } else {
+            /* Error! */
+            break;
+        }
+         
+
+    }
+}\fP
+.DE
+.in -2
+
 
 .H 2 "Abbreviations access"
 These are Internal-level Interface functions.  
