@@ -783,7 +783,7 @@ int *p_xyset;
 			}
 		}
 				
-		ev->ev_type = (nbytes > 0) ? EV_KEY : 0;
+		ev->ev_type = (nbytes > 0) ? EV_KEY : EV_OTHER;
 		ev->ev_time = xk->time;
 		
 		if (nbytes > 0) /* BUG: what if nbytes > 1 ? */
@@ -809,14 +809,16 @@ int *p_xyset;
 	case MapNotify:
 		if (icon_notify_funct)
 		   (*icon_notify_funct)(w->w_wn,FALSE);
+		ev->ev_type = EV_OTHER;
 		break;
 	case UnmapNotify:
 		if (icon_notify_funct)
 		   (*icon_notify_funct)(w->w_wn,TRUE);
+		ev->ev_type = EV_OTHER;
 		break;
     
 	default:
-		ev->ev_type = 0;
+		ev->ev_type = EV_OTHER;
 	}
 }
 
