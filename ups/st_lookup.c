@@ -108,13 +108,13 @@ static void add_common_block_globals PROTO((const char *name, func_t *f,
 					    global_list_t **p_glhead));
 static void dupf_mesg PROTO((const char *name,
 			     global_list_t *gl1, global_list_t *gl2));
-static bool modname_matches PROTO((Module *m, const char *name, 
+static bool modname_matches PROTO((Module *m, const char *name,
                                    size_t namelen));
-static void add_func_to_global_list PROTO((global_list_t **p_glhead, func_t *f, 
+static void add_func_to_global_list PROTO((global_list_t **p_glhead, func_t *f,
                                            Module *module, const char *st_name,
 					   bool use_demangled_name));
-static void add_to_global_list PROTO((global_list_t **p_glhead, 
-                                      const char *name, taddr_t addr, 
+static void add_to_global_list PROTO((global_list_t **p_glhead,
+                                      const char *name, taddr_t addr,
                                       fil_t *fil, Module *module,
 				      const char *st_name));
 static bool have_exact_match PROTO((global_list_t *glhead, const char *name));
@@ -199,7 +199,7 @@ size_t namelen;
 
 	if (name == NULL)
 		return TRUE;
-	
+
 	modname = get_module_name(m);
 	len = strlen(modname);
 
@@ -248,7 +248,7 @@ bool use_demangled_name;
 			funclist_t *fl;
 
 			*p_found_file = TRUE;
-			
+
 			for (fl = get_module_funclist(m);
 			     fl != NULL;
 			     fl = fl->fl_next) {
@@ -278,7 +278,7 @@ find_duplicate_file(fil, fil1)
   st = NULL;
 
   if (fil)
-    while (xp_next_symtab(xp, st, TRUE, &st)) 
+    while (xp_next_symtab(xp, st, TRUE, &st))
       for (*fil1 = st->st_sfiles; *fil1; *fil1 = (*fil1)->fi_next)
       {
 	if (fil != *fil1 && (fil->fi_flags & FI_DUPLICATE) &&
@@ -336,7 +336,7 @@ const char *name;
 
 	xp = get_current_target();
 	st = NULL;
-	
+
 	while (xp_next_symtab(xp, st, TRUE, &st)) {
 		fil_t *fil;
 
@@ -443,7 +443,7 @@ var_t **p_v;
 			*p_v = NULL;
 		}
 	}
-	
+
 	free_global_list_list(glhead);
 
 	return (*p_v != NULL) ? 0 : -1;
@@ -473,10 +473,10 @@ global_list_t **p_glhead;
 	while (!wants_stop &&
 	       xp_next_symtab(xp, st, !have_exact_match(*p_glhead, varname), &st)) {
 		fil_t *fil;
-		
+
 		if (lookup_global_addr(st, varpat))
 			st_get_fi(st);
-                
+
 		for (fil = st->st_sfiles;
 		     fil != NULL && !wants_stop; fil = fil->fi_next) {
 			var_t *v;
@@ -513,7 +513,7 @@ global_list_t **p_glhead;
 	while (!wants_stop &&
 	       xp_next_symtab(xp, st, !have_exact_match(*p_glhead, varname), &st)) {
 		fil_t *fil;
-		
+
 		for (fil = st->st_sfiles;
 		     fil != NULL && !wants_stop; fil = fil->fi_next) {
 			var_t *v;
@@ -646,7 +646,7 @@ global_list_t **p_glhead;
 
 		global_and_cblist_to_var(st->st_cblist, name, f,
 					 p_cblock, &fil, &v);
-		
+
 		if (v != NULL) {
 			add_var_to_global_list(p_glhead, v, fil, st->st_path);
 			return;
@@ -662,17 +662,17 @@ global_list_t *gl1, *gl2;
 
 	if ((res = strcmp(gl1->gl_name,  gl2->gl_name)) != 0)
 		return res;
-	
+
 	if ((gl1->gl_func != NULL) != (gl2->gl_func != NULL))
 		return (gl1->gl_func == NULL) ? -1 : 1;
-	
+
 	if (gl1->gl_func == NULL)
 		return 0;
 
 	if (gl1->gl_func == gl2->gl_func) {
 		if ((gl1->gl_module != NULL) == (gl2->gl_module != NULL))
 			return 0;
-		
+
 		return (gl1->gl_module != NULL) ? -1 : 1;
 	}
 
@@ -685,7 +685,7 @@ global_list_t *glhead;
 const char *name;
 {
 	global_list_t *gl;
-	
+
 	for (gl = glhead; gl != NULL; gl = gl->gl_next) {
 		if (strcmp(gl->gl_name, name) == 0)
 			return TRUE;
@@ -764,7 +764,7 @@ bool use_demangled_name;
 	if (target_menu_search_disabled(0, 0) == FALSE)
 	  update_target_menu_state(xp_get_state(xp), xp_is_attached(xp));
 }
-					
+
 int
 find_func_by_name(name, p_f, p_f1, use_demangled_name)
 const char *name;
@@ -777,7 +777,7 @@ bool use_demangled_name;
 				   p_f, p_f1, (var_t **)NULL, (var_t **)NULL,
 				   (common_block_t **)NULL,
 				   (fil_t **)NULL, (fil_t **)NULL, use_demangled_name);
-				
+
 }
 
 /*  We search all the symbol tables including those in the cache.
@@ -815,15 +815,15 @@ bool use_demangled_name;
 	  *p_v1 = NULL;
 	if (p_fil1)
 	  *p_fil1 = NULL;
-	
+
 	if ((funcname = strchr(name, ':')) != NULL && funcname[1] != ':') {
 		if (funcname[1] == '\0') {
 			errf("Missing function name after source file");
 			return -1;
 		}
-		
+
 		filename = name;
-		filename_len = funcname - name; 
+		filename_len = funcname - name;
 		++funcname;
 	}
 	else {
@@ -845,7 +845,7 @@ bool use_demangled_name;
 			if (strchr(globchars, *s) != NULL)
 				break;
 		}
-		
+
 		if (*s == '\0') {
 			namecopy = strf("%s*", funcname);
 			globname = namecopy;
@@ -872,7 +872,7 @@ bool use_demangled_name;
 
 	if (cblock != NULL) {
 		var_t *v;
-		
+
 		for (v = get_cblock_vars(cblock); v != NULL; v = v->va_next) {
 			if (arg_match(v->va_name, funcpat)) {
 				add_var_to_global_list(&glhead, v, fil, 0);
@@ -880,7 +880,7 @@ bool use_demangled_name;
 			}
 		}
 	}
-	
+
 	if ((glhead == NULL) && (fil != NULL) && (filename == NULL)) {
 		scan_symtabs(fil, (const char *)NULL, 0, funcpat, funcname,
 			     p_v != NULL, &glhead, &found_file, 1,
@@ -946,7 +946,7 @@ bool use_demangled_name;
 		    strcmp(prev->gl_name, gl->gl_name) == 0 &&
 		    (prev->gl_func != NULL) == (gl->gl_func != NULL))
 			continue;
-		
+
 		if (funcname_cmp(gl->gl_name, funcname) == 0) {
 			if ((gl->gl_func != NULL) ?
 				      (gl->gl_func->fu_flags & FU_STATIC) == 0 :
@@ -986,7 +986,7 @@ bool use_demangled_name;
 	  else
 	    if (exact_gls[0]->gl_fil && !exact_gls[1]->gl_fil)
 	      gl->gl_fil = exact_gls[0]->gl_fil;
-	
+
 	if (gl && !gl->gl_fil && partial_matches > 1 &&
 	    partial_gls[0]->gl_func != NULL &&
 	    partial_gls[1]->gl_func != NULL)
@@ -1038,7 +1038,7 @@ bool use_demangled_name;
 		dupf_mesg(funcname, exact_gls[0], exact_gls[1]);
 	    else
 		errf("\bUsing first one of multiple/overloaded symbols...");
-	    for (gl = glhead; gl != NULL; gl = gl->gl_next) 
+	    for (gl = glhead; gl != NULL; gl = gl->gl_next)
 		if (gl->gl_func && !(gl->gl_func->fu_flags & FU_STATIC))
 		    break;
 	    gl = gl ? gl : exact_gls[0];
@@ -1132,7 +1132,7 @@ bool use_demangled_name;
 	{
 	  char buff[256];
 	  Outwin *ow;
-	  
+
 	  ow = get_or_create_outwin();
 
 	  for (gl = glhead; gl != NULL; gl = gl->gl_next)
@@ -1216,12 +1216,12 @@ taddr_t addr;
 
 	xp = get_current_target();
 	st = NULL;
-	
+
 	while (xp_next_symtab(xp, st, TRUE, &st)) {
 		if (addr_and_functab_to_func(st->st_functab, addr, &f))
 			return st_ensure_fu(f);
 	}
-	
+
 	return NULL;
 }
 
@@ -1315,7 +1315,7 @@ int cmp_style;
 			if (arg_match(f->fu_demangled_name, funcpat))
 			{
 			  func_bp_list_t *fl;
-			  
+
 			  fl = new_func_bp_list();
 			  fl->fl_func = f;
 			  fl->fl_bp = 0;
@@ -1334,7 +1334,7 @@ int cmp_style;
 			     fl = fl->fl_next) {
 				if (arg_match(fl->fl_func->fu_demangled_name, funcpat)) {
 				  func_bp_list_t *fl2;
-				  
+
 				  fl2 = new_func_bp_list();
 				  fl2->fl_func = f;
 				  fl2->fl_bp = 0;
@@ -1354,10 +1354,10 @@ func_bp_list_t *fl1, *fl2;
 
 	if ((res = strcmp(fl1->fl_func->fu_demangled_name,  fl2->fl_func->fu_demangled_name)) != 0)
 		return res;
-	
+
 	if ((fl1->fl_func != NULL) != (fl2->fl_func != NULL))
 		return (fl1->fl_func == NULL) ? -1 : 1;
-	
+
 	if (fl1->fl_func == NULL)
 		return 0;
 
@@ -1378,16 +1378,16 @@ func_bp_list_t **funchead;
   int matches, filename_len, cmp_style = CMP_STRCMP;
   func_bp_list_t *fl;
   target_t *xp;
-  
+
   xp = get_current_target();
-  
+
   st = NULL;
   if ((funcname = strchr(name, ':')) != NULL && funcname[1] != ':') {
     if (funcname[1] == '\0') {
       errf("Missing function name after source file");
       return;
     }
-		
+
     filename = name;
     filename_len = funcname - name;
     if (filename[0]  == '*')
@@ -1402,7 +1402,7 @@ func_bp_list_t **funchead;
     filename_len = 0;		/* to satisfy gcc */
     funcname = (char *)name;
   }
-  
+
   for (s = funcname; s != '\0'; ++s) {
     if (strchr(globchars, *s) != NULL)
       break;
@@ -1417,20 +1417,20 @@ func_bp_list_t **funchead;
     namecopy = NULL;
     globname = funcname;
   }
-  
+
   funcpat = arg_do_quoting(&globname, globchars, TRUE);
-  
+
   if (namecopy != NULL)
     free(namecopy);
-  
+
   if (funcpat == NULL)
     return ;
-    
-  while (xp_next_symtab(xp, st, TRUE, &st)) 
+
+  while (xp_next_symtab(xp, st, TRUE, &st))
     find_matching_funcs_only(st, st->st_funclist,
 			     (fil_t *)NULL, filename, filename_len,
 			     funcpat, funchead, cmp_style);
-  
+
 				/* sort list so duplicates are together */
   matches = 0;
   for (fl = *funchead; fl != NULL; fl = fl->fl_next)
@@ -1458,7 +1458,7 @@ find_and_show_matching_globals(fil, fi_name, fi_name_len, name)
   char *funcname;
   static const char globchars[] = "*?";
   const char *globname;
-  
+
   funcname = (char *)name;
   globname = funcname;
   funcpat = arg_do_quoting(&globname, globchars, TRUE);
@@ -1470,7 +1470,7 @@ find_and_show_matching_globals(fil, fi_name, fi_name_len, name)
   {
     oldstate = td_set_obj_updating(OBJ_UPDATING_OFF);
     clear_selection();
-    for (gl = glhead; gl != NULL; gl = gl->gl_next) 
+    for (gl = glhead; gl != NULL; gl = gl->gl_next)
     {
       if (gl->gl_var)
       {
@@ -1493,7 +1493,7 @@ int wl;
 {
    const macro_t *ma;
    const macro_value_t *mav;
-   
+
    for (ma = FI_MACROS(fil); ma != NULL; ma = ma->ma_next)
       if (strlen(ma->ma_name) == wl && memcmp(ma->ma_name, w, wl) == 0)
 	 for (mav = ma->ma_values; mav != NULL; mav = mav->mav_next)
@@ -1501,7 +1501,7 @@ int wl;
 		(lnum >= mav->mav_start_lnum &&
 	         (mav->mav_end_lnum == 0 || lnum <= mav->mav_end_lnum)))
 	       return mav->mav_value;
-   
+
    return NULL;
 }
 
@@ -1513,7 +1513,7 @@ const char *s;
 {
    bool expanded = TRUE;
    char *result = NULL;
-   
+
    if (FI_MACROS(fil) == NULL) return NULL;
 
    while (expanded) {
@@ -1521,19 +1521,19 @@ const char *s;
       const char *ptr = start;
 
       expanded = FALSE;
-      
-      while (*ptr && !expanded) {
+
+      while (!expanded && *ptr) {
 	 while (*ptr && !isalpha(*ptr) && *ptr != '_') ptr++;
-	 
+
 	 if (*ptr) {
 	    const char *word = ptr++;
             const char *expansion;
 
 	    while (isalnum(*ptr) || *ptr == '_') ptr++;
-	    
+
 	    if ((expansion = macro_expand_word(fil, lnum, word, ptr - word)) != NULL) {
 	       char *new = e_malloc(strlen(start) + strlen(expansion) - (ptr-word) + 1);
-	       
+
 	       memcpy(new, start, word - start);
 	       strcpy(new + (word - start), expansion);
 	       strcat(new, ptr);
