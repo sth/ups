@@ -267,10 +267,11 @@ bool no_statefile_errors;
 		  for (nargs1 = 0; args1[nargs1] != NULL; ++nargs1);
 		  args2 = &fields3[0];
 		  for (nargs2 = 0; args2[nargs2] != NULL; ++nargs2);
-		  args = (char **)e_malloc((nargs1 + nargs2) * sizeof(char *));
+		  args = (char **)e_malloc((2 + nargs2) * sizeof(char *));
 		  args[0] = fields[1];
-		  for (i = 1; i < nargs1 + nargs2; ++i)
+		  for (i = 1; i <= nargs2; ++i)
 		    args[i] = fields3[i-1];
+                  args[nargs2+1] = NULL;
 		}
 		else
 		  args = &fields[1];
