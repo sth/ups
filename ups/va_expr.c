@@ -1423,7 +1423,6 @@ dexpr_t *de;
 	retval = 0;
 
 	if (cr->cr_machine != NULL && cr->cr_parse_id != NULL) {
-		taddr_t fp, ap, jcfa, unk;
 		ci_exec_result_t res;
 		objid_t par;
 		
