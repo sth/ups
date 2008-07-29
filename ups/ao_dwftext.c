@@ -42,6 +42,7 @@ char ups_ao_dwftext_c_rcsid[] = "$Id$";
 #include "ao_dwftext.h"
 #include "ao_dwfutil.h"
 #include "ao_symcb.h"
+#include "ao_text.h"
 #include "cursors.h"
 #include "ui.h"
 #if WANT_DEBUG
@@ -75,7 +76,9 @@ void
 dw_close_symtab_data(st)
 symtab_t *st;
 {
-    /* Original probably OK to use */
+    Dwarf_Error dw_err;
+    dwarf_finish(AO_STDATA(st)->st_dw_dbg, &dw_err);
+    ao_close_symtab_data(st);
 }
 
 bool

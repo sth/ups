@@ -29,6 +29,7 @@ bool text_dread PROTO((target_t *xp, taddr_t addr, char *buf, size_t nbytes));
 
 #ifdef SYMTAB_H_INCLUDED
 bool get_preamble PROTO((func_t *f, ao_preamble_t **p_pr));
+void ao_close_symtab_data PROTO((symtab_t *st));
 
 #ifdef AO_EXECINFO_H_INCLUDED
 bool scan_ao_symtab PROTO((const char *textpath, int fd, Execinfo *ei, 

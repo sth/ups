@@ -78,7 +78,6 @@ char ups_ao_text_c_rcsid[] = "$Id$";
 
 
 static int ao_get_min_bpt_addr PROTO((func_t *f, taddr_t *p_addr));
-static void ao_close_symtab_data PROTO((symtab_t *st));
 static const char *ao_disassemble_instruction PROTO((func_t *f, taddr_t addr,
 						     const char *text,
 						     const char **p_buf));
@@ -214,7 +213,7 @@ const char **p_mainfunc_name;
 		ao_passthru_addr,
 
 		ao_fil_may_have_matching_globals,
-		ao_close_symtab_data,		/* original OK */
+		dw_close_symtab_data,
 
 		dw_cblocks_match,
 		dw_set_cblock_data,
@@ -462,12 +461,14 @@ ao_preamble_t **p_pr;
 	return TRUE;
 }
 
-static void
+void
 ao_close_symtab_data(st)
 symtab_t *st;
 {
 	close(AO_STDATA(st)->st_textfd);	/* RGA */
 	close_symio(AO_STDATA(st)->st_text_symio);
+#if WANT_DWARF
+#endif
 }
 
 static int
