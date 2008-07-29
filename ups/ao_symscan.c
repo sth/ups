@@ -2304,7 +2304,7 @@ demangle_name_2(name, len, alloc_id, ptr, func, fil)
 
   ct = ao_compiler(fil, FALSE, CT_UNKNOWN);
   if (ct == CT_UNKNOWN)
-     *ptr = strdup(name);
+     *ptr = alloc_strdup(alloc_id, name);
   else
      demangle_name(name, len, alloc_id, ptr, func, ct);
 
