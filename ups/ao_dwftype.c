@@ -55,7 +55,7 @@ dwf_copy_type PROTO((type_t *dst, type_t *src));
 static type_t *
 dwf_type_from_dtype PROTO((dtype_t *dt));
 static type_t *
-dwf_get_void_type PROTO((alloc_pool_t *ap));
+dwf_get_void_type PROTO((alloc_pool_t *ap, symtab_t *st));
 static type_t *
 dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 				 alloc_pool_t *ap, stf_t *stf,
@@ -555,17 +555,17 @@ dtype_t *dt;
  * Fake a 'void' type - for things like "void *" DWARF may just have a
  * DW_TAG_pointer_type with no base type, implying 'void'
  */
-static type_t *dwf_get_void_type(ap)
+static type_t *dwf_get_void_type(ap, st)
 alloc_pool_t *ap;
+symtab_t *st;
 {
-    static type_t *void_type = NULL;
-
-    if (void_type == NULL) {
-	void_type = ci_make_type(ap, TY_VOID);
-	void_type->ty_size = 0;
-	void_type->ty_name = "void";
+    ao_stdata_t *ast = AO_STDATA(st);
+    if (ast->st_dw_void_type == NULL) {
+	ast->st_dw_void_type = ci_make_type(ap, TY_VOID);
+	ast->st_dw_void_type->ty_size = 0;
+	ast->st_dw_void_type->ty_name = "void";
     }
-    return void_type;
+    return ast->st_dw_void_type;
 }
 
 /*
@@ -642,7 +642,7 @@ dtype_t *dt;
 	/*
 	 * If there is no DW_AT_type attribute this is a "void *" or similar.
 	 */
-	*(dt->dt_p_type) = dwf_get_void_type(ap);
+	*(dt->dt_p_type) = dwf_get_void_type(ap, stf->stf_symtab);
     }
     return base;
 }
@@ -815,7 +815,7 @@ block_t *bl;
 	/*
 	 * A declaration without a type - assume a typedef of 'void'.
 	 */
-	type->ty_base = dwf_get_void_type(ap);
+	type->ty_base = dwf_get_void_type(ap, stf->stf_symtab);
     } else {
 	/*
 	 * No type, not a definition, ...

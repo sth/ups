@@ -148,6 +148,7 @@ typedef struct ao_stdata_t {
 	Dwarf_Debug st_dw_dbg;		/* Handle for libdwarf calls */
 	bool st_dw_scanned;		/* Dwarf symbols scanned? */
 	taddr_t st_dw_base_address;	/* Addr shlib mapped rel to Dwarf sym addrs */
+	type_t *st_dw_void_type;	/* Void type */
 #endif
 
 #if WANT_ELF
