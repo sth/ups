@@ -687,23 +687,21 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
     default:
 	panic("Unsupported address size");
     }
-    
+
     if ((rv = dwarf_get_fde_list(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK) {
-	Dwarf_Cie *ciep;
-	Dwarf_Fde *fdep;
 	Dwarf_Fde fde;
-       
-	if ((rv = dwarf_get_fde_at_pc(fde_data, *pc, &fde, NULL, NULL, &err)) == DW_DLV_OK) {
+
+        if ((rv = dwarf_get_fde_at_pc(fde_data, *pc, &fde, NULL, NULL, &err)) == DW_DLV_OK) {
 	    taddr_t new_fp;
 	    taddr_t new_sp;
 	    taddr_t new_pc;
-	    
-	    if (dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, cfa) &&
+
+            if (dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, cfa) &&
 		dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, ra_col, &new_pc)) {
                 if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, fp_col, &new_fp))
 		    new_fp = 0;
-                   
-		if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, sp_col, &new_sp))
+
+                if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, sp_col, &new_sp))
 		    new_sp = *cfa;
 
 		*fp = new_fp;
@@ -712,14 +710,7 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
 	    }
 	}
 
-	for (ciep = cie_data; ciep < cie_data + cie_count; ciep++)
-	    dwarf_dealloc(dbg, *ciep, DW_DLA_CIE);
-
-	for (fdep = fde_data; fdep < fde_data + fde_count; fdep++)
-	    dwarf_dealloc(dbg, *fdep, DW_DLA_FDE);
-
-	dwarf_dealloc(dbg, cie_data, DW_DLA_LIST);
-	dwarf_dealloc(dbg, fde_data, DW_DLA_LIST);
+	dwarf_fde_cie_list_dealloc(dbg, cie_data, cie_count, fde_data, fde_count);
     }
 
     return rv == DW_DLV_OK;
