@@ -1386,14 +1386,14 @@ wn_expose_or_press_queued(wn, md, p_x, p_y, exposed, resized, e_x, e_y, e_w, e_h
     memset((char *)&ev, 0, sizeof(XKeyEvent));
     ev.type = KeyPress;
     ev.display = wn__Dpy;
-    ev.window = WN_TO_W(WN_STDWIN)->w_win;
+    ev.window = WN_TO_W(wn)->w_win;
     XSendEvent(wn__Dpy, ev.window, False, 0L, (XEvent *)&ev);
     *exposed = *resized = 0;
 
     for(;;)
     {
       XPeekEvent(wn__Dpy, &x_event);
-     if (x_event.type == ButtonPress)
+      if (x_event.type == ButtonPress)
       {
 	w = WN_TO_W(wn);
 	x = x_event.xbutton.x - w->w_x_offs;
