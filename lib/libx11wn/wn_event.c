@@ -77,7 +77,7 @@ char wn_wn_event_c_rcsid[] = "$Id$";
 
 typedef void (*Sigfunc)PROTO((int));
 
-static void get_event PROTO((int wn, event_t *ev, int *p_xyset));
+static int get_event PROTO((int wn, event_t *ev, int *p_xyset));
 static int select_on_mask PROTO((long win_mask, int sample, long *p_resmask));
 static void set_event_win PROTO((event_t *ev));
 static void catch_sigio PROTO((int ignored_sig));
@@ -523,7 +523,7 @@ char *arg;
 
 /* x_get_event()
  */
-static void
+static int
 get_event(wn, ev, p_xyset)
 int wn;
 register event_t *ev;
@@ -560,14 +560,14 @@ int *p_xyset;
 		if (ev->ev_type == EV_MOUSE_MOVED) {
 			ev->ev_wn = w->w_wn;
 			ev->ev_buttons = w->w_bw->bw_buttons;
-			return;
+			return TRUE;
 		}
 		if (ev->ev_type != EV_OTHER) {
 			ev->ev_wn = WN_STDWIN;
 			ev->ev_buttons = WN_TO_W(WN_STDWIN)->w_bw->bw_buttons;
 			if (ev->ev_type == EV_OTHER_INPUT)
 				ev->ev_fdmask = resmask;
-			return;
+			return TRUE;
 		}
 	}
 	if (sample) {
@@ -575,7 +575,7 @@ int *p_xyset;
 	      ev->ev_type = EV_MOUSE_MOVED;
 	      ev->ev_wn = w->w_wn;
 	      ev->ev_buttons = w->w_bw->bw_buttons;
-	      return;
+	      return TRUE;
 	    }
 	}
 	else {
@@ -605,11 +605,21 @@ int *p_xyset;
 				break;
 		if (wp == _wn_Windowtab + _wn_Nwin) {
 			ev->ev_type = 0;
-			return;
+			return TRUE;
 		}
 
 		last_w = w = *wp;
 		wn__Last_event_window = ((XAnyEvent *)&x_event)->window;
+	}
+
+	/* If this is a dummy key press event sent by us to prevent
+	 * blocking then exit now indicating that we've run out of
+	 * events to process.
+	 */
+	if (x_event.type == KeyPress &&
+	    x_event.xkey.send_event &&
+	    x_event.xkey.keycode == 0) {
+		return FALSE;
 	}
 
 	ev->ev_wn = w->w_wn;
@@ -633,7 +643,7 @@ int *p_xyset;
 		}
 
 		ev->ev_type = EV_OTHER;
-		return;
+		return TRUE;
 	}
 	switch(x_event.type) {
 	case EnterNotify:
@@ -820,6 +830,8 @@ int *p_xyset;
 	default:
 		ev->ev_type = EV_OTHER;
 	}
+
+	return TRUE;
 }
 
 static void
@@ -1374,7 +1386,6 @@ wn_expose_or_press_queued(wn, md, p_x, p_y, exposed, resized, e_x, e_y, e_w, e_h
      int *e_h;
 {
 #ifdef X11
-  XEvent x_event;
   XKeyEvent ev;
   swin_t *w;
   event_t event;
@@ -1388,25 +1399,12 @@ wn_expose_or_press_queued(wn, md, p_x, p_y, exposed, resized, e_x, e_y, e_w, e_h
     ev.display = wn__Dpy;
     ev.window = WN_TO_W(wn)->w_win;
     XSendEvent(wn__Dpy, ev.window, False, 0L, (XEvent *)&ev);
+    XFlush(wn__Dpy);
     *exposed = *resized = 0;
 
-    for(;;)
+    /* read all events till we get the send event at the end */
+    while (get_event(wn, &event, &xyset))
     {
-      XPeekEvent(wn__Dpy, &x_event);
-      if (x_event.type == ButtonPress)
-      {
-	w = WN_TO_W(wn);
-	x = x_event.xbutton.x - w->w_x_offs;
-	y = x_event.xbutton.y - w->w_y_offs;
-	if (Mgetmd(x, y, wn) == md)
-	{
-	  *p_x = x;
-	  *p_y = y;
-	  ret = 1;
-	}
-      }
-      /* read all events till we get the send event at the end */
-      get_event(wn, &event, &xyset);
       if (event.ev_type == EV_WINDOW_EXPOSED || event.ev_type == EV_WINDOW_RESIZED) {
 	if (!*exposed && !*resized) {
 	  *e_x = event.ev_xpos;
@@ -1417,26 +1415,34 @@ wn_expose_or_press_queued(wn, md, p_x, p_y, exposed, resized, e_x, e_y, e_w, e_h
 	else {
 	  int x2pos = *e_x + *e_w;
 	  int y2pos = *e_y + *e_h;
-	   
+
 	  *e_x = MIN(*e_x, event.ev_xpos);
 	  *e_y = MIN(*e_y, event.ev_ypos);
 	  *e_w = MAX(x2pos, event.ev_xpos + event.ev_width) - *e_x;
 	  *e_h = MAX(y2pos, event.ev_ypos + event.ev_height) - *e_y;
 	}
 
-      if (event.ev_type == EV_WINDOW_EXPOSED)
-	*exposed = 1;
-      if (event.ev_type == EV_WINDOW_RESIZED)
-	*resized = 1;
+	if (event.ev_type == EV_WINDOW_EXPOSED)
+	  *exposed = 1;
+	if (event.ev_type == EV_WINDOW_RESIZED)
+	  *resized = 1;
       }
-      if (x_event.xany.send_event &&
-          x_event.type == KeyPress &&
-          x_event.xkey.keycode == 0)
-	return ret;
+      else if (event.ev_type == EV_BUTTON_DOWN) {
+	w = WN_TO_W(wn);
+	x = event.ev_x - w->w_x_offs;
+	y = event.ev_y - w->w_y_offs;
+
+	if (Mgetmd(x, y, wn) == md)
+	{
+	  *p_x = x;
+	  *p_y = y;
+	  ret = 1;
+	}
+      }
     }
   }
 #endif /* X11 */
-  return 0;
+  return ret;
 }
 void
 wn_set_icon_notify_func(func)
