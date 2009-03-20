@@ -1037,7 +1037,10 @@ event_t *ev;
 			else
 				get_event(wn, ev, &xyset);
 		}
-		
+
+		if (ev->ev_type == 0)
+			continue;
+
 		w = WN_TO_W(ev->ev_wn);
 		bw = w->w_bw;
 		if (!xyset) {
