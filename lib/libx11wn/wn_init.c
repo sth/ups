@@ -256,7 +256,9 @@ static  void wn_merge_databases()
 
     /* Get the defaults from the standard location. */
 
-    sprintf(path, "/usr/X11R6/lib/X11/app-defaults/%s", Appclass);
+    sprintf(path, "/usr/share/X11/app-defaults/%s", Appclass);
+    if (access (path, F_OK) != 0)
+	sprintf(path, "/usr/X11R6/lib/X11/app-defaults/%s", Appclass);
     if (access (path, F_OK) != 0)
 	sprintf(path, "/usr/lib/X11/app-defaults/%s", Appclass);
     if (access (path, F_OK) != 0)
