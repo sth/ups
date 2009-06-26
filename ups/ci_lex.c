@@ -76,7 +76,7 @@ static lexinfo_t *make_lexinfo PROTO((lex_env_t *le, const char *line));
 static const char *skip_whitespace PROTO((lex_env_t *le, const char *line));
 static int get_float_constant PROTO((lex_env_t *le, const char *line,
 		    const char **p_end, constant_t **p_co));
-static const char *getline PROTO((lex_env_t *le));
+static const char *get_line PROTO((lex_env_t *le));
 static int get_string PROTO((lex_env_t *le, const char *line, string_const_t *sc));
 static bool is_aggr_type_specifier PROTO((token_t token));
 static bool is_basic_type_specifier PROTO((token_t token));
@@ -381,7 +381,7 @@ int *p_res;
 #define follow(s, ch, ifyes, ifno) ((*(s) == (ch)) ? (++(s), (ifyes)) : (ifno))
 
 static const char *
-getline(le)
+get_line(le)
 lex_env_t *le;
 {
     if (le->le_abort_parse)
@@ -416,7 +416,7 @@ const char *line;
 	    if (*line != '\0')
 		break;
 
-	    if ((line = getline(le)) == NULL)
+	    if ((line = get_line(le)) == NULL)
 		break;
 #ifdef DEBUG
 	    read_another_line = TRUE;
@@ -1128,7 +1128,7 @@ string_const_t *sc;
 	if (*line != '\\')
 	    ch = *line;
 	else if (*++line == '\n') {
-	    line = getline(le);
+	    line = get_line(le);
 	    ch = (line != NULL) ? *line : '\0';
 	}
 	else
