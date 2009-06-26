@@ -182,7 +182,7 @@ static void show_obj_path PROTO((const char *op, objid_t obj,
 static int checkline PROTO((const char *line, const char *endword));
 static int record_obj_dump PROTO((objid_t obj));
 static int r_flush PROTO((void));
-static int getline PROTO((bool lose_leading_whitespace, char **p_line));
+static int r_getline PROTO((bool lose_leading_whitespace, char **p_line));
 
 static int cf_refresh PROTO((const char *cmd, int argc, char **unused_args));
 static int cf_menu PROTO((const char *cmd, int argc, char **args));
@@ -894,7 +894,7 @@ const char *upsline, *endword;
 		char *cond;
 		bool cond_holds;
 
-		if (getline(FALSE, &line) != 0)
+		if (r_getline(FALSE, &line) != 0)
 			return -1;
 		
 		if (*line == '\t')
@@ -996,7 +996,7 @@ const char *word;
 {
 	char *line;
 
-	while (getline(TRUE, &line) == 0) {
+	while (r_getline(TRUE, &line) == 0) {
 		if (strcmp(line, word) == 0)
 			return 0;
 	}
@@ -1011,12 +1011,12 @@ const char *line;
 	int res;
 	char *shell_line, *linecopy, *file_line;
 
-	/*  The line to be checked came from fpgetline() and getline()
+	/*  The line to be checked came from fpgetline() and r_getline()
 	 *  also calls fpgetline(), so stash the line.
 	 */
 	linecopy = shell_line = strsave(line);
 
-	if (getline(TRUE, &file_line) != 0)
+	if (r_getline(TRUE, &file_line) != 0)
 		return -1;
 	
 	while (isspace(*shell_line))
@@ -1095,7 +1095,7 @@ char **args;
 	}
 
 	if (expect_output && res == 0) {
-		if (getline(TRUE, &line) != 0)
+		if (r_getline(TRUE, &line) != 0)
 			res = -1;
 		else if (strcmp(line, "endshell") != 0) {
 			sysf("Expected `endshell'");
@@ -2168,7 +2168,7 @@ char **args;
 	eb = ebuf_create(TRUE);
 	found_endcode = FALSE;
 
-	while (getline(FALSE, &line) == 0) {
+	while (r_getline(FALSE, &line) == 0) {
 		if (strcmp(line, "endcode") == 0) {
 			found_endcode = TRUE;
 			break;
@@ -2716,7 +2716,7 @@ const char *what, *mesg;
 	char *line;
 	size_t len;
 
-	if (getline(TRUE, &line) != 0)
+	if (r_getline(TRUE, &line) != 0)
 		return -1;
 
 	/*  Allow comments, blank lines and the version string to precede
@@ -2725,7 +2725,7 @@ const char *what, *mesg;
 	 */
 	while (*line == '\0' || *line == '#' ||
 	       strncmp(line, "version ", 8) == 0) {
-		if (getline(TRUE, &line) != 0)
+		if (r_getline(TRUE, &line) != 0)
 			return -1;
 	}
 	
@@ -2774,7 +2774,7 @@ td_have_window()
 }
 
 static int
-getline(lose_leading_whitespace, p_line)
+r_getline(lose_leading_whitespace, p_line)
 bool lose_leading_whitespace;
 char **p_line;
 {
@@ -2843,7 +2843,7 @@ bool *p_eof;
 			fflush(stdout);
 		}
 
-		if (getline(FALSE, &line) != 0)
+		if (r_getline(FALSE, &line) != 0)
 			break;
 
 		line = config_trim_line(line);
@@ -2894,7 +2894,7 @@ bool *p_eof;
 
 	quit = FALSE;
 	for (;;) {
-		if (getline(FALSE, &line) != 0)
+		if (r_getline(FALSE, &line) != 0)
 			break;
 
 		line = config_trim_line(line);
