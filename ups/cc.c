@@ -41,7 +41,7 @@ char ups_cc_c_rcsid[] = "$Id$";
 #include "ci.h"
 #include "cc.h"
 
-static const char *getline PROTO((char *arg));
+static const char *cc_getline PROTO((char *arg));
 static parse_id_t parse PROTO((const char *name, const char *cppflags,
 			       unsigned long parse_flags));
 
@@ -304,7 +304,7 @@ const char *mesg;
 }
 
 static const char *
-getline(arg)
+cc_getline(arg)
 char *arg;
 {
 	return fpgetline((FILE *)arg);
@@ -369,7 +369,7 @@ unsigned long parse_flags;
 						 (block_t *)NULL,
 						 parse_flags, cc_report_error,
 						 (ci_resolve_name_func_t)NULL,
-						 getline, (char *)fp);
+						 cc_getline, (char *)fp);
 			pclose(fp);
 		}
 		free(cmd);
@@ -378,7 +378,7 @@ unsigned long parse_flags;
 		parse_id = ci_parse_file(name, (block_t *)NULL,
 					 parse_flags, cc_report_error,
 					 (ci_resolve_name_func_t)NULL,
-					 getline, (char *)fp);
+					 cc_getline, (char *)fp);
 		fclose(fp);
 	}
 
