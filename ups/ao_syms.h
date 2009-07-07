@@ -144,11 +144,13 @@ typedef struct ao_stdata_t {
 #endif
 
 #if WANT_DWARF
-	hashtab_t *st_type_names;	/* Type name -> DIE. */
-	Dwarf_Debug st_dw_dbg;		/* Handle for libdwarf calls */
-	bool st_dw_scanned;		/* Dwarf symbols scanned? */
-	taddr_t st_dw_base_address;	/* Addr shlib mapped rel to Dwarf sym addrs */
-	type_t *st_dw_void_type;	/* Void type */
+	hashtab_t *st_type_names;	  /* Type name -> DIE. */
+	Dwarf_Debug st_dw_dbg;		  /* Handle for libdwarf calls on main object */
+	Dwarf_Debug st_dw_debug_dbg;	  /* Handle for libdwarf calls on debug object */
+	bool st_dw_scanned;		  /* Dwarf symbols scanned? */
+	taddr_t st_dw_base_address;	  /* Addr main object mapped rel to Dwarf sym addrs */
+	taddr_t st_dw_debug_base_address; /* Addr debug object mapped rel to Dwarf sym addrs */
+	type_t *st_dw_void_type;	  /* Void type */
 #endif
 
 #if WANT_ELF

@@ -300,7 +300,7 @@ func_t **p_mainfunc;
 	mainfunc_name = NULL;
 	p_mainfunc_name = (p_mainfunc != NULL) ? &mainfunc_name : NULL;
 
-	if (!scan_ao_symtab(textpath, fd, &eibuf, NULL, shlib_load_addr,
+	if (!scan_ao_symtab(textpath, fd, &eibuf, NULL, NULL, shlib_load_addr,
 			   st_is, &st, &flist, p_mainfunc_name)) {
 		return FALSE;
 	}

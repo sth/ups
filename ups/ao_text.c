@@ -162,12 +162,13 @@ const char *initfunc_name;
 }
 
 bool
-scan_ao_symtab(textpath, fd, ei, dw_dbg, base_address,
+scan_ao_symtab(textpath, fd, ei, dw_dbg, dw_debug_dbg, base_address,
 	       st_is, p_symtab, p_flist, p_mainfunc_name)
 const char *textpath;
 int fd;
 Execinfo *ei;
 Dwarf_Debug dw_dbg;
+Dwarf_Debug dw_debug_dbg;
 taddr_t base_address;
 symtab_type_t st_is;
 symtab_t **p_symtab;
@@ -253,11 +254,14 @@ const char **p_mainfunc_name;
 #if WANT_DWARF
 	ast->st_type_names = NULL;
 	ast->st_dw_dbg = 0;
+	ast->st_dw_debug_dbg = 0;
 	ast->st_dw_scanned = FALSE;
-	ast->st_dw_base_address = base_address + ei->debug_addr_delta;
+	ast->st_dw_base_address = base_address;
+	ast->st_dw_debug_base_address = base_address + ei->debug_addr_delta;
 	ast->st_dw_void_type = NULL;
 	if (st_is == ST_DWARF) {
 	    ast->st_dw_dbg = dw_dbg;
+	    ast->st_dw_debug_dbg = dw_debug_dbg;
 	    st = make_symtab(ap, textpath, (fil_t *)NULL, (func_t *)NULL,
 			     &dwarf_ops, (char *)ast);
 	}

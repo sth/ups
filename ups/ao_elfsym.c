@@ -969,6 +969,7 @@ bool reattach_with_rescan;
 	Elfinfo *el;
 	symtab_type_t st_is;
 	Dwarf_Debug dw_dbg;
+	Dwarf_Debug dw_debug_dbg;
 	Dwarf_Error dw_err;
 	int rv;
 
@@ -980,8 +981,14 @@ bool reattach_with_rescan;
 	
 #if WANT_DWARF
 	if (st_is == ST_DWARF) {
-		if ((rv = dwarf_init(el->debugel->fd, DW_DLC_READ, NULL, NULL,
+		if ((rv = dwarf_init(el->fd, DW_DLC_READ, NULL, NULL,
 				     &dw_dbg, &dw_err) == DW_DLV_ERROR)) {
+			dwf_fatal_error("dwarf_init", rv, NULL, dw_err);
+			free_elfinfo(el);
+			return FALSE;
+		}
+		if ((rv = dwarf_init(el->debugel->fd, DW_DLC_READ, NULL, NULL,
+				     &dw_debug_dbg, &dw_err) == DW_DLV_ERROR)) {
 			dwf_fatal_error("dwarf_init", rv, NULL, dw_err);
 			free_elfinfo(el);
 			return FALSE;
@@ -1000,7 +1007,7 @@ bool reattach_with_rescan;
 
 	mainfunc_name = NULL;
 	p_mainfunc_name = (p_mainfunc != NULL) ? &mainfunc_name : NULL;
-	if (!scan_ao_symtab(textpath, fd, &eibuf, dw_dbg, 0,
+	if (!scan_ao_symtab(textpath, fd, &eibuf, dw_dbg, dw_debug_dbg, 0,
 			    st_is, &st, &flist, p_mainfunc_name)) {
 		free_elfinfo(el);
 		alloc_free_pool(st->st_apool);

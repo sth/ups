@@ -688,7 +688,8 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
 	panic("Unsupported address size");
     }
 
-    if ((rv = dwarf_get_fde_list(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK) {
+    if ((rv = dwarf_get_fde_list(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK ||
+        (rv = dwarf_get_fde_list_eh(dbg, &cie_data, &cie_count, &fde_data, &fde_count, &err)) == DW_DLV_OK) {
 	Dwarf_Fde fde;
 
         if ((rv = dwarf_get_fde_at_pc(fde_data, *pc, &fde, NULL, NULL, &err)) == DW_DLV_OK) {

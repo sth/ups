@@ -2020,6 +2020,7 @@ taddr_t new_addr;
 		ast->st_base_address = new_addr;
 #if WANT_DWARF
 		ast->st_dw_base_address = ast->st_dw_base_address + delta;
+		ast->st_dw_debug_base_address = ast->st_dw_debug_base_address + delta;
 #endif
 	}
 }

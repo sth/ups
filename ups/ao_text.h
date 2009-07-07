@@ -33,9 +33,10 @@ void ao_close_symtab_data PROTO((symtab_t *st));
 
 #ifdef AO_EXECINFO_H_INCLUDED
 bool scan_ao_symtab PROTO((const char *textpath, int fd, Execinfo *ei, 
-                           Dwarf_Debug dw_dbg, taddr_t base_address,
-			   symtab_type_t st_is, symtab_t **p_symtab, 
-                           func_t **p_flist, const char **p_mainfunc_name));
+                           Dwarf_Debug dw_dbg, Dwarf_Debug dw_debug_dbg,
+                           taddr_t base_address, symtab_type_t st_is,
+                           symtab_t **p_symtab, func_t **p_flist,
+                           const char **p_mainfunc_name));
 
 void do_ao_postscan_stuff PROTO((symtab_t *st, func_t *flist, Execinfo *ei, 
 				 func_t **p_mainfunc, 

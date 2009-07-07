@@ -78,6 +78,7 @@ symtab_t *st;
 {
     Dwarf_Error dw_err;
     dwarf_finish(AO_STDATA(st)->st_dw_dbg, &dw_err);
+    dwarf_finish(AO_STDATA(st)->st_dw_debug_dbg, &dw_err);
     ao_close_symtab_data(st);
 }
 
@@ -135,7 +136,7 @@ func_t *f;
     ao_stdata_t *ast = AO_STDATA(st);
     func_t *flist;
 
-    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_dbg);
+    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_debug_dbg);
 
     return f;
 }
@@ -147,7 +148,7 @@ symtab_t *st;
     ao_stdata_t *ast = AO_STDATA(st);
     func_t *flist;
 
-    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_dbg);
+    dwf_scan_symtab(st, NULL, NULL, &flist, NULL, ast->st_dw_debug_dbg);
 
     return st->st_sfiles;
 }
@@ -391,8 +392,12 @@ taddr_t *cfa;
 {
     ao_stdata_t *ast = AO_STDATA(st);
     taddr_t adjusted_pc = *pc - ast->st_dw_base_address;
-    
-    if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc, cfa)) {
+    taddr_t debug_adjusted_pc = *pc - ast->st_dw_debug_base_address;
+
+    if (dwf_unwind(ast->st_dw_debug_dbg, xp, fp, sp, &debug_adjusted_pc, cfa)) {
+	*pc = debug_adjusted_pc;
+	return TRUE;
+    } else if (dwf_unwind(ast->st_dw_dbg, xp, fp, sp, &adjusted_pc, cfa)) {
 	*pc = adjusted_pc;
 	return TRUE;
     }
