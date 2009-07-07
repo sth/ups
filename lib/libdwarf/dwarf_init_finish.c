@@ -143,7 +143,6 @@ _dwarf_setup(Dwarf_Debug dbg, Dwarf_Error * error)
          ++section_index) {
         
         struct Dwarf_Obj_Access_Section_s doas;
-        Dwarf_Error section_error;
         int res;
         int err;
 
@@ -373,6 +372,20 @@ _dwarf_setup(Dwarf_Debug dbg, Dwarf_Error * error)
             dbg->de_debug_macinfo_index = section_index;
             dbg->de_debug_macinfo_size = section_size;
         }
+        else if (strcmp(scn_name, ".debug_ranges") == 0) {
+            if (dbg->de_debug_ranges_index != 0) {
+                DWARF_DBG_ERROR(dbg,
+                                DW_DLE_DEBUG_RANGES_DUPLICATE,
+                                DW_DLV_ERROR);
+            }
+            if (section_size == 0) {
+                /* a zero size section is just empty. Ok, no error */
+                continue;
+            }
+            dbg->de_debug_ranges_index = section_index;
+            dbg->de_debug_ranges_size = section_size;
+            foundDwarf = TRUE;
+        }
     }
     if (foundDwarf) {
         return DW_DLV_OK;
@@ -404,6 +417,9 @@ dwarf_object_init(Dwarf_Obj_Access_Interface* obj, Dwarf_Handler errhand,
     dbg->de_errarg = errarg;
     dbg->de_frame_rule_initial_value = DW_FRAME_REG_INITIAL_VALUE;
     dbg->de_frame_reg_rules_entry_count = DW_FRAME_LAST_REG_NUM;
+    dbg->de_frame_cfa_col_number = DW_FRAME_CFA_COL;
+    dbg->de_frame_same_value_number = DW_FRAME_SAME_VAL;
+    dbg->de_frame_undefined_value_number  = DW_FRAME_UNDEFINED_VAL;
 
     dbg->de_obj_file = obj;
 
@@ -511,9 +527,7 @@ dwarf_get_section_max_offsets(Dwarf_Debug dbg,
     *debug_pubnames_size = dbg->de_debug_pubnames_size;
     *debug_str_size = dbg->de_debug_str_size;
     *debug_frame_size = dbg->de_debug_frame_size;
-    *debug_ranges_size = 0;  /* Not yet supported. */
+    *debug_ranges_size = dbg->de_debug_ranges_size;
     *debug_typenames_size = dbg->de_debug_typenames_size;
-
-
     return DW_DLV_OK;
 }

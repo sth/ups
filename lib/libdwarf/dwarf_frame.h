@@ -257,6 +257,11 @@ struct Dwarf_Cie_s {
        record the position so fde can get it on fde creation. */
     Dwarf_Unsigned ci_index;
     Dwarf_Small *  ci_section_ptr;
+    /* DWARF4 adds address size to the CIE: the .debug_info
+       section may not always be present to allow libdwarf to
+       find address_size from the compilation-unit. */
+    Dwarf_Half   ci_address_size;
+
 };
 
 /*
@@ -288,6 +293,9 @@ struct Dwarf_Fde_s {
     Dwarf_Fde fd_next;
     Dwarf_Small fd_length_size;
     Dwarf_Small fd_extension_size;
+    /* So we know from an fde which 'count' of fde-s in
+       Dwarf_Debug applies:  eh or standard. */
+    Dwarf_Small fd_is_eh;
     /* The following 2 for GNU .eh_frame exception handling
        Augmentation Data. Set if CIE ci_augmentation_type
        is aug_gcc_eh_z. Zero if unused. */

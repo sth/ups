@@ -35,35 +35,28 @@
 
 */
 /* The versions applicable by section are:
-                       DWARF2    DWARF3 DWARF4
- .debug_info             2         3     4
- .debug_abbrev           -         -     -
- .debug_frame            1         3     3
- .debug_str              -         -     -
- .debug_loc              -         -     -
- .debug_line             2         3     3
- .debug_aranges          2         2     2
- .debug_ranges           x         -     -
- .debug_pubtypes         x         2     2
- .debug_pubnames         2         2     2
- .debug_macinfo          -         -     -
+                       DWARF2 DWARF3 DWARF4
+ .debug_info             2      3      4
+ .debug_abbrev           -      -      -
+ .debug_frame            1      3      4
+ .debug_str              -      -      -
+ .debug_loc              -      -      -
+ .debug_line             2      3      4
+ .debug_aranges          2      2      2
+ .debug_ranges           x      -      -
+ .debug_pubtypes         x      2      2
+ .debug_pubnames         2      2      2
+ .debug_macinfo          -      -      -
 */
 
 #include <stddef.h>
 
 
 struct Dwarf_Die_s {
-    /* 
-       Points to the start of the portion corresponding to this Die in 
-       the .debug_info section. */
     Dwarf_Byte_Ptr di_debug_info_ptr;
-
-    /* Points to the abbreviation record for this DIE.
-    */
     Dwarf_Abbrev_List di_abbrev_list;
-
-    /* Points to cu context for this die.  */
     Dwarf_CU_Context di_cu_context;
+    int  di_abbrev_code;
 };
 
 struct Dwarf_Attribute_s {
@@ -101,17 +94,21 @@ struct Dwarf_Attribute_s {
 */
 struct Dwarf_CU_Context_s {
     Dwarf_Debug cc_dbg;
+    /* The sum of cc_length, cc_length_size, and cc_extension_size
+       is the total length of the CU including its header. */
     Dwarf_Word cc_length;
     Dwarf_Small cc_length_size;
     Dwarf_Small cc_extension_size;
     Dwarf_Half cc_version_stamp;
     Dwarf_Sword cc_abbrev_offset;
     Dwarf_Small cc_address_size;
+    /* cc_debug_info_offset is the offset in the section
+       of the CU header of this CU. */
     Dwarf_Word cc_debug_info_offset;
     Dwarf_Byte_Ptr cc_last_abbrev_ptr;
     Dwarf_Hash_Table cc_abbrev_hash_table;
     Dwarf_CU_Context cc_next;
-    unsigned char cc_offset_length;
+    /*unsigned char cc_offset_length; */
 };
 
 struct Dwarf_Debug_s {
@@ -181,11 +178,17 @@ struct Dwarf_Debug_s {
     Dwarf_Cie *de_cie_data;
     /* Count of number of Dwarf_Cie_s structs. */
     Dwarf_Signed de_cie_count;
+    /* Keep eh (GNU) separate!. */
+    Dwarf_Cie *de_cie_data_eh;
+    Dwarf_Signed de_cie_count_eh;
     /* 
        Points to contiguous block of pointers to Dwarf_Fde_s structs. */
     Dwarf_Fde *de_fde_data;
     /* Count of number of Dwarf_Fde_s structs. */
     Dwarf_Signed de_fde_count;
+    /* Keep eh (GNU) separate!. */
+    Dwarf_Fde *de_fde_data_eh;
+    Dwarf_Signed de_fde_count_eh;
 
     Dwarf_Small *de_debug_info;
     Dwarf_Small *de_debug_abbrev;
@@ -209,6 +212,7 @@ struct Dwarf_Debug_s {
 			identical to DWARF3 .debug_pubtypes. */
     Dwarf_Small *de_debug_varnames;
     Dwarf_Small *de_debug_weaknames;
+    Dwarf_Small *de_debug_ranges;	
 
     Dwarf_Unsigned de_debug_info_size;
     Dwarf_Unsigned de_debug_abbrev_size;
@@ -230,6 +234,7 @@ struct Dwarf_Debug_s {
     Dwarf_Unsigned de_debug_typenames_size;
     Dwarf_Unsigned de_debug_varnames_size;
     Dwarf_Unsigned de_debug_weaknames_size;
+    Dwarf_Unsigned de_debug_ranges_size;
 
     void *(*de_copy_word) (void *, const void *, size_t);
     unsigned char de_same_endian;
@@ -261,12 +266,16 @@ struct Dwarf_Debug_s {
     Dwarf_Half de_debug_info_index;
     Dwarf_Half de_debug_abbrev_index;
     Dwarf_Half de_debug_pubtypes_index; /* DWARF3 .debug_pubtypes */
+    Dwarf_Half de_debug_ranges_index; /* DWARF3 .debug_ranges */
 
     /* Default is DW_FRAME_INITIAL_VALUE from header. */
     Dwarf_Half de_frame_rule_initial_value;  
 
     /* Default is   DW_FRAME_LAST_REG_NUM. */
     Dwarf_Half de_frame_reg_rules_entry_count; 
+    Dwarf_Half de_frame_cfa_col_number; 
+    Dwarf_Half de_frame_same_value_number; 
+    Dwarf_Half de_frame_undefined_value_number; 
 
 
     unsigned char de_big_endian_object; /* non-zero if big-endian

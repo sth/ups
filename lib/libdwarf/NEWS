@@ -1,3 +1,48 @@
+April 27, 2009
+  Interface additions: dwarf_loclist_from_expr_a() and
+  dwarf_get_ranges_a() are new interfaces like
+  dwarf_loclist_from_expr() and dwarf_get_ranges() respectively,
+  but with arguments allowing
+  full support for different CIEs
+  in an executable  having different address-sizes
+  (and their compilation unit DIEs if .debug_info is present).
+  dwarf_get_loclist_entry() does not support
+  differing address sizes per CIE/CU.
+April 4, 2009
+  Added new functions dwarf_set_frame_cfa_value()
+  dwarf_set_frame_same_value(), and
+  dwarf_set_frame_undefined_value(). These are essential
+  for ABIs where the real register numbers exceed 1033
+  (such as ppc).  Failing to use these leads to 
+  frame instructions  DW_CFA_undefined and
+  DW_CFA_same_value emitting values that cannot be
+  interpreted correctly by a libdwarf consumer.
+  See dwarfdump for examples of use.
+Feb 14, 2009
+  Added configure option --enable-nonstandardprintf
+  which makes it easy to get printf of Dwarf_Unsigned (etc)
+  types correct even for non-standard compilers.
+Dec 30, 2008
+  Added interfaces for getting and printing the .debug_ranges
+  data.
+Dec 8, 2008
+  Record the abbreviation 'code' (index) in each DIE.
+  Making it possible for a pretty-printer to print the 
+  abbreviation code.
+Sep 30, 2008
+  Phil Mucci provided an a.out test chase which demonstrates a bug
+  in 64bit DWARF2 output by gcc.   Now libdwarf works around this
+  and with -v -v -v -v prints a warning.
+Sep 29, 2008
+  Thanks to Phil Mucci for providing a little-endian 64bit
+  test object file that exposed a problem when there are 'extra' bytes
+  (possibly unused) after a line table prologue header and before the
+  line table itself.  This releases fixes the bug.
+
+  Thanks to Matthew Legendre for pointing out that we were sharing
+  de_fde_count for eh and non-eh and that could cause erroneous
+  error returns in a couple of functions.
+  These counts are now separate.
 April 9, 2008
   libdwarf would behave badly if one compilation unit had more than 64K
   abbreviations: It was both very slow dealing with abbreviations and would
