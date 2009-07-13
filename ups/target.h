@@ -261,6 +261,7 @@ typedef struct xp_ops_s {
 	int (*xo_get_addrsize)PROTO((target_t *xp));
 	tstate_t (*xo_get_state)PROTO((target_t *xp));
 	int (*xo_get_lastsig)PROTO((target_t *xp));
+	const siginfo_t *(*xo_get_lastsiginfo)PROTO((target_t *xp));
 	stopres_t (*xo_get_stopres)PROTO((target_t *xp));
 	sigstate_t (*xo_get_sigstate)PROTO((target_t *xp, int sig));
 
@@ -268,7 +269,8 @@ typedef struct xp_ops_s {
 	 */
 	Stack *(*xo_get_stack_trace)PROTO((target_t *xp));
 	taddr_t (*xo_get_reg_addr)PROTO((target_t *xp, Stack *stk, int reg));
-	const char *(*xo_get_signal_tag)PROTO((target_t *xp, int signo));
+	const char *(*xo_get_signal_tag)PROTO((target_t *xp, int signo,
+					       const siginfo_t *siginfo));
 
 	/*  Reading and writing data.
 	 */
@@ -375,6 +377,8 @@ typedef struct xp_ops_s {
 	(xp->xp_ops->xo_get_state)(xp)
 #define xp_get_lastsig(xp) \
 	(xp->xp_ops->xo_get_lastsig)(xp)
+#define xp_get_lastsiginfo(xp) \
+	(xp->xp_ops->xo_get_lastsiginfo)(xp)
 #define xp_get_stopres(xp) \
 	(xp->xp_ops->xo_get_stopres)(xp)
 #define xp_get_sigstate(xp, sig) \
@@ -382,8 +386,8 @@ typedef struct xp_ops_s {
 
 #define xp_get_stack_trace(xp) \
 	(xp->xp_ops->xo_get_stack_trace)(xp)
-#define xp_get_signal_tag(xp, signo) \
-	(xp->xp_ops->xo_get_signal_tag)(xp, signo)
+#define xp_get_signal_tag(xp, signo, siginfo) \
+	(xp->xp_ops->xo_get_signal_tag)(xp, signo, siginfo)
 #define xp_get_reg_addr(xp, stk, reg) \
 	(xp->xp_ops->xo_get_reg_addr)(xp, stk, reg)
 
@@ -430,7 +434,7 @@ typedef struct xp_ops_s {
 
 int get_startup_stop_addrs PROTO((target_t *xp, taddr_t *main_addr,
 				  taddr_t *main_min_bpt_addr));
-const char *signame PROTO((int sig));
+const char *signame PROTO((int sig, const siginfo_t *siginfo));
 bool can_get_target_vars PROTO((target_t *xp));
 bool target_process_exists PROTO((target_t *xp));
 void kill_or_detach_from_target PROTO((target_t *xp));

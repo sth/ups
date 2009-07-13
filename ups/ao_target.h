@@ -49,6 +49,7 @@ typedef struct iproc {
 	taddr_t ip_base_sp;
 	taddr_t ip_restart_pc;
 	bool ip_lastsig;
+	siginfo_t *ip_lastsiginfo;
 	bool ip_attached;
 	stopres_t ip_stopres;
 #if AO_USE_PROCFS

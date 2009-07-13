@@ -123,6 +123,7 @@ static char *get_restart_pc PROTO((iproc_t *ip));
 static int wait_with_intr PROTO((wait_arg_t *p_status));
 static int get_words PROTO((int pid, ptracereq_t ptrace_req,
 			    taddr_t addr, char *buf, size_t nbytes));
+static void get_siginfo PROTO((iproc_t *ip));
 
 #ifndef AO_HAS_PTRACE_RANGE
 
@@ -242,6 +243,24 @@ wait_arg_t *p_status;
 	return ret;
 }
 
+static void
+get_siginfo(ip)
+iproc_t *ip;
+{
+#ifdef PTRACE_GETSIGINFO
+	siginfo_t siginfo;
+
+	if (std_ptrace(PTRACE_GETSIGINFO, ip->ip_pid, NULL, &siginfo) == 0) {
+		if (ip->ip_lastsiginfo == NULL)
+			ip->ip_lastsiginfo = alloc(ip->ip_apool, sizeof(siginfo_t));
+
+		memcpy(ip->ip_lastsiginfo, &siginfo, sizeof(siginfo));
+	}
+	else {
+		ip->ip_lastsiginfo = NULL;
+	}
+#endif
+}
 
 /*  Wait for process xp to stop.  If the process didn't die, update the
  *  stored register values.   Set ip_stopres to the reason why the
@@ -332,6 +351,7 @@ target_t *xp;
 		if (WSTOPSIG(status) != SIGTRAP) {
 			stopres = SR_SIG;
 			ip->ip_lastsig = WSTOPSIG(status);
+			get_siginfo(ip);
 		}
 		else if (user_stopped_target)
 			stopres = SR_USER;

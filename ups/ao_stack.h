@@ -25,4 +25,5 @@
 
 Stack *ao_get_stack_trace PROTO((target_t *xp));
 taddr_t ao_get_reg_addr PROTO((target_t *xp, Stack *stk, int reg));
-const char *ao_get_signal_tag PROTO((target_t *xp, int signo));
+const char *ao_get_signal_tag PROTO((target_t *xp, int signo,
+				     const siginfo_t *siginfo));

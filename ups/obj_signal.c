@@ -63,12 +63,13 @@ static int get_sig_attrs PROTO((int sig));
 #define SGH_ACCEPT		(1<<2)	/* target accepts signal */
 #define SGH_DFL_STOPS		(1<<3)	/* signal stops target by default */
 #define SGH_DFL_IGNORE		(1<<4)	/* signal is ignored by default */
+#define SGH_ADDRESS		(1<<5)	/* signal has fault address */
 
 static sig_info_t Sigtab[] = {
 	{ SIGINT,	"SIGINT",	0				      },
 	{ SIGHUP,	"SIGHUP",	SGH_CONT | SGH_ACCEPT		      },
 	{ SIGQUIT,	"SIGQUIT",	0				      },
-	{ SIGILL,	"SIGILL",	0				      },
+	{ SIGILL,	"SIGILL",	SGH_ADDRESS				      },
 	{ SIGTRAP,	"SIGTRAP",	0				      },
 #if defined(SIGIOT) && (!defined(SIGABRT) || SIGIOT != SIGABRT)
 	{ SIGIOT,	"SIGIOT",	0				      },
@@ -79,10 +80,10 @@ static sig_info_t Sigtab[] = {
 #if defined (SIGEMT)
 	{ SIGEMT,	"SIGEMT",	SGH_CONT | SGH_ACCEPT		      },
 #endif
-	{ SIGFPE,	"SIGFPE",	SGH_CONT | SGH_ACCEPT		      },
+	{ SIGFPE,	"SIGFPE",	SGH_CONT | SGH_ACCEPT | SGH_ADDRESS   },
 	{ SIGKILL,	"SIGKILL",	SGH_CONT | SGH_ACCEPT		      },
-	{ SIGBUS,	"SIGBUS",	0				      },
-	{ SIGSEGV,	"SIGSEGV",	0				      },
+	{ SIGBUS,	"SIGBUS",	SGH_ADDRESS			      },
+	{ SIGSEGV,	"SIGSEGV",	SGH_ADDRESS			      },
 #if defined (SIGSYS)
 	{ SIGSYS,	"SIGSYS",	0				      },
 #endif
@@ -285,15 +286,23 @@ int sig;
 }
 
 const char *
-signame(sig)
+signame(sig, siginfo)
 int sig;
+const siginfo_t *siginfo;
 {
 	static char buf[50];
 	int i;
 
 	for (i = 0; i < SIGTAB_SIZE; ++i) {
-		if (Sigtab[i].si_number == sig)
-			return Sigtab[i].si_name;
+		if (Sigtab[i].si_number == sig) {
+			if (siginfo && (Sigtab[i].si_attrs & SGH_ADDRESS) != 0) {
+				sprintf(buf, "%s at 0x%lx", Sigtab[i].si_name, (taddr_t)siginfo->si_addr);
+				return buf;
+			}
+			else {
+				return Sigtab[i].si_name;
+			}
+		}
 	}
 
 	(void) sprintf(buf, "<signal #%d>", sig);

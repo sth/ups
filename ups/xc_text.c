@@ -132,6 +132,7 @@ static int xc_is_attached PROTO((target_t *xp));
 static int xc_get_addrsize PROTO((target_t *xp));
 static tstate_t xc_get_state PROTO((target_t *xp));
 static int xc_get_lastsig PROTO((target_t *xp));
+static const siginfo_t *xc_get_lastsiginfo PROTO((target_t *xp));
 static stopres_t xc_get_stopres PROTO((target_t *xp));
 static sigstate_t xc_get_sigstate PROTO((target_t *xp, int sig));
 static Stack *xc_get_stack_trace PROTO((target_t *xp));
@@ -159,7 +160,8 @@ static void unpack_textloc PROTO((machine_t *ma, taddr_t addr,
 				  codefile_t **p_cf, textword_t **p_pc));
 static ci_exec_result_t single_step_machine PROTO((machine_t *ma));
 static int load_symtab PROTO((fil_t *fil));
-static const char *xc_get_signal_tag PROTO((target_t *xp, int sig));
+static const char *xc_get_signal_tag PROTO((target_t *xp, int sig,
+					    const siginfo_t *siginfo));
 static xc_tdata_t *make_xtd PROTO((alloc_pool_t *ap,
 				   machine_t *ma, symtab_t *st));
 static taddr_t xc_funcptr_to_addr PROTO((symtab_t *st, taddr_t addr));
@@ -192,7 +194,8 @@ xp_ops_t Xc_ops = {
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	NULL, NULL,
 	xc_is_attached, NULL, xc_get_addrsize,
-	xc_get_state, xc_get_lastsig, xc_get_stopres, xc_get_sigstate,
+	xc_get_state, xc_get_lastsig, xc_get_lastsiginfo,
+	xc_get_stopres, xc_get_sigstate,
 	xc_get_stack_trace, NULL, xc_get_signal_tag,
 	xc_read_fpval, NULL, xc_readreg, xc_setreg, NULL, NULL,
 	xc_get_retaddr_after_jsr, xc_get_retaddr_after_sig,
@@ -216,7 +219,8 @@ xp_ops_t Cc_ops = {
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	NULL, NULL,
 	xc_is_attached, NULL, xc_get_addrsize,
-	xc_get_state, xc_get_lastsig, xc_get_stopres, xc_get_sigstate,
+	xc_get_state, xc_get_lastsig, xc_get_lastsiginfo,
+	xc_get_stopres, xc_get_sigstate,
 	xc_get_stack_trace, NULL, xc_get_signal_tag,
 	xc_read_fpval, NULL, xc_readreg, xc_setreg, NULL, NULL,
 	xc_get_retaddr_after_jsr, xc_get_retaddr_after_sig,
@@ -637,6 +641,13 @@ target_t *xp;
 	return GET_XTD(xp)->xp_lastsig;
 }
 
+static const siginfo_t *
+xc_get_lastsiginfo(xp)
+target_t *xp;
+{
+	return NULL;
+}
+
 static stopres_t
 xc_get_stopres(xp)
 target_t *xp;
@@ -706,14 +717,15 @@ target_t *xp;
 }
 
 static const char *
-xc_get_signal_tag(xp, sig)
+xc_get_signal_tag(xp, sig, siginfo)
 target_t *xp;
 int sig;
+const siginfo_t *siginfo;
 {
 	ci_exec_result_t res;
 
 	if (sig > 0)
-		return signame(sig);
+		return signame(sig, siginfo);
 
 	res = (ci_exec_result_t)(-sig - 1);
 

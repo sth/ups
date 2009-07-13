@@ -29,6 +29,7 @@ char ups_config_c_rcsid[] = "$Id$";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
 
 #include <local/ukcprog.h>

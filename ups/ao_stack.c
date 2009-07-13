@@ -1321,11 +1321,12 @@ int reg;
 }
 
 const char *
-ao_get_signal_tag(xp, signo)
+ao_get_signal_tag(xp, signo, siginfo)
 target_t *xp;
 int signo;
+const siginfo_t *siginfo;
 {
-	return (signo == -1) ? "<unknown signal number>" : signame(signo);
+	return (signo == -1) ? "<unknown signal number>" : signame(signo, siginfo);
 }
 
 #endif /* AO_TARGET */

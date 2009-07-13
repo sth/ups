@@ -52,6 +52,21 @@ typedef enum ptracereq ptracereq_t;
 typedef int ptracereq_t;
 #endif
 
+#if defined(OS_LINUX)
+#ifndef PTRACE_SETOPTIONS
+#define PTRACE_SETOPTIONS 0x4200
+#endif
+#ifndef PTRACE_GETEVENTMSG
+#define PTRACE_GETEVENTMSG 0x4201
+#endif
+#ifndef PTRACE_GETSIGINFO
+#define PTRACE_GETSIGINFO 0x4202
+#endif
+#ifndef PTRACE_SETSIGINFO
+#define PTRACE_SETSIGINFO 0x4203
+#endif
+#endif
+
 #if defined (OS_BSD44)
 /*
  *  Request values for the ptrace system call

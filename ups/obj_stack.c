@@ -354,7 +354,7 @@ target_t *xp;
 			si = stk->stk_siginfo;
 			new_object((objid_t)si, OT_FSIG, (objid_t)stk,
 								OBJ_BEFORE);
-			tag = xp_get_signal_tag(xp, si->si_signo);
+			tag = xp_get_signal_tag(xp, si->si_signo, NULL);
 			set_field_value((objid_t)si, FN_FSIG_SIGNAME,
 							(fval_t)strsave(tag));
 		}
@@ -362,9 +362,11 @@ target_t *xp;
 
 	lastsig = xp_get_lastsig(xp);
 	if (last != NULL && lastsig != 0) {
+		const siginfo_t *lastsiginfo;
 		const char *tag;
 
-		tag = xp_get_signal_tag(xp, lastsig);
+		lastsiginfo = xp_get_lastsiginfo(xp);
+		tag = xp_get_signal_tag(xp, lastsig, lastsiginfo);
 		new_object((objid_t)tag, OT_FSIG, (objid_t)last, OBJ_AFTER);
 		set_field_value((objid_t)tag, FN_FSIG_SIGNAME,
 							(fval_t)strsave(tag));

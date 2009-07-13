@@ -94,6 +94,7 @@ static int ao_is_attached PROTO((target_t *xp));
 static int ao_get_addrsize PROTO((target_t *xp));
 static tstate_t ao_get_state PROTO((target_t *xp));
 static int ao_get_lastsig PROTO((target_t *xp));
+static const siginfo_t *ao_get_lastsiginfo PROTO((target_t *xp));
 static stopres_t ao_get_stopres PROTO((target_t *xp));
 static int ao_read_fpval PROTO((target_t *xp, taddr_t addr, int num_bytes, 
                                 fpval_t *p_val));
@@ -212,7 +213,8 @@ xp_ops_t Ao_ops = {
 	dx_enable_watchpoint, dx_disable_watchpoint,
 	ao_install_watchpoint, ao_uninstall_watchpoint,
 	ao_is_attached, ao_detach, ao_get_addrsize,
-	ao_get_state, ao_get_lastsig, ao_get_stopres, ao_get_sigstate,
+	ao_get_state, ao_get_lastsig, ao_get_lastsiginfo,
+	ao_get_stopres, ao_get_sigstate,
 	ao_get_stack_trace, ao_get_reg_addr, ao_get_signal_tag,
 	ao_read_fpval, ao_read_fpreg, ao_readreg, ao_setreg,
 	ao_readdreg, ao_setdreg,
@@ -309,6 +311,7 @@ const char **p_cmdline;
 	ip->ip_addrsize = 32;
 	ip->ip_core = co;
 	ip->ip_lastsig = lastsig;
+	ip->ip_lastsiginfo = NULL;
 	ip->ip_base_sp = (taddr_t)~0;	/* Fixed later for non-ELF */
 	
 	xp->xp_data = (char *)ip;
@@ -496,6 +499,13 @@ ao_get_lastsig(xp)
 target_t *xp;
 {
 	return GET_IPROC(xp)->ip_lastsig;
+}
+
+static const siginfo_t *
+ao_get_lastsiginfo(xp)
+target_t *xp;
+{
+	return GET_IPROC(xp)->ip_lastsiginfo;
 }
 
 /*  Return the reason why the process stopped.  This is the reason for the
