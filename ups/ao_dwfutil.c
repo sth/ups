@@ -587,12 +587,6 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     */
 	    vaddr->v_op = OP_SP_RELATIVE;
 	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_call_frame_cfa) {
-	    /*
-	     * Call frame address
-	     */
-	    vaddr->v_op = OP_CFA_RELATIVE;
-	    vaddr->v_register = 0;
 	} else {
 	    panic("dwf_get_location : unsupported opcode in location expression");
 	}
