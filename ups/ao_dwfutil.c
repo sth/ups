@@ -524,10 +524,13 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     for (i = 0; i < count; i++) {
 
 	vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
-	if (head == NULL)
+	if (head == NULL) {
 	    head = vaddr;
-	else
-	    panic("dwf_get_location : location list too long");
+	} else {
+	    errf("dwf_get_location : location list too long");
+	    head = NULL;
+	    break;
+        }
 
 	if (loclist[i]->ld_cents != 1)
 	    panic("dwf_get_location : location expression too complicated");
@@ -561,7 +564,11 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    /*
 	     * Relative to frame base address.
 	     */
-	    if (frame_base && frame_base->v_op == OP_REGISTER) {
+	    if (frame_base == BAD_FRAME_BASE) {
+		errf("dwf_get_location : frame base not known");
+		head = NULL;
+		break;
+	    } if (frame_base && frame_base->v_op == OP_REGISTER) {
 		if (frame_base->v_register == fp_reg) {
 		    vaddr->v_op = OP_FP_RELATIVE;
 		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
@@ -587,6 +594,12 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	     */
 	    vaddr->v_op = OP_SP_RELATIVE;
 	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+	} else if (op == DW_OP_call_frame_cfa) {
+	    /*
+	     * Call frame address
+	     */
+	    vaddr->v_op = OP_CFA_RELATIVE;
+	    vaddr->v_register = 0;
 	} else {
 	    panic("dwf_get_location : unsupported opcode in location expression");
 	}
@@ -610,9 +623,11 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
 {
     int rv;
     Dwarf_Error err;
+    Dwarf_Small value_type;
     Dwarf_Signed offset_relevant;
     Dwarf_Signed register_num;
-    Dwarf_Signed offset;
+    Dwarf_Signed offset_or_block_len;
+    Dwarf_Ptr block_ptr;
     int fp_col;
     int sp_col;
 
@@ -630,10 +645,23 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
 	panic("Unsupported address size");
     }
 
-    if ((rv = dwarf_get_fde_info_for_reg(fde, regnum, pc, &offset_relevant,
-					 &register_num, &offset, NULL,
-					 &err)) == DW_DLV_OK) {
-	if (register_num == DW_FRAME_CFA_COL)
+    if (regnum == DW_FRAME_CFA_COL3) {
+	rv = dwarf_get_fde_info_for_cfa_reg3(fde, pc, &value_type,
+					     &offset_relevant, &register_num,
+					     &offset_or_block_len, &block_ptr,
+					     NULL, &err);
+    } else {
+	rv = dwarf_get_fde_info_for_reg3(fde, regnum, pc, &value_type,
+					 &offset_relevant, &register_num,
+					 &offset_or_block_len, &block_ptr,
+					 NULL, &err);
+    }
+
+    if (rv == DW_DLV_OK) {
+	if (value_type != DW_EXPR_OFFSET)
+	    panic("Unsupported value type in unwind info");
+
+        if (register_num == DW_FRAME_CFA_COL3)
 	    *regval = cfa;
 	else if (register_num == fp_col)
 	    *regval = fp;
@@ -647,9 +675,9 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
 	    rv = DW_DLV_ERROR;
 
 	if (rv == DW_DLV_OK && offset_relevant)
-	    *regval += offset;
+	    *regval += offset_or_block_len;
 
-	if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL)
+	if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL3)
 	    dread_addrval(xp, *regval, regval);
     }
 
@@ -697,7 +725,7 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
 	    taddr_t new_sp;
 	    taddr_t new_pc;
 
-            if (dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL, cfa) &&
+            if (dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, DW_FRAME_CFA_COL3, cfa) &&
 		dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, ra_col, &new_pc)) {
                 if (!dwf_unwind_reg(fde, xp, *cfa, *fp, *sp, *pc, fp_col, &new_fp))
 		    new_fp = 0;
