@@ -47,7 +47,7 @@ static void _dwarf_pro_add_to_fde(Dwarf_P_Fde fde,
                                   Dwarf_P_Frame_Pgm inst);
 
 /*-------------------------------------------------------------------------
-        This functions adds a cie struct to the debug pointer. Its in the
+        This function adds a cie struct to the debug pointer. Its in the
         form of a linked list.
         augmenter: string reps augmentation (implementation defined)
         code_align: alignment of code
@@ -204,7 +204,7 @@ dwarf_add_frame_info(Dwarf_P_Debug dbg,
 }
 
  /*ARGSUSED*/                   /* pretend all args used */
-    Dwarf_Unsigned
+Dwarf_Unsigned
 dwarf_add_frame_info_b(Dwarf_P_Debug dbg,
                        Dwarf_P_Fde fde,
                        Dwarf_P_Die die,
@@ -245,9 +245,32 @@ dwarf_add_frame_info_b(Dwarf_P_Debug dbg,
     return dbg->de_n_fde;
 }
 
+/* This is an alternate to inserting frame instructions
+   one instruction at a time.  But use either this
+   or instruction level, not both in one fde. */
+int
+dwarf_insert_fde_inst_bytes(Dwarf_P_Debug dbg,
+    Dwarf_P_Fde fde,Dwarf_Unsigned len, Dwarf_Ptr ibytes,
+    Dwarf_Error *error)
+{
+    if( len == 0) {
+        return DW_DLV_OK;
+    }
+    if(fde->fde_block || fde->fde_inst) {
+        DWARF_P_DBG_ERROR(dbg, DW_DLE_DUPLICATE_INST_BLOCK,
+            (int)DW_DLV_BADADDR);
+    }
+    fde->fde_block = (Dwarf_Ptr)_dwarf_p_get_alloc(dbg, len);
+    memcpy(fde->fde_block,ibytes,len);
+    fde->fde_inst_block_size = len;
+    fde->fde_n_bytes += len;
+    return DW_DLV_OK;
+}
+    
+
 
 /*-------------------------------------------------------------------
-        Create a new fde 
+        Create a new fde.
 ---------------------------------------------------------------------*/
 Dwarf_P_Fde
 dwarf_new_fde(Dwarf_P_Debug dbg, Dwarf_Error * error)
@@ -260,17 +283,15 @@ dwarf_new_fde(Dwarf_P_Debug dbg, Dwarf_Error * error)
         DWARF_P_DBG_ERROR(dbg, DW_DLE_FDE_ALLOC,
                           (Dwarf_P_Fde) DW_DLV_BADADDR);
     }
-    fde->fde_next = NULL;
-    fde->fde_inst = NULL;
-    fde->fde_n_inst = 0;
-    fde->fde_n_bytes = 0;
-    fde->fde_last_inst = NULL;
+    
     fde->fde_uwordb_size = dbg->de_offset_size;
+
     return fde;
 }
 
+
 /*------------------------------------------------------------------------
-        Add cfe_offset instruction to fde
+        Add a cfe_offset instruction to the fde passed in.
 -------------------------------------------------------------------------*/
 Dwarf_P_Fde
 dwarf_fde_cfa_offset(Dwarf_P_Fde fde,
@@ -331,8 +352,15 @@ dwarf_fde_cfa_offset(Dwarf_P_Fde fde,
     represented with relocations and symbol indices for
     DW_DLC_SYMBOLIC_RELOCATIONS.
 
-    This does not treat all DW_CFA instructions and
-    currently excludes DWARF3 additions.
+    This does not treat all DW_CFA instructions yet.
+
+    For certain operations a val? value must be
+    signed (though passed in as unsigned here).
+
+    Currently this does not check that the frame
+    version is 3(for dwarf3) or 4 (for dwarf4)
+    when applying operations that are only valid for
+    dwarf3 or dwarf4.
 
 */
 Dwarf_P_Fde
@@ -352,6 +380,10 @@ dwarf_add_fde_inst(Dwarf_P_Fde fde,
     char buff1[ENCODE_SPACE_NEEDED];
     char buff2[ENCODE_SPACE_NEEDED];
     Dwarf_P_Debug dbg = fde->fde_dbg;
+    /* This is a hack telling the code when to transform
+       a value to a signed leb number. */
+    int signed_second = 0;
+    int signed_first = 0;
 
 
     nbytes = 0;
@@ -439,53 +471,43 @@ dwarf_add_fde_inst(Dwarf_P_Fde fde,
 
         } else {
             op = DW_CFA_offset_extended;
-
-            res = _dwarf_pro_encode_leb128_nm(val1, &nbytes1,
-                                              buff1, sizeof(buff1));
-            if (res != DW_DLV_OK) {
-                _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
-                return ((Dwarf_P_Fde) DW_DLV_BADADDR);
-            }
-            res = _dwarf_pro_encode_leb128_nm(val2, &nbytes2,
-                                              buff2, sizeof(buff2));
-            if (res != DW_DLV_OK) {
-                _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
-                return ((Dwarf_P_Fde) DW_DLV_BADADDR);
-            }
-            ptr = (char *) _dwarf_p_get_alloc(dbg, nbytes1 + nbytes2);
-            if (ptr == NULL) {
-                _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
-                return ((Dwarf_P_Fde) DW_DLV_BADADDR);
-            }
-            memcpy(ptr, buff1, nbytes1);
-            memcpy(ptr + nbytes1, buff2, nbytes2);
-            nbytes = nbytes1 + nbytes2;
+            goto two_leb;
         }
         break;
+    case DW_CFA_offset_extended_sf: /* DWARF3 */
+            signed_second = 1;
+            goto two_leb;
+    case DW_CFA_offset_extended:
+            goto two_leb;
 
     case DW_CFA_undefined:
     case DW_CFA_same_value:
-        res = _dwarf_pro_encode_leb128_nm(val1, &nbytes,
-                                          buff1, sizeof(buff1));
-        if (res != DW_DLV_OK) {
-            _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
-            return ((Dwarf_P_Fde) DW_DLV_BADADDR);
-        }
-        ptr = (char *) _dwarf_p_get_alloc(dbg, nbytes);
-        if (ptr == NULL) {
-            _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
-            return ((Dwarf_P_Fde) DW_DLV_BADADDR);
-        }
-        memcpy(ptr, buff1, nbytes);
-        break;
+        goto one_leb;
 
+    case DW_CFA_val_offset:
+         goto two_leb;
+    case DW_CFA_val_offset_sf:
+         signed_second = 1;
+         goto two_leb;
+    case DW_CFA_def_cfa_sf:
+         signed_second = 1;
+         goto two_leb;
     case DW_CFA_register:
     case DW_CFA_def_cfa:
+    two_leb:
         res = _dwarf_pro_encode_leb128_nm(val1, &nbytes1,
                                           buff1, sizeof(buff1));
         if (res != DW_DLV_OK) {
             _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
             return ((Dwarf_P_Fde) DW_DLV_BADADDR);
+        }
+        if (!signed_second) {
+                res = _dwarf_pro_encode_leb128_nm(val2, &nbytes2,
+                                              buff2, sizeof(buff2));
+        } else {
+            Dwarf_Signed val2s = val2;
+            res = _dwarf_pro_encode_signed_leb128_nm(val2s, &nbytes2,
+                                              buff2, sizeof(buff2));
         }
 
         res = _dwarf_pro_encode_leb128_nm(val2, &nbytes2,
@@ -505,10 +527,20 @@ dwarf_add_fde_inst(Dwarf_P_Fde fde,
         nbytes = nbytes1 + nbytes2;
         break;
 
+    case DW_CFA_def_cfa_offset_sf: /* DWARF3 */
+        signed_first = 1;
+        goto one_leb;
     case DW_CFA_def_cfa_register:
     case DW_CFA_def_cfa_offset:
-        res = _dwarf_pro_encode_leb128_nm(val1, &nbytes,
+    one_leb:
+        if(!signed_first) {
+            res = _dwarf_pro_encode_leb128_nm(val1, &nbytes,
                                           buff1, sizeof(buff1));
+        } else {
+            Dwarf_Signed val1s = val1;
+            res = _dwarf_pro_encode_signed_leb128_nm(val1s, &nbytes,
+                                          buff1, sizeof(buff1));
+        }
         if (res != DW_DLV_OK) {
             _dwarf_p_error(dbg, error, DW_DLE_STRING_ALLOC);
             return ((Dwarf_P_Fde) DW_DLV_BADADDR);
@@ -520,11 +552,17 @@ dwarf_add_fde_inst(Dwarf_P_Fde fde,
         }
         memcpy(ptr, buff1, nbytes);
         break;
-
+    case DW_CFA_def_cfa_expression: /* DWARF3 */
+        /* FIXME: argument is dwarf expr, not handled yet. */
+    case DW_CFA_expression: /* DWARF3 */
+        /* First arg: ULEB reg num. 2nd arg dwarf expr in form block.
+           FIXME: not handled yet. */
+    case DW_CFA_val_expression: /* DWARF3f */
+        /* First arg: ULEB reg num. 2nd arg dwarf expr in form block.
+           FIXME: not handled yet. */
     default:
-        /* This is wrong. We are just ignoring
-           instructions we don't yet handle. FIXME. */
-        break;
+        _dwarf_p_error(dbg, error, DW_DLE_DEBUGFRAME_ERROR);
+        return ((Dwarf_P_Fde) DW_DLV_BADADDR);
     }
 
     curinst->dfp_opcode = op;
@@ -538,8 +576,8 @@ dwarf_add_fde_inst(Dwarf_P_Fde fde,
 
 
 /*------------------------------------------------------------------------
-        instructions are added to fde in the form of a linked
-        list. This function manages the linked list
+        Instructions are added to an fde in the form of a linked
+        list. This function manages the linked list.
 -------------------------------------------------------------------------*/
 void
 _dwarf_pro_add_to_fde(Dwarf_P_Fde fde, Dwarf_P_Frame_Pgm curinst)

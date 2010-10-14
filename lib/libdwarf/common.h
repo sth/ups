@@ -1,6 +1,6 @@
 /* 
-  Copyright (C) SN Systems.   All Rights Reserved.
-  Portions Copyright (C) David Anderson.   All Rights Reserved.
+  Copyright (C) 2009-2010 SN Systems.   All Rights Reserved.
+  Portions Copyright (C) 2009-2010 David Anderson.   All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 

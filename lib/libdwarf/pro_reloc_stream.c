@@ -1,8 +1,8 @@
 /*
 
   Copyright (C) 2000,2001,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008 David Anderson, Inc. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2008-2010 David Anderson, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -218,16 +218,16 @@ _dwarf_stream_relocs_to_disk(Dwarf_P_Debug dbg,
         total_size = ct * len;
         sec_index = prb->pr_sect_num_of_reloc_sect;
         if (sec_index == 0) {
-            /* call de_func or de_func_b, getting section number of
-               reloc sec */
+            /* Call de_callback_func or de_callback_func_b, getting 
+               section number of reloc section. */
             int rel_section_index = 0;
             Dwarf_Unsigned name_idx = 0;
             int int_name = 0;
             int err = 0;
 
-            if (dbg->de_func_b) {
+            if (dbg->de_callback_func_b) {
                 rel_section_index =
-                    dbg->de_func_b(_dwarf_rel_section_names[i],
+                    dbg->de_callback_func_b(_dwarf_rel_section_names[i],
                                    /* size */
                                    dbg->de_relocation_record_size,
                                    /* type */ SHT_REL,
@@ -240,7 +240,7 @@ _dwarf_stream_relocs_to_disk(Dwarf_P_Debug dbg,
                                    &name_idx, &err);
             } else {
                 rel_section_index =
-                    dbg->de_func(_dwarf_rel_section_names[i],
+                    dbg->de_callback_func(_dwarf_rel_section_names[i],
                                  /* size */
                                  dbg->de_relocation_record_size,
                                  /* type */ SHT_REL,

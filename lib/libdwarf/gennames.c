@@ -1,6 +1,6 @@
 /* 
- Copyright 2009 SN Systems Ltd. All rights reserved.
- Portions Copyright 2009 David Anderson. All rights reserved.
+ Copyright 2009-2010 SN Systems Ltd. All rights reserved.
+ Portions Copyright 2009-2010 David Anderson. All rights reserved.
  
  This program is free software; you can redistribute it and/or modify it
  under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -44,7 +44,7 @@
 #include <errno.h>              /* For errno declaration. */
 #include <ctype.h>
 #include <string.h>
-#include <getopt.h>  
+#include <unistd.h>  /* For getopt */  
 #include "dwarf.h"
 #include "common.h"
 
@@ -404,7 +404,7 @@ GenerateOneSet()
 
         len = 39 - strlen(prefix);
         fprintf(f_names_enum_h,"    %s_%-*s = 0x%04x",
-            prefix,len,group_array[index].name,group_array[index].value);
+            prefix,(int)len,group_array[index].name,group_array[index].value);
         fprintf(f_names_enum_h,(index + 1 < array_count) ? ",\n" : "\n");
 
         /* Generate entries for 'dwarf_names.c' */
@@ -488,7 +488,16 @@ ParseDefinitionsAndWriteOutput()
 
     /* Process each line from 'dwarf.h' */
     while (!feof(f_dwarf_in)) {
-        fgets(line_in,sizeof(line_in),f_dwarf_in);
+        errno = 0;
+        char *fgbad = fgets(line_in,sizeof(line_in),f_dwarf_in);
+        if(!fgbad) {
+            if(feof(f_dwarf_in)) {
+                break;
+            }
+            /*  Is error. errno must be set. */
+            fprintf(stderr,"Error reading dwarf.h!. Errno %d\n",errno);
+            exit(1);
+        }
         if (is_skippable_line(line_in)) {
             continue;
         }

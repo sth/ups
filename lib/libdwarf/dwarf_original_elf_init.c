@@ -1,8 +1,8 @@
 /*
 
   Copyright (C) 2000,2001,2002,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2007 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008 Arxan Technologies, Inc. All rights reserved.
+  Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2008-2010 Arxan Technologies, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -164,6 +164,7 @@ dwarf_elf_init_file_ownership(dwarf_elf_handle elf_file_pointer,
     /* ELF is no longer tied to libdwarf. */
     Dwarf_Obj_Access_Interface *binary_interface = 0;
     int res = DW_DLV_OK;
+    int err = 0;
 
     if (access != DW_DLC_READ) {
         DWARF_DBG_ERROR(NULL, DW_DLE_INIT_ACCESS_WRONG, DW_DLV_ERROR);
@@ -173,9 +174,10 @@ dwarf_elf_init_file_ownership(dwarf_elf_handle elf_file_pointer,
     res = dwarf_elf_object_access_init(
         elf_file_pointer, 
         libdwarf_owns_elf,
-        &binary_interface);
+        &binary_interface,
+        &err);
     if(res != DW_DLV_OK){
-        DWARF_DBG_ERROR(NULL, DW_DLE_INIT_ACCESS_WRONG, DW_DLV_ERROR);
+        DWARF_DBG_ERROR(NULL, err, DW_DLV_ERROR);
     }
 
     /* This mallocs space and returns pointer thru ret_dbg, 

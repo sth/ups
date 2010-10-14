@@ -1,8 +1,8 @@
 /*
 
   Copyright (C) 2000,2004,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
-  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -203,7 +203,6 @@ dwarf_transform_to_disk_form(Dwarf_P_Debug dbg, Dwarf_Error * error)
        buffers one at a time. */
     int nbufs = 0;
     int sect = 0;
-    int name_idx = 0;
     int err = 0;
     Dwarf_Unsigned du = 0;
 
@@ -293,15 +292,17 @@ dwarf_transform_to_disk_form(Dwarf_P_Debug dbg, Dwarf_Error * error)
         {
             int new_base_elf_sect;
 
-            if (dbg->de_func_b) {
+            if (dbg->de_callback_func_b) {
                 new_base_elf_sect =
-                    dbg->de_func_b(_dwarf_sectnames[sect],
+                    dbg->de_callback_func_b(_dwarf_sectnames[sect],
                         /* rec size */ 1,
                         SECTION_TYPE,
                         flags, SHN_UNDEF, 0, &du, &err);
 
             } else {
-                new_base_elf_sect = dbg->de_func(_dwarf_sectnames[sect],
+                int name_idx = 0;
+                new_base_elf_sect = dbg->de_callback_func(
+                    _dwarf_sectnames[sect],
                     dbg->de_relocation_record_size,
                     SECTION_TYPE, flags,
                     SHN_UNDEF, 0,
@@ -412,10 +413,7 @@ dwarf_transform_to_disk_form(Dwarf_P_Debug dbg, Dwarf_Error * error)
 
     if (dbg->de_simple_name_headers[dwarf_snk_weakname].sn_head) {
         nbufs = _dwarf_transform_simplename_to_disk(dbg,
-                                                    dwarf_snk_weakname,
-                                                    DEBUG_WEAKNAMES,
-                                                    error);
-
+            dwarf_snk_weakname, DEBUG_WEAKNAMES, error);
         if (nbufs < 0) {
             DWARF_P_DBG_ERROR(dbg, DW_DLE_DEBUGINFO_ERROR,
                               DW_DLV_NOCOUNT);
@@ -423,8 +421,8 @@ dwarf_transform_to_disk_form(Dwarf_P_Debug dbg, Dwarf_Error * error)
     }
 
     {
-        Dwarf_Signed new_secs;
-        int res;
+        Dwarf_Signed new_secs = 0;
+        int res = 0;
 
         res = dbg->de_transform_relocs_to_disk(dbg, &new_secs);
         if (res != DW_DLV_OK) {
@@ -710,11 +708,11 @@ _dwarf_pro_generate_debugline(Dwarf_P_Debug dbg, Dwarf_Error * error)
                 sum_bytes += sizeof(Dwarf_Ubyte);
 
                 /* reloc for address */
-                res = dbg->de_reloc_name(dbg, DEBUG_LINE, sum_bytes,    /* r_offset 
-                                                                         */
-                                         curline->dpl_r_symidx,
-                                         dwarf_drt_data_reloc,
-                                         uwordb_size);
+                res = dbg->de_reloc_name(dbg, DEBUG_LINE, 
+                    sum_bytes,  /* r_offset  */
+                    curline->dpl_r_symidx,
+                    dwarf_drt_data_reloc,
+                    uwordb_size);
                 if (res != DW_DLV_OK) {
                     DWARF_P_DBG_ERROR(dbg, DW_DLE_CHUNK_ALLOC, -1);
                 }
@@ -891,25 +889,23 @@ _dwarf_pro_generate_debugline(Dwarf_P_Debug dbg, Dwarf_Error * error)
 static int
 _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
 {
-    int elfsectno;
-    int i;
+    int elfsectno = 0;
+    int i = 0;
     int firsttime = 1;
-    int pad;                    /* pad for padding to align cies and
-                                   fdes */
-    Dwarf_P_Cie curcie;
-    Dwarf_P_Fde curfde;
-    unsigned char *data;
-    Dwarf_sfixed dsw;
-    Dwarf_Unsigned du;
-    Dwarf_Ubyte db;
-    long *cie_offs;             /* holds byte offsets for links to
-                                   fde's */
-    unsigned long cie_length;
-    int cie_no;
+    int pad = 0;     /* Pad for padding to align cies and fdes */
+    Dwarf_P_Cie curcie = 0;
+    Dwarf_P_Fde curfde = 0;
+    unsigned char *data = 0;
+    Dwarf_sfixed dsw = 0;
+    Dwarf_Unsigned du = 0;
+    Dwarf_Ubyte db = 0;
+    long *cie_offs = 0;   /* Holds byte offsets for links to fde's */
+    unsigned long cie_length = 0;
+    int cie_no = 0;
     int uwordb_size = dbg->de_offset_size;
     int extension_size = dbg->de_64bit_extension ? 4 : 0;
     int upointer_size = dbg->de_pointer_size;
-    Dwarf_Unsigned cur_off;     /* current offset of written data, held 
+    Dwarf_Unsigned cur_off = 0; /* current offset of written data, held 
                                    for relocation info */
 
     elfsectno = dbg->de_elf_sects[DEBUG_FRAME];
@@ -922,21 +918,25 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
     if (cie_offs == NULL) {
         DWARF_P_DBG_ERROR(dbg, DW_DLE_CIE_OFFS_ALLOC, -1);
     }
-    /* generate cie number as we go along */
+    /* Generate cie number as we go along.  This writes
+       all CIEs first before any FDEs, which is rather
+       different from the order a compiler might like (which
+       might be each CIE followed by its FDEs then the next CIE, and
+       so on). */
     cie_no = 1;
     while (curcie) {
-        char *code_al;
-        int c_bytes;
-        char *data_al;
-        int d_bytes;
-        int res;
+        char *code_al = 0;
+        int c_bytes = 0;
+        char *data_al = 0;
+        int d_bytes = 0;
+        int res = 0;
         char buff1[ENCODE_SPACE_NEEDED];
         char buff2[ENCODE_SPACE_NEEDED];
         char buff3[ENCODE_SPACE_NEEDED];
-        char *augmentation;
-        char *augmented_al;
-        long augmented_fields_length;
-        int a_bytes;
+        char *augmentation = 0;
+        char *augmented_al = 0;
+        long augmented_fields_length = 0;
+        int a_bytes = 0;
 
         res = _dwarf_pro_encode_leb128_nm(curcie->cie_code_align,
                                           &c_bytes,
@@ -1063,18 +1063,19 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
     /* write out fde's */
     curfde = dbg->de_frame_fdes;
     while (curfde) {
-        Dwarf_P_Frame_Pgm curinst;
-        long fde_length;
-        int pad;
-        Dwarf_P_Cie cie_ptr;
-        Dwarf_Word cie_index, index;
-        int oet_length, afl_length, res;
+        Dwarf_P_Frame_Pgm curinst = 0;
+        long fde_length = 0;
+        int pad = 0;
+        Dwarf_P_Cie cie_ptr = 0;
+        Dwarf_Word cie_index = 0; 
+        Dwarf_Word index = 0;
+        int oet_length = 0;
+        int afl_length = 0; 
+        int res = 0;
         int v0_augmentation = 0;
-
 #if 0
-        unsigned char *fde_start_point;
+        unsigned char *fde_start_point = 0;
 #endif
-
         char afl_buff[ENCODE_SPACE_NEEDED];
 
         /* Find the CIE associated with this fde. */
@@ -1116,16 +1117,20 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
                 upointer_size;  /* address range */
         }
 
-        /* using fde offset, generate DW_AT_MIPS_fde attribute for the
-           die corresponding to this fde */
-        if (_dwarf_pro_add_AT_fde(dbg, curfde->fde_die, cur_off, error)
-            < 0)
-            return -1;
+     
+        if (curfde->fde_die) {
+            /* IRIX/MIPS extension:
+               Using fde offset, generate DW_AT_MIPS_fde attribute for the
+               die corresponding to this fde.  */
+            if(_dwarf_pro_add_AT_fde(dbg, curfde->fde_die, cur_off,  
+                error) < 0) {
+                return -1;
+            }
+        }
 
         /* store relocation for cie pointer */
         res = dbg->de_reloc_name(dbg, DEBUG_FRAME, cur_off +
-                                 BEGIN_LEN_SIZE,
-                                 /* r_offset */
+                                     BEGIN_LEN_SIZE /* r_offset */,
                                  dbg->de_sect_name_idx[DEBUG_FRAME],
                                  dwarf_drt_data_reloc, uwordb_size);
         if (res != DW_DLV_OK) {
@@ -1135,8 +1140,7 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
         /* store relocation information for initial location */
         res = dbg->de_reloc_name(dbg, DEBUG_FRAME,
                                  cur_off + BEGIN_LEN_SIZE +
-                                 upointer_size,
-                                 /* r_offset */
+                                     upointer_size /* r_offset */,
                                  curfde->fde_r_symidx,
                                  dwarf_drt_data_reloc, upointer_size);
         if (res != DW_DLV_OK) {
@@ -1152,8 +1156,8 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
                                      /* r_offset, where in cie this
                                         field starts */
                                      cur_off + BEGIN_LEN_SIZE +
-                                     uwordb_size + 2 * upointer_size +
-                                     afl_length,
+                                         uwordb_size + 2 * upointer_size +
+                                         afl_length,
                                      curfde->fde_exception_table_symbol,
                                      dwarf_drt_segment_rel,
                                      sizeof(Dwarf_sfixed));
@@ -1256,36 +1260,37 @@ _dwarf_pro_generate_debugframe(Dwarf_P_Debug dbg, Dwarf_Error * error)
         }
 
         curinst = curfde->fde_inst;
-        while (curinst) {
-            db = curinst->dfp_opcode;
-            WRITE_UNALIGNED(dbg, (void *) data, (const void *) &db,
-                            sizeof(db), sizeof(Dwarf_Ubyte));
-            data += sizeof(Dwarf_Ubyte);
+        if(curfde->fde_block) {
+            unsigned long size = curfde->fde_inst_block_size;
+            memcpy((void *) data, (const void *) curfde->fde_block, size);
+            data += size;
+        } else {
+            while (curinst) {
+                db = curinst->dfp_opcode;
+                WRITE_UNALIGNED(dbg, (void *) data, (const void *) &db,
+                     sizeof(db), sizeof(Dwarf_Ubyte));
+                data += sizeof(Dwarf_Ubyte);
 #if 0
-            if (curinst->dfp_sym_index) {
-                int res;
-
-                res = dbg->de_reloc_name(dbg,
-                                         DEBUG_FRAME,
-                                         (data - fde_start_point)
-                                         + cur_off + uwordb_size,       /* r_offset 
-                                                                         */
-                                         curinst->dfp_sym_index,
-                                         dwarf_drt_data_reloc,
-                                         upointer_size);
-                if (res != DW_DLV_OK) {
-                    {
+                if (curinst->dfp_sym_index) {
+                    int res = dbg->de_reloc_name(dbg,
+                        DEBUG_FRAME,
+                        /* r_offset = */
+                        (data - fde_start_point) + cur_off + uwordb_size, 
+                        curinst->dfp_sym_index,
+                        dwarf_drt_data_reloc,
+                        upointer_size);
+                    if (res != DW_DLV_OK) {
                         _dwarf_p_error(dbg, error, DW_DLE_ALLOC_FAIL);
                         return (0);
                     }
                 }
-            }
 #endif
-            memcpy((void *) data,
+                memcpy((void *) data,
                    (const void *) curinst->dfp_args,
                    curinst->dfp_nbytes);
-            data += curinst->dfp_nbytes;
-            curinst = curinst->dfp_next;
+                data += curinst->dfp_nbytes;
+                curinst = curinst->dfp_next;
+            }
         }
         /* padding */
         for (i = 0; i < pad; i++) {

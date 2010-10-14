@@ -1,8 +1,8 @@
 /*
 
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008 David Anderson, Inc. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2008-2010 David Anderson, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -85,7 +85,7 @@ dwarf_producer_init_b(Dwarf_Unsigned flags,
         DWARF_P_DBG_ERROR(dbg, DW_DLE_NO_CALLBACK_FUNC,
                           (Dwarf_P_Debug) DW_DLV_BADADDR);
     }
-    dbg->de_func_b = func;
+    dbg->de_callback_func_b = func;
     dbg->de_errhand = errhand;
     dbg->de_errarg = errarg;
     common_init(dbg, flags);
@@ -117,7 +117,7 @@ dwarf_producer_init(Dwarf_Unsigned flags,
         DWARF_P_DBG_ERROR(dbg, DW_DLE_NO_CALLBACK_FUNC,
                           (Dwarf_P_Debug) DW_DLV_BADADDR);
     }
-    dbg->de_func = func;
+    dbg->de_callback_func = func;
     dbg->de_errhand = errhand;
     dbg->de_errarg = errarg;
     common_init(dbg, flags);

@@ -2,8 +2,8 @@
 #define _DWARF_ELF_PORT_H
 /*
 
-  Copyright (C) 2008 David Anderson. All rights reserved.
-  Portions Copyright 2008 Arxan Technologies, Inc. All rights reserved.
+  Copyright (C) 2008-2010 David Anderson. All rights reserved.
+  Portions Copyright 2008-2010 Arxan Technologies, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -43,7 +43,8 @@
 int
 dwarf_elf_object_access_init(dwarf_elf_handle  elf ,
                     int libdwarf_owns_elf,
-                    Dwarf_Obj_Access_Interface**  ret_obj );
+                    Dwarf_Obj_Access_Interface**  ret_obj,
+                    int *err );
 
 void
 dwarf_elf_object_access_finish(Dwarf_Obj_Access_Interface*  obj );

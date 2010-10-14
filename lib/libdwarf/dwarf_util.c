@@ -1,6 +1,6 @@
 /*
-  Copyright (C) 2000,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
+  Copyright (C) 2000-2005 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -73,6 +73,10 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
         return (form);
 
     case DW_FORM_addr:
+        if(address_size) {
+            return address_size;
+        }
+        /* This should never happen, address_size should be set. */
         return (dbg->de_pointer_size);
 
     /* DWARF2 was wrong on the size of the attribute for
@@ -117,6 +121,9 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
 
     case DW_FORM_flag:
         return (1);
+    case DW_FORM_sec_offset:
+        /* If 32bit dwarf, is 4. Else is 64bit dwarf and is 8. */
+        return (v_length_size);
 
     case DW_FORM_ref_udata:
         _dwarf_decode_u_leb128(val_ptr, &leb128_length);
@@ -309,7 +316,7 @@ _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
 
     abbrev_ptr = cu_context->cc_last_abbrev_ptr != NULL ?
         cu_context->cc_last_abbrev_ptr :
-        dbg->de_debug_abbrev + cu_context->cc_abbrev_offset;
+        dbg->de_debug_abbrev.dss_data + cu_context->cc_abbrev_offset;
 
     /* End of abbrev's for this cu, since abbrev code is 0. */
     if (*abbrev_ptr == 0) {
@@ -432,7 +439,7 @@ _dwarf_length_of_cu_header(Dwarf_Debug dbg, Dwarf_Unsigned offset)
     int local_length_size = 0;
     int local_extension_size = 0;
     Dwarf_Unsigned length = 0;
-    Dwarf_Small *cuptr = dbg->de_debug_info + offset;
+    Dwarf_Small *cuptr = dbg->de_debug_info.dss_data + offset;
 
     READ_AREA_LENGTH(dbg, length, Dwarf_Unsigned,
                      cuptr, local_length_size, local_extension_size);
@@ -468,22 +475,21 @@ _dwarf_length_of_cu_header_simple(Dwarf_Debug dbg)
 int
 _dwarf_load_debug_info(Dwarf_Debug dbg, Dwarf_Error * error)
 {
-    int res;
+    int res = DW_DLV_ERROR;
 
-    /* Testing de_debug_info allows us to avoid testing
-       de_debug_abbrev. One test instead of 2. .debug_info is useless
+    /* Testing de_debug_info.dss_data allows us to avoid testing
+       de_debug_abbrev.dss_data. 
+       One test instead of 2. .debug_info is useless
        without .debug_abbrev. */
-    if (dbg->de_debug_info) {
+    if (dbg->de_debug_info.dss_data) {
         return DW_DLV_OK;
     }
 
-    res = _dwarf_load_section(dbg, dbg->de_debug_abbrev_index,
-                              &dbg->de_debug_abbrev, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_abbrev,error);
     if (res != DW_DLV_OK) {
         return res;
     }
-    res = _dwarf_load_section(dbg, dbg->de_debug_info_index,
-                              &dbg->de_debug_info, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_info, error);
     return res;
 
 }
@@ -508,7 +514,20 @@ _dwarf_free_abbrev_hash_table_contents(Dwarf_Debug dbg,Dwarf_Hash_Table hash_tab
     dwarf_dealloc(dbg,hash_table->tb_entries,DW_DLA_HASH_TABLE_ENTRY);
 }
 
-int _dwarf_get_address_size(Dwarf_Debug dbg, Dwarf_Die die)
+/* 
+    If no die provided the size value returned might be wrong.
+    If different compilation units have different address sizes 
+    this may not give the correct value in all contexts if the die
+    pointer is NULL. 
+    If the Elf offset size != address_size 
+    (for example if address_size = 4 but recorded in elf64 object)
+    this may not give the correct value in all contexts if the die
+    pointer is NULL. 
+    If the die pointer is non-NULL (in which case it must point to
+    a valid DIE) this will return the correct size.
+*/
+int 
+_dwarf_get_address_size(Dwarf_Debug dbg, Dwarf_Die die)
 {
     Dwarf_CU_Context context = 0;
     Dwarf_Half addrsize = 0;

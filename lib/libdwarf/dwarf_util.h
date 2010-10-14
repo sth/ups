@@ -3,7 +3,7 @@
 /*
 
   Copyright (C) 2000,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007,2008 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -182,8 +182,9 @@ typedef Dwarf_Unsigned BIGGEST_UINT;
    It reads the bits from where rw_src_data_p  points to 
    and updates the rw_src_data_p to point past what was just read.
 
-   It updates w_length_size and w_exten_size (which
-	are really issues only for the dwarfv2.1  64bit extension).
+   It updates w_length_size (to the size of an offset, either 4 or 8)
+   and w_exten_size (set 0 unless this frame has the DWARF3,4 64bit
+   extension, in which case w_exten_size is set to 4).
 
    r_dbg is just the current dbg pointer.
    w_target is the output length field.
@@ -206,17 +207,15 @@ typedef Dwarf_Unsigned BIGGEST_UINT;
    dwarf that the first 32 bits of the 64bit offset will be
    zero (because the compiler could not handle a truly large 
    value as of Jan 2003 and because no app has that much debug 
-   info anyway (yet)).
+   info anyway, at least not in the IRIX case).
 
    At present not testing for '64bit elf' here as that
    does not seem necessary (none of the 64bit length seems 
    appropriate unless it's  ident[EI_CLASS] == ELFCLASS64).
-   Might be a good idea though.
-
 */
 #   define    READ_AREA_LENGTH(r_dbg,w_target,r_targtype,         \
 	rw_src_data_p,w_length_size,w_exten_size)                 \
-do {    READ_UNALIGNED(r_dbg,w_target,r_targtype,                     \
+do {    READ_UNALIGNED(r_dbg,w_target,r_targtype,                 \
                 rw_src_data_p, ORIGINAL_DWARF_OFFSET_SIZE);       \
     if(w_target == DISTINGUISHED_VALUE) {                         \
 	     /* dwarf3 64bit extension */                         \
@@ -228,7 +227,9 @@ do {    READ_UNALIGNED(r_dbg,w_target,r_targtype,                     \
              rw_src_data_p += DISTINGUISHED_VALUE_OFFSET_SIZE;    \
     } else {                                                      \
 	if(w_target == 0 && r_dbg->de_big_endian_object) {        \
-	     /* IRIX 64 bit, big endian */                        \
+	     /* IRIX 64 bit, big endian.  This test */            \
+	     /* is not a truly precise test, a precise test */    \
+             /* would check if the target was IRIX.  */           \
              READ_UNALIGNED(r_dbg,w_target,r_targtype,            \
                 rw_src_data_p, DISTINGUISHED_VALUE_OFFSET_SIZE);  \
 	     w_length_size  = DISTINGUISHED_VALUE_OFFSET_SIZE;    \
@@ -241,8 +242,6 @@ do {    READ_UNALIGNED(r_dbg,w_target,r_targtype,                     \
              rw_src_data_p += w_length_size;                      \
 	}                                                         \
     } } while(0)
-
-
 
 Dwarf_Unsigned
 _dwarf_decode_u_leb128(Dwarf_Small * leb128,

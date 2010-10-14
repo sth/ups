@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000,2005 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2008  David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2008-2010  David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -45,6 +45,18 @@
 #define DW_CIE_ID 		~(0x0)
 #define DW_CIE_VERSION		1 /* DWARF2 */
 #define DW_CIE_VERSION3		3 /* DWARF3 */
+#define DW_CIE_VERSION4		4 /* DWARF4 */
+
+#define DW_CU_VERSION2 2
+#define DW_CU_VERSION3 3
+#define DW_CU_VERSION4 4
+
+/* DWARF2,3 and 4 */
+#define DW_ARANGES_VERSION2 2
+
+#define DW_LINE_VERSION2   2
+#define DW_LINE_VERSION3   3
+#define DW_LINE_VERSION4   4
 
 
 /* 

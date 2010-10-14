@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000, 2004, 2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2009 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2009-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -44,6 +44,12 @@
     UINT_MAX is used as our approximation to infinity.
 */
 #define MAX_LINE_DIFF       UINT_MAX
+
+/* This is for a sanity check on line
+   table extended opcodes.
+   It is entirely arbitrary, and 100 is surely too small if
+   someone was inserting strings in the opcode. */
+#define DW_LNE_LEN_MAX   100
 
 
 /*

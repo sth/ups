@@ -11,7 +11,7 @@
 .nr Hb 5
 \." ==============================================
 \." Put current date in the following at each rev
-.ds vE rev 1.23, 8 Aug 2008
+.ds vE rev 1.29, 20 Sep 2010
 \." ==============================================
 \." ==============================================
 .ds | |
@@ -48,6 +48,7 @@ suggest possible optimizations.
 The document is oriented to creating DWARF version 2.
 Support for creating DWARF3 is intended but such support
 is not yet fully present.
+DWARF4 support is also intended.
 .P
 \*(vE 
 .AE
@@ -63,7 +64,7 @@ information.
 .H 2 "Copyright"
 Copyright 1993-2006 Silicon Graphics, Inc.
 
-Copyright 2007-2008 David Anderson.
+Copyright 2007-2010 David Anderson.
 
 Permission is hereby granted to
 copy or republish or use any or all of this document without
@@ -85,6 +86,10 @@ and are being used by the code generator to provide debugging information.
 Some functions (and support for some extensions) were provided
 by Sun Microsystems.
 
+Example code showing one use of the functionality
+may be found in the dwarfgen \f(CWdwarfgen\fP application
+(provided in the source distribution along with libdwarf).
+
 .P
 The focus of this document is the functional interface,
 and as such, implementation and optimization issues are
@@ -96,7 +101,7 @@ in the "\fIA Consumer Library Interface to DWARF\fP", which should
 be read (or at least skimmed) before reading this document.
 .P
 However the general style of functions here 
-in the producer librar is rather C-traditional
+in the producer library is rather C-traditional
 with various types as return values (quite different
 from the consumer library interfaces).   The style
 generally follows the style of the original DWARF1 reader
@@ -109,6 +114,15 @@ too much of a change for the two applications then using
 the interface!  So this interface remains in the traditional C style
 of returning various data types with various (somewhat inconsistent)
 means of indicating failure.
+.P
+The error handling code in the library may either
+return a value or abort. 
+The library user can provide a function that the producer code
+will call on errors (which would allow callers avoid testing
+for error returns if the user function exits or aborts).
+See the  \f(CWdwarf_producer_init()\fP
+description below for more details.  
+
 
 .H 2 "Document History"
 This document originally prominently referenced
@@ -185,6 +199,8 @@ debug info creation.
 This library interface now cleans up, deallocating
 all memory it uses (the application simply calls
 dwarf_producer_finish(dbg)).
+.LI "September 20  2010"
+Now documents the marker feature of DIE creation.
 .LE
 
 .H 1 "Type Definitions"
@@ -442,10 +458,45 @@ On error it returns \f(CWDW_DLV_BADADDR\fP.
 \f(CWfunc\fP is a pointer to a function called-back from \f(CWLibdwarf\fP 
 whenever \f(CWLibdwarf\fP needs to create a new object section (as it will 
 for each .debug_* section and related relocation section).  
+.P
 \f(CWerrhand\fP 
-is a pointer to a function that will be used for handling errors detected 
-by \f(CWLibdwarf\fP.  \f(CWerrarg\fP is the default error argument used 
+is a pointer to a function that will be used as
+a default fall-back function for handling errors detected 
+by \f(CWLibdwarf\fP.  
+.P
+\f(CWerrarg\fP is the default error argument used 
 by the function pointed to by \f(CWerrhand\fP.
+.P
+For historical reasons the error handling is complicated
+and the following three paragraphs describe the  three
+possible scenarios when a producer function detects an error.
+In all cases a short error message is printed on
+stdout if the error number
+is negative (as all such should be, see libdwarf.h).
+Then further action is taken as follows.
+.P
+First,
+if the  Dwarf_Error argument to any specific producer function
+(see the functions documented below)  is non-null
+the \f(CWerrhand\fP argument here is ignored in that call and
+the specific producer function sets the Dwarf_Error and returns
+some specific value (for dwarf_producer_init it is DW_DLV_BADADDR
+as mentioned just above) indicating there is an error.
+.P
+Second,
+if the  Dwarf_Error argument to any specific producer function 
+(see the functions documented below)  is NULL and the
+\f(CWerrarg\fP  to \f(CWdwarf_producer_init() \fP is non-NULL
+then on an error in the producer code the Dwarf_Handler function is called
+and if that called function returns the producer code returns
+a specific value (for dwarf_producer_init it is DW_DLV_BADADDR
+as mentioned just above) indicating there is an error.
+.P
+Third,
+if the  Dwarf_Error argument to any specific producer function
+(see the functions documented below)  is NULL and the
+\f(CWerrarg\fP  to \f(CWdwarf_producer_init() \fP is NULL
+then on an error \f(CWabort()\fP is called.
 .P
 The \f(CWflags\fP
 values are as follows:
@@ -560,7 +611,8 @@ Its prototype is:
     int*                error) \fP
 .DE
 For each section in the object file that \f(CWlibdwarf\fP
-needs to create, it calls this function once, passing in
+needs to create, it calls this function once (calling it
+from \f(CWdwarf_transform_to_disk_form()\fP), passing in
 the section \f(CWname\fP, the section \f(CWtype\fP,
 the section \f(CWflags\fP, the \f(CWlink\fP field, and
 the \f(CWinfo\fP field.  
@@ -573,7 +625,7 @@ callback must be ignored by the app).
 And, for relocation callbacks, the \f(CWinfo\fP field
 is passed as the elf section number of the section
 the relocations apply to.
-
+.P
 On success
 the user function should return the Elf section number of the
 newly created Elf section.
@@ -1172,6 +1224,87 @@ Non-NULL links
 overwrite the corresponding links the given \f(CWdie\fP may have
 had before the call to \f(CWdwarf_die_link() \fP.
 
+.H 2 "DIE Markers"
+DIE markers provide a way for a producer to extract DIE offsets
+from DIE generation.  The markers do not influence the
+generation of DWARF, they simply allow a producer to
+extract .debug_info offsets for whatever purpose the
+producer finds useful (for example, a producer might
+want some unique other section unknown
+to libdwarf to know a particular DIE offset).
+
+One marks one or more DIEs as desired any time before
+calling \f(CWdwarf_transform_to_disk_form()\fP.
+
+After calling \f(CWdwarf_transform_to_disk_form()\fP
+call 
+\f(CWdwarf_get_die_markers()\fP 
+which has the offsets where the marked DIEs were written
+in the generated .debug_info data.
+
+
+.H 3 "dwarf_add_die_marker()"
+.DS
+\f(CWDwarf_Unsigned dwarf_add_die_marker(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Die die,
+        Dwarf_Unsigned marker,
+        Dwarf_Error *error) \fP
+.DE
+The function \f(CWdwarf_add_die_marker() \fP writes the
+value \f(CWmarker\fP to the \f(CWDIE\fP descriptor given by
+\f(CWdie\fP.  
+Passing in a marker of 0 means 'there is no marker'
+(zero is the default in DIEs).
+
+It returns \f(CW0\fP, on success.  
+On error it returns \f(CWDW_DLV_NOCOUNT\fP.
+
+.H 3 "dwarf_get_die_marker()"
+.DS
+\f(CWDwarf_Unsigned dwarf_get_die_marker(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Die die,
+        Dwarf_Unsigned *marker,
+        Dwarf_Error *error) \fP
+.DE
+The function \f(CWdwarf_get_die_marker() \fP returns the
+current marker value for this DIE
+through the pointer \f(CWmarker\fP.
+A marker value of 0 means 'no marker was set'.
+
+It returns \f(CW0\fP, on success.  
+On error it returns \f(CWDW_DLV_NOCOUNT\fP.
+
+.H 3 "dwarf_get_die_markers()"
+.DS
+\f(CWDwarf_Unsigned dwarf_get_die_markers(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Marker * marker_list,
+        Dwarf_Unsigned *marker_count,
+        Dwarf_Error *error) \fP
+.DE
+The function \f(CWdwarf_get_die_marker() \fP returns
+a pointer to an array of \f(CWDwarf_P_Marker\fP pointers to
+\f(CWstruct Dwarf_P_Marker_s\fP structures through
+the pointer \f(CWmarker_list\fP.
+The array length is returned through the
+pointer \f(CWmarker_count\fP.
+
+The call is only meaningful after 
+a call to \f(CWdwarf_transform_to_disk_form()\fP as the
+transform call creates the \f(CWstruct Dwarf_P_Marker_s\fP
+structures, one for each DIE generated for .debug_info
+(but only for DIEs that had a non-zero marker value).
+The field \f(CWma_offset\fP in the structure is set
+during generation of the .debug_info byte stream.
+The field \f(CWma_marker\fP in the structure is a copy
+of the DIE marker of the DIE given that offset.
+
+It returns \f(CW0\fP, on success.
+On error it returns \f(CWDW_DLV_BADADDR\fP (if there are no
+markers it returns \f(CWDW_DLV_BADADDR\fP).
+
 .H 2 "Attribute Creation"
 The functions in this section add attributes to a \f(CWDIE\fP.
 These functions return a \f(CWDwarf_P_Attribute\fP descriptor 
@@ -1654,7 +1787,7 @@ The function \f(CWdwarf_add_line_entry()\fP adds an entry to the
 section containing information about source lines.  
 It specifies
 in \f(CWcode_offset\fP, the offset from the address set using
-\f(CWdwarfdwarf_lne_set_address()\fP, of the address of the first
+\f(CWdwarf_lne_set_address()\fP, of the address of the first
 instruction in a contiguous block.  
 The source file that gave rise
 to the instruction is specified by \f(CWfile_index\fP, the source
@@ -2138,7 +2271,8 @@ stream.
 One just
 has to calculate it by hand or separately
 generate something with the 
-correct sequence and use dwarfdump -v and elfdump -h  and some
+correct sequence and use dwarfdump -v and readelf (or objdump)  
+and some
 kind of hex dumper to see the bytes.
 This is a serious inconvenience! 
 
@@ -2167,6 +2301,8 @@ is specified by the given \f(CWfde\fP.
 index of the \f(CWCIE\fP that should be used to setup the initial
 conditions for the given frame.  
 
+If the MIPS/IRIX specific DW_AT_MIPS_fde attribute is not
+needed  in .debug_info pass in 0 as the \f(CWdie\fP argument.
 
 It returns an index to the given \f(CWfde\fP.
 
@@ -2198,9 +2334,13 @@ adds the
 \f(CWFDE\fP
 specified by \f(CWfde\fP to the list of \f(CWFDE\fPs for the
 object represented by the given \f(CWdbg\fP.  
+
 \f(CWdie\fP specifies
 the \f(CWDIE\fP that represents the function whose frame information
 is specified by the given \f(CWfde\fP.  
+If the MIPS/IRIX specific DW_AT_MIPS_fde attribute is not
+needed  in .debug_info pass in 0 as the \f(CWdie\fP argument.
+
 \f(CWcie\fP specifies the
 index of the \f(CWCIE\fP that should be used to setup the initial
 conditions for the given frame.  
@@ -2305,16 +2445,26 @@ On error, it returns \f(CWDW_DLV_NOCOUNT\fP.
 The function \f(CWdwarf_add_frame_fde()\fP adds the \f(CWFDE\fP
 specified by \f(CWfde\fP to the list of \f(CWFDE\fPs for the
 object represented by the given \f(CWdbg\fP.  
+
+This function refers to MIPS/IRIX specific exception tables
+and is not a function other targets need.
+
 \f(CWdie\fP specifies
 the \f(CWDIE\fP that represents the function whose frame information
 is specified by the given \f(CWfde\fP.  
+If the MIPS/IRIX specific DW_AT_MIPS_fde attribute is not
+needed  in .debug_info pass in 0 as the \f(CWdie\fP argument.
+
 \f(CWcie\fP specifies the
 index of the \f(CWCIE\fP that should be used to setup the initial
 conditions for the given frame.  
+
 \f(CWoffset_into_exception_tables\fP specifies the
+MIPS/IRIX specific
 offset into \f(CW.MIPS.eh_region\fP elf section where the exception tables 
 for this function begins. 
-\f(CWexception_table_symbol\fP  gives the index of 
+\f(CWexception_table_symbol\fP is also MIPS/IRIX
+specific and it specifies the index of 
 the relocatable symbol to be used to relocate this offset.
 
 
@@ -2414,19 +2564,30 @@ On error, it returns \f(CWDW_DLV_NOCOUNT\fP.
 .DE
 The function \f(CWdwarf_add_frame_fde()\fP adds the \f(CWFDE\fP
 specified by \f(CWfde\fP to the list of \f(CWFDE\fPs for the
-object represented by the given \f(CWdbg\fP.  \f(CWdie\fP specifies
+object represented by the given \f(CWdbg\fP.  
+
+\f(CWdie\fP specifies
 the \f(CWDIE\fP that represents the function whose frame information
-is specified by the given \f(CWfde\fP.  \f(CWcie\fP specifies the
+is specified by the given \f(CWfde\fP.  
+If the MIPS/IRIX specific DW_AT_MIPS_fde attribute is not
+needed in .debug_info pass in 0 as the \f(CWdie\fP argument.
+
+\f(CWcie\fP specifies the
 index of the \f(CWCIE\fP that should be used to setup the initial
 conditions for the given frame.  \f(CWvirt_addr\fP represents the
 relocatable address at which the code for the given function begins,
 and \f(CWsym_idx\fP gives the index of the relocatable symbol to
 be used to relocate this address (\f(CWvirt_addr\fP that is).
 \f(CWcode_len\fP specifies the size in bytes of the machine instructions
-for the given function. \f(CWoffset_into_exception_tables\fP specifies the
+for the given function. 
+
+\f(CWoffset_into_exception_tables\fP specifies the
 offset into \f(CW.MIPS.eh_region\fP elf section where the exception tables 
-for this function begins. \f(CWexception_table_symbol\fP  gives the index of 
+for this function begins. 
+\f(CWexception_table_symbol\fP  gives the index of 
 the relocatable symbol to be used to relocate this offset.
+These arguments are MIPS/IRIX specific, pass in 0 for
+other targets.
 
 It returns an index to the given \f(CWfde\fP.
 
@@ -2458,7 +2619,7 @@ It returns \f(CWDW_DLV_BADADDR\fP on error.
         Dwarf_Error *error)\fP
 .DE
 The function \f(CWdwarf_add_fde_inst()\fP adds the operation specified
-by \f(CWop\fP to the \f(CWFDE\fP specified by \f(CWfde\fP.  Upto two
+by \f(CWop\fP to the \f(CWFDE\fP specified by \f(CWfde\fP.  Up to two
 operands can be specified in \f(CWval1\fP, and \f(CWval2\fP.  Based on
 the operand specified \f(CWLibdwarf\fP decides how many operands are
 meaningful for the operand.  It also converts the operands to the 
@@ -2467,6 +2628,30 @@ as \f(CWDwarf_Unsigned\fP).
 
 It returns the given \f(CWfde\fP on success, and \f(CWDW_DLV_BADADDR\fP
 on error.
+
+.H 3 "dwarf_insert_fde_inst_bytes()"
+.DS
+\f(CWint dwarf_insert_fde_inst_bytes(
+        Dwarf_P_Debug dbg,
+        Dwarf_P_Fde  fde,
+        Dwarf_Unsigned len,
+        Dwarf_Ptr ibytes,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_insert_fde_inst_bytes()\fP inserts
+the byte array (pointed at by \f(CWibytes\fP and of length \f(CWlen\fP)
+of frame instructions into the fde \f(CWfde\fP.
+It is incompatible with \f(CWdwarf_add_fde_inst()\fP, do not use
+both functions on any given Dwarf_P_Debug.
+At present it may only be called once on a given \f(CWfde\fP.
+The \f(CWlen\fP bytes \f(CWibytes\fP may be constructed in any way, but
+the assumption is they were copied from an object file
+such as is returned by the libdwarf consumer function
+\f(CWdwarf_get_fde_instr_bytes()\fP.
+
+It returns \f(CWDW_DLV_OK\fP on success, and \f(CWDW_DLV_ERROR\fP
+on error.
+
 
 .S
 .TC 1 1 4

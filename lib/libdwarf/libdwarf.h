@@ -1,9 +1,9 @@
 /*
 
-  Copyright (C) 2000,2001,2002,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2007 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008-2009 David Anderson. All rights reserved.
-  Portions Copyright 2008 Arxan Technologies, Inc. All rights reserved.
+  Copyright (C) 2000-2010 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2008-2010 David Anderson. All rights reserved.
+  Portions Copyright 2008-2010 Arxan Technologies, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -114,6 +114,14 @@ typedef unsigned long long  Dwarf_Addr;     /* target memory address */
 
 typedef void*        Dwarf_Ptr;          /* host machine pointer */
 
+/* Used for DW_FORM_ref_sig8. It is not a string, it
+   is 8 bytes of a signature one would use to find
+   a type unit. See dwarf_formsig8()
+*/
+typedef struct  {
+    char signature[8];
+} Dwarf_Sig8;
+
 /* Contains info on an uninterpreted block of data
 */
 typedef struct {
@@ -221,21 +229,27 @@ typedef struct {
 
 /* Taken as meaning 'undefined value', this is not
    a column or register number.
-   Only present at libdwarf runtime. Never on disk.
+   Only present at libdwarf runtime in the consumer
+   interfaces. Never on disk.
    DW_FRAME_* Values present on disk are in dwarf.h
-   Ensure this is > DW_REG_TABLE_SIZE.
+   Ensure this is > DW_REG_TABLE_SIZE (the reg table
+   size is changeable at runtime with the *reg3() interfaces,
+   and this value must be greater than the reg table size).
 */
 #define DW_FRAME_UNDEFINED_VAL          1034
 
 /* Taken as meaning 'same value' as caller had, not a column
-   or register number
-   Only present at libdwarf runtime. Never on disk.
+   or register number.
+   Only present at libdwarf runtime in the consumer
+   interfaces. Never on disk.
    DW_FRAME_* Values present on disk are in dwarf.h
-   Ensure this is > DW_REG_TABLE_SIZE.
+   Ensure this is > DW_REG_TABLE_SIZE (the reg table
+   size is changeable at runtime with the *reg3() interfaces,
+   and this value must be greater than the reg table size).
 */
 #define DW_FRAME_SAME_VAL               1035
 
-/* For DWARF3 interfaces, make the CFA a column with no
+/* For DWARF3 consumer interfaces, make the CFA a column with no
    real table number.  This is what should have been done
    for the DWARF2 interfaces.  This actually works for
    both DWARF2 and DWARF3, but see the libdwarf documentation
@@ -243,9 +257,13 @@ typedef struct {
    and  dwarf_get_fde_info_for_all_regs3()  
    Do NOT use this with the older dwarf_get_fde_info_for_reg()
    or dwarf_get_fde_info_for_all_regs() consumer interfaces.
-   Must be higher than any register count for *any* ABI.
-   (an unfortunate consequence of a lack of any way
-   to set it at run time).
+   Must be higher than any register count for *any* ABI
+   (ensures maximum applicability with minimum effort).
+   Ensure this is > DW_REG_TABLE_SIZE (the reg table
+   size is changeable at runtime with the *reg3() interfaces,
+   and this value must be greater than the reg table size).
+   Only present at libdwarf runtime in the consumer
+   interfaces. Never on disk.
 */
 #define DW_FRAME_CFA_COL3               1436
 
@@ -276,13 +294,14 @@ typedef struct Dwarf_Regtable_Entry_s {
            software register numbers in the machine hardware)
       and the following applies:
 
-          if dw_value_type == DW_EXPR_OFFSET (the only  possible case for dwarf2):
-        If dw_offset_relevant is non-zero, then
-         the value is stored at at the address CFA+N where N is a signed offset. 
-         Rule: Offset(N)
+          if dw_value_type == DW_EXPR_OFFSET (the only case for dwarf2):
+            If dw_offset_relevant is non-zero, then
+                the value is stored at at the address CFA+N where 
+                N is a signed offset. 
+                Rule: Offset(N)
             If dw_offset_relevant is zero, then the value of the register
-             is the value of (DWARF) register number dw_regnum.
-             Rule: register(F)
+                is the value of (DWARF) register number dw_regnum.
+                Rule: register(F)
           Other values of dw_value_type are an error.
         */
     Dwarf_Small         dw_offset_relevant;
@@ -309,21 +328,30 @@ typedef struct Dwarf_Regtable_Entry3_s {
     /*  For each index i (naming a hardware register with dwarf number
         i) the following is true and defines the value of that register:
 
-           If dw_regnum is Register DW_FRAME_UNDEFINED_VAL  
+          If dw_regnum is Register DW_FRAME_UNDEFINED_VAL  
              it is not DWARF register number but
              a place holder indicating the register has no defined value.
-           If dw_regnum is Register DW_FRAME_SAME_VAL 
+          If dw_regnum is Register DW_FRAME_SAME_VAL 
              it  is not DWARF register number but
              a place holder indicating the register has the same
              value in the previous frame.
-           DW_FRAME_UNDEFINED_VAL, DW_FRAME_SAME_VAL are
-             only present at libdwarf runtime. Never on disk.
+           DW_FRAME_UNDEFINED_VAL, DW_FRAME_SAME_VAL and
+             DW_FRAME_CFA_COL3 are only present at libdwarf runtime. 
+             Never on disk.
              DW_FRAME_* Values present on disk are in dwarf.h
+           Because DW_FRAME_SAME_VAL and DW_FRAME_UNDEFINED_VAL 
+           and DW_FRAME_CFA_COL3 are defineable at runtime 
+           consider the names symbolic in this comment, not absolute.
 
           Otherwise: the register number is a DWARF register number
             (see ABI documents for how this translates to hardware/
              software register numbers in the machine hardware)
              and the following applies:
+
+           In a cfa-defining entry (rt3_cfa_rule) the regnum is the
+           CFA 'register number'. Which is some 'normal' register,
+           not DW_FRAME_CFA_COL3, nor DW_FRAME_SAME_VAL, nor 
+           DW_FRAME_UNDEFINED_VAL.
 
           If dw_value_type == DW_EXPR_OFFSET (the only  possible case for 
              dwarf2):
@@ -373,19 +401,18 @@ typedef struct Dwarf_Regtable_Entry3_s {
    with from a portability point of view: changing
    the number for every architecture is a pain (if one fails
    to set it correctly a register rule gets clobbered when
-   setting CFA).
-   With MIPS it just happened to be easy to use DW_FRAME_CFA_COL.
+   setting CFA).  With MIPS it just happened to be easy to use 
+   DW_FRAME_CFA_COL (it was wrong conceptually but it was easy...).
 
-   rt3_rules and rt3_reg_table_size must be filled in 
-    before calling libdwarf.
-    Filled in with a pointer to an array (pointer and
-    array  set up by the calling application) of rt3_reg_table_size 
-    Dwarf_Regtable_Entry3_s structs.   
-    libdwarf does not allocate or deallocate space for the
-    rules, you must do so.   libdwarf will initialize the
-    contents rules array, you do not need to do so (though
-    if you choose to initialize the array somehow that is ok:
-    libdwarf will overwrite your initializations with its own).
+   rt3_rules and rt3_reg_table_size must be filled in before 
+   calling libdwarf.  Filled in with a pointer to an array 
+   (pointer and array  set up by the calling application) 
+   of rt3_reg_table_size Dwarf_Regtable_Entry3_s structs.   
+   libdwarf does not allocate or deallocate space for the
+   rules, you must do so.   libdwarf will initialize the
+   contents rules array, you do not need to do so (though
+   if you choose to initialize the array somehow that is ok:
+   libdwarf will overwrite your initializations with its own).
 
 */
 typedef struct Dwarf_Regtable3_s {
@@ -415,7 +442,7 @@ int dwarf_frame_get_reg_expression(struct Dwarf_Regtable_Entry3_s *reg_in,
     Dwarf_Block *block_out);
 
 
-/* for DW_DLC_SYMBOLIC_RELOCATIONS output to caller 
+/* For DW_DLC_SYMBOLIC_RELOCATIONS output to caller 
    v2, adding drd_length: some relocations are 4 and
    some 8 bytes (pointers are 8, section offsets 4) in
    some dwarf environments. (MIPS relocations are all one
@@ -423,13 +450,13 @@ int dwarf_frame_get_reg_expression(struct Dwarf_Regtable_Entry3_s *reg_in,
    to keep struct size down.
 */
 enum Dwarf_Rel_Type {
-        dwarf_drt_none, /* should not get to caller */
-                dwarf_drt_data_reloc, /* simple normal relocation */
-                dwarf_drt_segment_rel, /* special reloc, exceptions*/
-                dwarf_drt_first_of_length_pair,/* this and drt_second 
-                for .word end - begin
-                 case */
-                dwarf_drt_second_of_length_pair
+        dwarf_drt_none,        /* Should not get to caller */
+        dwarf_drt_data_reloc,  /* Simple normal relocation. */
+        dwarf_drt_segment_rel, /* Special reloc, exceptions. */
+        /* dwarf_drt_first_of_length_pair  and drt_second 
+           are for for the  .word end - begin case. */
+        dwarf_drt_first_of_length_pair,
+        dwarf_drt_second_of_length_pair
 };
 
 typedef struct Dwarf_P_Marker_s * Dwarf_P_Marker;
@@ -440,12 +467,12 @@ struct Dwarf_P_Marker_s {
 
 typedef struct Dwarf_Relocation_Data_s  * Dwarf_Relocation_Data;
 struct Dwarf_Relocation_Data_s {
-    unsigned char drd_type; /* cast to/from Dwarf_Rel_Type
-                      to keep size small in struct */
-    unsigned char drd_length; /* length in bytes
-                     of data being relocated. 4 for 32bit.
-                     8 for 64bit data */
-    Dwarf_Unsigned       drd_offset; /* where the data to reloc is */
+    unsigned char drd_type;   /* Cast to/from Dwarf_Rel_Type
+                               to keep size small in struct. */
+    unsigned char drd_length; /* Length in bytes of data being 
+                               relocated. 4 for 32bit data,
+                               8 for 64bit data. */
+    Dwarf_Unsigned       drd_offset; /* Where the data to reloc is. */
     Dwarf_Unsigned       drd_symbol_index;
 };
 
@@ -519,9 +546,13 @@ typedef struct Dwarf_Obj_Access_Section_s     Dwarf_Obj_Access_Section;
    names in the 'name' field.  libdwarf does
    not free the strings in 'name'. */
 struct Dwarf_Obj_Access_Section_s {
-    Dwarf_Addr addr;
+    Dwarf_Addr     addr;
     Dwarf_Unsigned size;
-    const char* name;
+    const char*    name;
+    /* Set link to zero if it is meaningless.  If non-zero
+       it should be a link to a rela section or from symtab
+       to strtab.  In Elf it is sh_link. */
+    Dwarf_Unsigned link;
 };
 
 /* Returned by the get_endianness function in 
@@ -635,7 +666,29 @@ struct Dwarf_Obj_Access_Methods_s {
      * DW_DLV_NO_ENTRY - No such section.
      */
     int    (*load_section)(void* obj, Dwarf_Half section_index, 
-    Dwarf_Small** return_data, int* error);
+        Dwarf_Small** return_data, int* error);
+
+   /**
+    * relocate_a_section
+    * If relocations are not supported leave this pointer NULL.
+    *
+    * Get a pointer to an array of bytes that represent the section.
+    *
+    * Parameters
+    * section_index - Zero-based index of the section to be relocated.
+    * error - Pointer to an integer for returning libdwarf-defined 
+    *   error numbers.
+    *
+    * Return
+    * DW_DLV_OK - No error.
+    * DW_DLV_ERROR - Error. Use 'error' to indicate a libdwarf-defined 
+    *    error number.
+    * DW_DLV_NO_ENTRY - No such section.
+    */
+    int    (*relocate_a_section)(void* obj, Dwarf_Half section_index,
+         Dwarf_Debug dbg,
+         int* error);
+
 };
 
 
@@ -715,14 +768,19 @@ struct Dwarf_Obj_Access_Interface_s {
 #define DW_DLC_SIZE_32     0x20000000 /* 64-bit address-size target */
 #define DW_DLC_OFFSET_SIZE_64 0x10000000 /* 64-bit offset-size DWARF */
 
-/* dwarf_init() access flag modifiers
+/* dwarf_pro_init() access flag modifiers
 */
 #define DW_DLC_ISA_MIPS             0x00000000 /* MIPS target */
 #define DW_DLC_ISA_IA64             0x01000000 /* IA64 target */
-#define DW_DLC_STREAM_RELOCATIONS   0x02000000 /* old style binary relocs */
-#define DW_DLC_SYMBOLIC_RELOCATIONS 0x04000000 /* usable with assem output */
-#define DW_DLC_TARGET_BIGENDIAN     0x08000000 /* big    endian target */
-#define DW_DLC_TARGET_LITTLEENDIAN  0x00100000 /* little endian target */
+#define DW_DLC_STREAM_RELOCATIONS   0x02000000 /* Old style binary relocs */
+
+    /* Usable with assembly output because it is up to the producer to
+       deal with locations in whatever manner the producer code wishes. 
+       Possibly emitting text an assembler will recognize. */
+#define DW_DLC_SYMBOLIC_RELOCATIONS 0x04000000 
+
+#define DW_DLC_TARGET_BIGENDIAN     0x08000000 /* Big    endian target */
+#define DW_DLC_TARGET_LITTLEENDIAN  0x00100000 /* Little endian target */
 
 #if 0
   /*
@@ -956,25 +1014,44 @@ struct Dwarf_Obj_Access_Interface_s {
 #define DW_DLE_DEBUG_RANGES_OFFSET_BAD         206
 #define DW_DLE_DEBUG_RANGES_MISSING_END        207
 #define DW_DLE_DEBUG_RANGES_OUT_OF_MEM         208
+#define DW_DLE_DEBUG_SYMTAB_ERR                209
+#define DW_DLE_DEBUG_STRTAB_ERR                210
+#define DW_DLE_RELOC_MISMATCH_INDEX            211
+#define DW_DLE_RELOC_MISMATCH_RELOC_INDEX      212
+#define DW_DLE_RELOC_MISMATCH_STRTAB_INDEX     213
+#define DW_DLE_RELOC_SECTION_MISMATCH          214
+#define DW_DLE_RELOC_SECTION_MISSING_INDEX     215
+#define DW_DLE_RELOC_SECTION_LENGTH_ODD        216
+#define DW_DLE_RELOC_SECTION_PTR_NULL          217
+#define DW_DLE_RELOC_SECTION_MALLOC_FAIL       218
+#define DW_DLE_NO_ELF64_SUPPORT                219
+#define DW_DLE_MISSING_ELF64_SUPPORT           220
+#define DW_DLE_ORPHAN_FDE                      221
+#define DW_DLE_DUPLICATE_INST_BLOCK            222
+#define DW_DLE_BAD_REF_SIG8_FORM               223
+#define DW_DLE_ATTR_EXPRLOC_FORM_BAD           224
+#define DW_DLE_FORM_SEC_OFFSET_LENGTH_BAD      225
+#define DW_DLE_NOT_REF_FORM                    226
+#define DW_DLE_DEBUG_FRAME_LENGTH_NOT_MULTIPLE 227
 
 
 
     /* DW_DLE_LAST MUST EQUAL LAST ERROR NUMBER */
-#define DW_DLE_LAST        208
+#define DW_DLE_LAST        227
 #define DW_DLE_LO_USER     0x10000
 
-        /* taken as meaning 'undefined value', this is not
-           a column or register number.
-           Only present at libdwarf runtime. Never on disk.
-       DW_FRAME_* Values present on disk are in dwarf.h
-        */
+   /* Taken as meaning 'undefined value', this is not
+      a column or register number.
+      Only present at libdwarf runtime. Never on disk.
+      DW_FRAME_* Values present on disk are in dwarf.h
+   */
 #define DW_FRAME_UNDEFINED_VAL          1034
 
-        /* taken as meaning 'same value' as caller had, not a column
-           or register number
-           Only present at libdwarf runtime. Never on disk.
-       DW_FRAME_* Values present on disk are in dwarf.h
-        */
+   /* Taken as meaning 'same value' as caller had, not a column
+      or register number
+      Only present at libdwarf runtime. Never on disk.
+      DW_FRAME_* Values present on disk are in dwarf.h
+   */
 #define DW_FRAME_SAME_VAL               1035
 
 
@@ -1043,6 +1120,16 @@ int dwarf_object_finish(Dwarf_Debug /* dbg */,
     Dwarf_Error* /* error */);
   
 /* die traversal operations */
+int dwarf_next_cu_header_b(Dwarf_Debug /*dbg*/, 
+    Dwarf_Unsigned* /*cu_header_length*/, 
+    Dwarf_Half*     /*version_stamp*/, 
+    Dwarf_Off*      /*abbrev_offset*/, 
+    Dwarf_Half*     /*address_size*/, 
+    Dwarf_Half*     /*length_size*/, 
+    Dwarf_Half*     /*extension_size*/, 
+    Dwarf_Unsigned* /*next_cu_header_offset*/,
+    Dwarf_Error*    /*error*/);
+/* The following is now obsolete, though supported. November 2009. */
 int dwarf_next_cu_header(Dwarf_Debug /*dbg*/, 
     Dwarf_Unsigned* /*cu_header_length*/, 
     Dwarf_Half*     /*version_stamp*/, 
@@ -1096,8 +1183,21 @@ int dwarf_dieoffset(Dwarf_Die /*die*/,
     Dwarf_Off*       /*return_offset*/,
     Dwarf_Error*     /*error*/);
 
+/* dwarf_CU_dieoffset_given_die returns
+   the global debug_info section offset of the CU die
+   that is the CU containing the given_die
+   (the passed in DIE can be any DIE). 
+   This information makes it possible for a consumer to
+   find and print CU context information for any die. 
+   See also dwarf_get_cu_die_offset_given_cu_header_offset(). */
+int dwarf_CU_dieoffset_given_die(Dwarf_Die /*given_die*/, 
+    Dwarf_Off*       /*return_offset*/,
+    Dwarf_Error*     /*error*/);
+
 /* dwarf_die_CU_offset returns the CU relative offset
-   not the global debug_info section offset. */
+   not the global debug_info section offset, given
+   any DIE in the CU.  See also dwarf_CU_dieoffset_given_die().
+   */
 int dwarf_die_CU_offset(Dwarf_Die /*die*/,
     Dwarf_Off*       /*return_offset*/,
     Dwarf_Error*     /*error*/);
@@ -1248,6 +1348,12 @@ int dwarf_global_formref(Dwarf_Attribute /*attr*/,
     Dwarf_Off*       /*return_offset*/,
     Dwarf_Error*     /*error*/);
 
+/*  dwarf_formsig8 returns in the caller-provided 8 byte area
+    the 8 bytes of a DW_FORM_ref_sig8.  Not a string.  */
+int dwarf_formsig8(Dwarf_Attribute /*attr*/,
+    Dwarf_Sig8 * /*returned sig bytes*/,
+    Dwarf_Error*     /*error*/);
+
 int dwarf_formaddr(Dwarf_Attribute /*attr*/, 
     Dwarf_Addr   *   /*returned_addr*/,
     Dwarf_Error*     /*error*/);
@@ -1271,6 +1377,12 @@ int dwarf_formblock(Dwarf_Attribute /*attr*/,
 int dwarf_formstring(Dwarf_Attribute /*attr*/, 
     char   **        /*returned_string*/,
     Dwarf_Error*     /*error*/);
+
+int dwarf_formexprloc(Dwarf_Attribute /*attr*/,
+    Dwarf_Unsigned * /*return_exprlen*/,
+    Dwarf_Ptr  * /*block_ptr*/,
+    Dwarf_Error * /*error*/);
+
 
 /* end attribute query operations. */
 
@@ -1358,6 +1470,9 @@ int dwarf_global_die_offset(Dwarf_Global /*global*/,
     Dwarf_Off*       /*return_offset*/,
     Dwarf_Error *    /*error*/);
 
+/* This returns the CU die global offset if one knows the
+   CU header global offset.
+   See also dwarf_CU_dieoffset_given_die(). */ 
 int dwarf_get_cu_die_offset_given_cu_header_offset(
     Dwarf_Debug      /*dbg*/,
     Dwarf_Off        /*in_cu_header_offset*/,
@@ -1622,6 +1737,13 @@ int dwarf_get_cie_info(Dwarf_Cie /*cie*/,
     Dwarf_Unsigned*  /*initial_instructions_length*/, 
     Dwarf_Error*     /*error*/);
 
+/* dwarf_get_cie_index new September 2009. */
+int dwarf_get_cie_index(
+    Dwarf_Cie /*cie*/,
+    Dwarf_Signed* /*index*/, 
+    Dwarf_Error* /*error*/ );
+
+
 int dwarf_get_fde_instr_bytes(Dwarf_Fde /*fde*/, 
     Dwarf_Ptr *      /*outinstrs*/, Dwarf_Unsigned * /*outlen*/, 
     Dwarf_Error *    /*error*/);
@@ -1652,7 +1774,6 @@ int dwarf_get_fde_info_for_reg(Dwarf_Fde /*fde*/,
 
 /* See discussion of dw_value_type, libdwarf.h. 
    Use of DW_FRAME_CFA_COL is not meaningful in this interface.
-   Nor is DDW_FRAME_CFA_COL3.
    See dwarf_get_fde_info_for_cfa_reg3().
 */
 /* dwarf_get_fde_info_for_reg3 is useful on a single column, but
@@ -1711,7 +1832,7 @@ int dwarf_get_fde_augmentation_data(Dwarf_Fde /* fde*/,
     Dwarf_Unsigned * /* augdata_len */,
     Dwarf_Error*     /*error*/);
 
-int dwarf_expand_frame_instructions(Dwarf_Debug /*dbg*/, 
+int dwarf_expand_frame_instructions(Dwarf_Cie /*cie*/, 
     Dwarf_Ptr        /*instruction*/, 
     Dwarf_Unsigned   /*i_length*/, 
     Dwarf_Frame_Op** /*returned_op_list*/, 
@@ -1746,12 +1867,29 @@ int dwarf_get_arange_cu_header_offset(
 #pragma optional dwarf_get_arange_cu_header_offset
 #endif
 
+/* DWARF2,3 interface. No longer really adequate (it was never
+   right for segmented address spaces, please switch
+   to using dwarf_get_arange_info_b instead.  
+   There is no effective difference between these
+   functions  if the address space
+   of the target is not segmented.  */
 int dwarf_get_arange_info(
     Dwarf_Arange     /*arange*/, 
     Dwarf_Addr*      /*start*/, 
     Dwarf_Unsigned*  /*length*/, 
     Dwarf_Off*       /*cu_die_offset*/, 
     Dwarf_Error*     /*error*/ );
+
+/* New for DWARF4, entries may have segment information. 
+   *segment is only meaningful if *segment_entry_size is non-zero. */
+int dwarf_get_arange_info_b(
+    Dwarf_Arange     /*arange*/, 
+    Dwarf_Unsigned*  /*segment*/, 
+    Dwarf_Unsigned*  /*segment_entry_size*/, 
+    Dwarf_Addr    *  /*start*/, 
+    Dwarf_Unsigned*  /*length*/, 
+    Dwarf_Off     *  /*cu_die_offset*/, 
+    Dwarf_Error   *  /*error*/ );
 
 
 /* consumer .debug_macinfo information interface.
@@ -1866,6 +2004,36 @@ int dwarf_get_address_size(Dwarf_Debug /*dbg*/,
     Dwarf_Half  *    /*addr_size*/,
     Dwarf_Error *    /*error*/);
 
+/* The dwarf specification separates FORMs into
+different classes.  To do the seperation properly
+requires 4 pieces of data as of DWARF4 (thus the
+function arguments listed here). 
+The DWARF4 specification class definition suffices to
+describe all DWARF versions.
+See section 7.5.4, Attribute Encodings.
+A return of DW_FORM_CLASS_UNKNOWN means we could not properly figure
+out what form-class it is.
+
+    DW_FORM_CLASS_FRAMEPTR is MIPS/IRIX only, and refers
+    to the DW_AT_MIPS_fde attribute (a reference to the
+    .debug_frame section).
+*/
+enum Dwarf_Form_Class {
+    DW_FORM_CLASS_UNKNOWN,   DW_FORM_CLASS_ADDRESS,
+    DW_FORM_CLASS_BLOCK,     DW_FORM_CLASS_CONSTANT, 
+    DW_FORM_CLASS_EXPRLOC,   DW_FORM_CLASS_FLAG, 
+    DW_FORM_CLASS_LINEPTR,   DW_FORM_CLASS_LOCLISTPTR, 
+    DW_FORM_CLASS_MACPTR,    DW_FORM_CLASS_RANGELISTPTR, 
+    DW_FORM_CLASS_REFERENCE, DW_FORM_CLASS_STRING,
+    DW_FORM_CLASS_FRAMEPTR
+};
+
+enum Dwarf_Form_Class dwarf_get_form_class(
+    Dwarf_Half /* dwversion */,
+    Dwarf_Half /* attrnum */, 
+    Dwarf_Half /*offset_size */, 
+    Dwarf_Half /*form*/);
+
 /* utility operations */
 Dwarf_Unsigned dwarf_errno(Dwarf_Error     /*error*/);
 
@@ -1881,6 +2049,23 @@ char* dwarf_errmsg(Dwarf_Error    /*error*/);
 ** Returns previous value.
 */
 int dwarf_set_stringcheck(int /*stringcheck*/);
+
+/* 'apply' defaults to 1 and means do all
+ * 'rela' relocations on reading in a dwarf object section with
+ * such relocations.
+ * Call with parameter value 0 to turn off application of 
+ * such relocations.
+ * Since the static linker leaves 'bogus' data in object sections
+ * with a 'rela' relocation section such data cannot be read
+ * sensibly without processing the relocations.  Such relocations
+ * do not exist in executables and shared objects (.so), the
+ * relocations only exist in plain .o relocatable object files.
+ * Actual value saved and returned is only 8 bits! Upper bits
+ * ignored by libdwarf (and zero on return).
+ * Returns previous value.
+ * */
+int dwarf_set_reloc_application(int /*apply*/);
+
 
 /* Unimplemented */
 Dwarf_Handler dwarf_seterrhand(Dwarf_Debug /*dbg*/, Dwarf_Handler /*errhand*/);
@@ -1956,6 +2141,9 @@ int dwarf_get_relocation_info(
 /* v2:  has the drd_length field, enum value in uchar member */
 #define DWARF_DRD_BUFFER_VERSION 2
 
+/* Markers are not written  to DWARF2/3/4, they are user
+   defined and may be used for any purpose.
+*/
 Dwarf_Signed dwarf_get_die_markers(
     Dwarf_P_Debug     /*dbg*/,
     Dwarf_P_Marker *  /*marker_list*/,
@@ -2171,6 +2359,15 @@ Dwarf_P_Fde dwarf_add_fde_inst(
     Dwarf_Unsigned  /*val2*/, 
     Dwarf_Error*    /*error*/);
 
+/* New September 17, 2009 */
+int dwarf_insert_fde_inst_bytes(
+    Dwarf_P_Debug  /*dbg*/,
+    Dwarf_P_Fde    /*fde*/,
+    Dwarf_Unsigned /*len*/, 
+    Dwarf_Ptr      /*ibytes*/,
+    Dwarf_Error*   /*error*/);
+
+
 Dwarf_P_Fde dwarf_new_fde(Dwarf_P_Debug    /*dbg*/, Dwarf_Error* /*error*/);
 
 Dwarf_P_Fde dwarf_fde_cfa_offset(
@@ -2194,6 +2391,9 @@ Dwarf_Unsigned dwarf_add_die_to_debug(
     Dwarf_P_Die     /*die*/,
     Dwarf_Error*    /*error*/);
 
+/* Markers are not written  to DWARF2/3/4, they are user
+   defined and may be used for any purpose.
+*/
 Dwarf_Unsigned dwarf_add_die_marker(
     Dwarf_P_Debug   /*dbg*/,
     Dwarf_P_Die     /*die*/,
@@ -2436,6 +2636,59 @@ int dwarf_get_ranges_a(Dwarf_Debug /*dbg*/,
 void dwarf_ranges_dealloc(Dwarf_Debug /*dbg*/, 
     Dwarf_Ranges * /*rangesbuf*/,
     Dwarf_Signed /*rangecount*/);
+
+/* The harmless error list is a circular buffer of
+   errors we note but which do not stop us from processing
+   the object.  Created so dwarfdump or other tools
+   can report such inconsequential errors without causing
+   anything to stop early. */
+#define DW_HARMLESS_ERROR_CIRCULAR_LIST_DEFAULT_SIZE 4
+#define DW_HARMLESS_ERROR_MSG_STRING_SIZE   200
+/* User code supplies size of array of pointers errmsg_ptrs_array
+    in count and the array of pointers (the pointers themselves
+    need not be initialized).
+    The pointers returned in the array of pointers
+    are invalidated by ANY call to libdwarf.
+    Use them before making another libdwarf call!
+    The array of string pointers passed in always has
+    a final null pointer, so if there are N pointers the
+    and M actual strings, then MIN(M,N-1) pointers are
+    set to point to error strings.  The array of pointers
+    to strings always terminates with a NULL pointer.
+    If 'count' is passed in zero then errmsg_ptrs_array
+    is not touched.
+
+    The function returns DW_DLV_NO_ENTRY if no harmless errors 
+    were noted so far.  Returns DW_DLV_OK if there are errors.
+    Never returns DW_DLV_ERROR. 
+
+    Each call empties the error list (discarding all current entries).
+    If newerr_count is non-NULL the count of harmless errors
+    since the last call is returned through the pointer
+    (some may have been discarded or not returned, it is a circular
+    list...).
+    If DW_DLV_NO_ENTRY is returned none of the arguments
+    here are touched or used.
+    */
+int dwarf_get_harmless_error_list(Dwarf_Debug /*dbg*/,
+    unsigned  /*count*/, 
+    const char ** /*errmsg_ptrs_array*/,
+    unsigned * /*newerr_count*/);
+
+/* Insertion is only for testing the harmless error code, it is not
+    necessarily useful otherwise. */
+void dwarf_insert_harmless_error(Dwarf_Debug /*dbg*/,
+    char * /*newerror*/);
+
+/* The size of the circular list of strings may be set
+   and reset as needed.  If it is shortened excess
+   messages are simply dropped.  It returns the previous
+   size. If zero passed in the size is unchanged
+   and it simply returns the current size  */
+unsigned dwarf_set_harmless_error_list_size(Dwarf_Debug /*dbg*/,
+    unsigned /*maxcount*/);
+/* The harmless error strings (if any) are freed when the dbg
+   is dwarf_finish()ed. */
 
 /*  When the val_in is known these dwarf_get_TAG_name (etc)
     functions return the string corresponding to the val_in passed in

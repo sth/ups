@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2009 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -166,23 +166,20 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
 
     /* The Dwarf_Debug this die belongs to. */
     Dwarf_Debug dbg=0;
-    int resattr=0;
-    int lres=0;
-
-    int res=0;
+    int resattr = DW_DLV_ERROR;
+    int lres =    DW_DLV_ERROR;
+    int res  =    DW_DLV_ERROR;
 
     /* ***** BEGIN CODE ***** */
 
-    if (error != NULL)
+    if (error != NULL) {
         *error = NULL;
+    }
 
     CHECK_DIE(die, DW_DLV_ERROR);
     dbg = die->di_cu_context->cc_dbg;
 
-    res =
-        _dwarf_load_section(dbg,
-                            dbg->de_debug_line_index,
-                            &dbg->de_debug_line, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_line,error);
     if (res != DW_DLV_OK) {
         return res;
     }
@@ -199,12 +196,12 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
         return lres;
     }
 
-    if (line_offset >= dbg->de_debug_line_size) {
+    if (line_offset >= dbg->de_debug_line.dss_size) {
         _dwarf_error(dbg, error, DW_DLE_LINE_OFFSET_BAD);
         return (DW_DLV_ERROR);
     }
-    orig_line_ptr = dbg->de_debug_line;
-    line_ptr = dbg->de_debug_line + line_offset;
+    orig_line_ptr = dbg->de_debug_line.dss_data;
+    line_ptr = dbg->de_debug_line.dss_data + line_offset;
     dwarf_dealloc(dbg, stmt_list_attr, DW_DLA_ATTR);
 
     /* 
@@ -215,8 +212,8 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
         return resattr;
     }
     if (resattr == DW_DLV_OK) {
-        int cres;
-        char *cdir;
+        int cres = DW_DLV_ERROR;
+        char *cdir = 0;
 
         cres = dwarf_formstring(comp_dir_attr, &cdir, error);
         if (cres == DW_DLV_ERROR) {
@@ -233,7 +230,7 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
     {
         Dwarf_Small *line_ptr_out = 0;
         int dres = dwarf_read_line_table_prefix(dbg,
-            line_ptr,dbg->de_debug_line_size - line_offset,
+            line_ptr,dbg->de_debug_line.dss_size - line_offset,
             &line_ptr_out,
             &prefix, 
             &bogus_bytes_ptr,
@@ -288,7 +285,7 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
         printf("  include dir[%d] %s\n",
                (int) i, prefix.pf_include_directories[i]);
     }
-    printf("  include files count    %d\n", (int)
+    printf("  files count            %d\n", (int)
            prefix.pf_files_count);
 
     for (i = 0; i < prefix.pf_files_count; ++i) {
@@ -582,9 +579,10 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
             case DW_LNE_set_address:{
                     {
                         READ_UNALIGNED(dbg, address, Dwarf_Addr,
-                                       line_ptr, dbg->de_pointer_size);
+                                       line_ptr, 
+                                       die->di_cu_context->cc_address_size);
 
-                        line_ptr += dbg->de_pointer_size;
+                        line_ptr += die->di_cu_context->cc_address_size;
                         printf("DW_LNE_set_address address 0x%" DW_PR_DUx "\n",
                                (Dwarf_Unsigned) address);
                     }
@@ -629,11 +627,30 @@ _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
                 }
 
             default:{
-                    dwarf_free_line_table_prefix(&prefix);
-                    _dwarf_error(dbg, error,
+                 /* This is an extended op code we do not know about,
+                    other than we know now many bytes it is
+                    (and the op code and the bytes of operand). */
+
+                 Dwarf_Unsigned remaining_bytes = instr_length -1;
+                 if(instr_length < 1 || remaining_bytes > DW_LNE_LEN_MAX) {
+                      dwarf_free_line_table_prefix(&prefix);
+                      _dwarf_error(dbg, error,
                                  DW_DLE_LINE_EXT_OPCODE_BAD);
-                    return (DW_DLV_ERROR);
+                      return (DW_DLV_ERROR);
+                 }
+                 printf("DW_LNE extended op 0x%x ",ext_opcode);
+                 printf("Bytecount: " DW_PR_DUu , instr_length);
+                 if(remaining_bytes > 0) {
+                     printf(" linedata: 0x");
+                     while (remaining_bytes > 0) {
+                        printf("%02x",(unsigned char)(*(line_ptr)));
+                        line_ptr++;
+                        remaining_bytes--;
+                     }
+                 }
+                 printf("\n");
                 }
+                break;
             }
 
         }

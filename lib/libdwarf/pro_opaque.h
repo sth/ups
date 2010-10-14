@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -237,41 +237,38 @@ struct Dwarf_P_Simple_name_header_s {
        trailer */
     Dwarf_Signed sn_net_len;
 };
-typedef int (*_dwarf_pro_reloc_name_func_ptr) (Dwarf_P_Debug dbg, int sec_index, Dwarf_Unsigned offset,	/* r_offset 
-													 */
-					       Dwarf_Unsigned symidx,
-					       enum Dwarf_Rel_Type type,
-					       int reltarget_length);
+typedef int (*_dwarf_pro_reloc_name_func_ptr) (Dwarf_P_Debug dbg, 
+    int sec_index, 
+    Dwarf_Unsigned offset,/* r_offset */
+    Dwarf_Unsigned symidx,
+    enum Dwarf_Rel_Type type,
+    int reltarget_length);
 
-typedef int (*_dwarf_pro_reloc_length_func_ptr) (Dwarf_P_Debug dbg, int sec_index, Dwarf_Unsigned offset,	/* r_offset 
-														 */
-						 Dwarf_Unsigned
-						 start_symidx,
-						 Dwarf_Unsigned
-						 end_symidx,
-						 enum Dwarf_Rel_Type
-						 type,
-						 int reltarget_length);
+typedef int (*_dwarf_pro_reloc_length_func_ptr) (Dwarf_P_Debug dbg, 
+    int sec_index, Dwarf_Unsigned offset,/* r_offset */
+    Dwarf_Unsigned start_symidx,
+    Dwarf_Unsigned end_symidx,
+    enum Dwarf_Rel_Type type,
+    int reltarget_length);
 typedef int (*_dwarf_pro_transform_relocs_func_ptr) (Dwarf_P_Debug dbg,
 						     Dwarf_Signed *
 						     new_sec_count);
 
 /*
-	Each slot in a block of slots could be:
-	a binary stream relocation entry (32 or 64bit relocation data)
-        a SYMBOLIC relocation entry.
-	During creation sometimes we create multiple chained blocks,
-	but sometimes we create a single long block.
-        Before returning reloc data to caller, 
-        we switch to a single, long-enough,
-	block.
+    Each slot in a block of slots could be:
+    a binary stream relocation entry (32 or 64bit relocation data)
+    a SYMBOLIC relocation entry.
+    During creation sometimes we create multiple chained blocks,
+    but sometimes we create a single long block.
+    Before returning reloc data to caller, 
+    we switch to a single, long-enough,
+    block.
 
-	We make counters here Dwarf_Unsigned so that we
-	get sufficient alignment. Since we use space after
-	the struct (at malloc time) for user data which
-        must have Dwarf_Unsigned alignment, this
-	struct must have that alignment too.
-
+    We make counters here Dwarf_Unsigned so that we
+    get sufficient alignment. Since we use space after
+    the struct (at malloc time) for user data which
+    must have Dwarf_Unsigned alignment, this
+    struct must have that alignment too.
 */
 struct Dwarf_P_Relocation_Block_s {
     Dwarf_Unsigned rb_slots_in_block;	/* slots in block, as created */
@@ -289,22 +286,15 @@ struct Dwarf_P_Relocation_Block_s {
    no relocations).
 */
 struct Dwarf_P_Per_Reloc_Sect_s {
-
-
     unsigned long pr_reloc_total_count;	/* total number of entries
-					   across all blocks */
+        across all blocks */
 
     unsigned long pr_slots_per_block_to_alloc;	/* at Block alloc, this 
-						   is the default
-						   number of slots to
-						   use */
+        is the default number of slots to use */
 
     int pr_sect_num_of_reloc_sect;	/* sect number returned by
-					   de_func() or de_func_b()
-					   call, this is the sect
-					   number of the relocation
-					   section. */
-
+        de_callback_func() or de_callback_func_b() call, this is the sect
+        number of the relocation section. */
 
     /* singly-linked list. add at and ('last') with count of blocks */
     struct Dwarf_P_Relocation_Block_s *pr_first_block;
@@ -318,7 +308,6 @@ typedef struct memory_list_s {
   struct memory_list_s *prev;
   struct memory_list_s *next;
 } memory_list_t;
-
 
 struct Dwarf_P_Per_Sect_String_Attrs_s {
     int sect_sa_section_number;
@@ -336,11 +325,10 @@ struct Dwarf_P_Debug_s {
     Dwarf_Handler de_errhand;
     Dwarf_Ptr de_errarg;
 
-    /* 
-       Call back function, used to create .debug* sections. Provided
+    /* Call back function, used to create .debug* sections. Provided
        by user. Only of these used per dbg. */
-    Dwarf_Callback_Func de_func;
-    Dwarf_Callback_Func_b de_func_b;
+    Dwarf_Callback_Func de_callback_func;
+    Dwarf_Callback_Func_b de_callback_func_b;
 
     /* Flags from producer_init call */
     Dwarf_Unsigned de_flags;
@@ -397,7 +385,6 @@ struct Dwarf_P_Debug_s {
     /* current points to the current, unfilled, block */
     struct dw_macinfo_block_s *de_current_macinfo;
 
-
     /* Pointer to the first section, to support reset_section_bytes */
     Dwarf_P_Section_Data de_first_debug_sect;
 
@@ -413,30 +400,12 @@ struct Dwarf_P_Debug_s {
 					   (SYMBOLIC output) */
 
     /* used in remembering sections */
-    int de_elf_sects[NUM_DEBUG_SECTIONS];	/* 
-						   elf sect number of
-						   the section itself,
-						   DEBUG_LINE for
-						   example */
+    int de_elf_sects[NUM_DEBUG_SECTIONS];  /* elf sect number of
+        the section itself, DEBUG_LINE for example */
 
-    Dwarf_Unsigned de_sect_name_idx[NUM_DEBUG_SECTIONS];	/* section 
-								   name 
-								   index 
-								   or
-								   handle 
-								   for
-								   the
-								   name 
-								   of
-								   the
-								   symbol 
-								   for
-								   DEBUG_LINE 
-								   for
-								   example 
-								 */
-
-
+    Dwarf_Unsigned de_sect_name_idx[NUM_DEBUG_SECTIONS]; /* section 
+        name index or handle for the name of the symbol for
+        DEBUG_LINE for example */
 
     int de_offset_reloc;	/* offset reloc type, R_MIPS_32 for
 				   example. Specific to the ABI being
@@ -449,10 +418,10 @@ struct Dwarf_P_Debug_s {
 				   produced. relocates pointer size
 				   field */
 
-    unsigned char de_offset_size;	/* section offset. Here to
-					   avoid test of abi in macro
-					   at run time MIPS -n32 4,
-					   -64 8.  */
+    unsigned char de_offset_size;  /* section offset. Here to
+                                      avoid test of abi in macro
+                                      at run time MIPS -n32 4,
+                                      -64 8.  */
 
     unsigned char de_pointer_size;	/* size of pointer in target.
 					   Here to avoid test of abi in 
@@ -501,7 +470,6 @@ struct Dwarf_P_Debug_s {
     /* String attributes data of each section. */
     struct Dwarf_P_Per_Sect_String_Attrs_s de_sect_string_attr[NUM_DEBUG_SECTIONS];
 };
-
 
 #define CURRENT_VERSION_STAMP		2
 

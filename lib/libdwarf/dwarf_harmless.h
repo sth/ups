@@ -1,7 +1,6 @@
 /*
 
-  Copyright (C) 2000 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2008-2010  David Anderson. All Rights Reserved.
+  Copyright (C) 2010 David Anderson.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -23,33 +22,10 @@
   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
   USA.
 
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
 */
 
 
 
+void dwarf_harmless_init(struct Dwarf_Harmless_s *dhp,unsigned size);
+void dwarf_harmless_cleanout(struct Dwarf_Harmless_s *dhp);
 
-/* In a given CU, one of these is (eventually) set up
-   for every abbreviation we need to find (and for all.
-   those ealier in the abbreviations for that CU).
-   So we don't want elements needlessly big.
-*/
-struct Dwarf_Abbrev_s {
-    /* No TAG should exceed DW_TAG_hi_user, 0xffff, but
-       we do allow a larger value here. */
-    Dwarf_Word ab_tag;
-    /* Abbreviations are numbered (normally sequentially from
-       1 and so 16 bits is not enough!  */
-    Dwarf_Word ab_code;
-    Dwarf_Small ab_has_child;
-    Dwarf_Byte_Ptr ab_abbrev_ptr;
-    Dwarf_Debug ab_dbg;
-};

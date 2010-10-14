@@ -1,7 +1,7 @@
 /*
 
-  Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc. All Rights Reserved.
-  Portions Copyright (C) 2008 David Anderson.  All Rights Reserved.
+  Copyright (C) 2000-2005 Silicon Graphics, Inc. All Rights Reserved.
+  Portions Copyright (C) 2008-2010 David Anderson.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -291,7 +291,29 @@ const char *_dwarf_errmsgs[] = {
     "DW_DLE_FRAME_REGISTER_COUNT_MISMATCH(202)",
     "DW_DLE_LINK_LOOP(203)",
     "DW_DLE_STRP_OFFSET_BAD(204)",
-
+    "DW_DLE_DEBUG_RANGES_DUPLICATE(205)",
+    "DW_DLE_DEBUG_RANGES_OFFSET_BAD(206)",
+    "DW_DLE_DEBUG_RANGES_MISSING_END(207)",
+    "DW_DLE_DEBUG_RANGES_OUT_OF_MEM(208)",
+    "DW_DLE_DEBUG_SYMTAB_ERR(209)",
+    "DW_DLE_DEBUG_STRTAB_ERR(210)",
+    "DW_DLE_RELOC_MISMATCH_INDEX(211)",
+    "DW_DLE_RELOC_MISMATCH_RELOC_INDEX(212)",
+    "DW_DLE_RELOC_MISMATCH_STRTAB_INDEX(213)",
+    "DW_DLE_RELOC_SECTION_MISMATCH(214)",
+    "DW_DLE_RELOC_SECTION_MISSING_INDEX(215)",
+    "DW_DLE_RELOC_SECTION_LENGTH_ODD(216)",
+    "DW_DLE_RELOC_SECTION_PTR_NULL(217)",
+    "DW_DLE_RELOC_SECTION_MALLOC_FAIL(218)",
+    "DW_DLE_NO_ELF64_SUPPORT(219)",
+    "DW_DLE_MISSING_ELF64_SUPPORT(220)",
+    "DW_DLE_ORPHAN_FDE(221)",
+    "DW_DLE_DUPLICATE_INST_BLOCK(222)",
+    "DW_DLE_BAD_REF_SIG8_FORM(223)",
+    "DW_DLE_ATTR_EXPRLOC_FORM_BAD(224)",
+    "DW_DLE_FORM_SEC_OFFSET_LENGTH_BAD(225)",
+    "DW_DLE_NOT_REF_FORM(226)",
+    "DW_DLE_DEBUG_FRAME_LENGTH_NOT_MULTIPLE(227)"
 };
 
 

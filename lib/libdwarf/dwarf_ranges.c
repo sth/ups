@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2008 David Anderson. All Rights Reserved.
+  Copyright (C) 2008-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -69,22 +69,21 @@ int dwarf_get_ranges_a(Dwarf_Debug dbg,
     Dwarf_Ranges * ranges_data_out = 0;
     unsigned copyindex = 0;
     Dwarf_Half address_size = 0;
-    int res = 0;
+    int res = DW_DLV_ERROR;
 
-    res = _dwarf_load_section(dbg,
-        dbg->de_debug_ranges_index,
-        &dbg->de_debug_ranges, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_ranges,error);
     if (res != DW_DLV_OK) {
         return res;
     }
-    if(rangesoffset >= dbg->de_debug_ranges_size) {
+    if(rangesoffset >= dbg->de_debug_ranges.dss_size) {
         _dwarf_error(dbg, error, DW_DLE_DEBUG_RANGES_OFFSET_BAD);
         return (DW_DLV_ERROR);
 
     }
     address_size = _dwarf_get_address_size(dbg, die);
-    section_end = dbg->de_debug_ranges + dbg->de_debug_ranges_size;
-    rangeptr = dbg->de_debug_ranges + rangesoffset;
+    section_end = dbg->de_debug_ranges.dss_data + 
+        dbg->de_debug_ranges.dss_size;
+    rangeptr = dbg->de_debug_ranges.dss_data + rangesoffset;
     beginrangeptr = rangeptr;
 
     for(;;) {
@@ -143,7 +142,7 @@ int dwarf_get_ranges_a(Dwarf_Debug dbg,
         curre = curre->next;
         free(r);
     }
-    // Callers will often not care about the bytes used.
+    /* Callers will often not care about the bytes used. */
     if(bytecount) {
         *bytecount = rangeptr - beginrangeptr;
     }

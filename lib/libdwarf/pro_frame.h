@@ -124,4 +124,9 @@ struct Dwarf_P_Fde_s {
 
     int fde_uwordb_size;
     Dwarf_P_Debug fde_dbg;
+
+    /* If fde_block is non-null, then it is the set of instructions.
+       so we should use it rather than fde_inst. */
+    Dwarf_Unsigned fde_inst_block_size;
+    void *fde_block;
 };

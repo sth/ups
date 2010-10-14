@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002,2007 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -114,8 +114,9 @@ _dwarf_p_get_alloc(Dwarf_P_Debug dbg, Dwarf_Unsigned size)
   This routine is only here in case a caller of an older version of the
   library is calling this for some reason.
   We will clean up any stray blocks when the session is closed.
-  No need to remove this block.  In theory the user might be depending on the fact
-  that we used to just 'free' this.  In theory they might also be
+  No need to remove this block.  In theory the user might be 
+  depending on the fact that we used to just 'free' this.  
+  In theory they might also be
   passing a block that they got from libdwarf.  So we don't know if we
   should try to remove this block from our global list.  Safest just to
   do nothing at this point.

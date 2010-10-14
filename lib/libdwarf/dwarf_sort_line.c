@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2000,2002,2004,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2009 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -643,10 +643,9 @@ _dwarf_update_line_sec(Dwarf_Small * line_ptr,
                 }
 
             default:{
-                    *err_code = DW_DLE_LINE_EXT_OPCODE_BAD;
-                    dwarf_free_line_table_prefix(&prefix);
-                    free_area_data(area_base);
-                    return (DW_DLV_ERROR);
+                 Dwarf_Unsigned remaining_bytes = instr_length -1;
+                 line_ptr += remaining_bytes;
+                 break;
                 }
             }
 

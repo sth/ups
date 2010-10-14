@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2007,2008 David Anderson. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2007-2010 David Anderson. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -115,9 +115,9 @@ dwarf_add_AT_targ_address_b(Dwarf_P_Debug dbg,
     case DW_AT_static_link:
     case DW_AT_use_location:
     case DW_AT_vtable_elem_location:
-        
+    case DW_AT_const_value: /* Gcc can generate this as address. */
+    case DW_AT_entry_pc:
         break;
-
     default: 
         if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
@@ -485,6 +485,8 @@ dwarf_add_AT_unsigned_const(Dwarf_P_Debug dbg,
     case DW_AT_allocated:
     case DW_AT_upper_bound:
     case DW_AT_lower_bound:
+    case DW_AT_call_file:
+    case DW_AT_call_line:
         break;
 
         default: {

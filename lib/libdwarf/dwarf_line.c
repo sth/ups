@@ -1,6 +1,6 @@
 /*
-  Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2009 David Anderson. All Rights Reserved.
+  Copyright (C) 2000-2006 Silicon Graphics, Inc.  All Rights Reserved.
+  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -47,6 +47,47 @@
 #include <stdlib.h>
 #include "dwarf_line.h"
 
+static int
+is_path_separator(Dwarf_Small s)
+{
+    if(s == '/') {
+        return 1;
+    }
+#ifdef HAVE_WINDOWS_PATH
+    if(s == '\\') {
+        return 1;
+    }
+#endif
+    return 0;
+}
+
+/* Return 0 if false, 1 if true. 
+   If HAVE_WINDOWS_PATH is defined we
+   attempt to handle windows full paths:
+   \\something   or  C:cwdpath.c
+*/ 
+static int
+file_name_is_full_path(Dwarf_Small  *fname)
+{
+    Dwarf_Small firstc = *fname;
+    if(is_path_separator(firstc)) {
+        /* Full path. */
+        return 1;
+    }
+    if(!firstc) {
+        return 0;
+    }
+#ifdef HAVE_WINDOWS_PATH
+    if((firstc >= 'A' && firstc <= 'Z') ||
+       (firstc >= 'a' && firstc <= 'z')) {
+         Dwarf_Small secondc = fname[1];
+         if (secondc == ':') {
+             return 1;
+         }
+    }
+#endif
+    return 0;
+}
 
 /* 
     Although source files is supposed to return the
@@ -60,14 +101,11 @@ dwarf_srcfiles(Dwarf_Die die,
                char ***srcfiles,
                Dwarf_Signed * srcfilecount, Dwarf_Error * error)
 {
-    /* 
-       This pointer is used to scan the portion of the .debug_line
+    /* This pointer is used to scan the portion of the .debug_line
        section for the current cu. */
     Dwarf_Small *line_ptr;
 
-
-    /* 
-       Pointer to a DW_AT_stmt_list attribute in case it exists in the
+    /* Pointer to a DW_AT_stmt_list attribute in case it exists in the
        die. */
     Dwarf_Attribute stmt_list_attr;
 
@@ -81,10 +119,7 @@ dwarf_srcfiles(Dwarf_Die die,
        attribute. */
     Dwarf_Unsigned line_offset = 0;
 
-
-
-    /* 
-       This points to a block of char *'s, each of which points to a
+    /* This points to a block of char *'s, each of which points to a
        file name. */
     char **ret_files = 0;
 
@@ -95,15 +130,13 @@ dwarf_srcfiles(Dwarf_Die die,
     Dwarf_Chain curr_chain = NULL;
     Dwarf_Chain prev_chain = NULL;
     Dwarf_Chain head_chain = NULL;
-    int resattr = 0;
-    int lres = 0;
+    int resattr = DW_DLV_ERROR;
+    int lres = DW_DLV_ERROR;
     struct Line_Table_Prefix_s line_prefix;
     int i = 0;
-    int res = 0;
-
+    int res = DW_DLV_ERROR;
 
     /* ***** BEGIN CODE ***** */
-
     /* Reset error. */
     if (error != NULL)
         *error = NULL;
@@ -116,15 +149,12 @@ dwarf_srcfiles(Dwarf_Die die,
         return resattr;
     }
 
-    if (dbg->de_debug_line_index == 0) {
+    if (dbg->de_debug_line.dss_index == 0) {
         _dwarf_error(dbg, error, DW_DLE_DEBUG_LINE_NULL);
         return (DW_DLV_ERROR);
     }
 
-    res =
-        _dwarf_load_section(dbg,
-                            dbg->de_debug_line_index,
-                            &dbg->de_debug_line, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_line,error);
     if (res != DW_DLV_OK) {
         return res;
     }
@@ -133,11 +163,11 @@ dwarf_srcfiles(Dwarf_Die die,
     if (lres != DW_DLV_OK) {
         return lres;
     }
-    if (line_offset >= dbg->de_debug_line_size) {
+    if (line_offset >= dbg->de_debug_line.dss_size) {
         _dwarf_error(dbg, error, DW_DLE_LINE_OFFSET_BAD);
         return (DW_DLV_ERROR);
     }
-    line_ptr = dbg->de_debug_line + line_offset;
+    line_ptr = dbg->de_debug_line.dss_data + line_offset;
     dwarf_dealloc(dbg, stmt_list_attr, DW_DLA_ATTR);
 
     /* 
@@ -148,8 +178,8 @@ dwarf_srcfiles(Dwarf_Die die,
         return resattr;
     }
     if (resattr == DW_DLV_OK) {
-        int cres;
-        char *cdir;
+        int cres = DW_DLV_ERROR;
+        char *cdir = 0;
 
         cres = dwarf_formstring(comp_dir_attr, &cdir, error);
         if (cres == DW_DLV_ERROR) {
@@ -166,7 +196,7 @@ dwarf_srcfiles(Dwarf_Die die,
         Dwarf_Small *line_ptr_out = 0;
         int dres = dwarf_read_line_table_prefix(dbg,
             line_ptr,
-            dbg->de_debug_line_size,
+            dbg->de_debug_line.dss_size,
             &line_ptr_out,
             &line_prefix, 
             NULL, NULL,error,
@@ -196,13 +226,12 @@ dwarf_srcfiles(Dwarf_Die die,
             dir_name = (char *) comp_dir;
         } else {
             dir_name =
-                (char *) line_prefix.pf_include_directories[fe->
-                                                            lte_directory_index
-                                                            - 1];
+                (char *) line_prefix.pf_include_directories[
+                    fe->lte_directory_index - 1];
         }
 
         /* dir_name can be NULL if there is no DW_AT_comp_dir */
-        if ((*file_name) == '/' || dir_name == 0) {
+        if(dir_name == 0 || file_name_is_full_path(file_name)) { 
             /* This is safe because dwarf_dealloc is careful to not
                dealloc strings which are part of the raw .debug_* data. 
              */
@@ -286,24 +315,20 @@ dwarf_srcfiles(Dwarf_Die die,
 */
 int
 _dwarf_internal_srclines(Dwarf_Die die,
-                         Dwarf_Line ** linebuf,
-                         Dwarf_Signed * count,
-                         Dwarf_Bool doaddrs,
-                         Dwarf_Bool dolines, Dwarf_Error * error)
+    Dwarf_Line ** linebuf,
+    Dwarf_Signed * count,
+    Dwarf_Bool doaddrs,
+    Dwarf_Bool dolines, Dwarf_Error * error)
 {
-    /* 
-       This pointer is used to scan the portion of the .debug_line
+    /* This pointer is used to scan the portion of the .debug_line
        section for the current cu. */
     Dwarf_Small *line_ptr = 0;
 
-    /* 
-       This points to the last byte of the .debug_line portion for the
+    /* This points to the last byte of the .debug_line portion for the
        current cu. */
     Dwarf_Small *line_ptr_end = 0;
 
-
-    /* 
-       Pointer to a DW_AT_stmt_list attribute in case it exists in the
+    /* Pointer to a DW_AT_stmt_list attribute in case it exists in the
        die. */
     Dwarf_Attribute stmt_list_attr = 0;
 
@@ -313,8 +338,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
     /* Pointer to name of compilation directory. */
     Dwarf_Small *comp_dir = NULL;
 
-    /* 
-       Offset into .debug_line specified by a DW_AT_stmt_list
+    /* Offset into .debug_line specified by a DW_AT_stmt_list
        attribute. */
     Dwarf_Unsigned line_offset = 0;
 
@@ -326,7 +350,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
     Dwarf_Word line = 1;
     Dwarf_Word column = 0;
 
-    /* phony init. See below for true initialization. */
+    /* Phony init. See below for true initialization. */
     Dwarf_Bool is_stmt = false;
 
     Dwarf_Bool basic_block = false;
@@ -335,8 +359,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
     Dwarf_Small isa = 0;
     Dwarf_Bool end_sequence = false;
 
-    /* 
-       These pointers are used to build the list of files names by this 
+    /* These pointers are used to build the list of files names by this 
        cu.  cur_file_entry points to the file name being added, and
        prev_file_entry to the previous one. */
     Dwarf_File_Entry cur_file_entry, prev_file_entry;
@@ -344,36 +367,30 @@ _dwarf_internal_srclines(Dwarf_Die die,
     Dwarf_Sword i = 0;
     Dwarf_Sword file_entry_count = 0;
 
-    /* 
-       This is the current opcode read from the statement program. */
+    /* This is the current opcode read from the statement program. */
     Dwarf_Small opcode = 0;
 
-    /* 
-       Pointer to a Dwarf_Line_Context_s structure that contains the
+    /* Pointer to a Dwarf_Line_Context_s structure that contains the
        context such as file names and include directories for the set
        of lines being generated. */
     Dwarf_Line_Context line_context = 0;
 
-    /* 
-       This is a pointer to the current line being added to the line
+    /* This is a pointer to the current line being added to the line
        matrix. */
     Dwarf_Line curr_line = 0;
 
-    /* 
-       These variables are used to decode leb128 numbers. Leb128_num
+    /* These variables are used to decode leb128 numbers. Leb128_num
        holds the decoded number, and leb128_length is its length in
        bytes. */
     Dwarf_Word leb128_num = 0;
     Dwarf_Word leb128_length = 0;
     Dwarf_Sword advance_line = 0;
 
-    /* 
-       This is the operand of the latest fixed_advance_pc extended
+    /* This is the operand of the latest fixed_advance_pc extended
        opcode. */
     Dwarf_Half fixed_advance_pc = 0;
 
-    /* 
-       Counts the number of lines in the line matrix. */
+    /* Counts the number of lines in the line matrix. */
     Dwarf_Sword line_count = 0;
 
     /* This is the length of an extended opcode instr.  */
@@ -381,72 +398,62 @@ _dwarf_internal_srclines(Dwarf_Die die,
     Dwarf_Small ext_opcode = 0;
     struct Line_Table_Prefix_s prefix;
 
-    /* 
-       Used to chain together pointers to line table entries that are
+    /* Used to chain together pointers to line table entries that are
        later used to create a block of Dwarf_Line entries. */
     Dwarf_Chain chain_line = NULL;
     Dwarf_Chain head_chain = NULL;
     Dwarf_Chain curr_chain = NULL;
 
-    /* 
-       This points to a block of Dwarf_Lines, a pointer to which is
+    /* This points to a block of Dwarf_Lines, a pointer to which is
        returned in linebuf. */
     Dwarf_Line *block_line = 0;
 
     /* The Dwarf_Debug this die belongs to. */
     Dwarf_Debug dbg = 0;
-    int resattr = 0;
-    int lres = 0;
+    int resattr = DW_DLV_ERROR;
+    int lres = DW_DLV_ERROR;
     Dwarf_Half address_size = 0;
 
-    int res = 0;
+    int res = DW_DLV_ERROR;
 
     /* ***** BEGIN CODE ***** */
-
     if (error != NULL)
         *error = NULL;
 
     CHECK_DIE(die, DW_DLV_ERROR);
     dbg = die->di_cu_context->cc_dbg;
 
-    res =
-        _dwarf_load_section(dbg,
-                            dbg->de_debug_line_index,
-                            &dbg->de_debug_line, error);
+    res = _dwarf_load_section(dbg, &dbg->de_debug_line,error);
     if (res != DW_DLV_OK) {
         return res;
     }
     address_size = _dwarf_get_address_size(dbg, die);
-
     resattr = dwarf_attr(die, DW_AT_stmt_list, &stmt_list_attr, error);
     if (resattr != DW_DLV_OK) {
         return resattr;
     }
-
-
 
     lres = dwarf_formudata(stmt_list_attr, &line_offset, error);
     if (lres != DW_DLV_OK) {
         return lres;
     }
 
-    if (line_offset >= dbg->de_debug_line_size) {
+    if (line_offset >= dbg->de_debug_line.dss_size) {
         _dwarf_error(dbg, error, DW_DLE_LINE_OFFSET_BAD);
         return (DW_DLV_ERROR);
     }
-    line_ptr = dbg->de_debug_line + line_offset;
+    line_ptr = dbg->de_debug_line.dss_data + line_offset;
     dwarf_dealloc(dbg, stmt_list_attr, DW_DLA_ATTR);
 
-    /* 
-       If die has DW_AT_comp_dir attribute, get the string that names
+    /* If die has DW_AT_comp_dir attribute, get the string that names
        the compilation directory. */
     resattr = dwarf_attr(die, DW_AT_comp_dir, &comp_dir_attr, error);
     if (resattr == DW_DLV_ERROR) {
         return resattr;
     }
     if (resattr == DW_DLV_OK) {
-        int cres;
-        char *cdir;
+        int cres = DW_DLV_ERROR;
+        char *cdir = 0;
 
         cres = dwarf_formstring(comp_dir_attr, &cdir, error);
         if (cres == DW_DLV_ERROR) {
@@ -464,7 +471,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
         Dwarf_Small *newlinep = 0;
         int res = dwarf_read_line_table_prefix(dbg,
             line_ptr,
-            dbg->de_debug_line_size,
+            dbg->de_debug_line.dss_size,
             &newlinep,
             &prefix,
             NULL,NULL,
@@ -728,12 +735,10 @@ _dwarf_internal_srclines(Dwarf_Die die,
 
             case DW_LNS_const_add_pc:{
                     opcode = MAX_LINE_OP_CODE - prefix.pf_opcode_base;
-                    address =
-                        address +
+                    address = address +
                         prefix.pf_minimum_instruction_length * (opcode /
-                                                                prefix.
-                                                                pf_line_range);
-
+                            prefix.
+                            pf_line_range);
                     break;
                 }
 
@@ -874,7 +879,7 @@ _dwarf_internal_srclines(Dwarf_Die die,
 
                             curr_line->li_address = address;
                             curr_line->li_addr_line.li_offset =
-                                line_ptr - dbg->de_debug_line;
+                                line_ptr - dbg->de_debug_line.dss_data;
 
                             line_count++;
 
@@ -945,10 +950,18 @@ _dwarf_internal_srclines(Dwarf_Die die,
                 }
 
             default:{
-                    dwarf_free_line_table_prefix(&prefix);
-                    _dwarf_error(dbg, error,
+                 /* This is an extended op code we do not know about,
+                    other than we know now many bytes it is
+                    and the op code and the bytes of operand. */
+                 Dwarf_Unsigned remaining_bytes = instr_length -1;
+                 if(instr_length < 1 || remaining_bytes > DW_LNE_LEN_MAX) {
+                      dwarf_free_line_table_prefix(&prefix);
+                      _dwarf_error(dbg, error,
                                  DW_DLE_LINE_EXT_OPCODE_BAD);
-                    return (DW_DLV_ERROR);
+                      return (DW_DLV_ERROR);
+                 }
+                 line_ptr += remaining_bytes;
+                 break;
                 }
             }
 
@@ -999,12 +1012,10 @@ dwarf_srclines(Dwarf_Die die,
                Dwarf_Line ** linebuf,
                Dwarf_Signed * linecount, Dwarf_Error * error)
 {
-    Dwarf_Signed count;
-    int res;
-
-    res = _dwarf_internal_srclines(die, linebuf, &count,        /* addrlist= 
-                                                                 */ false,
-                                   /* linelist= */ true, error);
+    Dwarf_Signed count = 0;
+    int res  = _dwarf_internal_srclines(die, linebuf, &count,
+        /* addrlist= */ false,
+        /* linelist= */ true, error);
     if (res != DW_DLV_OK) {
         return res;
     }
@@ -1023,7 +1034,7 @@ dwarf_srclines(Dwarf_Die die,
 
 int
 dwarf_linebeginstatement(Dwarf_Line line,
-                         Dwarf_Bool * return_bool, Dwarf_Error * error)
+    Dwarf_Bool * return_bool, Dwarf_Error * error)
 {
     if (line == NULL || return_bool == 0) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1049,7 +1060,7 @@ dwarf_linebeginstatement(Dwarf_Line line,
 */
 int
 dwarf_lineendsequence(Dwarf_Line line,
-                      Dwarf_Bool * return_bool, Dwarf_Error * error)
+    Dwarf_Bool * return_bool, Dwarf_Error * error)
 {
     if (line == NULL) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1067,7 +1078,7 @@ dwarf_lineendsequence(Dwarf_Line line,
 */
 int
 dwarf_lineno(Dwarf_Line line,
-             Dwarf_Unsigned * ret_lineno, Dwarf_Error * error)
+    Dwarf_Unsigned * ret_lineno, Dwarf_Error * error)
 {
     if (line == NULL || ret_lineno == 0) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1091,7 +1102,7 @@ dwarf_lineno(Dwarf_Line line,
 */
 int
 dwarf_line_srcfileno(Dwarf_Line line,
-                     Dwarf_Unsigned * ret_fileno, Dwarf_Error * error)
+    Dwarf_Unsigned * ret_fileno, Dwarf_Error * error)
 {
     if (line == NULL || ret_fileno == 0) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1114,7 +1125,7 @@ dwarf_line_srcfileno(Dwarf_Line line,
 */
 int
 dwarf_lineaddr(Dwarf_Line line,
-               Dwarf_Addr * ret_lineaddr, Dwarf_Error * error)
+    Dwarf_Addr * ret_lineaddr, Dwarf_Error * error)
 {
     if (line == NULL || ret_lineaddr == 0) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1137,7 +1148,7 @@ dwarf_lineaddr(Dwarf_Line line,
 */
 int
 dwarf_lineoff(Dwarf_Line line,
-              Dwarf_Signed * ret_lineoff, Dwarf_Error * error)
+    Dwarf_Signed * ret_lineoff, Dwarf_Error * error)
 {
     if (line == NULL || ret_lineoff == 0) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1154,12 +1165,14 @@ dwarf_lineoff(Dwarf_Line line,
 int
 dwarf_linesrc(Dwarf_Line line, char **ret_linesrc, Dwarf_Error * error)
 {
-    Dwarf_Signed i;
+    Dwarf_Signed i = 0;
     Dwarf_File_Entry file_entry;
-    Dwarf_Small *name_buffer;
-    Dwarf_Small *include_directories;
-    Dwarf_Debug dbg;
-    unsigned int comp_dir_len;
+    Dwarf_Small *name_buffer = 0;
+    Dwarf_Small *include_directories = 0;
+    Dwarf_Small include_direc_full_path = 0;
+    Dwarf_Small file_name_full_path = 0;
+    Dwarf_Debug dbg = 0;
+    unsigned int comp_dir_len = 0;
 
     if (line == NULL) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
@@ -1203,7 +1216,8 @@ dwarf_linesrc(Dwarf_Line line, char **ret_linesrc, Dwarf_Error * error)
         return (DW_DLV_ERROR);
     }
 
-    if (*(char *) file_entry->fi_file_name == '/') {
+    file_name_full_path = file_name_is_full_path(file_entry->fi_file_name);
+    if (file_name_full_path) {
         *ret_linesrc = ((char *) file_entry->fi_file_name);
         return DW_DLV_OK;
     }
@@ -1262,38 +1276,33 @@ dwarf_linesrc(Dwarf_Line line, char **ret_linesrc, Dwarf_Error * error)
 
     if (line->li_context->lc_compilation_directory) {
         comp_dir_len = strlen((char *)
-                              (line->li_context->
-                               lc_compilation_directory));
+            (line->li_context->lc_compilation_directory));
     } else {
         /* No DW_AT_comp_dir present. Do the best we can without it. */
         comp_dir_len = 0;
     }
 
+    include_direc_full_path = file_name_is_full_path(include_directories);
     name_buffer = _dwarf_get_alloc(dbg, DW_DLA_STRING,
-                                   (*include_directories == '/' ?
-                                    0 : comp_dir_len + 1) +
-                                   strlen((char *) include_directories)
-                                   + 1 +
-                                   strlen((char *) file_entry->
-                                          fi_file_name) + 1);
+        (include_direc_full_path ?  0 : comp_dir_len + 1) +
+            strlen((char *)include_directories) + 1 + 
+            strlen((char *)file_entry->fi_file_name) + 1);
     if (name_buffer == NULL) {
         _dwarf_error(dbg, error, DW_DLE_ALLOC_FAIL);
         return (DW_DLV_ERROR);
     }
 
-    if (*include_directories != '/') {
+    if (!include_direc_full_path) {
         if (comp_dir_len > 0) {
-            strcpy((char *) name_buffer,
-                   (char *) line->li_context->lc_compilation_directory);
+            strcpy((char *)name_buffer,
+                (char *)line->li_context->lc_compilation_directory);
             /* Who provides the / needed after the compilation
                directory? */
-            if (name_buffer[comp_dir_len - 1] != '/') {
-                /* Here we provide the / separator */
-                name_buffer[comp_dir_len] = '/';        /* overwrite
-                                                           previous nul 
-                                                           terminator
-                                                           with needed
-                                                           / */
+            if (!is_path_separator(name_buffer[comp_dir_len - 1])) {
+                /* Here we provide the / separator. It
+                   should work ok for Windows */
+                /* Overwrite previous nul terminator with needed / */
+                name_buffer[comp_dir_len] = '/';   
                 name_buffer[comp_dir_len + 1] = 0;
             }
         }
@@ -1313,13 +1322,12 @@ dwarf_linesrc(Dwarf_Line line, char **ret_linesrc, Dwarf_Error * error)
 */
 int
 dwarf_lineblock(Dwarf_Line line,
-                Dwarf_Bool * return_bool, Dwarf_Error * error)
+    Dwarf_Bool * return_bool, Dwarf_Error * error)
 {
     if (line == NULL) {
         _dwarf_error(NULL, error, DW_DLE_DWARF_LINE_NULL);
         return (DW_DLV_ERROR);
     }
-
     *return_bool = (line->li_addr_line.li_l_data.li_basic_block);
     return DW_DLV_OK;
 }
@@ -1496,7 +1504,7 @@ dwarf_pclines(Dwarf_Debug dbg,
 
 void
 dwarf_srclines_dealloc(Dwarf_Debug dbg, Dwarf_Line * linebuf,
-                       Dwarf_Signed count)
+    Dwarf_Signed count)
 {
 
     Dwarf_Signed i = 0;
@@ -1570,9 +1578,10 @@ print_header_issue(Dwarf_Debug dbg,
     printf("*** DWARF CHECK: "
         "line table header: %s", 
         specific_msg);
-    if( data_start >= dbg->de_debug_line && 
-        (data_start < (dbg->de_debug_line + dbg->de_debug_line_size))) {
-        Dwarf_Unsigned off = data_start - dbg->de_debug_line;
+    if( data_start >= dbg->de_debug_line.dss_data && 
+        (data_start < (dbg->de_debug_line.dss_data + 
+        dbg->de_debug_line.dss_size))) {
+        Dwarf_Unsigned off = data_start - dbg->de_debug_line.dss_data;
         printf(" at .debug_line section offset 0x%" DW_PR_DUx 
             "  ( %" DW_PR_DUu " ) ",
             off,off);
@@ -1645,7 +1654,8 @@ dwarf_read_line_table_prefix(Dwarf_Debug dbg,
         local_extension_size;
     /* ASSERT: prefix_out->pf_length_field_length == line_ptr
        -prefix_out->pf_line_ptr_start; */
-    if (line_ptr_end > dbg->de_debug_line + dbg->de_debug_line_size) {
+    if (line_ptr_end > dbg->de_debug_line.dss_data + 
+        dbg->de_debug_line.dss_size) {
         _dwarf_error(dbg, err, DW_DLE_DEBUG_LINE_LENGTH_BAD);
         return (DW_DLV_ERROR);
     }

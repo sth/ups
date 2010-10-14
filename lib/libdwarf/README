@@ -1,10 +1,25 @@
 To build libdwarf.a, type
         ./configure
         make
+To build libdwarf.so, type
+        ./configure --enable-shared --disable-nonshared
+        make
+To build  both, type
+        ./configure --enable-shared 
+        make
 
-To use dwarf or libdwarf, you may want to install dwarf.h and
-libdwarf.h somewhere convenient, and you may need the libdwarf
-in the accompanying libdwarf directory
+No real install target is provided here, so 'make install' does
+not do much. One can copy either or both of libdwarf.a libdwarf.so 
+to somewhere fairly standard (but intended for software you build)  
+like '/usr/local/lib'.  Or anywhere else you want to copy it.
+
+To use dwarf or libdwarf, you may want to copy dwarf.h and
+libdwarf.h somewhere convenient (possibly /usr/local/include), 
+and you may need to copy the libdwarf to a convenient spot 
+(/usr/local/lib is a traditional place for libraries one builds
+oneself on Unix and Linux).
+This copying is not needed to build dwarfdump.
+
 
 Multi Threading, or using threads with libdwarf (Thread Safety):
   Nothing in libdwarf does any locking.  Every Dwarf_Debug
@@ -27,6 +42,11 @@ For example
         ./configure  CPPFLAGS="-I/home/davea/inc" CFLAGS="-I/home/davea/inc"
 Set both CFLAGS and CPPFLAGS so that configure works properly.
 
+If you are using the old frame interfaces and depend on
+the use of DW_FRAME_CFA_COL you must add  --enable-oldframecol
+to the ./configure options to configure libdwarf.
+See NEWS and libdwarf2.1.mm/pdf .
+
 To generate SGI IRIX 64 bit offsets (in the producer code)
 configure with   --enable-dwarf-format-sgi-irix.
 To configure with only 32bit offsets (aka DWARF2) configure
@@ -37,9 +57,27 @@ DW_DLC_OFFSET_SIZE_64 onto the flags in the call to
 dwarf_producer_init() (or dwarf_producer_init_b) [when the
 address size is specified as 64 bit].
 
-It is now possible to request shared library build with
+Mac OSX (June 2010): Since MacOSX does not use elf, there is no elf.h
+header in the headers provided on MacOSX.
+Use a search engine (like google) to find an elf.h you can use.
+http://www.rockbox.org/tracker/9006?getfile=16683 
+might be useful.
+In addition, the archive (ar) program on MacOSX does not
+automatically generate some data so modify the generated
+Makefile to add -s to the options to ar.
+
+To enable dection of Windows pathnames as full paths
+add --enable-windowspath.  Doing this does mean things like
+A:foo and \anything are treated as full paths (these are
+unlikely path names on a POSIX system but are legal 
+POSIX partial paths).
+
+It is possible to request a shared library (libdwarf.so) build with
 	--enable-shared
-(--enable-nonshared is on by default).
+To turn off the build of the archive library (libdwarf.a) specify
+        --disable-nonshared
+but in this case you must specify --enable-shared or nothing will
+build!
 
 TARGET DEPENDENCIES of .debug_frame:
 dwarf.h
@@ -54,11 +92,11 @@ dwarf.h
   to get these exactly right for your architecture.
   DW_FRAME_RA_COL
   DW_FRAME_STATIC_LINK
-  DW_FRAME_CFA_COL
+  DW_FRAME_CFA_COL 
 
 libdwarf.h
   The DW_FRAME_REG_INITIAL_VALUE #define should be set to
-  the value approprate to your archtecture. See libdwarf.h
+  the value appropriate to your architecture. See libdwarf.h
   for details.
 
   If DW_REG_TABLE_SIZE is not set large enough attempts to 
@@ -91,7 +129,7 @@ as libdwarf does not get a DW_DLE_DF_REG_NUM_TOO_HIGH error.
 If you intend to use the libdwarf dwarf-producer code
 for .debug_frame information
 you must do a thorough analysys and revise dwarf.h
-substantially to match the output target archtecture.
+substantially to match the output target architecture.
 
 In general, in the producer code, numbers are copied from and
 to integers with memcpy().  In case of endianness problems,
@@ -115,18 +153,15 @@ format files but do have a postscript printer (or have
 ghostscript) can print the documents.  
 This form was chosen before pdf format existed...
 
-libdwarf2.1.ps documents a way for a debugger to read dwarf information.
-libdwarf2p.1.ps documents a way for a compiler to generate dwarf information.
-dwarf.v2.ps documents Dwarf Version 2.
-index.v2.ps is an index to dwarf.v2.ps.
+libdwarf2.1.pdf documents a way for a debugger to read dwarf information.
+libdwarf2p.1.pdf documents a way for a compiler to generate dwarf information.
+dwarf.v2.pdf documents Dwarf Version 2.
+index.v2.pdf is an index to dwarf.v2.ps.
 indexDW.v2  is a plain text index of dwarf #defines to dwarf.v2.ps
 mips_extensions.ps documents the mips/sgi extensions to dwarf.
 
-The commands used to generate the postscript were:
- pr -t -e libdwarf2.1.mm | tbl | psroff -t -mm >libdwarf2.1.ps
- pr -t -e  libdwarf2p.1.mm | tbl | psroff -t -mm >libdwarf2p.1.ps
- pic dwarf.v2.mm | tbl | psroff -t -mm >dwarf.v2.ps 2> newIndex
- pic index.v2.mm | tbl | psroff -t -mm >index.v2.ps
+See the Makefile for the commands used to build pdf files
+libdwarf.2.1.pdf and libdwarf1p.1.pdf.
 
 pic is a picture processing tool (ATT command).
 tbl is a table-processing tool.
@@ -135,17 +170,21 @@ tbl and pic are available on linux.
 
 psroff is a name for a troff-like processor, part of
 Documentor's Work Bench on IRIX. Substitute a
-troff-like or nroff-like processor.
+troff-like or nroff-like processor (GNU groff works fine).
 
 The index.v2.mm was generated by the dwarf-document writer
-using some local ATT/USL tools (which SGI does not have, so
+using some local ATT/USL tools (which neither SGI 
+nor the open-source community generally has, so
 there is no way I know of to regenerate this).
 
 To use dwarf or libdwarf, you may want to install dwarf.h and
 libdwarf.h somewhere convenient.
 
 You will also need libelf (libelf.a and/or libelf.so) and
-libelf.h installed. These are available from GNU repositories.
+libelf.h installed. These are available from GNU repositories
+and from the normal Linux repositories for Linux releases.
+On Ubuntu 20/04 for example:
+	sudo apt-get install libelf-dev libelf1 
 
 $Source$
 $Revision$

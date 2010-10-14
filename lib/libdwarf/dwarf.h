@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2000,2001,2003,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2002,2007 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2007-2009 David Anderson. All rights reserved.
+  Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
+  Portions Copyright 2007-2010 David Anderson. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -132,6 +132,7 @@ extern "C" {
 #define DW_TAG_shared_type              0x40  /* DWARF3f */
 #define DW_TAG_type_unit                0x41  /* DWARF4 */
 #define DW_TAG_rvalue_reference_type    0x42  /* DWARF4 */
+#define DW_TAG_template_alias           0x43  /* DWARF4 */
 #define DW_TAG_lo_user                  0x4080
 
 #define DW_TAG_MIPS_loop                0x4081
@@ -145,6 +146,13 @@ extern "C" {
 #define DW_TAG_class_template           0x4103 /* GNU. For C++ */
 #define DW_TAG_GNU_BINCL                0x4104 /* GNU */
 #define DW_TAG_GNU_EINCL                0x4105 /* GNU */
+
+
+/* GNU extension. http://gcc.gnu.org/wiki/TemplateParmsDwarf */
+#define DW_TAG_GNU_template_template_parameter  0x4106 /* GNU */
+#define DW_TAG_GNU_template_template_param      0x4106 /* GNU */
+#define DW_TAG_GNU_template_parameter_pack      0x4107 /* GNU */
+#define DW_TAG_GNU_formal_parameter_pack        0x4108 /* GNU */
 
 /* ALTIUM extensions */
     /* DSP-C/Starcore __circ qualifier */
@@ -212,6 +220,7 @@ extern "C" {
 #define DW_FORM_sec_offset              0x17 /* DWARF4 */
 #define DW_FORM_exprloc                 0x18 /* DWARF4 */
 #define DW_FORM_flag_present            0x19 /* DWARF4 */
+/* 0x1a thru 0x1f were left unused accidentally. Reserved for future use. */
 #define DW_FORM_ref_sig8                0x20 /* DWARF4 */
 
 #define DW_AT_sibling                           0x01
@@ -309,6 +318,8 @@ extern "C" {
 #define DW_AT_main_subprogram                   0x6a /* DWARF4 */
 #define DW_AT_data_bit_offset                   0x6b /* DWARF4 */
 #define DW_AT_const_expr                        0x6c /* DWARF4 */
+#define DW_AT_enum_class                        0x6d /* DWARF4 */
+#define DW_AT_linkage_name                      0x6e /* DWARF4 */
 
 /* In extensions, we attempt to include the vendor extension
    in the name even when the vendor leaves it out. */
@@ -368,6 +379,7 @@ extern "C" {
 #define DW_AT_body_begin                        0x2105 /* GNU */
 #define DW_AT_body_end                          0x2106 /* GNU */
 #define DW_AT_GNU_vector                        0x2107 /* GNU */
+#define DW_AT_GNU_template_name                 0x2108 /* GNU */
 
 /* ALTIUM extension: ALTIUM Compliant location lists (flag) */
 #define DW_AT_ALTIUM_loclist    0x2300          /* ALTIUM  */
@@ -726,6 +738,7 @@ extern "C" {
 #define DW_LANG_ObjC_plus_plus          0x0011 /* DWARF3f */
 #define DW_LANG_UPC                     0x0012 /* DWARF3f */
 #define DW_LANG_D                       0x0013 /* DWARF3f */
+#define DW_LANG_Python                  0x0014 /* DWARF4 */
 #define DW_LANG_lo_user                 0x8000
 #define DW_LANG_Mips_Assembler          0x8001 /* MIPS   */
 #define DW_LANG_Upc                     0x8765 /* UPC, use
@@ -815,6 +828,12 @@ extern "C" {
 #define DW_LNE_lo_user                  0x80 /* DWARF3 */
 #define DW_LNE_hi_user                  0xff /* DWARF3 */
 
+/* These are known values for DW_LNS_set_isa. */
+#define DW_ISA_UNKNOWN   0
+/* The following two are ARM specific. */
+#define DW_ISA_ARM_thumb 1 /* ARM ISA */
+#define DW_ISA_ARM_arm   2 /* ARM ISA */
+
 /* Macro information. */
 #define DW_MACINFO_define               0x01
 #define DW_MACINFO_undef                0x02
@@ -822,6 +841,9 @@ extern "C" {
 #define DW_MACINFO_end_file             0x04
 #define DW_MACINFO_vendor_ext           0xff
 
+/* CFA operator compaction (a space saving measure, see
+   the DWARF standard) means DW_CFA_extended and DW_CFA_nop 
+   have the same value here.  */
 #define DW_CFA_advance_loc        0x40
 #define DW_CFA_offset             0x80
 #define DW_CFA_restore            0xc0
@@ -844,7 +866,7 @@ extern "C" {
 #define DW_CFA_def_cfa_offset   0x0e
 #define DW_CFA_def_cfa_expression 0x0f     /* DWARF3 */
 #define DW_CFA_expression       0x10       /* DWARF3 */
-#define DW_CFA_cfa_offset_extended_sf 0x11 /* DWARF3 */
+#define DW_CFA_offset_extended_sf 0x11     /* DWARF3 */
 #define DW_CFA_def_cfa_sf       0x12       /* DWARF3 */
 #define DW_CFA_def_cfa_offset_sf 0x13      /* DWARF3 */
 #define DW_CFA_val_offset        0x14      /* DWARF3f */
@@ -899,13 +921,15 @@ extern "C" {
    the Virtual Frame Pointer on MIPS/SGI machines.
 
    The DW_FRAME* names here are MIPS/SGI specfic.
-   Libdwarf interfaces defined in 2008 make the FRAME definitions
+   Libdwarf interfaces defined in 2008 make the 
+   frame definitions
    here (and the fixed table sizes they imply) obsolete.
    They are left here for compatibility. 
-   
 */
-/* Column used for CFA. Assumes reg 0 never appears as
-   a register in DWARF info.  */
+/* Default column used for CFA in the libdwarf reader client.
+   Assumes reg 0 never appears as
+   a register in DWARF information. Usable for MIPS,
+   but never a good idea, really.    */
 #define DW_FRAME_CFA_COL 0  
 
 #define DW_FRAME_REG1   1  /* integer reg 1 */
@@ -1010,7 +1034,7 @@ extern "C" {
 #endif
 
 
-/* Column recording ra (return addrress from a function call). 
+/* Column recording ra (return address from a function call). 
    This is common to many architectures, but as a 'simple register'
    is not necessarily adequate for all architectures.
    For MIPS/IRIX this register number is actually recorded on disk
