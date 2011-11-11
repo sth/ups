@@ -46,6 +46,9 @@
 #define _GNU_SOURCE 1
 #endif
 
+#ifdef HAVE_STDAFX_H /* Windows specific. */
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
 
 #include "libdwarfdefs.h"
 #include <string.h>

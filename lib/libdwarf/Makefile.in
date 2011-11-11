@@ -62,9 +62,10 @@ RANLIB =	@RANLIB@
 DEFS =		@DEFS@
 LIBS =		@LIBS@
 INCLUDES =	-I. -I$(srcdir)
-CFLAGS =	@CFLAGS@ $(INCLUDES)
+dwfpic =        @dwfpic@
+CFLAGS =	$(PREINCS) @CFLAGS@ $(INCLUDES) $(dwfpic) $(POSTINCS)
 # For more checking add -DWANT_LIBBDWARF_MALLOC_CHECK=1 to CFLAGS
-LDFLAGS =	@LDFLAGS@
+LDFLAGS =	$(PRELIBS) @LDFLAGS@ $(POSTLIBS)
 
 
 BUILD_BASE = .
@@ -205,12 +206,20 @@ clean:
 	rm -f index.v2.ps
 	rm -f mips_extensions.ps
 	rm -f libdwarf2p.1.ps
+	rm -f gennames 
+	rm -f junk 
+	rm -f ALL
+	rm -f gennames 
+	rm -f dwarf_names_enum.h dwarf_names_new.h dwarf_names.c dwarf_names.h
 
 install: all
 	echo "No install provided, see comments in the README"
 
 distclean:	clean
 	rm -f config.status config.log config.cache config.h
+	rm -rf autom4te.cache 
+	rm -f Makefile
+
 
 shar:
 		@echo "shar not set up yet"

@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2000-2005 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2010 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2011 David Anderson. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -49,13 +49,11 @@
 
 
 
-/*
-    Given a form, and a pointer to the bytes encoding 
+/*  Given a form, and a pointer to the bytes encoding 
     a value of that form, val_ptr, this function returns
     the length, in bytes, of a value of that form.
     When using this function, check for a return of 0
-    a recursive DW_FORM_INDIRECT value.
-*/
+    a recursive DW_FORM_INDIRECT value.  */
 Dwarf_Unsigned
 _dwarf_get_size_of_val(Dwarf_Debug dbg,
     Dwarf_Unsigned form,
@@ -78,11 +76,13 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
         }
         /* This should never happen, address_size should be set. */
         return (dbg->de_pointer_size);
+    case DW_FORM_ref_sig8:
+        return 8; /* sizeof Dwarf_Sig8 */
 
-    /* DWARF2 was wrong on the size of the attribute for
-       DW_FORM_ref_addr.  We assume compilers are using the 
-       corrected DWARF3 text (for 32bit pointer target objects pointer and
-       offsets are the same size anyway). */
+    /*  DWARF2 was wrong on the size of the attribute for
+        DW_FORM_ref_addr.  We assume compilers are using the 
+        corrected DWARF3 text (for 32bit pointer target objects pointer and
+        offsets are the same size anyway). */
     case DW_FORM_ref_addr:
         return (v_length_size);
 
@@ -91,12 +91,12 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
 
     case DW_FORM_block2:
         READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
-                       val_ptr, sizeof(Dwarf_Half));
+            val_ptr, sizeof(Dwarf_Half));
         return (ret_value + sizeof(Dwarf_Half));
 
     case DW_FORM_block4:
         READ_UNALIGNED(dbg, ret_value, Dwarf_Unsigned,
-                       val_ptr, sizeof(Dwarf_ufixed));
+            val_ptr, sizeof(Dwarf_ufixed));
         return (ret_value + sizeof(Dwarf_ufixed));
 
 
@@ -116,16 +116,22 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
         return (strlen((char *) val_ptr) + 1);
 
     case DW_FORM_block:
+    case DW_FORM_exprloc:
         length = _dwarf_decode_u_leb128(val_ptr, &leb128_length);
         return (length + leb128_length);
 
+    case DW_FORM_flag_present:
+        return (0);
     case DW_FORM_flag:
         return (1);
+
     case DW_FORM_sec_offset:
         /* If 32bit dwarf, is 4. Else is 64bit dwarf and is 8. */
         return (v_length_size);
 
     case DW_FORM_ref_udata:
+        /*  Discard the decoded value, we just want the length
+            of the value. */
         _dwarf_decode_u_leb128(val_ptr, &leb128_length);
         return (leb128_length);
 
@@ -136,15 +142,15 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
             form_indirect = _dwarf_decode_u_leb128(val_ptr, &indir_len);
             if (form_indirect == DW_FORM_indirect) {
                 return (0);     /* We are in big trouble: The true form 
-                                   of DW_FORM_indirect is
-                                   DW_FORM_indirect? Nonsense. Should
-                                   never happen. */
+                    of DW_FORM_indirect is
+                    DW_FORM_indirect? Nonsense. Should
+                    never happen. */
             }
             return (indir_len + _dwarf_get_size_of_val(dbg,
-                   form_indirect,
-                   address_size,
-                   val_ptr + indir_len,
-                   v_length_size));
+                form_indirect,
+                address_size,
+                val_ptr + indir_len,
+                v_length_size));
         }
 
     case DW_FORM_ref1:
@@ -160,6 +166,8 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
         return (8);
 
     case DW_FORM_sdata:
+        /*  Discard the decoded value, we just want the length
+            of the value. */
         _dwarf_decode_s_leb128(val_ptr, &leb128_length);
         return (leb128_length);
 
@@ -167,22 +175,23 @@ _dwarf_get_size_of_val(Dwarf_Debug dbg,
         return (v_length_size);
 
     case DW_FORM_udata:
+        /*  Discard the decoded value, we just want the length
+            of the value. */
         _dwarf_decode_u_leb128(val_ptr, &leb128_length);
         return (leb128_length);
     }
 }
 
-/* We allow an arbitrary number of HT_MULTIPLE entries
-   before resizing.  It seems up to 20 or 30
-   would work nearly as well.
-   We could have a different resize multiple than 'resize now'
-   test multiple, but for now we don't do that.
-*/
+/*  We allow an arbitrary number of HT_MULTIPLE entries
+    before resizing.  It seems up to 20 or 30
+    would work nearly as well.
+    We could have a different resize multiple than 'resize now'
+    test multiple, but for now we don't do that.  */
 #define HT_MULTIPLE 8
 
-/* Copy the old entries, updating each to be in
-   a new list.  Don't delete anything. Leave the
-   htin with stale data. */
+/*  Copy the old entries, updating each to be in
+    a new list.  Don't delete anything. Leave the
+    htin with stale data. */
 static void
 copy_abbrev_table_to_new_table(Dwarf_Hash_Table htin, 
   Dwarf_Hash_Table htout)
@@ -197,24 +206,23 @@ copy_abbrev_table_to_new_table(Dwarf_Hash_Table htin,
         Dwarf_Abbrev_List nextlistent = 0;
 
         for (  ; listent ; listent = nextlistent) {
-             unsigned newtmp = listent->ab_code;
-             unsigned newhash = newtmp%entry_out_count;
-             Dwarf_Hash_Table_Entry e;
-             nextlistent = listent->ab_next;
-             e = entry_out+newhash; 
-             /* Move_entry_to_new_hash. This reverses the
+            unsigned newtmp = listent->ab_code;
+            unsigned newhash = newtmp%entry_out_count;
+            Dwarf_Hash_Table_Entry e;
+            nextlistent = listent->ab_next;
+            e = entry_out+newhash; 
+            /*  Move_entry_to_new_hash. This reverses the
                 order of the entries, effectively, but
                 that does not seem significant. */
-             listent->ab_next = e->at_head;
-             e->at_head = listent;
+            listent->ab_next = e->at_head;
+            e->at_head = listent;
 
-             htout->tb_total_abbrev_count++;
+            htout->tb_total_abbrev_count++;
         } 
     }
 }
 
-/*
-    This function returns a pointer to a Dwarf_Abbrev_List_s
+/*  This function returns a pointer to a Dwarf_Abbrev_List_s
     struct for the abbrev with the given code.  It puts the
     struct on the appropriate hash table.  It also adds all
     the abbrev between the last abbrev added and this one to
@@ -238,8 +246,7 @@ copy_abbrev_table_to_new_table(Dwarf_Hash_Table htin,
     lists on reallocation, any given Dwarf_Abbrev_list entry
     never moves once allocated, so the pointer is safe to return.
 
-    Returns NULL on error.
-*/
+    Returns NULL on error.  */
 Dwarf_Abbrev_List
 _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
 {
@@ -259,20 +266,21 @@ _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
     Dwarf_Hash_Table_Entry inner_hash_entry = 0; 
 
     Dwarf_Byte_Ptr abbrev_ptr = 0;
-    unsigned hashable_val;
+    Dwarf_Byte_Ptr end_abbrev_ptr = 0;
+    unsigned hashable_val = 0;
 
     if ( !hash_table_base->tb_entries ) {
-         hash_table_base->tb_table_entry_count =  HT_MULTIPLE;
-         hash_table_base->tb_total_abbrev_count= 0;
-         hash_table_base->tb_entries =  _dwarf_get_alloc(dbg,
+        hash_table_base->tb_table_entry_count =  HT_MULTIPLE;
+        hash_table_base->tb_total_abbrev_count= 0;
+        hash_table_base->tb_entries =  _dwarf_get_alloc(dbg,
             DW_DLA_HASH_TABLE_ENTRY, 
             hash_table_base->tb_table_entry_count);
-         if(! hash_table_base->tb_entries) {
-             return NULL;
-         }
+        if(! hash_table_base->tb_entries) {
+            return NULL;
+        }
 
     } else if (hash_table_base->tb_total_abbrev_count >
-          ( hash_table_base->tb_table_entry_count * HT_MULTIPLE) ) {
+        ( hash_table_base->tb_table_entry_count * HT_MULTIPLE) ) {
         struct Dwarf_Hash_Table_s newht;
         /* Effectively multiplies by >= HT_MULTIPLE */
         newht.tb_table_entry_count =  hash_table_base->tb_total_abbrev_count;
@@ -282,18 +290,17 @@ _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
             newht.tb_table_entry_count);
 
         if(! newht.tb_entries) {
-             return NULL;
+            return NULL;
         }
-        /* Copy the existing entries to the new table,
-           rehashing each. 
-        */
+        /*  Copy the existing entries to the new table,
+            rehashing each.  */
         copy_abbrev_table_to_new_table(hash_table_base, &newht);
-        /* Dealloc only the entries hash table array, not the lists
-           of things pointed to by a hash table entry array. */
+        /*  Dealloc only the entries hash table array, not the lists
+            of things pointed to by a hash table entry array. */
         dwarf_dealloc(dbg, hash_table_base->tb_entries,DW_DLA_HASH_TABLE_ENTRY);
         hash_table_base->tb_entries = 0;
-        /* Now overwrite the existing table descriptor with
-           the new, newly valid, contents. */
+        /*  Now overwrite the existing table descriptor with
+            the new, newly valid, contents. */
         *hash_table_base = newht;
     } /* Else is ok as is, add entry */ 
 
@@ -306,32 +313,40 @@ _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
    
     /* Determine if the 'code' is the list of synonyms already. */
     for (hash_abbrev_entry = entry_cur->at_head;
-         hash_abbrev_entry != NULL && hash_abbrev_entry->ab_code != code;
-         hash_abbrev_entry = hash_abbrev_entry->ab_next);
+        hash_abbrev_entry != NULL && hash_abbrev_entry->ab_code != code;
+        hash_abbrev_entry = hash_abbrev_entry->ab_next);
     if (hash_abbrev_entry != NULL) {
-        /* This returns a pointer to an abbrev list entry, not 
-           the list itself. */
+        /*  This returns a pointer to an abbrev list entry, not 
+            the list itself. */
         return (hash_abbrev_entry);
     }
 
     abbrev_ptr = cu_context->cc_last_abbrev_ptr != NULL ?
         cu_context->cc_last_abbrev_ptr :
         dbg->de_debug_abbrev.dss_data + cu_context->cc_abbrev_offset;
+    end_abbrev_ptr = dbg->de_debug_abbrev.dss_data +
+        dbg->de_debug_abbrev.dss_size;
 
-    /* End of abbrev's for this cu, since abbrev code is 0. */
+    /*  End of abbrev's as we are past the end entirely.
+        THis can happen */
+    if (abbrev_ptr > end_abbrev_ptr) {
+        return (NULL);
+    }
+    /*  End of abbrev's for this cu, since abbrev code is 0. */
     if (*abbrev_ptr == 0) {
         return (NULL);
     }
 
     do {
-        unsigned new_hashable_val;
+        unsigned new_hashable_val = 0;
         DECODE_LEB128_UWORD(abbrev_ptr, abbrev_code);
         DECODE_LEB128_UWORD(abbrev_ptr, abbrev_tag);
 
         inner_list_entry = (Dwarf_Abbrev_List)
             _dwarf_get_alloc(cu_context->cc_dbg, DW_DLA_ABBREV_LIST, 1);
-        if (inner_list_entry == NULL)
+        if (inner_list_entry == NULL) {
             return (NULL);
+        }
 
         new_hashable_val = abbrev_code;
         hash_num = new_hashable_val % 
@@ -348,14 +363,18 @@ _dwarf_get_abbrev_for_code(Dwarf_CU_Context cu_context, Dwarf_Unsigned code)
         inner_list_entry->ab_has_child = *(abbrev_ptr++);
         inner_list_entry->ab_abbrev_ptr = abbrev_ptr;
 
-        /* Cycle thru the abbrev content, ignoring the content except
-           to find the end of the content. */
+        /*  Cycle thru the abbrev content, ignoring the content except
+            to find the end of the content. */
         do {
             DECODE_LEB128_UWORD(abbrev_ptr, attr_name);
             DECODE_LEB128_UWORD(abbrev_ptr, attr_form);
         } while (attr_name != 0 && attr_form != 0);
 
-    } while (*abbrev_ptr != 0 && abbrev_code != code);
+        /*  We may have fallen off the end of content,  that is not
+            a botch in the section, as there is no rule that the last
+            abbrev need have abbrev_code of 0. */
+    } while ( (abbrev_ptr < end_abbrev_ptr ) && 
+        *abbrev_ptr != 0 && abbrev_code != code);
 
     cu_context->cc_last_abbrev_ptr = abbrev_ptr;
     return (abbrev_code == code ? inner_list_entry : NULL);
@@ -424,80 +443,102 @@ _dwarf_memcpy_swap_bytes(void *s1, const void *s2, size_t len)
 }
 
 
-/*
-  This calculation used to be sprinkled all over.
-  Now brought to one place.
+/*  This calculation used to be sprinkled all over.
+    Now brought to one place.
 
-  We try to accurately compute the size of a cu header
-  given a known cu header location ( an offset in .debug_info).
-
-*/
+    We try to accurately compute the size of a cu header
+    given a known cu header location ( an offset in .debug_info
+    or debug_types).  */
 /* ARGSUSED */
 Dwarf_Unsigned
-_dwarf_length_of_cu_header(Dwarf_Debug dbg, Dwarf_Unsigned offset)
+_dwarf_length_of_cu_header(Dwarf_Debug dbg, Dwarf_Unsigned offset,
+    Dwarf_Bool is_info)
 {
     int local_length_size = 0;
     int local_extension_size = 0;
     Dwarf_Unsigned length = 0;
-    Dwarf_Small *cuptr = dbg->de_debug_info.dss_data + offset;
+    Dwarf_Unsigned final_size = 0;
+    Dwarf_Small *cuptr = 
+        is_info? dbg->de_debug_info.dss_data + offset:
+            dbg->de_debug_types.dss_data+ offset;
 
     READ_AREA_LENGTH(dbg, length, Dwarf_Unsigned,
-                     cuptr, local_length_size, local_extension_size);
+        cuptr, local_length_size, local_extension_size);
 
-    return local_extension_size +       /* initial extesion, if present 
-                                         */
+    final_size = local_extension_size +  /* initial extension, if present */
         local_length_size +     /* Size of cu length field. */
         sizeof(Dwarf_Half) +    /* Size of version stamp field. */
         local_length_size +     /* Size of abbrev offset field. */
         sizeof(Dwarf_Small);    /* Size of address size field. */
 
+    if(!is_info) {
+        final_size += 
+            /* type signature size */
+            sizeof (Dwarf_Sig8) + 
+            /* type offset size */
+            local_length_size;
+    }
+    return final_size;
 }
 
-/*
-        Pretend we know nothing about the CU
-        and just roughly compute the result. 
-*/
+/*  Pretend we know nothing about the CU
+    and just roughly compute the result.  */
 Dwarf_Unsigned
-_dwarf_length_of_cu_header_simple(Dwarf_Debug dbg)
+_dwarf_length_of_cu_header_simple(Dwarf_Debug dbg,
+    Dwarf_Bool dinfo)
 {
-    return dbg->de_length_size +        /* Size of cu length field. */
+    Dwarf_Unsigned finalsize = 0;
+    finalsize =  dbg->de_length_size +        /* Size of cu length field. */
         sizeof(Dwarf_Half) +    /* Size of version stamp field. */
         dbg->de_length_size +   /* Size of abbrev offset field. */
         sizeof(Dwarf_Small);    /* Size of address size field. */
+    if(!dinfo) {
+        finalsize += 
+            /* type signature size */
+            sizeof (Dwarf_Sig8) + 
+            /* type offset size */
+            dbg->de_length_size;
+    }
+    return finalsize;
 }
 
-/* Now that we delay loading .debug_info, we need to do the
-   load in more places. So putting the load
-   code in one place now instead of replicating it in multiple
-   places.
-
-*/
+/*  Now that we delay loading .debug_info, we need to do the
+    load in more places. So putting the load
+    code in one place now instead of replicating it in multiple
+    places.  */
 int
 _dwarf_load_debug_info(Dwarf_Debug dbg, Dwarf_Error * error)
 {
     int res = DW_DLV_ERROR;
-
-    /* Testing de_debug_info.dss_data allows us to avoid testing
-       de_debug_abbrev.dss_data. 
-       One test instead of 2. .debug_info is useless
-       without .debug_abbrev. */
     if (dbg->de_debug_info.dss_data) {
         return DW_DLV_OK;
     }
-
     res = _dwarf_load_section(dbg, &dbg->de_debug_abbrev,error);
     if (res != DW_DLV_OK) {
         return res;
     }
     res = _dwarf_load_section(dbg, &dbg->de_debug_info, error);
     return res;
-
+}
+int
+_dwarf_load_debug_types(Dwarf_Debug dbg, Dwarf_Error * error)
+{
+    int res = DW_DLV_ERROR;
+    if (dbg->de_debug_types.dss_data) {
+        return DW_DLV_OK;
+    }
+    res = _dwarf_load_section(dbg, &dbg->de_debug_abbrev,error);
+    if (res != DW_DLV_OK) {
+        return res;
+    }
+    res = _dwarf_load_section(dbg, &dbg->de_debug_types, error);
+    return res;
 }
 void
 _dwarf_free_abbrev_hash_table_contents(Dwarf_Debug dbg,Dwarf_Hash_Table hash_table)
 {
-    /* A Hash Table is an array with tb_table_entry_count struct
-       Dwarf_Hash_Table_s entries in the array. */
+    /*  A Hash Table is an array with tb_table_entry_count struct
+        Dwarf_Hash_Table_s entries in the array. */
     int hashnum = 0;
     for (; hashnum < hash_table->tb_table_entry_count; ++hashnum) {
         struct Dwarf_Abbrev_List_s *abbrev = 0;

@@ -1,7 +1,7 @@
 /*
 
   Copyright (C) 2000-2005 Silicon Graphics, Inc. All Rights Reserved.
-  Portions Copyright (C) 2008-2010 David Anderson.  All Rights Reserved.
+  Portions Copyright (C) 2008-2011 David Anderson.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -216,7 +216,7 @@ const char *_dwarf_errmsgs[] = {
     "DW_DLE_MAKE_CU_CONTEXT_FAIL",
     "DW_DLE_REL_ALLOC",
     "DW_DLE_ARANGE_OFFSET_BAD",
-    "DW_DLE_SEGMENT_SIZE_BAD",
+    "DW_DLE_SEGMENT_SIZE_BAD (135) Size of a segment selector should usually be less than 8 (bytes).",
     "DW_DLE_ARANGE_LENGTH_BAD",
     "DW_DLE_ARANGE_DECODE_ERROR",
     "DW_DLE_ARANGES_NULL",
@@ -313,49 +313,56 @@ const char *_dwarf_errmsgs[] = {
     "DW_DLE_ATTR_EXPRLOC_FORM_BAD(224)",
     "DW_DLE_FORM_SEC_OFFSET_LENGTH_BAD(225)",
     "DW_DLE_NOT_REF_FORM(226)",
-    "DW_DLE_DEBUG_FRAME_LENGTH_NOT_MULTIPLE(227)"
+    "DW_DLE_DEBUG_FRAME_LENGTH_NOT_MULTIPLE(227)",
+    "DW_DLE_REF_SIG8_NOT_HANDLED (228)",
+    "DW_DLE_DEBUG_FRAME_POSSIBLE_ADDRESS_BOTCH (229)",
+    "DW_DLE_LOC_BAD_TERMINATION (230) the last location operator in an expression is missing some associated data, an operator ended too soon",
+    "DW_DLE_SYMTAB_SECTION_LENGTH_ODD (231) so doing relocations seems unsafe",
+    "DW_DLE_RELOC_SECTION_SYMBOL_INDEX_BAD (232) so doing a relocation seems unsafe",
+    "DW_DLE_RELOC_SECTION_RELOC_TARGET_SIZE_UNKNOWN (233) so doing a relocation is unsafe",
+    "DW_DLE_SYMTAB_SECTION_ENTRYSIZE_ZERO(234)",
+    "DW_DLE_LINE_NUMBER_HEADER_ERROR (235), a line number program header seems incomplete (perhaps the header_length is wrong?).",
+    "DW_DLE_DEBUG_TYPES_NULL (236)",
+    "DW_DLE_DEBUG_TYPES_DUPLICATE (237)",
+    "DW_DLE_DEBUG_TYPES_ONLY_DWARF4 (238)",
+    "DW_DLE_DEBUG_TYPEOFFSET_BAD (239)",
 };
 
 
 
 
-/* 
-    This function performs error handling as described in the 
+/*  This function performs error handling as described in the 
     libdwarf consumer document section 3.  Dbg is the Dwarf_debug
     structure being processed.  Error is a pointer to the pointer
     to the error descriptor that will be returned.  Errval is an
-    error code listed in dwarf_error.h.
-*/
+    error code listed in dwarf_error.h.  */
 void
 _dwarf_error(Dwarf_Debug dbg, Dwarf_Error * error, Dwarf_Sword errval)
 {
     Dwarf_Error errptr;
 
-    /* 
-       Allow NULL dbg on entry, since sometimes that can happen and we
-       want to report the upper-level error, not this one. */
+    /*  Allow NULL dbg on entry, since sometimes that can happen and we
+        want to report the upper-level error, not this one. */
     if (error != NULL) {
-
-        /* 
-           If dbg is NULL, use the alternate error struct. However,
-           this will overwrite the earlier error. */
+        /*  If dbg is NULL, use the alternate error struct. However,
+            this will overwrite the earlier error. */
         if (dbg != NULL) {
             errptr =
                 (Dwarf_Error) _dwarf_get_alloc(dbg, DW_DLA_ERROR, 1);
             if (errptr == NULL) {
                 fprintf(stderr,
-                        "Could not allocate Dwarf_Error structure, "
-                        "abort() in libdwarf.\n");
+                    "Could not allocate Dwarf_Error structure, "
+                    "abort() in libdwarf.\n");
                 abort();
             }
         } else {
-            /* We have no dbg to work with. dwarf_init failed. We hack
-               up a special area. */
+            /*  We have no dbg to work with. dwarf_init failed. We hack
+                up a special area. */
             errptr = _dwarf_special_no_dbg_error_malloc();
             if (errptr == NULL) {
                 fprintf(stderr,
-                        "Could not allocate Dwarf_Error structure, "
-                        "abort() in libdwarf..\n");
+                    "Could not allocate Dwarf_Error structure, "
+                    "abort() in libdwarf..\n");
                 abort();
             }
         }
@@ -369,7 +376,7 @@ _dwarf_error(Dwarf_Debug dbg, Dwarf_Error * error, Dwarf_Sword errval)
         errptr = (Dwarf_Error) _dwarf_get_alloc(dbg, DW_DLA_ERROR, 1);
         if (errptr == NULL) {
             fprintf(stderr, "Could not allocate Dwarf_Error structure,"
-                    " abort() in libdwarf.\n");
+                " abort() in libdwarf.\n");
             abort();
         }
         errptr->er_errval = errval;
@@ -377,7 +384,7 @@ _dwarf_error(Dwarf_Debug dbg, Dwarf_Error * error, Dwarf_Sword errval)
         return;
     }
     fprintf(stderr,
-            "abort() in libdwarf. No error argument, no handler.\n");
+        "abort() in libdwarf. No error argument, no handler.\n");
     abort();
 }
 
@@ -402,7 +409,7 @@ dwarf_errmsg(Dwarf_Error error)
         return "Dwarf_Error is NULL";
     }
 
-    if (error->er_errval > (sizeof(_dwarf_errmsgs) / sizeof(char *))) {
+    if (error->er_errval >= (sizeof(_dwarf_errmsgs) / sizeof(char *))) {
         return "Dwarf_Error value out of range";
     }
 
