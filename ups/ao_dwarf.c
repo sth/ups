@@ -676,6 +676,8 @@ dwf_get_flag(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     if (form == DW_FORM_flag) {
 	if ((rv = dwarf_formflag(attribute, &val, &err)) != DW_DLV_OK)
 	    dwf_fatal_error("dwarf_formflag", rv, die, err);
+    } else if (form == DW_FORM_flag_present) {
+	val = 1;
     } else {
 	dwf_fatal_error("attribute form not flag", 0, die, err);
     }
