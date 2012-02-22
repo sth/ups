@@ -1,5 +1,5 @@
 /* Automatically generated, do not edit. */
-/* Generated on Nov 11 2011  10:24:05 */
+/* Generated on Feb 22 2012  12:46:56 */
 
 /* BEGIN FILE */
 
@@ -79,6 +79,8 @@ enum Dwarf_TAG_e {
     DW_TAG_GNU_template_template_parameter   = 0x4106,
     DW_TAG_GNU_template_parameter_pack       = 0x4107,
     DW_TAG_GNU_formal_parameter_pack         = 0x4108,
+    DW_TAG_GNU_call_site                     = 0x4109,
+    DW_TAG_GNU_call_site_parameter           = 0x410a,
     DW_TAG_SUN_function_template             = 0x4201,
     DW_TAG_SUN_class_template                = 0x4202,
     DW_TAG_SUN_struct_template               = 0x4203,
@@ -270,7 +272,23 @@ enum Dwarf_AT_e {
     DW_AT_body_begin                         = 0x2105,
     DW_AT_body_end                           = 0x2106,
     DW_AT_GNU_vector                         = 0x2107,
-    DW_AT_GNU_template_name                  = 0x2108,
+    DW_AT_GNU_guarded_by                     = 0x2108,
+    DW_AT_GNU_pt_guarded_by                  = 0x2109,
+    DW_AT_GNU_guarded                        = 0x210a,
+    DW_AT_GNU_pt_guarded                     = 0x210b,
+    DW_AT_GNU_locks_excluded                 = 0x210c,
+    DW_AT_GNU_exclusive_locks_required       = 0x210d,
+    DW_AT_GNU_shared_locks_required          = 0x210e,
+    DW_AT_GNU_odr_signature                  = 0x210f,
+    DW_AT_GNU_template_name                  = 0x2110,
+    DW_AT_GNU_call_site_value                = 0x2111,
+    DW_AT_GNU_call_site_data_value           = 0x2112,
+    DW_AT_GNU_call_site_target               = 0x2113,
+    DW_AT_GNU_call_site_target_clobbered     = 0x2114,
+    DW_AT_GNU_tail_call                      = 0x2115,
+    DW_AT_GNU_all_tail_call_sites            = 0x2116,
+    DW_AT_GNU_all_call_sites                 = 0x2117,
+    DW_AT_GNU_all_source_call_sites          = 0x2118,
     DW_AT_SUN_template                       = 0x2201,
     DW_AT_SUN_alignment                      = 0x2202,
     DW_AT_SUN_vtable                         = 0x2203,
@@ -318,6 +336,8 @@ enum Dwarf_AT_e {
     DW_AT_SUN_fortran_main_alias             = 0x223a,
     DW_AT_SUN_fortran_based                  = 0x223b,
     DW_AT_ALTIUM_loclist                     = 0x2300,
+    DW_AT_use_GNAT_descriptive_type          = 0x2301,
+    DW_AT_GNAT_descriptive_type              = 0x2302,
     DW_AT_upc_threads_scaled                 = 0x3210,
     DW_AT_PGI_lbase                          = 0x3a00,
     DW_AT_PGI_soffset                        = 0x3a01,
@@ -495,7 +515,11 @@ enum Dwarf_OP_e {
     DW_OP_HP_unmod_range                     = 0x00e5,
     DW_OP_HP_tls                             = 0x00e6,
     DW_OP_INTEL_bit_piece                    = 0x00e8,
-    DW_OP_APPLE_uninit                       = 0x00f0,
+    DW_OP_GNU_uninit                         = 0x00f0,
+    DW_OP_GNU_encoded_addr                   = 0x00f1,
+    DW_OP_GNU_implicit_pointer               = 0x00f2,
+    DW_OP_GNU_entry_value                    = 0x00f3,
+    DW_OP_PGI_omp_thread_num                 = 0x00f8,
     DW_OP_hi_user                            = 0x00ff
 };
 
@@ -617,6 +641,7 @@ enum Dwarf_CC_e {
     DW_CC_program                            = 0x0002,
     DW_CC_nocall                             = 0x0003,
     DW_CC_lo_user                            = 0x0040,
+    DW_CC_GNU_borland_fastcall_i386          = 0x0041,
     DW_CC_ALTIUM_interrupt                   = 0x0065,
     DW_CC_ALTIUM_near_system_stack           = 0x0066,
     DW_CC_ALTIUM_near_user_stack             = 0x0067,
@@ -671,7 +696,7 @@ enum Dwarf_LNE_e {
     DW_LNE_HP_negate_function_exit           = 0x0018,
     DW_LNE_HP_negate_front_end_logical       = 0x0019,
     DW_LNE_HP_define_proc                    = 0x0020,
-    DW_LNE_lo_user                           = 0x0080,
+    DW_LNE_HP_source_file_correlation        = 0x0080,
     DW_LNE_hi_user                           = 0x00ff
 };
 

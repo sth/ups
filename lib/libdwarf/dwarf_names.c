@@ -1,5 +1,5 @@
 /* Generated routines, do not edit. */
-/* Generated on Nov 11 2011  10:24:05 */
+/* Generated on Feb 22 2012  12:46:56 */
 
 /* BEGIN FILE */
 
@@ -227,6 +227,12 @@ dwarf_get_TAG_name (unsigned int val,const char ** s_out)
         return DW_DLV_OK;
     case DW_TAG_GNU_formal_parameter_pack:
         *s_out = "DW_TAG_GNU_formal_parameter_pack";
+        return DW_DLV_OK;
+    case DW_TAG_GNU_call_site:
+        *s_out = "DW_TAG_GNU_call_site";
+        return DW_DLV_OK;
+    case DW_TAG_GNU_call_site_parameter:
+        *s_out = "DW_TAG_GNU_call_site_parameter";
         return DW_DLV_OK;
     case DW_TAG_SUN_function_template:
         *s_out = "DW_TAG_SUN_function_template";
@@ -798,8 +804,56 @@ dwarf_get_AT_name (unsigned int val,const char ** s_out)
     case DW_AT_GNU_vector:
         *s_out = "DW_AT_GNU_vector";
         return DW_DLV_OK;
+    case DW_AT_GNU_guarded_by:
+        *s_out = "DW_AT_GNU_guarded_by";
+        return DW_DLV_OK;
+    case DW_AT_GNU_pt_guarded_by:
+        *s_out = "DW_AT_GNU_pt_guarded_by";
+        return DW_DLV_OK;
+    case DW_AT_GNU_guarded:
+        *s_out = "DW_AT_GNU_guarded";
+        return DW_DLV_OK;
+    case DW_AT_GNU_pt_guarded:
+        *s_out = "DW_AT_GNU_pt_guarded";
+        return DW_DLV_OK;
+    case DW_AT_GNU_locks_excluded:
+        *s_out = "DW_AT_GNU_locks_excluded";
+        return DW_DLV_OK;
+    case DW_AT_GNU_exclusive_locks_required:
+        *s_out = "DW_AT_GNU_exclusive_locks_required";
+        return DW_DLV_OK;
+    case DW_AT_GNU_shared_locks_required:
+        *s_out = "DW_AT_GNU_shared_locks_required";
+        return DW_DLV_OK;
+    case DW_AT_GNU_odr_signature:
+        *s_out = "DW_AT_GNU_odr_signature";
+        return DW_DLV_OK;
     case DW_AT_GNU_template_name:
         *s_out = "DW_AT_GNU_template_name";
+        return DW_DLV_OK;
+    case DW_AT_GNU_call_site_value:
+        *s_out = "DW_AT_GNU_call_site_value";
+        return DW_DLV_OK;
+    case DW_AT_GNU_call_site_data_value:
+        *s_out = "DW_AT_GNU_call_site_data_value";
+        return DW_DLV_OK;
+    case DW_AT_GNU_call_site_target:
+        *s_out = "DW_AT_GNU_call_site_target";
+        return DW_DLV_OK;
+    case DW_AT_GNU_call_site_target_clobbered:
+        *s_out = "DW_AT_GNU_call_site_target_clobbered";
+        return DW_DLV_OK;
+    case DW_AT_GNU_tail_call:
+        *s_out = "DW_AT_GNU_tail_call";
+        return DW_DLV_OK;
+    case DW_AT_GNU_all_tail_call_sites:
+        *s_out = "DW_AT_GNU_all_tail_call_sites";
+        return DW_DLV_OK;
+    case DW_AT_GNU_all_call_sites:
+        *s_out = "DW_AT_GNU_all_call_sites";
+        return DW_DLV_OK;
+    case DW_AT_GNU_all_source_call_sites:
+        *s_out = "DW_AT_GNU_all_source_call_sites";
         return DW_DLV_OK;
     case DW_AT_SUN_template:
         *s_out = "DW_AT_SUN_template";
@@ -941,6 +995,12 @@ dwarf_get_AT_name (unsigned int val,const char ** s_out)
         return DW_DLV_OK;
     case DW_AT_ALTIUM_loclist:
         *s_out = "DW_AT_ALTIUM_loclist";
+        return DW_DLV_OK;
+    case DW_AT_use_GNAT_descriptive_type:
+        *s_out = "DW_AT_use_GNAT_descriptive_type";
+        return DW_DLV_OK;
+    case DW_AT_GNAT_descriptive_type:
+        *s_out = "DW_AT_GNAT_descriptive_type";
         return DW_DLV_OK;
     case DW_AT_upc_threads_scaled:
         *s_out = "DW_AT_upc_threads_scaled";
@@ -1472,8 +1532,20 @@ dwarf_get_OP_name (unsigned int val,const char ** s_out)
     case DW_OP_INTEL_bit_piece:
         *s_out = "DW_OP_INTEL_bit_piece";
         return DW_DLV_OK;
-    case DW_OP_APPLE_uninit:
-        *s_out = "DW_OP_APPLE_uninit";
+    case DW_OP_GNU_uninit:
+        *s_out = "DW_OP_GNU_uninit";
+        return DW_DLV_OK;
+    case DW_OP_GNU_encoded_addr:
+        *s_out = "DW_OP_GNU_encoded_addr";
+        return DW_DLV_OK;
+    case DW_OP_GNU_implicit_pointer:
+        *s_out = "DW_OP_GNU_implicit_pointer";
+        return DW_DLV_OK;
+    case DW_OP_GNU_entry_value:
+        *s_out = "DW_OP_GNU_entry_value";
+        return DW_DLV_OK;
+    case DW_OP_PGI_omp_thread_num:
+        *s_out = "DW_OP_PGI_omp_thread_num";
         return DW_DLV_OK;
     case DW_OP_hi_user:
         *s_out = "DW_OP_hi_user";
@@ -1828,6 +1900,9 @@ dwarf_get_CC_name (unsigned int val,const char ** s_out)
     case DW_CC_lo_user:
         *s_out = "DW_CC_lo_user";
         return DW_DLV_OK;
+    case DW_CC_GNU_borland_fastcall_i386:
+        *s_out = "DW_CC_GNU_borland_fastcall_i386";
+        return DW_DLV_OK;
     case DW_CC_ALTIUM_interrupt:
         *s_out = "DW_CC_ALTIUM_interrupt";
         return DW_DLV_OK;
@@ -1985,8 +2060,8 @@ dwarf_get_LNE_name (unsigned int val,const char ** s_out)
     case DW_LNE_HP_define_proc:
         *s_out = "DW_LNE_HP_define_proc";
         return DW_DLV_OK;
-    case DW_LNE_lo_user:
-        *s_out = "DW_LNE_lo_user";
+    case DW_LNE_HP_source_file_correlation:
+        *s_out = "DW_LNE_HP_source_file_correlation";
         return DW_DLV_OK;
     case DW_LNE_hi_user:
         *s_out = "DW_LNE_hi_user";

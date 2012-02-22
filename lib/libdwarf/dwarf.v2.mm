@@ -49,8 +49,8 @@
 '\"	UNIX International members.
 '\"
 '\" $Log$
-'\" Revision 1.7  2011/11/11 10:27:24  thughes
-'\" Update libdwarf to 20111030 version.
+'\" Revision 1.8  2012/02/22 13:55:02  thughes
+'\" Update libdwarf to 20111214 version.
 '\"
 '\" Revision 1.1  1994/05/18 18:50:42  davea
 '\" Initial revision
