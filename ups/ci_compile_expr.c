@@ -1408,7 +1408,8 @@ expr_context_t context;
 			base = expr->ex_type->ty_base;
 			if (context == EC_VALUE && !is_aggregate(base) &&
 					      base->ty_code != DT_FUNC_RETURNING) {
-				code_deref(tx, base->ty_code, base->ty_size, expr_addrtype);
+				size = ci_typesize(NULL, base);
+				code_deref(tx, base->ty_code, size, expr_addrtype);
 				addrtype = unknown_addrtype(tx);
 			}
 			else
