@@ -1,0 +1,9 @@
+
+Makefile
+develhdrs
+ifdefs.h
+*.o
+*.a
+*.swp
+/ups-state/*.state
+
