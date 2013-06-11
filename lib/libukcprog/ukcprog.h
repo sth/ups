@@ -97,11 +97,17 @@ typedef char *constvoidptr;
 #define CAT3(a,b,c) CAT(a,b)c
 #endif
 
+#if defined(__GNUC__)
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
+
 /* from panic.c */
 typedef void (*panic_handler_t) PROTO((const char *message));
 
 panic_handler_t install_panic_handler PROTO((panic_handler_t handler));
-void panic PROTO((const char *message));
+void panic PROTO((const char *message)) NORETURN;
 
 
 /* from e_malloc.c */
