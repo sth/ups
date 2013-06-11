@@ -120,7 +120,7 @@ Dwarf_Die
 dwf_cu_die(Dwarf_Debug dbg)
 {
     int rv;
-    Dwarf_Die cu_die;
+    Dwarf_Die cu_die = 0;
     Dwarf_Error err;
 
     if ((rv = dwarf_siblingof(dbg, NULL, &cu_die, &err)) != DW_DLV_OK)
@@ -177,7 +177,7 @@ Dwarf_Die
 dwf_die_at_offset(Dwarf_Debug dbg, Dwarf_Off offset)
 {
     int rv;
-    Dwarf_Die die;
+    Dwarf_Die die = 0;
     Dwarf_Error err;
 
     if ((rv = dwarf_offdie(dbg, offset, &die, &err)) != DW_DLV_OK)
@@ -204,7 +204,7 @@ Dwarf_Off
 dwf_offset_of_die(Dwarf_Debug dbg, Dwarf_Die die)
 {
     int rv;
-    Dwarf_Off offset;
+    Dwarf_Off offset = 0;
     Dwarf_Error err;
 
     if ((rv = dwarf_dieoffset(die, &offset, &err)) != DW_DLV_OK)
@@ -219,7 +219,7 @@ Dwarf_Off
 dwf_cu_offset_of_die(Dwarf_Debug dbg, Dwarf_Die die)
 {
     int rv;
-    Dwarf_Off offset;
+    Dwarf_Off offset = 0;
     Dwarf_Error err;
 
     if ((rv = dwarf_die_CU_offset(die, &offset, &err)) != DW_DLV_OK)
@@ -234,7 +234,7 @@ Dwarf_Half
 dwf_get_tag(Dwarf_Debug dbg, Dwarf_Die die)
 {
     int rv;
-    Dwarf_Half tag;
+    Dwarf_Half tag = 0;
     Dwarf_Error err;
 
     if ((rv = dwarf_tag(die, &tag, &err)) != DW_DLV_OK)
@@ -251,7 +251,7 @@ dwf_has_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 {
     int rv;
     Dwarf_Error err;
-    Dwarf_Bool has_it;
+    Dwarf_Bool has_it = 0;
 
     if ((rv = dwarf_hasattr(die, id, &has_it, &err)) != DW_DLV_OK)
 	dwf_fatal_error("dwarf_hasattr", rv, die, err);
@@ -274,15 +274,20 @@ dwf_get_string(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Half form;
     char *str = NULL;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
-
+	goto cleanup_attribute;
+    }
     if ((form == DW_FORM_string) || (form == DW_FORM_strp)) {
 	char *s;
-	if ((rv = dwarf_formstring(attribute, &s, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_formstring(attribute, &s, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_formstring", rv, die, err);
+	    goto cleanup_attribute;
+	}
 	if (ap)
 	    str = alloc_strdup(ap, s);
 	else
@@ -290,8 +295,11 @@ dwf_get_string(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
 	dwarf_dealloc(dbg, s, DW_DLA_STRING);
     } else {
 	dwf_fatal_error("attribute form not string", 0, die, err);
+	goto cleanup_attribute;
     }
+cleanup_attribute:
     dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return str;
 }
 
@@ -338,29 +346,43 @@ dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Addr addr = 0;
 
     if (id == DW_AT_low_pc) {
-	if ((rv = dwarf_lowpc(die, &addr, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_lowpc(die, &addr, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_lowpc", rv, die, err);
+	    goto end;
+	}
     } else if (id == DW_AT_high_pc) {
-	if ((rv = dwarf_highpc(die, &addr, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_highpc(die, &addr, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_highpc", rv, die, err);
+	    goto end;
+	}
     } else {
 
 	Dwarf_Attribute attribute;
 	Dwarf_Half form;
 
-	if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_attr", rv, die, err);
-	if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	    goto end;
+	}
+	if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_whatform", rv, die, err);
+	    goto local_cleanup_attribute;
+	}
 
 	if (form == DW_FORM_addr) {
-	    if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK)
+	    if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK) {
 		dwf_fatal_error("dwarf_formaddr", rv, die, err);
+	        goto local_cleanup_attribute;
+	    }
 	} else {
 	    dwf_fatal_error("attribute form not address", 0, die, err);
+	    goto local_cleanup_attribute;
 	}
+
+local_cleanup_attribute:
 	dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
     }
+end:
     return addr;
 }
 
@@ -379,10 +401,14 @@ dwf_get_offset(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     if ((form == DW_FORM_ref1)
 	    || (form == DW_FORM_ref2)
@@ -390,13 +416,18 @@ dwf_get_offset(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 	    || (form == DW_FORM_ref8)
 	    || (form == DW_FORM_ref_udata)
 	    || (form == DW_FORM_ref_addr)) {
-	if ((rv = dwarf_global_formref(attribute, &val, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_global_formref(attribute, &val, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_global_formref", rv, die, err);
+	    goto cleanup_attribute;
+	}
     } else {
 	dwf_fatal_error("attribute form not (global) ref", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return val;
 }
 
@@ -419,23 +450,32 @@ dwf_get_cu_ref(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     if ((form == DW_FORM_ref1)
 	    || (form == DW_FORM_ref2)
 	    || (form == DW_FORM_ref4)
 	    || (form == DW_FORM_ref8)
 	    || (form == DW_FORM_ref_udata)) {
-	if ((rv = dwarf_formref(attribute, &val, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_formref(attribute, &val, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_formref", rv, die, err);
+	    goto cleanup_attribute;
+	}
     } else {
 	dwf_fatal_error("attribute form not ref", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return val;
 }
 
@@ -452,9 +492,12 @@ dwf_get_s_data(Dwarf_Debug dbg, Dwarf_Attribute attribute)
     Dwarf_Error err;
     Dwarf_Signed val = 0;
 
-    if ((rv = dwarf_formsdata(attribute, &val, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_formsdata(attribute, &val, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_formsdata", rv, NULL, err);
+	goto end;
+    }
 
+end:
     return val;
 }
 
@@ -471,9 +514,12 @@ dwf_get_u_data(Dwarf_Debug dbg, Dwarf_Attribute attribute)
     Dwarf_Error err;
     Dwarf_Unsigned val = 0;
 
-    if ((rv = dwarf_formudata(attribute, &val, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_formudata(attribute, &val, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_formudata", rv, NULL, err);
+	goto end;
+    }
 
+end:
     return val;
 }
 
@@ -494,10 +540,14 @@ dwf_get_udata(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     if ((form == DW_FORM_data1)
 	    || (form == DW_FORM_data2)
@@ -507,9 +557,12 @@ dwf_get_udata(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 	val = dwf_get_u_data(dbg, attribute);
     } else {
 	dwf_fatal_error("attribute form not udata", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return val;
 }
 
@@ -531,10 +584,14 @@ dwf_get_sdata(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     if ((form == DW_FORM_data1)
 	    || (form == DW_FORM_data2)
@@ -544,9 +601,12 @@ dwf_get_sdata(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 	val = dwf_get_s_data(dbg, attribute);
     } else {
 	dwf_fatal_error("attribute form not sdata", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return val;
 }
 
@@ -571,10 +631,14 @@ dwf_get_number(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     /*
      * If it is not clear from the "form" whether the data is signed or
@@ -644,9 +708,12 @@ dwf_get_number(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 	} /* switch on 'id' */
     } else {
 	dwf_fatal_error("attribute form not data", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return sval;
 }
 
@@ -668,21 +735,30 @@ dwf_get_flag(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Attribute attribute;
     Dwarf_Half form;
 
-    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	goto end;
+    }
+    if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
+	goto cleanup_attribute;
+    }
 
     if (form == DW_FORM_flag) {
-	if ((rv = dwarf_formflag(attribute, &val, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_formflag(attribute, &val, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_formflag", rv, die, err);
+	    goto cleanup_attribute;
+    	}
     } else if (form == DW_FORM_flag_present) {
 	val = 1;
     } else {
 	dwf_fatal_error("attribute form not flag", 0, die, err);
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return (bool)val;
 }
 
@@ -710,18 +786,20 @@ dwf_get_loclist(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Signed *p_c
     int rv;
     Dwarf_Error err;
     Dwarf_Attribute attribute;
-    Dwarf_Locdesc **loclist;
+    Dwarf_Locdesc **loclist = NULL;
 
     if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_attr", rv, die, err);
-	return NULL;
+	goto end;
     }
     if ((rv = dwarf_loclist_n(attribute, &loclist, p_count, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_loclist", rv, die, err);
-	return NULL;
+	goto cleanup_attribute;
     }
-    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 
+cleanup_attribute:
+    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
+end:
     return loclist;
 }
 

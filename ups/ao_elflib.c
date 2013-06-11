@@ -1251,13 +1251,13 @@ bool
 add_solib_entry(alloc_pool_t *ap, symtab_t *st, func_t *flist, Elfinfo *el, Solib **p_solibs)
 {
 	Solib *so;
-	const char *soname, *rpath, *runpath;
+	const char *soname = 0, *rpath = "", *runpath = 0;
 	ao_stdata_t *ast;
-	taddr_t debug_vaddr;
-	taddr_t dyn_symtab_vaddr;
-	taddr_t dyn_strtab_vaddr;
-	taddr_t plt_rel_vaddr;
-	int plt_rel_type;
+	taddr_t debug_vaddr = 0;
+	taddr_t dyn_symtab_vaddr = 0;
+	taddr_t dyn_strtab_vaddr = 0;
+	taddr_t plt_rel_vaddr = 0;
+	int plt_rel_type = 0;
 	struct stat stbuf;
 	symtab_t *oldst;
 
@@ -1279,9 +1279,6 @@ add_solib_entry(alloc_pool_t *ap, symtab_t *st, func_t *flist, Elfinfo *el, Soli
 	     FALSE at this point, terminiating the debug seesion.
 	     Changed to continue with null data.
 	     */
-	  soname = 0;
-	  rpath = "";
-	  debug_vaddr = 0;
 	}
 
 	for (so = *p_solibs; so; so = so->next)

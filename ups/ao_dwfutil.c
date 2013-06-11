@@ -369,7 +369,7 @@ stf_t *stf;
     char **srcfiles, *name;
     const char *comp_dir;
     int comp_dir_len = 0;
-    hf_t **list, *file;
+    hf_t **list = NULL, *file = NULL;
 
     /*
      * Get the list of source and header files in this CU.
@@ -378,8 +378,10 @@ stf_t *stf;
      */
     if ((rv = dwarf_srcfiles(cu_die, &srcfiles, &count, &err)) == DW_DLV_NO_ENTRY)
 	return;
-    if (rv != DW_DLV_OK)
+    if (rv != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_srcfiles", rv, cu_die, err);
+	goto end;
+    }
     comp_dir = stf->stf_objpath_hint;
     if (comp_dir)
 	comp_dir_len = strlen(comp_dir);
@@ -424,6 +426,7 @@ stf_t *stf;
     }
     dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
 
+end:
     stf->stf_fmap = list;
     stf->stf_mapsize = count;
 }

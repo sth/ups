@@ -128,18 +128,28 @@ stf_t *stf;
      * Use DW_TAG_lexical_block DIEs (elsewhere) rather than dwarf_lineblock()
      * to get basic block info. (GCC does not set it)
      */
-    if ((rv = dwarf_srclines(cu_die, &lines, &count, &err)) != DW_DLV_OK)
+    if ((rv = dwarf_srclines(cu_die, &lines, &count, &err)) != DW_DLV_OK) {
 	dwf_fatal_error("dwarf_srclines", rv, cu_die, err);
+	goto end;
+    }
     for (i = count-1; i >= 0; i--) {
 
-	if ((rv = dwarf_lineaddr(lines[i], &addr, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_lineaddr(lines[i], &addr, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_lineaddr", rv, cu_die, err);
-	if ((rv = dwarf_lineno(lines[i], &ln_num, &err)) != DW_DLV_OK)
+	    goto cleanup_line;
+	}
+	if ((rv = dwarf_lineno(lines[i], &ln_num, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_lineno", rv, cu_die, err);
-	if ((rv = dwarf_lineoff(lines[i], &ln_col, &err)) != DW_DLV_OK)
+	    goto cleanup_line;
+	}
+	if ((rv = dwarf_lineoff(lines[i], &ln_col, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_lineoff", rv, cu_die, err);
-	if ((rv = dwarf_linesrc(lines[i], &name, &err)) != DW_DLV_OK)
+	    goto cleanup_line;
+	}
+	if ((rv = dwarf_linesrc(lines[i], &name, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_linesrc", rv, cu_die, err);
+	    goto cleanup_line;
+	}
 
 	if (addr > prev_addr)
 	    errf("dwf_do_cu_lines: Address went up - 0x%lx to 0x%lx",
@@ -148,17 +158,13 @@ stf_t *stf;
 
 	if ((f = dwf_lookup_func_by_addr(stf, addr + stf->stf_addr)) == NULL) {
 	    errf("\bAddress 0x%lx not found in %s", (long)addr + stf->stf_addr, name);
-	    dwarf_dealloc(dbg, name, DW_DLA_STRING);
-	    dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
-	    lines[i] = (Dwarf_Line)0;
-	    continue;
+	    goto cleanup_name;
 	}
-	if (f->fu_flags & FU_DONE_LNOS)
+	if (f->fu_flags & FU_DONE_LNOS) {
 	    panic("dwf_do_cu_lines: Already done lnos");
+	    goto cleanup_name;
+	}
 
-	dwarf_dealloc(dbg, name, DW_DLA_STRING);
-	dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
-	lines[i] = (Dwarf_Line)0;
 
 	lno = (lno_t *)alloc(st->st_apool, sizeof(lno_t));
 	lno->ln_fil = f->fu_fil;
@@ -169,8 +175,15 @@ stf_t *stf;
 	f->fu__lnos = lno;
 	if (f->fu_max_lnum < ln_num)
 	    f->fu_max_lnum = ln_num;
+
+    cleanup_name:
+	dwarf_dealloc(dbg, name, DW_DLA_STRING);
+    cleanup_line:
+	dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
+	lines[i] = (Dwarf_Line)0;
     }
     dwarf_dealloc(dbg, lines, DW_DLA_LIST);
+end:
 
     /*
      * Now fix things : we get entries for the opening '{' and closing '}'
@@ -436,16 +449,22 @@ Dwarf_Global *globals;
 	    continue;
 
 	/* Is global in the CU ? */
-	if ((rv = dwarf_global_cu_offset(globals[i], &offset, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_global_cu_offset(globals[i], &offset, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_global_cu_offset", rv, die, err);
+	    goto cleanup_global;
+	}
 	if (offset != cu_hdr_offset)
-	    continue;
+	    goto cleanup_global;
 
 	/* Get the DIE and the name. */
-	if ((rv = dwarf_global_die_offset(globals[i], &die_offset, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_global_die_offset(globals[i], &die_offset, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_global_dieoffset", rv, die, err);
-	if ((rv = dwarf_globname(globals[i], &global_name, &err)) != DW_DLV_OK)
+	    goto cleanup_global;
+	}
+	if ((rv = dwarf_globname(globals[i], &global_name, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_globname", rv, die, err);
+	    goto cleanup_global;
+	}
 
 	/* What sort of global : function, variable, ... ? */
 	die = dwf_die_at_offset(dbg, die_offset);
@@ -467,6 +486,7 @@ Dwarf_Global *globals;
 
 	/* Done with this global. */
 	dwarf_dealloc(dbg, global_name, DW_DLA_STRING);
+    cleanup_global:
 	dwarf_dealloc(dbg, globals[i], DW_DLA_GLOBAL);
 	globals[i] = (Dwarf_Global)0;
 
@@ -1197,8 +1217,10 @@ stf_t *stf;
 	int rv;
 	int i;
 
-	if ((rv = dwarf_get_macro_details(dbg, offset, 0, &count, &macinfo, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_get_macro_details(dbg, offset, 0, &count, &macinfo, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_get_macro_details", rv, cu_die, err);
+	    goto cleanup_macinfo;
+	}
 
 	for (i = 0; i < count; i++) {
 	    int depth = 0;
@@ -1235,6 +1257,7 @@ stf_t *stf;
 	    }
 	}
 
+    cleanup_macinfo:
 	dwarf_dealloc(dbg, macinfo, DW_DLA_STRING);
     }
 
@@ -1299,8 +1322,10 @@ Dwarf_Debug dbg;
      * 3) load other info as required (as now)
      */
     if (only_globals) {
-	if ((rv = dwarf_get_globals(dbg, &globals, &global_count, &err)) == DW_DLV_ERROR)
+	if ((rv = dwarf_get_globals(dbg, &globals, &global_count, &err)) == DW_DLV_ERROR) {
 	    dwf_fatal_error("dwarf_get_globals", rv, NULL, err);
+	    goto end;
+	}
     }
 
     /*
@@ -1376,6 +1401,7 @@ Dwarf_Debug dbg;
     if (globals != NULL)
 	dwarf_dealloc(dbg, globals, DW_DLA_LIST);
 
+end:
     *p_flist = flist;
 
     ast->st_dw_scanned = TRUE;
