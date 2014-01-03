@@ -267,6 +267,44 @@ ELF(section_entries)(Elf_Shdr *sh)
 	return sh->sh_size / sh->sh_entsize;
 }
 
+static void *
+ELF(lookup_note)(Elfinfo *el, const char *notename, int notetype, size_t *p_notesize)
+{
+	void *note = NULL;
+	Elf_Shdr *sh;
+
+	for (sh = el->sections; note == NULL && sh < el->sections + el->num_sections; sh++) {
+		if (sh->sh_type == SHT_NOTE) {
+			unsigned char *data = e_malloc(sh->sh_size);
+
+			if (ELF(read_section)(el, el->sec_strings + sh->sh_name, sh, data)) {
+				int offset = 0;
+
+				while (note == NULL && offset < sh->sh_size) {
+					Elf_Nhdr *nh = (Elf_Nhdr *)(data + offset);
+					int nameoffset = sizeof(Elf_Nhdr);
+					char *name = (char *)(data + nameoffset);
+					int descoffset = ELF_ALIGN(nameoffset + nh->n_namesz);
+					unsigned char *desc = (unsigned char *)(data + descoffset);
+					int nextoffset = ELF_ALIGN(descoffset + nh->n_descsz);
+
+					if (strcmp(name, notename) == 0 && nh->n_type == notetype) {
+						note = e_malloc(nh->n_descsz);
+						memcpy(note, desc, nh->n_descsz);
+						*p_notesize = nh->n_descsz;
+					}
+					
+					offset = nextoffset;
+				}
+			}
+
+			free(data);
+		}
+	}
+
+	return note;
+}
+
 static Elf_Sym *
 ELF(lookup_symbol)(Elf_Sym *syms, size_t index)
 {
@@ -471,6 +509,7 @@ const Elfops ELF(ops) = {
         ELF(section_size),
         ELF(section_link),
         ELF(section_entries),
+	ELF(lookup_note),
         ELF(lookup_symbol),
         ELF(symbol_name),
         ELF(symbol_value),
