@@ -406,13 +406,13 @@ find_debug_file_by_id(const char *textpath, const unsigned char *id, size_t idsi
 		*textdirptr = '\0';
 	}
 
-	sprintf(debugpath, "%s/.build-id/%c%c/%s", textdir, idstr[0], idstr[1], idstr + 2);
+	sprintf(debugpath, "%s/.build-id/%c%c/%s.debug", textdir, idstr[0], idstr[1], idstr + 2);
 
 	if (access(debugpath, R_OK) < 0) {
-		sprintf(debugpath, "%s/.debug/.build-id/%c%c/%s", textdir, idstr[0], idstr[1], idstr + 2);
+		sprintf(debugpath, "%s/.debug/.build-id/%c%c/%s.debug", textdir, idstr[0], idstr[1], idstr + 2);
 
 		if (access(debugpath, R_OK) < 0) {
-			sprintf(debugpath, "/usr/lib/debug/.build-id/%c%c/%s", idstr[0], idstr[1], idstr + 2);
+			sprintf(debugpath, "/usr/lib/debug/.build-id/%c%c/%s.debug", idstr[0], idstr[1], idstr + 2);
 
 			if (access(debugpath, R_OK) < 0) {
 				free(textdir);
