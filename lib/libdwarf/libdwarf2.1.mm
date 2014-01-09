@@ -8,7 +8,7 @@ n\."
 .nr Hb 5
 \." ==============================================
 \." Put current date in the following at each rev
-.ds vE rev 2.02, December 13, 2011
+.ds vE rev 2.11, June 07, 2013
 \." ==============================================
 \." ==============================================
 .ds | |
@@ -202,6 +202,18 @@ functions.
 The following is a brief mention of the changes in this libdwarf from 
 the libdwarf draft for DWARF Version 1 and recent changes.
 .H 2 "Items Changed"
+.P
+Defined how the new operator DW_OP_GNU_const_type is handled.
+(January 26 2013)
+.P
+Added dwarf_loclist_from_expr_b()
+function which adds arguments of the DWARF version
+(2 for DWARF2, etc) and the offset size 
+to the dwarf_loclist_from_expr_a()
+function.  Because the DW_OP_GNU_implicit_pointer
+opcode is defined differently for DWARF2 than for
+later versions.
+(November 2012)
 .P
 Added new functions (some for libdwarf client code) 
 and internal logic support for the 
@@ -469,6 +481,18 @@ this to a \f(CWDwarf_Signed\fP type for those operations.
 For a \f(CWDW_OP_implicit_value\fP operator the \f(CWlr_number2\fP
 field is a pointer to the bytes of the value. The field pointed to
 is \f(CWlr_number\fP bytes long.  There is no explicit terminator.
+Do not attempt to \f(CWfree\fP the bytes which \f(CWlr_number2\fP
+points at and do not alter those bytes. The pointer value
+remains valid till the open Dwarf_Debug is closed.
+This is a rather ugly use of a host integer to hold a pointer. 
+You will normally have to do a 'cast' operation to use the value. 
+.P
+For a \f(CWDW_OP_GNU_const_type\fP operator the \f(CWlr_number2\fP
+field is a pointer to a block with an initial
+unsigned byte giving the number of bytes
+following, followed immediately that number of const
+value bytes. 
+There is no explicit terminator.
 Do not attempt to \f(CWfree\fP the bytes which \f(CWlr_number2\fP
 points at and do not alter those bytes. The pointer value
 remains valid till the open Dwarf_Debug is closed.
@@ -2246,7 +2270,8 @@ The function \f(CWdwarf_lowpc()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CW*return_lowpc\fP
 to the low program counter 
 value associated with the \f(CWdie\fP descriptor if \f(CWdie\fP 
-represents a debugging information entry with this attribute.  
+represents a debugging information entry with the
+\f(CWDW_AT_low_pc\fP attribute.
 It returns \f(CWDW_DLV_NO_ENTRY\fP if \f(CWdie\fP does not have this 
 attribute. 
 It returns \f(CWDW_DLV_ERROR\fP if an error occurred. 
@@ -2262,10 +2287,20 @@ The function \f(CWdwarf_highpc()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CW*return_highpc\fP
 the high program counter 
 value associated with the \f(CWdie\fP descriptor if \f(CWdie\fP 
-represents a debugging information entry with this attribute.  
+represents a debugging information entry with the
+\f(CWDW_AT_high_pc attribute\fP and the form is \f(CWDW_FORM_addr\fP
+(meaning the form is of class address).  
+
+So this function is useless for a \f(CWDW_AT_high_pc\fP
+which is encoded as a constant.
+
 It returns \f(CWDW_DLV_NO_ENTRY\fP if \f(CWdie\fP does not have this 
-attribute. 
-It returns \f(CWDW_DLV_ERROR\fP if an error occurred. 
+attribute.
+
+It returns \f(CWDW_DLV_ERROR\fP if an error occurred or if the
+form is of class constant (which means this function is
+not very useful for some DWARF as of 2013). 
+
 
 .H 3 "dwarf_bytesize()"
 .DS
@@ -2422,6 +2457,7 @@ to the attribute form code of
 the attribute represented by the \f(CWDwarf_Attribute\fP descriptor 
 \f(CWattr\fP.  
 It returns  \f(CWDW_DLV_ERROR\fP  on error.
+
 An attribute using DW_FORM_indirect effectively has two forms.
 This function returns the 'final' form for \f(CWDW_FORM_indirect\fP,
 not the \f(CWDW_FORM_indirect\fP itself. This function is
@@ -2443,9 +2479,17 @@ the attribute represented by the \f(CWDwarf_Attribute\fP descriptor
 It returns  \f(CWDW_DLV_ERROR\fP  on error.
 An attribute using \f(CWDW_FORM_indirect\fP effectively has two forms.
 This returns the form 'directly' in the initial form field.
+That is, it returns the 'initial' form of the attribute.
+.P
 So when the form field is \f(CWDW_FORM_indirect\fP
 this call returns the \f(CWDW_FORM_indirect\fP form, 
 which is sometimes useful for dump utilities.
+.P
+It is confusing that the _direct() function returns 
+DW_FORM_indirect if an indirect form is involved.
+Just think of this as returning the initial form the first
+form value seen for the attribute, which is also the final
+form unless the initial form is \f(CWDW_FORM_indirect\fP.
 
 .H 3 "dwarf_whatattr()"
 .DS
@@ -2575,8 +2619,16 @@ It returns \f(CWDW_DLV_ERROR\fP on error.
 When it succeeds,
 \f(CWdwarf_formflag()\fP returns
 \f(CWDW_DLV_OK\fP and sets \f(CW*return_bool\fP
-\f(CW1\fP (i.e. true) (if the attribute has a non-zero value)
-or \f(CW0\fP (i.e. false) (if the attribute has a zero value).
+to the (one unsigned byte) flag value. 
+Any non-zero value means true.
+A zero value means false.
+
+Before 29 November 2012 this would only return 1 or zero
+through the pointer, but that was always a strange thing to do.
+The DWARF specification has always been clear that any non-zero
+value means true.  The function should report the value
+found truthfully, and now it does.
+
 It returns \f(CWDW_DLV_ERROR\fP on error or if the \f(CWattr\fP
 does not have form flag.
 
@@ -2918,7 +2970,11 @@ if (lres == DW_DLV_OK) {
         Dwarf_Signed  *listlen,
         Dwarf_Error *error)\fP
 .DE
-The function \f(CWdwarf_loclist_from_expr()\fP sets \f(CW*llbuf\fP to point to 
+Use \f(CWdwarf_loclist_from_expr_b()\fP instead. 
+This function is obsolete.
+.P
+The function \f(CWdwarf_loclist_from_expr()\fP 
+sets \f(CW*llbuf\fP to point to 
 a \f(CWDwarf_Locdesc\fP pointer for the single location expression
 which is pointed to by \f(CW*bytes_in\fP (whose length is
 \f(CW*bytes_len\fP).
@@ -2936,7 +2992,8 @@ being read (normally 4 or 8).
 .P
 It returns \f(CWDW_DLV_ERROR\fP on error. 
 .P
-Storage allocated by a successful call of \f(CWdwarf_loclist_from_expr()\fP should 
+Storage allocated by a successful call 
+of \f(CWdwarf_loclist_from_expr()\fP should 
 be deallocated when no longer of interest (see \f(CWdwarf_dealloc()\fP).
 The block of \f(CWDwarf_Loc\fP structs pointed to by the \f(CWld_s\fP 
 field of each \f(CWDwarf_Locdesc\fP structure 
@@ -2965,7 +3022,34 @@ if (lres == DW_DLV_OK) {
 .DE
 .in -2
 .P
+.H 3 "dwarf_loclist_from_expr_b()"
+.DS
+\f(CWint dwarf_loclist_from_expr_a(
+        Dwarf_Ptr bytes_in, 
+        Dwarf_Unsigned bytes_len,
+        Dwarf_Half addr_size,
+        Dwarf_Half offset_size,
+        Dwarf_Half version_stamp,
+        Dwarf_Locdesc **llbuf,
+        Dwarf_Signed  *listlen,
+        Dwarf_Error *error)\fP
+.DE
+The function \f(CWdwarf_loclist_from_expr_b()\fP 
+is identical to  \f(CWdwarf_loclist_from_expr_a()\fP
+in every way except that the caller passes an additional argument 
+\f(CWversion_stamp\fP containing the 
+version stamp (2 for DWARF2, etc) of the CU using
+this location expression and an additional argument
+of the offset size of the CU using this location expression.
+The DW_OP_GNU_implicit_pointer operation requires this version 
+and offset information to be correctly processed.
+.P
+The \f(CWaddr_size\fP argument (from 27April2009) is needed
+to correctly interpret frame information as different compilation
+units can have different address sizes.
+DWARF4 adds address_size to the CIE header.
 
+.P
 .H 3 "dwarf_loclist_from_expr_a()"
 .DS
 \f(CWint dwarf_loclist_from_expr_a(
@@ -2976,6 +3060,9 @@ if (lres == DW_DLV_OK) {
         Dwarf_Signed  *listlen,
         Dwarf_Error *error)\fP
 .DE
+Use \f(CWdwarf_loclist_from_expr_b()\fP instead. 
+This function is obsolete.
+.P
 The function \f(CWdwarf_loclist_from_expr_a()\fP 
 is identical to  \f(CWdwarf_loclist_from_expr()\fP
 in every way except that the caller passes the additional argument 
@@ -6275,6 +6362,10 @@ callers.
 These functions aid in the management of errors encountered when using 
 functions in the \fIlibdwarf\fP library and releasing memory allocated 
 as a result of a \fIlibdwarf\fP operation. 
+.P
+For clients that wish to encode LEB numbers two
+interfaces are provided to the producer code's 
+internal LEB function.
 
 .H 3 "dwarf_errno()"
 .DS
@@ -6619,6 +6710,44 @@ to by \f(CWspace\fP, and allocated to the given \f(CWDwarf_Debug\fP.
 The argument \f(CWtype\fP is an integer code that specifies the allocation 
 type of the region pointed to by the \f(CWspace\fP.  Refer to section 
 4 for details on \fIlibdwarf\fP memory management.
+
+.H 3 "dwarf_encode_leb128()"
+.DS
+int dwarf_encode_leb128(Dwarf_Unsigned val,
+    int * nbytes,
+    char * space,
+    int   splen);
+.DE
+The function \f(CWdwarf_encode_leb128\fP 
+encodes the value \f(CWval\fP
+in the caller-provided buffer that \f(CWspace\fP
+points to.  The caller-provided buffer must
+be at least \f(CWsplen\fP bytes long.
+
+The function returns \f(CWDW_DLV_OK\fP
+if the encoding succeeds.
+If  \f(CWsplen\fP is too small to encode the
+value, \f(CWDW_DLV_ERROR\fP will
+be returned.
+
+If the call succeeds, 
+the number of bytes of \f(CWspace\fP that are used
+in the encoding are returned through the pointer \f(CWnbytes\fP
+
+
+.H 3 "dwarf_encode_signed_leb128()"
+.DS
+int dwarf_encode_signed_leb128(Dwarf_Signed val,
+    int * nbytes,
+    char * space,
+    int splen);
+.DE
+
+The function \f(CWdwarf_encode_signed_leb128\fP
+is the same as \f(CWdwarf_encode_leb128\fP except that
+the argument  \f(CWval\fP is signed.
+
+
 
 .SK
 .S

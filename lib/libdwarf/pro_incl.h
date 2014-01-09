@@ -2,8 +2,8 @@
 
   Copyright (C) 2000,2002,2004 Silicon Graphics, Inc.  All Rights Reserved.
   Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008-2010 David Anderson. All rights reserved.
-  Portions Copyright 2010 SN Systems Ltd. All rights reserved.
+  Portions Copyright 2008-2012 David Anderson. All rights reserved.
+  Portions Copyright 2010-2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -36,6 +36,11 @@
 
 */
 
+/* Windows specific */
+#ifdef HAVE_STDAFX_H
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
+
 #ifdef HAVE_ELF_H
 #include <elf.h>
 #elif defined(HAVE_LIBELF_H) 
@@ -59,7 +64,7 @@
 #define WRITE_UNALIGNED(dbg,dest,source, srclength,len_out) \
     { \
         dbg->de_copy_word(dest,                     \
-            ((char *)source) +(srclength)-(len_out),\
+            ((const char *)source) +(srclength)-(len_out),\
             (len_out)) ;                            \
     }
 
@@ -69,7 +74,7 @@
 #define WRITE_UNALIGNED(dbg,dest,source, srclength,len_out) \
     { \
         dbg->de_copy_word( (dest) , \
-            ((char *)source) ,      \
+            ((const char *)source) ,      \
             (len_out)) ;            \
     }
 #endif

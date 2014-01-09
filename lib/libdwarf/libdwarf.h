@@ -2,9 +2,9 @@
 
   Copyright (C) 2000-2010 Silicon Graphics, Inc.  All Rights Reserved.
   Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008-2011 David Anderson. All rights reserved.
+  Portions Copyright 2008-2013 David Anderson. All rights reserved.
   Portions Copyright 2008-2010 Arxan Technologies, Inc. All rights reserved.
-  Portions Copyright 2010 SN Systems Ltd. All rights reserved.
+  Portions Copyright 2010-2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -61,9 +61,15 @@ extern "C" {
     so one can use grep  to each declaration in its entirety.
     The declarations are a little harder to read this way, but...
 
+    The seeming duplication of the Elf typedef allows
+    both verification we have the right struct name (when
+    libelf.h included before this) and
+    creation of a local handle so we have the struct pointer
+    here (if libelf.h is not included before this file).
+
 */
 
-struct Elf;
+typedef struct Elf Elf;
 typedef struct Elf* dwarf_elf_handle;
 
 /* To enable printing with printf regardless of the
@@ -144,7 +150,7 @@ typedef struct {
 typedef struct {
     Dwarf_Small     lr_atom;        /* location operation */
     Dwarf_Unsigned  lr_number;      /* operand */
-    Dwarf_Unsigned  lr_number2;     /* for OP_BREGx */
+    Dwarf_Unsigned  lr_number2;     /* for OP_BREGx  and DW_OP_GNU_const_type*/
     Dwarf_Unsigned  lr_offset;      /* offset in locexpr for OP_BRA etc */
 } Dwarf_Loc;
 
@@ -502,16 +508,16 @@ typedef struct Dwarf_Var_s*        Dwarf_Var;
 typedef struct Dwarf_Weak_s*       Dwarf_Weak;
 typedef struct Dwarf_Error_s*      Dwarf_Error;
 typedef struct Dwarf_Attribute_s*  Dwarf_Attribute;
-typedef struct Dwarf_Abbrev_s*       Dwarf_Abbrev;
-typedef struct Dwarf_Fde_s*         Dwarf_Fde;
-typedef struct Dwarf_Cie_s*         Dwarf_Cie;
-typedef struct Dwarf_Arange_s*       Dwarf_Arange;
+typedef struct Dwarf_Abbrev_s*     Dwarf_Abbrev;
+typedef struct Dwarf_Fde_s*        Dwarf_Fde;
+typedef struct Dwarf_Cie_s*        Dwarf_Cie;
+typedef struct Dwarf_Arange_s*     Dwarf_Arange;
 
 /* Opaque types for Producer Library. */
-typedef struct Dwarf_P_Debug_s*           Dwarf_P_Debug;
-typedef struct Dwarf_P_Die_s*           Dwarf_P_Die;
-typedef struct Dwarf_P_Attribute_s*    Dwarf_P_Attribute;
-typedef struct Dwarf_P_Fde_s*        Dwarf_P_Fde;
+typedef struct Dwarf_P_Debug_s*       Dwarf_P_Debug;
+typedef struct Dwarf_P_Die_s*         Dwarf_P_Die;
+typedef struct Dwarf_P_Attribute_s*   Dwarf_P_Attribute;
+typedef struct Dwarf_P_Fde_s*         Dwarf_P_Fde;
 typedef struct Dwarf_P_Expr_s*        Dwarf_P_Expr;
 typedef Dwarf_Unsigned                Dwarf_Tag;
 
@@ -559,6 +565,9 @@ struct Dwarf_Obj_Access_Section_s {
         makes no sense for a given section. */
     Dwarf_Addr     addr;
 
+    /* Section type. */
+    Dwarf_Unsigned type;
+
     /* Size in bytes of the section. */
     Dwarf_Unsigned size;
 
@@ -569,6 +578,11 @@ struct Dwarf_Obj_Access_Section_s {
         it should be a link to a rela section or from symtab
         to strtab.  In Elf it is sh_link. */
     Dwarf_Unsigned link;
+
+    /*  The section header index of the section to which the
+        relocation applies. In Elf it is sh_info. */
+    Dwarf_Unsigned info;
+
     /*  Elf sections that are tables have a non-zero entrysize so
         the count of entries can be calculated even without
         the right structure definition. If your object format
@@ -751,8 +765,8 @@ struct Dwarf_Obj_Access_Interface_s {
 #define DW_DLA_LIST            0x0f     /* a list */
 #define DW_DLA_LINEBUF         0x10     /* Dwarf_Line* (not used) */
 #define DW_DLA_ARANGE          0x11     /* Dwarf_Arange */
-#define DW_DLA_ABBREV          0x12      /* Dwarf_Abbrev */
-#define DW_DLA_FRAME_OP        0x13      /* Dwarf_Frame_Op */
+#define DW_DLA_ABBREV          0x12     /* Dwarf_Abbrev */
+#define DW_DLA_FRAME_OP        0x13     /* Dwarf_Frame_Op */
 #define DW_DLA_CIE             0x14     /* Dwarf_Cie */
 #define DW_DLA_FDE             0x15     /* Dwarf_Fde */
 #define DW_DLA_LOC_BLOCK       0x16     /* Dwarf_Loc Block (not used) */
@@ -779,8 +793,8 @@ struct Dwarf_Obj_Access_Interface_s {
    flags then the DWARF3 64 bit offset extension is used 
    to generate 64 bit offsets.
 */
-#define DW_DLC_SIZE_64     0x40000000 /* 32-bit address-size target */
-#define DW_DLC_SIZE_32     0x20000000 /* 64-bit address-size target */
+#define DW_DLC_SIZE_64     0x40000000 /* 64-bit address-size target */
+#define DW_DLC_SIZE_32     0x20000000 /* 32-bit address-size target */
 #define DW_DLC_OFFSET_SIZE_64 0x10000000 /* 64-bit offset-size DWARF */
 
 /* dwarf_producer_init*() access flag modifiers
@@ -1325,19 +1339,39 @@ int dwarf_loclist(Dwarf_Attribute /*attr*/,  /* inflexible! */
    no addr_size is obsolete but supported, 
    use dwarf_loclist_from_expr_a() instead.  
 */
-int dwarf_loclist_from_expr(Dwarf_Debug dbg,
-    Dwarf_Ptr expression_in,
-    Dwarf_Unsigned expression_length,
-    Dwarf_Locdesc ** llbuf,
-    Dwarf_Signed * listlen, Dwarf_Error * error);
+int dwarf_loclist_from_expr(Dwarf_Debug /*dbg*/,
+    Dwarf_Ptr      /* expression_in*/,
+    Dwarf_Unsigned /* expression_length*/,
+    Dwarf_Locdesc ** /* llbuf*/,
+    Dwarf_Signed * /*listlen*/, 
+    Dwarf_Error *  /* error*/ );
 
-/* dwarf_loclist_from_expr_a() new 27 Apr 2009: added addr_size argument. */
-int dwarf_loclist_from_expr_a(Dwarf_Debug dbg,
-    Dwarf_Ptr expression_in,
-    Dwarf_Unsigned expression_length,
-    Dwarf_Half addr_size,
-    Dwarf_Locdesc ** llbuf,
-    Dwarf_Signed * listlen, Dwarf_Error * error);
+/*  dwarf_loclist_from_expr_a() new 27 Apr 2009: 
+    added addr_size argument. */
+int dwarf_loclist_from_expr_a(Dwarf_Debug /*dbg*/,
+    Dwarf_Ptr      /*expression_in*/,
+    Dwarf_Unsigned /*expression_length*/,
+    Dwarf_Half     /*addr_size*/,
+    Dwarf_Locdesc ** /*llbuf*/,
+    Dwarf_Signed * /*listlen*/, 
+    Dwarf_Error *  /*error*/);
+
+/*  dwarf_loclist_from_expr_b() new 13 Nov 2012: 
+    added dwarf_version (DWARF version number
+    of the applicable compilation unit) 
+    and offset_size arguments. Added for
+    DW_OP_GNU_implicit_pointer. */
+int
+dwarf_loclist_from_expr_b(Dwarf_Debug /*dbg*/, 
+    Dwarf_Ptr      /*expression_in*/ ,
+    Dwarf_Unsigned /*expression_length*/ ,
+    Dwarf_Half     /*addr_size*/ ,
+    Dwarf_Half     /*offset_size*/ ,
+    Dwarf_Small    /*dwarf_version*/ ,
+    Dwarf_Locdesc ** /*llbuf*/ ,
+    Dwarf_Signed * /*listlen*/ , 
+    Dwarf_Error *  /*error*/ );
+
 
 /* Unimplemented */
 int dwarf_stringlen(Dwarf_Die /*die*/, 
@@ -1403,11 +1437,11 @@ int dwarf_hasform(Dwarf_Attribute /*attr*/,
     Dwarf_Error*     /*error*/);
 
 int dwarf_whatform(Dwarf_Attribute /*attr*/, 
-    Dwarf_Half *     /*returned_form*/,
+    Dwarf_Half *     /*returned_final_form*/,
     Dwarf_Error*     /*error*/);
 
 int dwarf_whatform_direct(Dwarf_Attribute /*attr*/, 
-    Dwarf_Half *     /*returned_form*/,
+    Dwarf_Half *     /*returned_initial_form*/,
     Dwarf_Error*     /*error*/);
 
 int dwarf_whatattr(Dwarf_Attribute /*attr*/, 
@@ -1481,7 +1515,8 @@ void dwarf_srclines_dealloc(Dwarf_Debug /*dbg*/,
     Dwarf_Line*       /*linebuf*/,
     Dwarf_Signed      /*count */);
 
-
+/*  While 'filecount' is signed, the value
+    returned through the pointer is never negative. */
 int dwarf_srcfiles(Dwarf_Die /*die*/, 
     char***          /*srcfiles*/, 
     Dwarf_Signed *   /*filecount*/,
@@ -1525,7 +1560,7 @@ int dwarf_lineoff(Dwarf_Line /*line*/,
     through the pointer returned_offset. 
     dwarf_lineoff_b() is new in December 2011.  */
 int dwarf_lineoff_b(Dwarf_Line /*line*/, 
-    Dwarf_Unsigned  */*returned_lineoffset*/,
+    Dwarf_Unsigned * /*returned_lineoffset*/,
     Dwarf_Error*     /*error*/);
 
 int dwarf_linesrc(Dwarf_Line /*line*/, 
@@ -2191,7 +2226,7 @@ void dwarf_dealloc(Dwarf_Debug /*dbg*/, void* /*space*/,
 
 /* DWARF Producer Interface */
 
-/* New form June, 2011. Adds user_data argument.  */
+/*  New form June, 2011. Adds user_data argument. */
 typedef int (*Dwarf_Callback_Func_c)(
     char*           /*name*/,
     int             /*size*/,
@@ -2939,6 +2974,17 @@ int dwarf_get_section_count(Dwarf_Debug /*dbg*/);
 int dwarf_get_version_of_die(Dwarf_Die /*die*/,
     Dwarf_Half * /*version*/,
     Dwarf_Half * /*offset_size*/);
+
+/*  These make the  LEB encoding routines visible to libdwarf
+    callers. Added November, 2012. */
+int dwarf_encode_leb128(Dwarf_Unsigned /*val*/,
+    int * /*nbytes*/,
+    char * /*space*/,
+    int /*splen*/);
+int dwarf_encode_signed_leb128(Dwarf_Signed /*val*/,
+    int * /*nbytes*/,
+    char * /*space*/,
+    int /*splen*/);
 
 /*  Record some application command line options in libdwarf.  
     This is not arc/argv processing, just precooked setting

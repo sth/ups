@@ -1,7 +1,8 @@
 /*
 
   Copyright (C) 2000,2002,2004,2005,2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2011 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2012 David Anderson. All Rights Reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -62,7 +63,7 @@ print_line_header(void)
 
 /* FIXME: print new line values:   prologue_end epilogue_begin isa */
 static void
-print_line_detail(char *prefix,
+print_line_detail(const char *prefix,
     int opcode,
     Dwarf_Unsigned address,
     unsigned long file,
@@ -81,7 +82,7 @@ print_line_detail(char *prefix,
         (unsigned long) line,
         (unsigned long) column,
         (int) is_stmt, (int) basic_block, (int) end_sequence);
-    if(discriminator || prologue_end || epilogue_begin || isa) {
+    if (discriminator || prologue_end || epilogue_begin || isa) {
         printf(" %1d", prologue_end);
         printf(" %1d", epilogue_begin);
         printf(" %1d", isa);
@@ -94,7 +95,7 @@ print_line_detail(char *prefix,
 /*  return DW_DLV_OK if ok. else DW_DLV_NO_ENTRY or DW_DLV_ERROR
     If err_count_out is non-NULL, this is a special 'check'
     call.  */
-int
+static int
 _dwarf_internal_printlines(Dwarf_Die die, Dwarf_Error * error,
 int * err_count_out, int only_line_header)
 {
@@ -140,6 +141,7 @@ int * err_count_out, int only_line_header)
 
 
     Dwarf_Sword i=0;
+    Dwarf_Word u=0;
 
     /*  This is the current opcode read from the statement program. */
     Dwarf_Small opcode=0;
@@ -261,7 +263,7 @@ int * err_count_out, int only_line_header)
         line_ptr_end = prefix.pf_line_ptr_end;
         line_ptr = line_ptr_out;
     }
-    if(only_line_header) {
+    if (only_line_header) {
         /* Just checking for header errors, nothing more here.*/
         dwarf_free_line_table_prefix(&prefix);
         return DW_DLV_OK;
@@ -292,23 +294,23 @@ int * err_count_out, int only_line_header)
     }
     printf("  include directories count %d\n", 
         (int) prefix.pf_include_directories_count);
-    for (i = 0; i < prefix.pf_include_directories_count; ++i) {
-        printf("  include dir[%d] %s\n",
-            (int) i, prefix.pf_include_directories[i]);
+    for (u = 0; u < prefix.pf_include_directories_count; ++u) {
+        printf("  include dir[%u] %s\n",
+            (int) u, prefix.pf_include_directories[u]);
     }
     printf("  files count            %d\n", 
         (int) prefix.pf_files_count);
 
-    for (i = 0; i < prefix.pf_files_count; ++i) {
+    for (u = 0; u < prefix.pf_files_count; ++u) {
         struct Line_Table_File_Entry_s *lfile =
-            prefix.pf_line_table_file_entries + i;
+            prefix.pf_line_table_file_entries + u;
         Dwarf_Unsigned tlm2 = lfile->lte_last_modification_time;
         Dwarf_Unsigned di = lfile->lte_directory_index;
         Dwarf_Unsigned fl = lfile->lte_length_of_file;
 
-        printf("  file[%d]  %s (file-number: %d) \n",
-            (int) i, (char *) lfile->lte_filename,
-            (int)(i+1));
+        printf("  file[%u]  %s (file-number: %u) \n",
+            (unsigned) u, (char *) lfile->lte_filename,
+            (unsigned)(u+1));
         printf("    dir index %d\n", (int) di);
         {
             time_t tt = (time_t) tlm2;
@@ -325,7 +327,7 @@ int * err_count_out, int only_line_header)
 
     {
         Dwarf_Unsigned offset = 0;
-        if(bogus_bytes_count > 0) {
+        if (bogus_bytes_count > 0) {
             Dwarf_Unsigned wcount = bogus_bytes_count;
             Dwarf_Unsigned boffset = bogus_bytes_ptr - orig_line_ptr;
             printf("*** DWARF CHECK: the line table prologue  header_length "
@@ -393,7 +395,7 @@ int * err_count_out, int only_line_header)
 
             opcode = opcode - prefix.pf_opcode_base;
             operation_advance = (opcode / prefix.pf_line_range);
-            if(prefix.pf_maximum_ops_per_instruction < 2) {
+            if (prefix.pf_maximum_ops_per_instruction < 2) {
                 address = address + (prefix.pf_minimum_instruction_length *
                     operation_advance);
             } else {
@@ -488,7 +490,7 @@ int * err_count_out, int only_line_header)
 
             case DW_LNS_const_add_pc:{
                 opcode = MAX_LINE_OP_CODE - prefix.pf_opcode_base;
-                if(prefix.pf_maximum_ops_per_instruction < 2) {
+                if (prefix.pf_maximum_ops_per_instruction < 2) {
                     Dwarf_Unsigned operation_advance =
                         (opcode / prefix.pf_line_range);
                     address = address +
@@ -651,7 +653,7 @@ int * err_count_out, int only_line_header)
                     (and the op code and the bytes of operand). */
 
                 Dwarf_Unsigned remaining_bytes = instr_length -1;
-                if(instr_length < 1 || remaining_bytes > DW_LNE_LEN_MAX) {
+                if (instr_length < 1 || remaining_bytes > DW_LNE_LEN_MAX) {
                     dwarf_free_line_table_prefix(&prefix);
                     _dwarf_error(dbg, error,
                         DW_DLE_LINE_EXT_OPCODE_BAD);
@@ -659,7 +661,7 @@ int * err_count_out, int only_line_header)
                 }
                 printf("DW_LNE extended op 0x%x ",ext_opcode);
                 printf("Bytecount: %" DW_PR_DUu , (Dwarf_Unsigned)instr_length);
-                if(remaining_bytes > 0) {
+                if (remaining_bytes > 0) {
                     printf(" linedata: 0x");
                     while (remaining_bytes > 0) {
                         printf("%02x",(unsigned char)(*(line_ptr)));

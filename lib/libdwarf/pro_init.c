@@ -2,7 +2,8 @@
 
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
   Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008-2011 David Anderson, Inc. All rights reserved.
+  Portions Copyright 2008-2012 David Anderson, Inc. All rights reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -42,6 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "pro_incl.h"
+#include "pro_line.h"
 #include "pro_section.h"        /* for MAGIC_SECT_NO */
 #include "pro_reloc_symbolic.h"
 #include "pro_reloc_stream.h"
@@ -200,7 +202,7 @@ common_init(Dwarf_P_Debug dbg, Dwarf_Unsigned flags)
         dwarf3.  This allows run-time selection of offset size.  */
     dbg->de_64bit_extension = (IS_64BIT(dbg) ? 1 : 0);
     dbg->de_pointer_size = (IS_64BIT(dbg) ? 8 : 4);
-    if( flags & DW_DLC_OFFSET_SIZE_64 && (dbg->de_pointer_size == 8)) {
+    if (flags & DW_DLC_OFFSET_SIZE_64 && (dbg->de_pointer_size == 8)) {
         /*  When it's 64 bit address, a 64bit offset is sensible.
             Arguably a 32 bit address with 64 bit offset could be
             sensible, but who would want that? */

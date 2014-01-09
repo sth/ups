@@ -2,8 +2,8 @@
 
   Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc. All Rights Reserved.
   Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2008-2011 David Anderson. All rights reserved.
-  Portions Copyright 2010 SN Systems Ltd. All rights reserved.
+  Portions Copyright 2008-2012 David Anderson. All rights reserved.
+  Portions Copyright 2010-2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -117,7 +117,7 @@ dwarf_uncompress_integer_block(
 {
     Dwarf_Unsigned output_length_in_units = 0;
     void * output_block = 0;
-    int i = 0;
+    unsigned i = 0;
     char * ptr = 0;
     int remain = 0;
     Dwarf_sfixed * array = 0;
@@ -145,9 +145,8 @@ dwarf_uncompress_integer_block(
     remain = input_length_in_bytes;
     ptr = input_block;
     while (remain > 0) {
-        Dwarf_Signed num;
-        Dwarf_Word len;
-        num = _dwarf_decode_s_leb128((unsigned char *)ptr, &len);
+        Dwarf_Word len = 0;
+        _dwarf_decode_s_leb128((unsigned char *)ptr, &len);
         ptr += len;
         remain -= len;
         output_length_in_units++;
@@ -249,7 +248,7 @@ dwarf_convert_to_global_offset(Dwarf_Attribute attr,
     Dwarf_CU_Context cu_context = 0;
   
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
 
@@ -317,7 +316,7 @@ dwarf_formref(Dwarf_Attribute attr,
 
     *ret_offset = 0;
     res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     switch (attr->ar_attribute_form) {
@@ -401,11 +400,11 @@ int dwarf_formsig8(Dwarf_Attribute attr,
     Dwarf_Small *dataptr = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
 
-    if(attr->ar_attribute_form != DW_FORM_ref_sig8 ) {
+    if (attr->ar_attribute_form != DW_FORM_ref_sig8 ) {
         _dwarf_error(dbg, error, DW_DLE_BAD_REF_SIG8_FORM);
         return (DW_DLV_ERROR);
     }
@@ -450,7 +449,7 @@ dwarf_global_formref(Dwarf_Attribute attr,
     Dwarf_Half context_version = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     context_version = cu_context->cc_version_stamp;
@@ -498,7 +497,7 @@ dwarf_global_formref(Dwarf_Attribute attr,
         That was first clearly documented in DWARF3.
         In DWARF4 these two forms are no longer references. */
     case DW_FORM_data4:
-        if(context_version == DW_CU_VERSION4) {
+        if (context_version == DW_CU_VERSION4) {
             _dwarf_error(dbg, error, DW_DLE_NOT_REF_FORM);
             return (DW_DLV_ERROR);
         }
@@ -507,7 +506,7 @@ dwarf_global_formref(Dwarf_Attribute attr,
         /* The offset is global. */
         break;
     case DW_FORM_data8:
-        if(context_version == DW_CU_VERSION4) {
+        if (context_version == DW_CU_VERSION4) {
             _dwarf_error(dbg, error, DW_DLE_NOT_REF_FORM);
             return (DW_DLV_ERROR);
         }
@@ -523,7 +522,7 @@ dwarf_global_formref(Dwarf_Attribute attr,
                 of DW_FORM_sec_offset refers to,
                 the offset is not going to refer to .debug_info! */
             unsigned length_size = cu_context->cc_length_size;
-            if(length_size == 4) {
+            if (length_size == 4) {
                 READ_UNALIGNED(dbg, offset, Dwarf_Unsigned,
                     attr->ar_debug_ptr, sizeof(Dwarf_ufixed));
             } else if (length_size == 8) {
@@ -563,7 +562,7 @@ dwarf_formaddr(Dwarf_Attribute attr,
     Dwarf_CU_Context cu_context = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     if (attr->ar_attribute_form == DW_FORM_addr
@@ -619,7 +618,7 @@ dwarf_formflag(Dwarf_Attribute attr,
     }
 
     if (attr->ar_attribute_form == DW_FORM_flag) {
-        *ret_bool = (*(Dwarf_Small *) attr->ar_debug_ptr != 0);
+        *ret_bool = *(Dwarf_Small *)(attr->ar_debug_ptr);
         return (DW_DLV_OK);
     }
     _dwarf_error(cu_context->cc_dbg, error, DW_DLE_ATTR_FORM_BAD);
@@ -636,7 +635,7 @@ dwarf_formudata(Dwarf_Attribute attr,
     Dwarf_CU_Context cu_context = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     switch (attr->ar_attribute_form) {
@@ -701,7 +700,7 @@ dwarf_formsdata(Dwarf_Attribute attr,
     Dwarf_CU_Context cu_context = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     switch (attr->ar_attribute_form) {
@@ -767,7 +766,7 @@ dwarf_formblock(Dwarf_Attribute attr,
     Dwarf_Block *ret_block = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     switch (attr->ar_attribute_form) {
@@ -841,7 +840,7 @@ dwarf_formstring(Dwarf_Attribute attr,
     int res = DW_DLV_ERROR;
 
     res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     if (attr->ar_attribute_form == DW_FORM_string) {
@@ -909,7 +908,7 @@ dwarf_formexprloc(Dwarf_Attribute attr,
     Dwarf_CU_Context cu_context = 0;
 
     int res  = get_attr_dbg(&dbg,&cu_context,attr,error);
-    if(res != DW_DLV_OK) { 
+    if (res != DW_DLV_OK) { 
         return res;
     } 
     if (dbg == NULL) {

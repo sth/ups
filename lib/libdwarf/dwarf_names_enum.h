@@ -1,5 +1,5 @@
 /* Automatically generated, do not edit. */
-/* Generated on Feb 22 2012  12:46:56 */
+/* Generated on Jan  9 2014  16:06:35 */
 
 /* BEGIN FILE */
 
@@ -519,7 +519,15 @@ enum Dwarf_OP_e {
     DW_OP_GNU_encoded_addr                   = 0x00f1,
     DW_OP_GNU_implicit_pointer               = 0x00f2,
     DW_OP_GNU_entry_value                    = 0x00f3,
+    DW_OP_GNU_const_type                     = 0x00f4,
+    DW_OP_GNU_regval_type                    = 0x00f5,
+    DW_OP_GNU_deref_type                     = 0x00f6,
+    DW_OP_GNU_convert                        = 0x00f7,
     DW_OP_PGI_omp_thread_num                 = 0x00f8,
+    DW_OP_GNU_reinterpret                    = 0x00f9,
+    DW_OP_GNU_parameter_ref                  = 0x00fa,
+    DW_OP_GNU_addr_index                     = 0x00fb,
+    DW_OP_GNU_const_index                    = 0x00fc,
     DW_OP_hi_user                            = 0x00ff
 };
 
@@ -621,6 +629,8 @@ enum Dwarf_LANG_e {
     DW_LANG_Python                           = 0x0014,
     DW_LANG_OpenCL                           = 0x0015,
     DW_LANG_Go                               = 0x0016,
+    DW_LANG_Modula3                          = 0x0017,
+    DW_LANG_Haskel                           = 0x0018,
     DW_LANG_lo_user                          = 0x8000,
     DW_LANG_Mips_Assembler                   = 0x8001,
     DW_LANG_Upc                              = 0x8765,

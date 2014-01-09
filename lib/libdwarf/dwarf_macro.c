@@ -1,7 +1,8 @@
 /*
 
   Copyright (C) 2000-2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2011 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2012 David Anderson. All Rights Reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -145,7 +146,7 @@ _dwarf_macro_stack_push_index(Dwarf_Debug dbg, Dwarf_Signed indx,
             ms->was_fault = 1;
             return DW_DLV_ERROR;
         }
-        if(ms->st_base) {
+        if (ms->st_base) {
             memcpy(newbase, ms->st_base,
                 ms->next_to_use * sizeof(Dwarf_Signed));
             dwarf_dealloc(dbg, ms->st_base, DW_DLA_STRING);
@@ -278,7 +279,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             (void) _dwarf_decode_u_leb128(pnext, &len);
 
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 _dwarf_error(dbg, error,
                     DW_DLE_DEBUG_MACRO_INCONSISTENT);
@@ -286,7 +288,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             }
             slen = strlen((char *) pnext) + 1;
             pnext += slen;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 _dwarf_error(dbg, error,
                     DW_DLE_DEBUG_MACRO_INCONSISTENT);
@@ -298,7 +301,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             /* line, file index */
             (void) _dwarf_decode_u_leb128(pnext, &len);
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 _dwarf_error(dbg, error,
                     DW_DLE_DEBUG_MACRO_INCONSISTENT);
@@ -306,7 +310,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             }
             (void) _dwarf_decode_u_leb128(pnext, &len);
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 _dwarf_error(dbg, error,
                     DW_DLE_DEBUG_MACRO_INCONSISTENT);
@@ -399,7 +404,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             pdmd->dmd_lineno = v1;
 
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 dwarf_dealloc(dbg, return_data, DW_DLA_STRING);
                 _dwarf_error(dbg, error,
@@ -411,7 +417,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             pdmd->dmd_macro = (char *) latest_str_loc;
             latest_str_loc += slen;
             pnext += slen;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 dwarf_dealloc(dbg, return_data, DW_DLA_STRING);
                 _dwarf_error(dbg, error,
@@ -424,7 +431,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
             v1 = _dwarf_decode_u_leb128(pnext, &len);
             pdmd->dmd_lineno = v1;
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 dwarf_dealloc(dbg, return_data, DW_DLA_STRING);
                 _dwarf_error(dbg, error,
@@ -439,7 +447,8 @@ dwarf_get_macro_details(Dwarf_Debug dbg,
                 we pop this one. */
             fileindex = v1;
             pnext += len;
-            if (((pnext - macro_base)) >= dbg->de_debug_macinfo.dss_size) {
+            if (((Dwarf_Unsigned)(pnext - macro_base)) >= 
+                dbg->de_debug_macinfo.dss_size) {
                 free_macro_stack(dbg,&msdata);
                 dwarf_dealloc(dbg, return_data, DW_DLA_STRING);
                 _dwarf_error(dbg, error,

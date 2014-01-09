@@ -1,8 +1,8 @@
 /*
 
   Copyright (C) 2000-2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2011 David Anderson. All Rights Reserved.
-  Portions Copyright (C) 2010 SN Systems Ltd. All Rights Reserved.
+  Portions Copyright (C) 2007-2012 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2010-2012 SN Systems Ltd. All Rights Reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -301,16 +301,16 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
             /* This is a CIE.  */
             Dwarf_Cie cie_ptr_to_use = 0;
 
-            int res = dwarf_find_existing_cie_ptr(prefix.cf_start_addr,
+            int resc = dwarf_find_existing_cie_ptr(prefix.cf_start_addr,
                 cur_cie_ptr,
                 &cie_ptr_to_use,
                 head_cie_ptr);
-            if (res == DW_DLV_OK) {
+            if (resc == DW_DLV_OK) {
                 cur_cie_ptr = cie_ptr_to_use;
                 /* Ok. Seen already. */
-            } else if (res == DW_DLV_NO_ENTRY) {
+            } else if (resc == DW_DLV_NO_ENTRY) {
                 /* CIE before its FDE in this case. */
-                res = dwarf_create_cie_from_after_start(dbg,
+                resc = dwarf_create_cie_from_after_start(dbg,
                     &prefix,
                     section_ptr,
                     frame_ptr,
@@ -319,10 +319,10 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
                     &cie_ptr_to_use,
                     error);
                 /* ASSERT: res==DW_DLV_NO_ENTRY impossible. */
-                if (res == DW_DLV_ERROR) {
+                if (resc == DW_DLV_ERROR) {
                     dealloc_fde_cie_list_internal(head_fde_ptr,
                         head_cie_ptr);
-                    return res;
+                    return resc;
                 }
                 /* ASSERT res != DW_DLV_NO_ENTRY */
                 cie_count++;
@@ -333,7 +333,7 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 
                 dealloc_fde_cie_list_internal(head_fde_ptr,
                     head_cie_ptr);
-                return res;
+                return resc;
             }
             frame_ptr = cie_ptr_to_use->ci_cie_start +
                 cie_ptr_to_use->ci_length +
@@ -343,7 +343,7 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
         } else {
             /*  This is an FDE, Frame Description Entry, see the Dwarf
                 Spec, section 6.4.1 */
-            int res = DW_DLV_ERROR;
+            int resf = DW_DLV_ERROR;
             Dwarf_Cie cie_ptr_to_use = 0;
             Dwarf_Fde fde_ptr_to_use = 0;
 
@@ -355,15 +355,15 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
                     section_ptr,
                     prefix.cf_cie_id_addr);
 
-            res = dwarf_find_existing_cie_ptr(cieptr_val,
+            resf = dwarf_find_existing_cie_ptr(cieptr_val,
                 cur_cie_ptr,
                 &cie_ptr_to_use,
                 head_cie_ptr);
-            if (res == DW_DLV_OK) {
+            if (resf == DW_DLV_OK) {
                 cur_cie_ptr = cie_ptr_to_use;
                 /* Ok. Seen CIE already. */
-            } else if (res == DW_DLV_NO_ENTRY) {
-                res = dwarf_create_cie_from_start(dbg,
+            } else if (resf == DW_DLV_NO_ENTRY) {
+                resf = dwarf_create_cie_from_start(dbg,
                     cieptr_val,
                     section_ptr,
                     section_index,
@@ -374,12 +374,12 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
                     use_gnu_cie_calc,
                     &cie_ptr_to_use,
                     error);
-                if (res == DW_DLV_ERROR) {
+                if (resf == DW_DLV_ERROR) {
                     dealloc_fde_cie_list_internal(head_fde_ptr,
                         head_cie_ptr);
-                    return res;
+                    return resf;
                 } else if (res == DW_DLV_NO_ENTRY) {
-                    return res;
+                    return resf;
                 }
                 ++cie_count;
                 chain_up_cie(cie_ptr_to_use, &head_cie_ptr,
@@ -388,10 +388,10 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 
             } else {
                 /* DW_DLV_ERROR */
-                return res;
+                return resf;
             }
 
-            res = dwarf_create_fde_from_after_start(dbg,
+            resf = dwarf_create_fde_from_after_start(dbg,
                 &prefix,
                 section_ptr,
                 frame_ptr,
@@ -399,8 +399,8 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
                 cie_ptr_to_use,
                 &fde_ptr_to_use,
                 error);
-            if (res == DW_DLV_ERROR) {
-                return res;
+            if (resf == DW_DLV_ERROR) {
+                return resf;
             }
             chain_up_fde(fde_ptr_to_use, &head_fde_ptr, &cur_fde_ptr);
             fde_count++;
@@ -431,7 +431,7 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
         cie_list_ptr = (Dwarf_Cie *)
             _dwarf_get_alloc(dbg, DW_DLA_LIST, cie_count);
     } else {
-        if(fde_count > 0) {
+        if (fde_count > 0) {
             dealloc_fde_cie_list_internal(head_fde_ptr, head_cie_ptr);
             _dwarf_error(dbg, error, DW_DLE_ORPHAN_FDE);
             return DW_DLV_ERROR;
@@ -472,7 +472,7 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 
     *fde_data = fde_list_ptr;
     *fde_element_count = fde_count;
-    if(use_gnu_cie_calc) {
+    if (use_gnu_cie_calc) {
         dbg->de_fde_data_eh = fde_list_ptr;
         dbg->de_fde_count_eh = fde_count;
         dbg->de_cie_data_eh = cie_list_ptr;
@@ -486,7 +486,7 @@ _dwarf_get_fde_list_internal(Dwarf_Debug dbg, Dwarf_Cie ** cie_data,
 
     /*  Sort the list by the address so that dwarf_get_fde_at_pc() can
         binary search this list.  */
-    if(fde_count > 0) {
+    if (fde_count > 0) {
         qsort((void *) fde_list_ptr, fde_count, sizeof(Dwarf_Ptr),
             qsort_compare);
     }
@@ -564,16 +564,16 @@ dwarf_create_cie_from_after_start(Dwarf_Debug dbg,
         Dwarf_Unsigned lreg = 0;
         unsigned long size = 0;
 
-        if( version == DW_CIE_VERSION4) {
+        if (version == DW_CIE_VERSION4) {
             address_size = *((unsigned char *)frame_ptr);
-            if(address_size  > sizeof(Dwarf_Addr)) {
+            if (address_size  > sizeof(Dwarf_Addr)) {
                 _dwarf_error(dbg, error, DW_DLE_ADDRESS_SIZE_ERROR);
                 return (DW_DLV_ERROR);
             }
             ++frame_ptr;
             segment_size = *((unsigned char *)frame_ptr);
             ++frame_ptr;
-            if(segment_size  > sizeof(Dwarf_Addr)) {
+            if (segment_size  > sizeof(Dwarf_Addr)) {
                 _dwarf_error(dbg, error, DW_DLE_SEGMENT_SIZE_BAD);
                 return (DW_DLV_ERROR);
             }
@@ -908,8 +908,8 @@ dwarf_create_fde_from_after_start(Dwarf_Debug dbg,
 static int
 qsort_compare(const void *elem1, const void *elem2)
 {
-    Dwarf_Fde fde1 = *(Dwarf_Fde *) elem1;
-    Dwarf_Fde fde2 = *(Dwarf_Fde *) elem2;
+    const Dwarf_Fde fde1 = *(const Dwarf_Fde *) elem1;
+    const Dwarf_Fde fde2 = *(const Dwarf_Fde *) elem2;
     Dwarf_Addr addr1 = fde1->fd_initial_location;
     Dwarf_Addr addr2 = fde2->fd_initial_location;
 

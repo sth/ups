@@ -1,5 +1,5 @@
 /* Generated routines, do not edit. */
-/* Generated on Feb 22 2012  12:46:56 */
+/* Generated on Jan  9 2014  16:06:35 */
 
 /* BEGIN FILE */
 
@@ -1544,8 +1544,32 @@ dwarf_get_OP_name (unsigned int val,const char ** s_out)
     case DW_OP_GNU_entry_value:
         *s_out = "DW_OP_GNU_entry_value";
         return DW_DLV_OK;
+    case DW_OP_GNU_const_type:
+        *s_out = "DW_OP_GNU_const_type";
+        return DW_DLV_OK;
+    case DW_OP_GNU_regval_type:
+        *s_out = "DW_OP_GNU_regval_type";
+        return DW_DLV_OK;
+    case DW_OP_GNU_deref_type:
+        *s_out = "DW_OP_GNU_deref_type";
+        return DW_DLV_OK;
+    case DW_OP_GNU_convert:
+        *s_out = "DW_OP_GNU_convert";
+        return DW_DLV_OK;
     case DW_OP_PGI_omp_thread_num:
         *s_out = "DW_OP_PGI_omp_thread_num";
+        return DW_DLV_OK;
+    case DW_OP_GNU_reinterpret:
+        *s_out = "DW_OP_GNU_reinterpret";
+        return DW_DLV_OK;
+    case DW_OP_GNU_parameter_ref:
+        *s_out = "DW_OP_GNU_parameter_ref";
+        return DW_DLV_OK;
+    case DW_OP_GNU_addr_index:
+        *s_out = "DW_OP_GNU_addr_index";
+        return DW_DLV_OK;
+    case DW_OP_GNU_const_index:
+        *s_out = "DW_OP_GNU_const_index";
         return DW_DLV_OK;
     case DW_OP_hi_user:
         *s_out = "DW_OP_hi_user";
@@ -1841,6 +1865,12 @@ dwarf_get_LANG_name (unsigned int val,const char ** s_out)
         return DW_DLV_OK;
     case DW_LANG_Go:
         *s_out = "DW_LANG_Go";
+        return DW_DLV_OK;
+    case DW_LANG_Modula3:
+        *s_out = "DW_LANG_Modula3";
+        return DW_DLV_OK;
+    case DW_LANG_Haskel:
+        *s_out = "DW_LANG_Haskel";
         return DW_DLV_OK;
     case DW_LANG_lo_user:
         *s_out = "DW_LANG_lo_user";

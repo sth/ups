@@ -1,7 +1,8 @@
 /*
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
   Portions Copyright 2002-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2007-2010 David Anderson. All rights reserved.
+  Portions Copyright 2007-2012 David Anderson. All rights reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -116,7 +117,7 @@ dwarf_add_AT_targ_address_b(Dwarf_P_Debug dbg,
     case DW_AT_entry_pc:
         break;
     default: 
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -141,7 +142,7 @@ dwarf_add_AT_ref_address(Dwarf_P_Debug dbg,
         break;
 
     default: 
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -234,7 +235,7 @@ dwarf_compress_integer_block(
     Dwarf_Unsigned output_length_in_bytes = 0;
     char * output_block = 0;
     char encode_buffer[ENCODE_SPACE_NEEDED];
-    int i = 0;
+    unsigned u = 0;
     char * ptr = 0;
     int remain = 0;
     int result = 0;
@@ -259,11 +260,11 @@ dwarf_compress_integer_block(
     /* First compress everything to find the total size. */
 
     output_length_in_bytes = 0;
-    for (i=0; i<input_length_in_units; i++) {
+    for (u=0; u<input_length_in_units; u++) {
         int unit_encoded_size;
         Dwarf_sfixed unit; /* this is fixed at signed-32-bits */
         
-        unit = ((Dwarf_sfixed*)input_block)[i];
+        unit = ((Dwarf_sfixed*)input_block)[u];
         
         result = _dwarf_pro_encode_signed_leb128_nm(unit, &unit_encoded_size,
             encode_buffer,sizeof(encode_buffer));
@@ -288,11 +289,11 @@ dwarf_compress_integer_block(
 
     ptr = output_block;
     remain = output_length_in_bytes;
-    for (i=0; i<input_length_in_units; i++) {
+    for (u=0; u<input_length_in_units; u++) {
         int unit_encoded_size;
         Dwarf_sfixed unit; /* this is fixed at signed-32-bits */
         
-        unit = ((Dwarf_sfixed*)input_block)[i];
+        unit = ((Dwarf_sfixed*)input_block)[u];
         
         result = _dwarf_pro_encode_signed_leb128_nm(unit, &unit_encoded_size,
             ptr, remain);
@@ -484,7 +485,7 @@ dwarf_add_AT_unsigned_const(Dwarf_P_Debug dbg,
         break;
 
     default:
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -574,7 +575,7 @@ dwarf_add_AT_signed_const(Dwarf_P_Debug dbg,
         break;
 
     default:
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -639,7 +640,7 @@ dwarf_add_AT_location_expr(Dwarf_P_Debug dbg,
     Dwarf_Half attr_form = 0;
     char *len_str = 0;
     int len_size = 0;
-    int block_size = 0;
+    unsigned block_size = 0;
     char *block_dest_ptr = 0;
     int do_len_as_int = 0;
 
@@ -687,7 +688,7 @@ dwarf_add_AT_location_expr(Dwarf_P_Debug dbg,
     break;
 
     default:
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -824,7 +825,7 @@ dwarf_add_AT_reference(Dwarf_P_Debug dbg,
         break;
 
     default:
-        if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+        if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }
@@ -882,7 +883,7 @@ dwarf_add_AT_flag(Dwarf_P_Debug dbg,
         break;
 
         default:
-            if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+            if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
                 _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
                 return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
             }
@@ -952,7 +953,7 @@ dwarf_add_AT_string(Dwarf_P_Debug dbg,
         break;
 
         default:
-            if ( attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
+            if (attr < DW_AT_lo_user || attr > DW_AT_hi_user ) {
             _dwarf_p_error(dbg, error, DW_DLE_INPUT_ATTR_BAD);
             return ((Dwarf_P_Attribute) DW_DLV_BADADDR);
         }

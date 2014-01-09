@@ -3,8 +3,8 @@
   Copyright (C) 2000-2006 Silicon Graphics, Inc.  All Rights Reserved.
   Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
   Portions Copyright 2008-2010 Arxan Technologies, Inc. All rights reserved.
-  Portions Copyright 2011 David Anderson. All rights reserved.
-  
+  Portions Copyright 2011-2012 David Anderson. All rights reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License
@@ -108,7 +108,10 @@ dwarf_init(int fd,
     /*  Changed to mmap request per bug 281217. 6/95 */
 #ifdef HAVE_ELF_C_READ_MMAP
     /*  ELF_C_READ_MMAP is an SGI IRIX specific enum value from IRIX
-        libelf.h meaning read but use mmap */
+        libelf.h meaning read but use mmap. 
+        It is never necessary -- it is just a convenience.  
+        HAVE_ELF_C_READ_MMAP has not been in config.h via
+        configure since 2004 at least. */
     what_kind_of_elf_read = ELF_C_READ_MMAP;
 #endif /* !HAVE_ELF_C_READ_MMAP */
 
@@ -161,7 +164,7 @@ dwarf_elf_init_file_ownership(dwarf_elf_handle elf_file_pointer,
         libdwarf_owns_elf,
         &binary_interface,
         &err);
-    if(res != DW_DLV_OK){
+    if (res != DW_DLV_OK){
         DWARF_DBG_ERROR(NULL, err, DW_DLV_ERROR);
     }
 
@@ -169,7 +172,7 @@ dwarf_elf_init_file_ownership(dwarf_elf_handle elf_file_pointer,
         saving  the binary interface in 'ret-dbg' */
     res = dwarf_object_init(binary_interface, errhand, errarg, 
         ret_dbg, error);
-    if(res != DW_DLV_OK){
+    if (res != DW_DLV_OK){
         dwarf_elf_object_access_finish(binary_interface);
     }
     return res;

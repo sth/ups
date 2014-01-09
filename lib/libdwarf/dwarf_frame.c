@@ -1,7 +1,8 @@
 /*
 
   Copyright (C) 2000-2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2011 David Anderson. All Rights Reserved.
+  Portions Copyright (C) 2007-2012 David Anderson. All Rights Reserved.
+  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of version 2.1 of the GNU Lesser General Public License 
@@ -165,12 +166,16 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     Dwarf_Sword * returned_count,
     int *returned_error)
 {
+/*  The following macro depends on macreg and
+    machigh_reg both being unsigned to avoid
+    unintended behavior and to avoid compiler warnings when
+    high warning levels are turned on.  */
 #define ERROR_IF_REG_NUM_TOO_HIGH(macreg,machigh_reg)        \
     do {                                                     \
-        if ((macreg) >= (machigh_reg) || (macreg) < 0) {     \
+        if ((macreg) >= (machigh_reg)) {                     \
             SIMPLE_ERROR_RETURN(DW_DLE_DF_REG_NUM_TOO_HIGH); \
         }                                                    \
-    } /*CONSTCOND */ while(0)
+    } /*CONSTCOND */ while (0)
 #define SIMPLE_ERROR_RETURN(code) \
         free(localregtab);        \
         *returned_error = code;   \
@@ -180,8 +185,8 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     Dwarf_Small *instr_ptr;
 
     /*  Register numbers not limited to just 255, thus not using
-        Dwarf_Small. */
-    typedef int reg_num_type;
+        Dwarf_Small.  */
+    typedef unsigned reg_num_type;
 
     Dwarf_Unsigned factored_N_value;
     Dwarf_Signed signed_factored_N_value;
@@ -193,7 +198,7 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
         Dwarf_ufixed */
     Dwarf_Unsigned adv_loc = 0;
 
-    int reg_count = dbg->de_frame_reg_rules_entry_count;
+    unsigned reg_count = dbg->de_frame_reg_rules_entry_count;
     struct Dwarf_Reg_Rule_s *localregtab = calloc(reg_count,
         sizeof(struct Dwarf_Reg_Rule_s));
 
@@ -1075,16 +1080,16 @@ dwarf_get_cie_of_fde(Dwarf_Fde fde,
 
 int dwarf_get_cie_index(
     Dwarf_Cie cie,
-    Dwarf_Signed* index, 
+    Dwarf_Signed* indx, 
     Dwarf_Error* error )
 {
-    if( cie == NULL )
+    if (cie == NULL)
     {
         _dwarf_error(NULL, error, DW_DLE_CIE_NULL);
         return (DW_DLV_ERROR);
     }
 
-    *index = cie->ci_index;
+    *indx = cie->ci_index;
     return (DW_DLV_OK);
 }
 
@@ -1260,7 +1265,7 @@ dwarf_get_fde_for_die(Dwarf_Debug dbg,
     cie_ptr = prefix_c.cf_addr_after_prefix;
     cie_id = prefix_c.cf_cie_id;
 
-    if (cie_id == DW_CIE_ID) {
+    if (cie_id == (Dwarf_Unsigned)DW_CIE_ID) {
         int res2 = 0;
         Dwarf_Cie new_cie = 0;
 
@@ -1727,7 +1732,7 @@ dwarf_get_fde_info_for_reg(Dwarf_Fde fde,
             DW_DLE_FRAME_REGISTER_UNREPRESENTABLE);
         return (DW_DLV_ERROR);
     }
-    if(table_column == dbg->de_frame_cfa_col_number) {
+    if (table_column == dbg->de_frame_cfa_col_number) {
         if (register_num != NULL)
             *register_num = fde_table.fr_cfa_rule.ru_register;
         if (offset != NULL)
@@ -1917,7 +1922,7 @@ dwarf_get_fde_n(Dwarf_Fde * fde_data,
     Dwarf_Fde * returned_fde, Dwarf_Error * error)
 {
     Dwarf_Debug dbg = 0;
-    Dwarf_Signed fdecount = 0;
+    Dwarf_Unsigned fdecount = 0;
 
     if (fde_data == NULL) {
         _dwarf_error(dbg, error, DW_DLE_FDE_PTR_NULL);
@@ -2337,7 +2342,7 @@ init_reg_rules_alloc(Dwarf_Debug dbg,struct Dwarf_Frame_s *f,
     f->fr_reg = (struct Dwarf_Reg_Rule_s *)
         calloc(sizeof(struct Dwarf_Reg_Rule_s), count);
     if (f->fr_reg == 0) {
-        if(error) {
+        if (error) {
             _dwarf_error(dbg, error, DW_DLE_DF_ALLOC_FAIL);
         }
         return (DW_DLV_ERROR);
@@ -2394,7 +2399,7 @@ dwarf_init_reg_rules_ru(struct Dwarf_Reg_Rule_s *base,
 {
     struct Dwarf_Reg_Rule_s *r = base+first;
     unsigned i = first;
-    for( ; i < last; ++i,++r) {
+    for (; i < last; ++i,++r) {
         r->ru_is_off = 0;
         r->ru_value_type = DW_EXPR_OFFSET;
         r->ru_register = initial_value;
@@ -2408,7 +2413,7 @@ dwarf_init_reg_rules_dw(struct Dwarf_Regtable_Entry_s *base,
 {
     struct Dwarf_Regtable_Entry_s *r = base+first;
     unsigned i = first;
-    for( ; i < last; ++i,++r) {
+    for (; i < last; ++i,++r) {
         r->dw_offset_relevant = 0;
         r->dw_value_type = DW_EXPR_OFFSET;
         r->dw_regnum = initial_value;
@@ -2421,7 +2426,7 @@ dwarf_init_reg_rules_dw3(struct Dwarf_Regtable_Entry3_s *base,
 {
     struct Dwarf_Regtable_Entry3_s *r = base+first;
     unsigned i = first;
-    for( ; i < last; ++i,++r) {
+    for (; i < last; ++i,++r) {
         r->dw_offset_relevant = 0;
         r->dw_value_type = DW_EXPR_OFFSET;
         r->dw_regnum = initial_value;
