@@ -280,8 +280,8 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fs->fs_symlim = 0;
     fs->fs_initial_lno_fil = fil;
     /* These used to process line number data later. */
-    fs->fs_low_pc = dwf_get_address(dbg, addr_die, DW_AT_low_pc) + stf->stf_addr;
-    fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc) + stf->stf_addr;
+    fs->fs_low_pc = dwf_get_address(dbg, addr_die, DW_AT_low_pc, 0) + stf->stf_addr;
+    fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc, fs->fs_low_pc) + stf->stf_addr;
     fs->fs_die_offset = dwf_offset_of_die(dbg, addr_die);
 
     if (dwf_has_attribute(dbg, addr_die, DW_AT_frame_base) &&

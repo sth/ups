@@ -64,7 +64,7 @@ Dwarf_Half	dwf_get_tag(Dwarf_Debug dbg, Dwarf_Die die);
 char *		dwf_get_string(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id);
 bool		dwf_get_name(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die,
 			     char **p_name, char **p_mangled);
-Dwarf_Addr	dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
+Dwarf_Addr	dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Addr base);
 Dwarf_Off	dwf_get_offset(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 Dwarf_Off	dwf_get_cu_ref(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 Dwarf_Unsigned	dwf_get_udata(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
