@@ -522,6 +522,8 @@ int recursed;		/* Recursion level, 0 = top. */
      */
     die = dwf_child_die(dbg, parent_die);
     while (die != (Dwarf_Die)0) {
+	block_t *descend_bl = parent_bl;
+	Dwarf_Die imported_die;
 
 	if (dwf_next_stop_check != (time_t)-1 &&
 	    dwf_next_stop_check < time(NULL)) {
@@ -545,6 +547,13 @@ int recursed;		/* Recursion level, 0 = top. */
 	switch (tag) {
 
 	case DW_TAG_compile_unit:
+	    break;
+
+	case DW_TAG_imported_unit:
+	    imported_die = dwf_die_at_attribute(dbg, die, DW_AT_import);
+	    dwf_load_from_die(st, stf, p_flist, f, p_blocklist, parent_bl,
+			      parent_dt, imported_die, dw_what, dw_level,
+			      recursed + 1);
 	    break;
 
 	case DW_TAG_subprogram:
@@ -591,8 +600,8 @@ int recursed;		/* Recursion level, 0 = top. */
 		bl->bl_next = bl_head;
 		bl_head = bl;
 
-		parent_bl = bl_head;
 		descend = TRUE;
+		descend_bl = bl_head;
 	    } else if (dw_what & DWL_ANY_TYPES) {
 		/*
 		 * As GCC 3.2.2 sometimes hides type definitions
@@ -947,7 +956,7 @@ int recursed;		/* Recursion level, 0 = top. */
 	 */
 	if (descend)
 	    dwf_load_from_die(st, stf, p_flist, f,
-			      &(parent_bl->bl_blocks), parent_bl,
+			      &(descend_bl->bl_blocks), descend_bl,
 			      dt, die, dw_what_next, dw_level+1, recursed+1);
 
 	/* Next DIE at this level. */
@@ -1315,54 +1324,59 @@ Dwarf_Debug dbg;
 	 * Get the DIE for this CU.
 	 */
 	cu_die = dwf_cu_die(dbg);
-	tag = dwf_get_tag(dbg, cu_die);	/* Should get DW_TAG_compile_unit */
-	cu_die_offset = dwf_offset_of_die (dbg, cu_die);
+	tag = dwf_get_tag(dbg, cu_die);
 
-	/*
-	 * Get CU attributes.
-	 */
-	if (dwf_has_attribute(dbg, cu_die, DW_AT_name))
-	    cu_name  = dwf_get_string(dbg, ap, cu_die, DW_AT_name);
-	else
-	    cu_name = "";
-	comp_dir = dwf_get_string(dbg, ap, cu_die, DW_AT_comp_dir);
-	lang     = dwf_get_src_language(dbg, cu_die);
-	ct       = dwf_get_compiler_type(dbg, cu_die);
+	if (tag == DW_TAG_compile_unit) {
+	    cu_die_offset = dwf_offset_of_die (dbg, cu_die);
 
-	/*
-	 * Start a new 'stf'.
-	 */
-	stf = make_stf(ap, cu_name, st, 0, lang, ast->st_dw_debug_base_address);
-	stf->stf_symlim = -1;
-	stf->stf_fnum = -1;
-	stf->stf_dw_dbg = dbg;
-	stf->stf_cu_die_offset = (off_t)cu_die_offset;
-	stf->stf_cu_hdr_offset = (off_t)cu_hdr_offset;
-	stf->stf_compiler_type = ct;
-	stf->stf_objpath_hint = comp_dir;
-	st->st_sfiles = ao_make_fil(stf, rootblock, comp_dir, st->st_sfiles);
-	if ((*cu_name != '\0') && (ast->st_type_names == NULL))
-	    ast->st_type_names = hash_create_tab(ap, 1000);
-	stf->stf_fil = st->st_sfiles;
+	    /*
+	     * Get CU attributes.
+	     */
+	    if (dwf_has_attribute(dbg, cu_die, DW_AT_name))
+		cu_name  = dwf_get_string(dbg, ap, cu_die, DW_AT_name);
+	    else
+		cu_name = "";
+	    comp_dir = dwf_get_string(dbg, ap, cu_die, DW_AT_comp_dir);
+	    lang     = dwf_get_src_language(dbg, cu_die);
+	    ct       = dwf_get_compiler_type(dbg, cu_die);
 
-	/*
-	 * Compiler ?
-	 */
-	if (ct != CT_UNKNOWN)
-	    st->st_sfiles->fi_flags |= FI_FOUND_COMPILER;
+	    /*
+	     * Start a new 'stf'.
+	     */
+	    stf = make_stf(ap, cu_name, st, 0, lang, ast->st_dw_debug_base_address);
+	    stf->stf_symlim = -1;
+	    stf->stf_fnum = -1;
+	    stf->stf_dw_dbg = dbg;
+	    stf->stf_cu_die_offset = (off_t)cu_die_offset;
+	    stf->stf_cu_hdr_offset = (off_t)cu_hdr_offset;
+	    stf->stf_compiler_type = ct;
+	    stf->stf_objpath_hint = comp_dir;
+	    st->st_sfiles = ao_make_fil(stf, rootblock, comp_dir, st->st_sfiles);
+	    if ((*cu_name != '\0') && (ast->st_type_names == NULL))
+		ast->st_type_names = hash_create_tab(ap, 1000);
+	    stf->stf_fil = st->st_sfiles;
 
-	/*
-	 * Get the list of files in this CU
-	 */
-	dwf_get_cu_files(dbg, cu_die, ap, stf);
+	    /*
+	     * Compiler ?
+	     */
+	    if (ct != CT_UNKNOWN)
+		st->st_sfiles->fi_flags |= FI_FOUND_COMPILER;
 
-	if (only_globals)
-	    dwf_load_globals_from_cu(st, stf, &flist, cu_die, cu_hdr_offset, global_count, globals);
-	else
-	    dwf_load_syms_from_cu(st, stf, &flist, cu_die);
+	    /*
+	     * Get the list of files in this CU
+	     */
+	    dwf_get_cu_files(dbg, cu_die, ap, stf);
 
-	/* Finish the stf. */
-	reverse_stf_funclist(stf);
+	    if (only_globals)
+		dwf_load_globals_from_cu(st, stf, &flist, cu_die, cu_hdr_offset, global_count, globals);
+	    else
+		dwf_load_syms_from_cu(st, stf, &flist, cu_die);
+
+	    /* Finish the stf. */
+	    reverse_stf_funclist(stf);
+	} else if (tag != DW_TAG_partial_unit) {
+	    panic("dwf_scan_symtab : unexpected DIE type");
+	}
 
 	cu_hdr_offset = (Dwarf_Off)next_cu_hdr;
 
