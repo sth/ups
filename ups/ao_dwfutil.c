@@ -174,24 +174,24 @@ dwf_get_compiler_type(dbg, cu_die)
 Dwarf_Debug dbg;
 Dwarf_Die cu_die;
 {
-    Compiler_type ct;
+    Compiler_type ct = CT_UNKNOWN;
     char *producer;
 
-    producer = dwf_get_string(dbg, NULL, cu_die, DW_AT_producer);
+    if ((producer = dwf_get_string(dbg, NULL, cu_die, DW_AT_producer)) != NULL) {
+	/*
+	 * dwarfTODO: find out other values of 'producer'
+	 * dwarfTODO: if used C++ on a C file may want to change language
+	 */
+	if (strncmp (producer, "GNU C ", 6) == 0)
+	    ct = CT_GNU_CC;
+	else if (strncmp (producer, "GNU C++ ", 8) == 0)
+	    ct = CT_GNU_CC;
+	else if (strncmp (producer, "GNU F77 ", 8) == 0)
+	    ct = CT_GNU_CC;
+	
+	free (producer);
+    }
 
-    /*
-     * dwarfTODO: find out other values of 'producer'
-     * dwarfTODO: if used C++ on a C file may want to change language
-     */
-    if (strncmp (producer, "GNU C ", 6) == 0)
-	ct = CT_GNU_CC;
-    else if (strncmp (producer, "GNU C++ ", 8) == 0)
-	ct = CT_GNU_CC;
-    else if (strncmp (producer, "GNU F77 ", 8) == 0)
-	ct = CT_GNU_CC;
-    else
-	ct = CT_UNKNOWN;
-    free (producer);
     return ct;
 }
 
