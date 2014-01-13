@@ -1523,7 +1523,7 @@ proc_memcpy:
 
 			nbytes = GETLONG(pc);
 			addr = *sp;
-			sp -= nbytes / 4 - 1;
+			sp -= nbytes / sizeof(stackword_t) - 1;
 
 			if (IS_CI_ADDR(*sp)) {
 				memcpy((char *)sp, (char *)addr, nbytes);

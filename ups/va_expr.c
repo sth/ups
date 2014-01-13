@@ -1226,7 +1226,7 @@ typecode_t restype;
 	case TY_U_UNION:
 	case TY_U_STRUCT:
 		errf("\bCan't display struct/union types");
-		argslots = typesize(Expr_type) /sizeof(int);
+		argslots = typesize(Expr_type) / sizeof(long);
 		Expr_type = NULL;
 		break;
 	default:
