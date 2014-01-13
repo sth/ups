@@ -293,8 +293,8 @@ ELF(lookup_note)(Elfinfo *el, const char *notename, int notetype, size_t *p_note
 						memcpy(note, desc, nh->n_descsz);
 						*p_notesize = nh->n_descsz;
 					}
-					
-					offset = nextoffset;
+
+					offset = offset + nextoffset;
 				}
 			}
 
