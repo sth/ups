@@ -285,8 +285,10 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fs->fs_die_offset = dwf_offset_of_die(dbg, addr_die);
 
     if (dwf_has_attribute(dbg, addr_die, DW_AT_frame_base) &&
-	dwf_get_loclist_length(dbg, addr_die, DW_AT_frame_base) == 1)
-	fs->fs_frame_base = dwf_get_location(dbg, st->st_apool, addr_die, DW_AT_frame_base, NULL);
+	dwf_get_loclist_length(dbg, addr_die, DW_AT_frame_base) == 1) {
+	if ((fs->fs_frame_base = dwf_get_location(dbg, st->st_apool, addr_die, DW_AT_frame_base, NULL)) == NULL)
+	    fs->fs_frame_base = BAD_FRAME_BASE;
+    }
 
     addr = fs->fs_low_pc;
 

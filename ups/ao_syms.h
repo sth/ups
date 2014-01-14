@@ -69,6 +69,8 @@ typedef struct fsyminfo {
 #endif
 } fsyminfo_t;
 
+#define BAD_FRAME_BASE ((vaddr_t *)-1)
+
 #define AO_FSYMDATA(f)		((fsyminfo_t *)(f)->fu_symdata)
 
 #ifdef ST_TE

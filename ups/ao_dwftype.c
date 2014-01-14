@@ -467,7 +467,8 @@ func_t *f;
      */
     if (vaddr == NULL) {
 
-	class = class_hint;
+	if ((class = class_hint) != CL_MOU)
+	    type = NULL;
 	addr = 0;
 
     } else if (vaddr->v_op == OP_CFA_RELATIVE ||

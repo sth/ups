@@ -524,13 +524,19 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     for (i = 0; i < count; i++) {
 
 	vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
-	if (head == NULL)
+	if (head == NULL) {
 	    head = vaddr;
-	else
-	    panic("dwf_get_location : location list too long");
+	} else {
+	    errf("dwf_get_location : location list too long");
+	    head = NULL;
+	    break;
+        }
 
-	if (loclist[i]->ld_cents != 1)
-	    panic("dwf_get_location : location expression too complicated");
+	if (loclist[i]->ld_cents != 1) {
+	    errf("dwf_get_location : location expression too complicated");
+	    head = NULL;
+	    break;
+	}
 
 	op = loclist[i]->ld_s->lr_atom;
 	if (op == DW_OP_addr) {
@@ -561,7 +567,11 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    /*
 	     * Relative to frame base address.
 	     */
-	    if (frame_base && frame_base->v_op == OP_REGISTER) {
+	    if (frame_base == BAD_FRAME_BASE) {
+		errf("dwf_get_location : frame base not known");
+		head = NULL;
+		i = count;
+	    } else if (frame_base && frame_base->v_op == OP_REGISTER) {
 		if (frame_base->v_register == fp_reg) {
 		    vaddr->v_op = OP_FP_RELATIVE;
 		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
@@ -591,7 +601,11 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    /*
 	     * Frame base address.
 	     */
-	    if (frame_base && frame_base->v_op == OP_REGISTER) {
+	    if (frame_base == BAD_FRAME_BASE) {
+		errf("dwf_get_location : frame base not known");
+		head = NULL;
+		i = count;
+	    } else if (frame_base && frame_base->v_op == OP_REGISTER) {
 		if (frame_base->v_register == fp_reg) {
 		    vaddr->v_op = OP_FP_RELATIVE;
 		    vaddr->v_offset = 0;
