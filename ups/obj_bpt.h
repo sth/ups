@@ -29,7 +29,8 @@ extern struct Edit_history* bpt_history;
 int save_target_state PROTO((target_t *xp, bool remove_bpts,
 			     bool remove_vars, bool append));
 void recalculate_bpt_addrs PROTO((target_t *xp));
-bool execute_bp_code PROTO((breakpoint_t *bp, taddr_t fp, taddr_t ap, taddr_t cfa));
+bool execute_bp_code PROTO((breakpoint_t *bp, taddr_t fp, taddr_t ap,
+			    taddr_t sp, taddr_t cfa));
 #endif
 
 int save_all_breakpoints_to_file PROTO((const char *path, FILE *fp));

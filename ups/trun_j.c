@@ -187,6 +187,7 @@ stopres_t *p_stopres;
 			{
 			    stop = execute_bp_code(bp, xp_getreg(xp, UPSREG_FP),
 						   xp_getreg(xp, UPSREG_AP),
+						   xp_getreg(xp, UPSREG_SP),
 						   xp_getcfa(xp));
 			    stopres = xp_get_stopres(xp);
 			    if (stopres != SR_BPT)
@@ -654,6 +655,7 @@ stopres_t *p_stopres;
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -786,6 +788,7 @@ stopres_t *p_stopres;
 				execute_bp_code(bp_at_start_of_func,
 						xp_getreg(xp, UPSREG_FP),
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -1119,6 +1122,7 @@ retry:
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -1282,6 +1286,7 @@ set_bpt:
 				execute_bp_code(bp_at_start_of_func,
 						xp_getreg(xp, UPSREG_FP),
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}

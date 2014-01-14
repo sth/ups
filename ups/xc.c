@@ -126,7 +126,7 @@ char **argv;
 	if (ci_load(path, stack_size, want_opcounts, argv, environ, &ma) != 0)
 		exit(1);
 
-	res = ci_execute_machine(ma, (taddr_t)0, (taddr_t)0, (taddr_t)0,
+	res = ci_execute_machine(ma, (taddr_t)0, (taddr_t)0, (taddr_t)0, (taddr_t)0,
 						noread, nowrite,
 						(ci_indirect_call_proc_t)NULL);
 

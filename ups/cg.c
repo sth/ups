@@ -130,7 +130,7 @@ const char *entry_name;
 
 	ci_initialise_machine(ma, FALSE, FALSE, argv, envp);
 	
-	res = ci_execute_machine(ma, (taddr_t)0, (taddr_t)0, (taddr_t)0,
+	res = ci_execute_machine(ma, (taddr_t)0, (taddr_t)0, (taddr_t)0, (taddr_t)0,
 				 noread, nowrite, (ci_indirect_call_proc_t)NULL);
 
 	if (res != CI_ER_EXITED && res != CI_ER_TRAP) {

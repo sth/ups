@@ -245,7 +245,7 @@ void ci_set_expecting_arithmetic_signals PROTO((bool expecting_signals));
 #ifdef SYMTAB_H_INCLUDED
 ci_exec_result_t ci_execute_machine PROTO((machine_t *machine,
 			    unsigned long procfp, unsigned long procap,
-			    unsigned long proccfa,
+			    unsigned long procsp, unsigned long proccfa,
 			    ci_readproc_t readproc, ci_writeproc_t writeproc,
 			    ci_indirect_call_proc_t indirect_call_proc));
 #endif /* SYMTAB_H_INCLUDED */

@@ -916,7 +916,7 @@ objid_t obj;
 vformat_t new_format;
 bool change_caused_by_edit;
 {
-	taddr_t fp, ap, cfa, junk;
+	taddr_t fp, ap, sp, cfa;
 	dexpr_t *de;
 	bool lose_descendents;
 	type_t *type;
@@ -942,13 +942,13 @@ bool change_caused_by_edit;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fp = ap = 0;
 	else
-		get_stack_func(par, &fp, &ap, &junk, &cfa);
+		get_stack_func(par, &fp, &ap, &sp, &cfa);
 
 	Expr_type = NULL;
 	ci_initialise_machine(de->de_machine, TRUE, FALSE,
 					(char **)NULL, (char **)NULL);
 
-	res = ci_execute_machine(de->de_machine, fp, ap, cfa,
+	res = ci_execute_machine(de->de_machine, fp, ap, sp, cfa,
 					read_data, nowrite, set_expr_result);
 
 	if (res != CI_ER_TRAP) {
@@ -1306,7 +1306,7 @@ get_expr_address(de)
 dexpr_t *de;
 {
 	objid_t par;
-	taddr_t fp, ap, cfa, junk;
+	taddr_t junk;
 	fil_t *fil;
 	int lnum;
 	compile_res_t *cr;
@@ -1324,7 +1324,7 @@ dexpr_t *de;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fil = (fil_t *)par;
         else
-		fil = get_stack_func(par, &fp, &ap, &junk, &cfa)->fu_fil;
+		fil = get_stack_func(par, &junk, &junk, &junk, &junk)->fu_fil;
 
 	lnum = de->de_block->bl_start_lnum;
 
@@ -1340,7 +1340,7 @@ dexpr_t *de;
 	retval = 0;
 
 	if (cr->cr_machine != NULL && cr->cr_parse_id != NULL) {
-		taddr_t fp, ap, cfa, junk;
+		taddr_t fp, ap, sp, cfa;
 		ci_exec_result_t res;
 		objid_t par;
 		
@@ -1348,13 +1348,13 @@ dexpr_t *de;
 		if (ups_get_object_type(par) == OT_SFILE)
                 	fp = ap = 0;
 		else
-			get_stack_func(par, &fp, &ap, &junk, &cfa);
+			get_stack_func(par, &fp, &ap, &sp, &cfa);
 		
 		Expr_type = NULL;
 		ci_initialise_machine(cr->cr_machine, TRUE, FALSE,
 				      (char **)NULL, (char **)NULL);
 		
-		res = ci_execute_machine(cr->cr_machine, fp, ap, cfa,
+		res = ci_execute_machine(cr->cr_machine, fp, ap, sp, cfa,
 					 read_data, nowrite, set_expr_result);
 		
 		if (res != CI_ER_TRAP) {
@@ -1387,7 +1387,7 @@ get_expr_size(de)
 dexpr_t *de;
 {
 	objid_t par;
-	taddr_t fp, ap, cfa, junk;
+	taddr_t fp, ap, sp, cfa, junk;
 	fil_t *fil;
 	int lnum;
 	compile_res_t *cr;
@@ -1400,7 +1400,7 @@ dexpr_t *de;
 	if (ups_get_object_type(par) == OT_SFILE)
 		fil = (fil_t *)par;
         else
-		fil = get_stack_func(par, &fp, &ap, &junk, &cfa)->fu_fil;
+		fil = get_stack_func(par, &junk, &junk, &junk, &junk)->fu_fil;
 
 	lnum = de->de_block->bl_start_lnum;
 
@@ -1430,13 +1430,13 @@ dexpr_t *de;
 		if (ups_get_object_type(par) == OT_SFILE)
                 	fp = ap = 0;
 		else
-			get_stack_func(par, &fp, &ap, &junk, &cfa);
+			get_stack_func(par, &fp, &ap, &sp, &cfa);
 		
 		Expr_type = NULL;
 		ci_initialise_machine(cr->cr_machine, TRUE, FALSE,
 				      (char **)NULL, (char **)NULL);
 		
-		res = ci_execute_machine(cr->cr_machine, fp, ap, cfa,
+		res = ci_execute_machine(cr->cr_machine, fp, ap, sp, cfa,
 					 read_data, nowrite, set_expr_result);
 		
 		if (res != CI_ER_TRAP) {

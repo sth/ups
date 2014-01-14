@@ -896,7 +896,8 @@ int nargs;
 
 	ma->ma_sp = sp;
 	ma->ma_pc = text;
-	res = ci_execute_machine(ma, (textaddr_t)0, (textaddr_t)0, (textaddr_t)0,
+	res = ci_execute_machine(ma, (textaddr_t)0, (textaddr_t)0,
+			      (textaddr_t)0, (textaddr_t)0,
 			      (ci_readproc_t)NULL, (ci_writeproc_t)NULL,
 			      (ci_indirect_call_proc_t)NULL);
 	
@@ -946,9 +947,9 @@ int nargs;
 #define GET_FLOAT(d, p)		(d.d_word = *(p))
 
 ci_exec_result_t
-ci_execute_machine(ma, procfp, procap, proccfa, readproc, writeproc, indirect_call_proc)
+ci_execute_machine(ma, procfp, procap, procsp, proccfa, readproc, writeproc, indirect_call_proc)
 machine_t *ma;
-textaddr_t procfp, procap, proccfa;
+textaddr_t procfp, procap, procsp, proccfa;
 ci_readproc_t readproc;
 ci_writeproc_t writeproc;
 ci_indirect_call_proc_t indirect_call_proc;
@@ -2233,6 +2234,22 @@ proc_memcpy:
 			BREAK;
 		CASE OC_PROC_PUSH_AP_ADDR_Q:
 			PUSH((stackword_t)(procap + GETQUAD(pc)), sp);
+			pc += 8;
+			BREAK;
+
+		CASE OC_PROC_PUSH_SP_ADDR_B:
+			PUSH((stackword_t)(procsp + *pc++), sp);
+			BREAK;
+		CASE OC_PROC_PUSH_SP_ADDR_W:
+			PUSH((stackword_t)(procsp + GETWORD(pc)), sp);
+			pc += 2;
+			BREAK;
+		CASE OC_PROC_PUSH_SP_ADDR_L:
+			PUSH((stackword_t)(procsp + GETLONG(pc)), sp);
+			pc += 4;
+			BREAK;
+		CASE OC_PROC_PUSH_SP_ADDR_Q:
+			PUSH((stackword_t)(procsp + GETQUAD(pc)), sp);
 			pc += 8;
 			BREAK;
 

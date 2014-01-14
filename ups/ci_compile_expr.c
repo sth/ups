@@ -734,8 +734,12 @@ expr_context_t context;
 				case OP_FP_RELATIVE:
 					generic_opcode = OC_PROC_PUSH_FP_ADDR_B;
 					break;
+				case OP_SP_RELATIVE:
+					generic_opcode = OC_PROC_PUSH_SP_ADDR_B;
+					break;
 				default:
 					panic("unhandled op in cvr");
+					break;
 				}
 			} else {
 				generic_opcode = (v->va_class == CL_ARG)
@@ -778,8 +782,12 @@ expr_context_t context;
 					case OP_FP_RELATIVE:
 						generic_opcode = OC_PROC_PUSH_FP_ADDR_B;
 						break;
+					case OP_SP_RELATIVE:
+						generic_opcode = OC_PROC_PUSH_SP_ADDR_B;
+						break;
 					default:
 						panic("unhandled op in cvr");
+						break;
 					}
 				} else {
 					generic_opcode = (v->va_class == CL_ARG)
