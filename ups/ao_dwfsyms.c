@@ -415,14 +415,11 @@ Dwarf_Global *globals;
     Dwarf_Off offset, die_offset;
     Dwarf_Die die;
     Dwarf_Half tag;
-    snlist_t *sn;
-    alloc_pool_t *ap;
     char *global_name;
 
     /*
      * Initalise
      */
-    ap = st->st_apool;
     dbg = stf->stf_dw_dbg;
     die = (Dwarf_Die)0;
 
@@ -459,7 +456,7 @@ Dwarf_Global *globals;
 	    break;
 
 	case DW_TAG_variable:
-	    sn = dwf_add_globalvar_to_symtab(st, stf, strdup(global_name));
+	    dwf_add_globalvar_to_symtab(st, stf, strdup(global_name));
 	    break;
 
 	default:
@@ -498,19 +495,15 @@ int recursed;		/* Recursion level, 0 = top. */
 {
     int i;
     Dwarf_Debug dbg;
-    long rel_offset;
     Dwarf_Die die, spec_die;
     Dwarf_Half tag;
-    snlist_t *sn;
     block_t *bl_head = NULL;
     aggr_or_enum_def_t *ae;
     alloc_pool_t *ap;
     dtype_t *dt;
     type_t *type;
-    bool is_static;
     char *name;
     dwload_t dw_what_next;
-    bool ok;
     bool descend;
 
     /*
@@ -534,13 +527,9 @@ int recursed;		/* Recursion level, 0 = top. */
 	    dwf_next_stop_check = time(NULL) + DWF_STOP_CHECK_INTERVAL;
 	}
 
-	/* Offset in CU is very useful when debugging. */
-	rel_offset = (long)dwf_cu_offset_of_die(dbg, die);
-
 	/*
 	 * What sort of item : function, variable, ... ?
 	 */
-	ok = FALSE;
 	descend = FALSE;
 	dw_what_next = dw_what; /* in most cases */
 	dw_what_next &= (~DWL_AE_MEMBERS); /* only at current level */
@@ -629,9 +618,8 @@ int recursed;		/* Recursion level, 0 = top. */
 		     * Add globals and static with global scope in current CU.
 		     */
 		    spec_die = dwf_find_spec_die(dbg, die);
-		    is_static = !dwf_get_opt_flag(dbg, spec_die, DW_AT_external);
 		    name = dwf_get_string(dbg, ap, spec_die, DW_AT_name);
-		    sn = dwf_add_globalvar_to_symtab(st, stf, name);
+		    dwf_add_globalvar_to_symtab(st, stf, name);
 		}
 	    } else if ((dw_level == 1) && (dw_what & DWL_TOP_VARS)) {
 		/*
@@ -833,12 +821,11 @@ int recursed;		/* Recursion level, 0 = top. */
 
 	case DW_TAG_enumerator:
 	    if (dw_what & DWL_ENUM_MEMBERS) {
-		enum_member_t *em;
 		/*
 		 * Enumeration member
 		 */
 		ae = parent_dt->dt_type->ty_aggr_or_enum;
-		em = dwf_make_enumerator(dbg, die, ap, stf, ae);
+		dwf_make_enumerator(dbg, die, ap, stf, ae);
 	    }
 	    break;
 

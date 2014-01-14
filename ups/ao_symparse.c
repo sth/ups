@@ -252,10 +252,7 @@ Ftype **p_ft;
 {
 	int symno;
 	bool got_match;
-	ao_stdata_t *ast;
 	Symrec symrec;
-
-	ast = AO_STDATA(stf->stf_symtab);
 
 	got_match = FALSE;
 
@@ -1484,7 +1481,7 @@ int tnum, eval;
 	aggr_or_enum_def_t *ae;
 	dim_t *dim;
 	typecode_t utypecode;
-	int is_struct, junk, const_type = 0;
+	int is_struct, junk /*, const_type = 0 */;
 	const char *s, *s1, *tag;
 	char prior_chr;
 	alloc_pool_t *ap;
@@ -1563,9 +1560,10 @@ int tnum, eval;
 		{
 		  type_t *rtype = NULL;
 		  const char *s_old = s;
-
+/*
 		  if (*(s-1) == 'k')
 		    const_type = 1;
+*/
 		  rtype = TypeId(stf, sr, &s, eval, *(s - 1));
 		  if (!rtype)
 		  {
@@ -2427,7 +2425,7 @@ bool *terminate;
 {
 	const char *s;
 	char prior_chr;
-	type_t *type, *type1;
+	type_t *type;
 	int width = 0, offset;
 	var_t *v = NULL;
 
@@ -2537,7 +2535,7 @@ bool *terminate;
 	{
 	  prior_chr = *s == '\\' ? *(s-1) : *s;
 	  bump_str(sr, &s);
-	  type1 = TypeId(stf, sr, &s, eval, prior_chr); /* just ignore it */
+	  TypeId(stf, sr, &s, eval, prior_chr); /* just ignore it */
 	}
 
 	if (*s == ':' )   /*   g++ static member */

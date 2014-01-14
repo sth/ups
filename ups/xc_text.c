@@ -1040,14 +1040,12 @@ const char **p_mesg;
 	codefile_t *cf, *fcf;
 	textword_t *pc, *fpc;
 	int i;
-	func_retval_t retval;
 
 	ma = GET_XTD(xp)->xp_machine;
 	
 	sp = ma->ma_sp;
 	pc = ma->ma_pc;
 	cf = ma->ma_codefile;
-	retval = ma->ma_retval;
 
 	for (i = nargs - 1; i >= 0; --i)
 		*--ma->ma_sp = args[i];

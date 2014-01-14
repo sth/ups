@@ -832,10 +832,6 @@ int func_index, operand_size;
 codefile_t **p_cf;
 textword_t **p_pc;
 {
-	textword_t *pc;
-
-	pc = *p_pc;
-
 	/* Dibyendu : following looks incorrect - see xc_machine.c */
 	/* if (func_index >= 0) */
 	{

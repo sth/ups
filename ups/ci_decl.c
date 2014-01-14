@@ -512,9 +512,6 @@ bool is_definition;
 		max_addr = 0;
 		prev = NULL;
 		for (v = aggr_members; v != NULL; prev = v, v = v->va_next) {
-			typecode_t vcode;
-
-			vcode = v->va_type->ty_code;
 			if (v->va_type->ty_code == TY_BITFIELD) {
 				if (typecode != TY_STRUCT)
 					diagf(ET_ERROR, v->va_lexinfo,

@@ -273,13 +273,10 @@ Srcbuf *sb;
 size_t lim_point;
 int lim_ypos, editline_height, srcline_height, *p_lnum, *p_ypos;
 {
-	int ypos, mixedline_height;
+	int ypos;
 	size_t offset, ebstart, *lptr, *llim;
 	Editblock *eb;
 	
-	mixedline_height = (editline_height > srcline_height) ?
-					    editline_height : srcline_height;
-
 	offset = 0;
 	ypos = 0;
 	lptr = sb->linetab;

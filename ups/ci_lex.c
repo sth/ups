@@ -800,12 +800,16 @@ yylex()
 	{
 	    char *end;
 	    number_t val;
+#if !WANT_UINT_CONST
 	    const char *startline;
+#endif
 
 	    /*  BUG: handle signed/unsigned and types correctly.
 	     *  Mostly fixed now. 13/1/99 Dibyendu.
 	     */
+#if !WANT_UINT_CONST
 	    startline = line-1;
+#endif
 	    if (!convert_number(line - 1, 0, &end, &val)) {
 		token = BADTOK;
 	    }

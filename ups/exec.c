@@ -108,7 +108,7 @@ int command;
    so that the first breakpoint works */
 
 	target_t *xp;
-	bool want_refresh, target_updated = FALSE;
+	bool target_updated = FALSE;
 	stopres_t stopres = SR_FAILED;	
         /* RGA as per Callum Gibson callum@bain.oz.au */
 	char *ptr = 0;
@@ -119,8 +119,6 @@ int command;
 
 	xp = get_current_target();
 
-	want_refresh = TRUE;
-	
 	switch(command) {
 	case MR_TGT_CONT:
 		stopres = xp_cont(xp);

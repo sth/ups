@@ -160,10 +160,8 @@ lno_t *
 dw_get_fu_lnos(f)
 func_t *f;
 {
-    fsyminfo_t *fs;
     symtab_t *st;
     stf_t *stf;
-    ao_stdata_t *ast;
 
     /*
      * Already done ?
@@ -172,8 +170,6 @@ func_t *f;
 	return f->fu__lnos;
 
     st = f->fu_symtab;
-    fs = AO_FSYMDATA(f);
-    ast = AO_STDATA(st);
 
     /*
      * 'stf' may be one for an included file, we want the CU file
@@ -264,7 +260,6 @@ dw_get_fi_vars(fil)
 fil_t *fil;
 {
     symtab_t *st;
-    ao_stdata_t *ast;
     stf_t *stf;
 /*    snlist_t *sn; */
     errf_ofunc_t oldf;
@@ -283,7 +278,6 @@ fil_t *fil;
     indicate_target_menu_search(1);
 
     st = fil->fi_symtab;
-    ast = AO_STDATA(st);
     stf = AO_FIDATA(fil);
 
     /*

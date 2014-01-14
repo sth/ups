@@ -835,13 +835,11 @@ xp_opcode_t opcode, *p_old_opcode;
 	int byte_shift;
 	unsigned mask;
 #endif
-	int pid;
         unsigned long temp;
 	xp_opcode_t old_opcode;
 	iproc_t *ip;
 
 	ip = GET_IPROC(xp);
-	pid = ip->ip_pid;
 
 	if (p_old_opcode != NULL)
 		opcode = BPT;
@@ -1087,7 +1085,7 @@ const char **p_mesg;
 #if defined(ARCH_BSDI386) || defined(ARCH_LINUX386)
 #if AO_HAS_PTRACE_REGS
 	ptrace_regs_t ptrace_regs, orig_ptrace_regs;
-	ptrace_regs_t *regs, *orig_regs; 
+	ptrace_regs_t *orig_regs; 
 #else
 	taddr_t saved_regs[N_UREGS];
 #endif
@@ -1206,7 +1204,6 @@ const char **p_mesg;
 #if AO_HAS_PTRACE_REGS
 	ptrace_get_regtab(ip, &ptrace_regs);
 	orig_ptrace_regs = ptrace_regs;
-	regs = &ptrace_regs;
 	orig_regs = &orig_ptrace_regs;
 	sp = xp_getreg(xp, UPSREG_SP);
 #else

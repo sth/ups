@@ -80,6 +80,7 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 #include "breakpoint.h"
 #include "tdr.h"
 #include "state.h"
+#include "obj_bpt.h"
 
 
 /* Definitions. */
@@ -466,7 +467,6 @@ void
 ptrace_kill(xp)
 target_t *xp;
 {
-	wait_arg_t status;
 	iproc_t *ip;
 
 	ip = GET_IPROC(xp);
@@ -480,14 +480,8 @@ target_t *xp;
 	if (ip->ip_stopres != SR_DIED) {
 		if (ip->ip_attached) {
 			/*  wait() hangs on a PTRACE_ATTACH process which
-			 *  has been killed, so fake the status.
+			 *  has been killed.
 			 */
-#ifdef WAIT_STATUS_IS_INT
-			status = SIGKILL;
-#else
-			status.w_T.w_Termsig = SIGKILL;
-			status.w_T.w_Retcode = 0;
-#endif
 		}
 		else {
 			ptrace_wait_for_target(xp);

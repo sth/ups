@@ -787,7 +787,6 @@ bool rematch, reload;
       /*!(fil->fi_name && fil->fi_name[0] == '/') &&*/ /* RGA 8/14/97 */
       (!(fil->fi_flags & FI_DONE_MATCH) || rematch || reload))
   {
-    lno_t *ln;
     int last_ln = 0, nlines, i, j, match = 0, file_access = -1, 
     old_path_found = 0, max_pathlen;
     funclist_t *fl;
@@ -812,7 +811,7 @@ bool rematch, reload;
     {
       for (fl = fil->fi_funclist; fl; fl = fl->fl_next)
       {
-	ln = FU_LNOS(fl->fl_func);
+	FU_LNOS(fl->fl_func);
 	if (!(fl->fl_func->fu_flags & FU_NOTHEADER))
         {
 	  if (last_ln)

@@ -648,7 +648,7 @@ bool want_outwin;
 	};
 	Region *root, *line, *regs[MAX_REGNUM];
 	target_menu_info_t tmbuf;
-	font_t *sysfont, *menufont;
+	font_t *menufont;
 
 	/*  Dimensions and percentages */
 	int menu_height;
@@ -671,7 +671,6 @@ bool want_outwin;
 
 	/*  Set up fixed dimensions.  Some of these vary with font heights.
 	 */
-	sysfont = wn_get_sysfont();
 	menufont = Mstdfont();
 	menu_height = menufont->ft_height + 8;
 	outwin_percent = get_default("OutwinPercent", 10, 1);
@@ -2575,13 +2574,11 @@ set_dynamic_bphead_menu_state(md, enable)
 int md;
 bool enable;
 {
-	menu_arg_t *ma;
 	Region *dmenu_region;
 	char rvs[2];
 
 	dmenu_region = get_dynamic_menu_region();
 
-	ma = (menu_arg_t *)re_get_data(dmenu_region);
 	rvs[0] = (enable) ?
 	  (char)MR_ENABLE_ALL_BREAKPOINTS : (char)MR_DISABLE_ALL_BREAKPOINTS;
 	rvs[1] = 0;
@@ -2596,13 +2593,11 @@ set_dynamic_wphead_menu_state(md, enable)
 int md;
 bool enable;
 {
-	menu_arg_t *ma;
 	Region *dmenu_region;
 	char rvs[2];
 
 	dmenu_region = get_dynamic_menu_region();
 
-	ma = (menu_arg_t *)re_get_data(dmenu_region);
 	rvs[0] = (enable) ?
 	  (char)MR_ENABLE_ALL_WATCHPOINTS : (char)MR_DISABLE_ALL_WATCHPOINTS;
 	rvs[1] = 0;

@@ -662,9 +662,8 @@ mf_value(fline, p_uline)
 const char *fline, **p_uline;
 {
 	char *endstr;
-	long val;
 
-	val = strtol(*p_uline, &endstr, (fline[1] == 'h') ? 16 : 10);
+	strtol(*p_uline, &endstr, (fline[1] == 'h') ? 16 : 10);
 
 	if (endstr == *p_uline)
 		return FALSE;

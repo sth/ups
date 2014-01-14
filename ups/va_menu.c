@@ -1654,8 +1654,7 @@ int **obj_var;
   type_t *type;
   const char *mesg;
   var_t *v, *sub_v;
-  bool hide_ptr;
-  int is_ptr_to_func, len, found = 0, str_match;
+  int is_ptr_to_func, found = 0, str_match;
   taddr_t addr;
   type_t *btype;
 
@@ -1674,7 +1673,6 @@ int **obj_var;
   dv = (dvar_t *)obj;
   v = dv->dv_var;
   
-  hide_ptr = (v->va_flags & VA_HIDE_PTR) != 0;
   type = get_type_at_level(v, dv->dv_ilevel);
   
   
@@ -1709,7 +1707,6 @@ int **obj_var;
     return found;
   }
 
-  len = strlen(name);
   for (v = type->ty_aggr_or_enum->ae_aggr_members; v != NULL; v = v->va_next)
   {
     if (demangling_enabled(0, 0))

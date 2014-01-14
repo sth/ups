@@ -1741,12 +1741,11 @@ var_t *v;
 void show_dv_size(dv)
      dvar_t* dv;
 {
-  type_t *type, *btype;
+  type_t *btype;
   var_t *v;
   int len;
 
   v = dv->dv_var;
-  type = get_type_at_level(v, dv->dv_ilevel);
   
   len = UNKNOWN_SIZE;
   /*  If the variable is an array then we can find out how

@@ -1451,7 +1451,7 @@ int **obj_var;
   objid_t par, var_obj;
   block_t *block;
   var_t *v;
-  int found = 0, len, str_match;
+  int found = 0, str_match;
   func_t *f;
   block_t *blocks;
   taddr_t junk;
@@ -1487,7 +1487,6 @@ int **obj_var;
 	add_block_object(par, block);
     }
   }
-  len = strlen(name);  
   for (v = blocks->bl_vars; v != NULL; v = v->va_next)
   {
     if (demangling_enabled(0, 0))

@@ -558,15 +558,12 @@ int command;
 char *arg;
 {
 	int oldstate;
-	wpdesc_t *wd;
 
 	if (command == MR_WPTMEN_ACCELERATOR_ACTION)
 		command = wpt_accelerator_action(obj);
 
 	display_area_overlay_unselect_global_selection();
 	oldstate = td_set_obj_updating(OBJ_UPDATING_OFF);
-
-	wd = (wpdesc_t *)obj;
 
 	switch(command) {
 	case MR_WPTMEN_REMOVE:

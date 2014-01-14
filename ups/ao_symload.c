@@ -154,13 +154,15 @@ get_fi_compiler(fil)
 fil_t *fil;
 {
 
-  stf_t *stf, *stf_next;
-  int symno, min_symno, max_symno;
+  stf_t *stf;
+  int symno, max_symno;
+#ifndef AO_ELF
+  int min_symno;
+#endif
   /* cursor_t old_cursor; */
   static int checked = 0;
   static Compiler_type sym;
   static char *c_str = NULL;
-  symtab_t *st;
   Symrec symrec;
   nlist_t nm;
   const char *c;
@@ -179,16 +181,17 @@ fil_t *fil;
   symrec.symio = AO_STDATA(fil->fi_symtab)->st_text_symio;
 #endif
 	
-  min_symno = 0;
   stf = AO_FIDATA(fil);
+#ifndef AO_ELF
+  min_symno = 0;
   if (fil->fi_next)
   {
-    stf_next = AO_FIDATA(fil->fi_next);
+    stf_t *stf_next = AO_FIDATA(fil->fi_next);
     if (stf_next)
       min_symno = stf_next->stf_symno;
   }
+#endif
 
-  st = stf->stf_symtab;
   if (!checked)
   {
     char *c2;
@@ -1639,7 +1642,9 @@ func_t *f;
 {
   lno_t dummy_lno, *last;
   lno_t *lno = NULL;
+#ifndef AO_ELF
   ao_stdata_t *ast;
+#endif
   int max_lnum;
   symio_t *symio;
   taddr_t min_addr;
@@ -1652,12 +1657,12 @@ func_t *f;
   if (f->fu_flags & FU_DONE_LNOS)
     return f->fu__lnos;
 
-  ast = AO_STDATA(f->fu_symtab);
-
 #ifdef AO_ELF
   if (!elf_scan_then_setup_symio(f->fu_fil, &symio))
     return NULL;
 #else
+  ast = AO_STDATA(f->fu_symtab);
+
   symio = ast->st_text_symio;
 #endif
           

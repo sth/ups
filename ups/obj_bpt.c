@@ -1349,16 +1349,16 @@ const char **p_display_string;
 	objid_t obj1 = NULL;
 	taddr_t addr1;
 	bpdesc_t *bd1 = NULL;
+	int lnum1;
 #endif /* OS_SUNOS */
 	fval_t fields[FN_BPT_LAST + 1];
 	func_t *f, *f1 = NULL;
 	bpdesc_t *bd;
 	const char *fname;
 	fil_t *fil;
-	int lnum, lnum1, ret, method_call = 0, multi_func = 0, lnum_n;
+	int lnum, ret, method_call = 0, lnum_n;
 	taddr_t addr;
 	target_t *xp;
-	objid_t obj_n;
 
 	xp = get_current_target();
 	bd = (bpdesc_t *)obj;
@@ -1391,8 +1391,6 @@ const char **p_display_string;
 	    {
 	      int ans, ans_stat, first_only = 0;
 
-	      multi_func = 1;
-
 	      if (funchead->fl_next)
 	      {
 		ans_stat = prompt_for_choice
@@ -1414,7 +1412,9 @@ const char **p_display_string;
 		  f = fl->fl_func;
 		  get_min_bpt_addr(f, &addr, FALSE);
 		  addr_to_fil_and_lnum(f, addr, &fil, &lnum, FALSE);
+#ifdef OS_SUNOS
 		  lnum1 = lnum;
+#endif /* OS_SUNOS */
 		  if (first_only)
 		    break;
 		  else
@@ -1424,7 +1424,7 @@ const char **p_display_string;
 				     &fil, &lnum_n, FALSE);
 		if (!lnum_n)
 		  lnum_n = -1;	/* allow multiple breakpoints in libraries */
-		obj_n = add_breakpoint_object(fl->fl_func, fil, lnum_n, TRUE);
+		add_breakpoint_object(fl->fl_func, fil, lnum_n, TRUE);
 	      }
 	      do_free_func_bp_list_list(funchead);
 	    }
@@ -1474,7 +1474,6 @@ const char **p_display_string;
 
 	    if (funchead)
 	    {
-	      multi_func = 1;
 	      if (method_call)
 		errf("\bPlacing multiple breakpoints in overloaded/multiply linked methods");
 	      else
@@ -1488,7 +1487,7 @@ const char **p_display_string;
 				     &fil, &lnum_n, FALSE);
 		if (!lnum_n)
 		  lnum_n = -1;	/* allow multiple breakpoints in libraries */
-		obj_n = add_breakpoint_object(fl->fl_func, fil, lnum_n, TRUE);
+		add_breakpoint_object(fl->fl_func, fil, lnum_n, TRUE);
 	      }
 	      do_free_func_bp_list_list(funchead);
 	    }
@@ -2330,7 +2329,6 @@ func_t** pfirst;
 	func_bp_list_t *fl;
 	for (fl = funchead; fl != NULL; fl = fl->fl_next)
 	{		 
-	    objid_t obj_n;
 	    fil_t *fil;
 	    int lnum;
 	    taddr_t call_bpt_addr;
@@ -2346,7 +2344,7 @@ func_t** pfirst;
 				     &fil, &lnum, FALSE);
 	    if (!lnum)
 		lnum = -1;	/* allow multiple breakpoints in libraries */
-	    obj_n = add_breakpoint_object(fl->fl_func, fil, lnum, TRUE);
+	    add_breakpoint_object(fl->fl_func, fil, lnum, TRUE);
 	}
 	do_free_func_bp_list_list(funchead);
     }

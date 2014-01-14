@@ -661,7 +661,7 @@ alloc_pool_t *ap;
 typecode_t typecode;
 {
     dtype_t *dt;
-    type_t *type, *base;
+    type_t *type;
 
     /*
      * Make a 'type_t' and 'dtype_t'
@@ -681,7 +681,7 @@ typecode_t typecode;
 	type->ty_name = dwf_get_string(dbg, ap, die, DW_AT_name);
 
     dt = dwf_make_dtype(dbg, die, ap, stf, DT_IS_TYPE, &(type->ty_base), type);
-    base = dwf_try_resolve_base_type(dbg, die, ap, stf, dt);
+    dwf_try_resolve_base_type(dbg, die, ap, stf, dt);
 
     return dt;
 }
