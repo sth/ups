@@ -674,7 +674,7 @@ yylex()
 	    len = s - line;
 
 	    for (i = 0; i < NKEYS; ++i)
-		if (memcmp(Keytab[i].name, line, len) == 0 &&
+		if (strncmp(Keytab[i].name, line, len) == 0 &&
 			Keytab[i].name[len] == '\0')
 		    break;
 	    if (i < NKEYS) {
