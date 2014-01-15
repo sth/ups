@@ -229,7 +229,7 @@ wait_with_intr(p_status, p_errno)
 wait_arg_t *p_status;
 int *p_errno;
 {
-	abort_func_t oldfunc = set_user_abort_func(stop_target);
+	abort_func_t oldfunc = NULL;
 	int ret;
 
 #if HAVE_SIGSETJMP && HAVE_SIGLONGJMP
@@ -240,6 +240,8 @@ int *p_errno;
 		set_user_abort_func(oldfunc);
 		return 0;
 	}
+
+	oldfunc = set_user_abort_func(stop_target);
 
 	if (get_run_alarm_time() > 0)
 	    ret = wait3(p_status, WNOHANG, NULL);
