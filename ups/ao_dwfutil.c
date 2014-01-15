@@ -755,6 +755,8 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
 		*fp = new_fp;
 		*sp = new_sp;
 		*pc = new_pc;
+	    } else {
+		*pc = 0;
 	    }
 	}
 
