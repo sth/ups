@@ -605,7 +605,7 @@ int *p_decl_may_have_changed;
 
 	xp = get_current_target();
 
-	if (v->va_location) {
+	if (v->va_location && ups_get_object_type(par) != OT_SFILE) {
 		func_t *f = get_stack_func(par, &pc, &fp, &ap, &sp, &cfa);
 		stf_t *stf = AO_FIDATA(f->fu_fil);
 		vaddr_t *vaddr;
