@@ -344,29 +344,31 @@ dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Addr base)
 	Dwarf_Attribute attribute;
 	Dwarf_Half form;
 
-	if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK)
+	if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_attr", rv, die, err);
-	if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK)
+	} else if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_whatform", rv, die, err);
-
-	if (form == DW_FORM_addr) {
-	    if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK)
-		dwf_fatal_error("dwarf_formaddr", rv, die, err);
-	} else if ((form == DW_FORM_data1)
-		   || (form == DW_FORM_data2)
-		   || (form == DW_FORM_data4)
-		   || (form == DW_FORM_data8)
-		   || (form == DW_FORM_udata)) {
-	    Dwarf_Unsigned offset;
-
-	    if ((rv = dwarf_formudata(attribute, &offset, &err)) != DW_DLV_OK)
-		dwf_fatal_error("dwarf_formudata", rv, die, err);
-
-	    addr = base + offset;
 	} else {
-	    dwf_fatal_error("attribute form not address", 0, die, err);
+	    if (form == DW_FORM_addr) {
+		if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK)
+		    dwf_fatal_error("dwarf_formaddr", rv, die, err);
+	    } else if ((form == DW_FORM_data1)
+		       || (form == DW_FORM_data2)
+		       || (form == DW_FORM_data4)
+		       || (form == DW_FORM_data8)
+		       || (form == DW_FORM_udata)) {
+		Dwarf_Unsigned offset;
+
+		if ((rv = dwarf_formudata(attribute, &offset, &err)) != DW_DLV_OK)
+		    dwf_fatal_error("dwarf_formudata", rv, die, err);
+
+		addr = base + offset;
+	    } else {
+		dwf_fatal_error("attribute form not address", 0, die, err);
+	    }
+
+	    dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 	}
-	dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
     }
     return addr;
 }
