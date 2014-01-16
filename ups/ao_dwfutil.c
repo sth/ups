@@ -494,7 +494,7 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     Dwarf_Locdesc **loclist;
     Dwarf_Signed count = 0;
     Dwarf_Small op;
-    vaddr_t *head = NULL, *vaddr;
+    vaddr_t *head = NULL, *tail = NULL, *vaddr;
     unsigned char fp_regop;
     unsigned char sp_regop;
     unsigned char fp_reg;
@@ -522,109 +522,113 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     }
 
     for (i = 0; i < count; i++) {
+	Dwarf_Locdesc *ld = loclist[i];
 
 	vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
-	if (head == NULL) {
-	    head = vaddr;
+
+	vaddr->v_next = NULL;
+	vaddr->v_low_pc = ld->ld_lopc;
+	vaddr->v_high_pc = ld->ld_hipc;
+
+	if (ld->ld_cents == 1) {
+	    op = ld->ld_s->lr_atom;
+	    if (op == DW_OP_addr) {
+		/*
+		 * Address
+		 */
+		vaddr->v_op = OP_ADDR;
+		vaddr->v_addr = ld->ld_s->lr_number;
+	    } else if ((op >= DW_OP_reg0) && (op <= DW_OP_reg31)) {
+		/*
+		 * Register 0..31
+		 */
+		vaddr->v_op = OP_REGISTER;
+		vaddr->v_register = op - DW_OP_reg0;
+	    } else if (op == DW_OP_regx) {
+		/*
+		 * Register
+		 */
+		vaddr->v_op = OP_REGISTER;
+		vaddr->v_register = ld->ld_s->lr_number;
+	    } else if (op == DW_OP_plus_uconst) {
+		/*
+		 * Unsigned offset.
+		 */
+		vaddr->v_op = OP_U_OFFSET;
+		vaddr->v_u_offset = ld->ld_s->lr_number;
+	    } else if (op == DW_OP_fbreg) {
+		/*
+		 * Relative to frame base address.
+		 */
+		if (frame_base == BAD_FRAME_BASE) {
+		    errf("dwf_get_location : frame base not known");
+		    goto next_location;
+		} else if (frame_base && frame_base->v_op == OP_REGISTER) {
+		    if (frame_base->v_register == fp_reg) {
+			vaddr->v_op = OP_FP_RELATIVE;
+			vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		    } else if (frame_base->v_register == sp_reg) {
+			vaddr->v_op = OP_SP_RELATIVE;
+			vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		    } else {
+			panic("dwf_get_location : frame base register not fp or sp");
+		    }
+		} else {
+		    vaddr->v_op = OP_CFA_RELATIVE;
+		    vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		}
+	    } else if (op == fp_regop) {
+		/*
+		 * Relative to frame pointer.
+		 */
+		vaddr->v_op = OP_FP_RELATIVE;
+		vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+	    } else if (op == sp_regop) {
+		/*
+		 * Relative to stack pointer.
+		 */
+		vaddr->v_op = OP_SP_RELATIVE;
+		vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+	    } else if (op == DW_OP_call_frame_cfa) {
+		/*
+		 * Frame base address.
+		 */
+		if (frame_base == BAD_FRAME_BASE) {
+		    errf("dwf_get_location : frame base not known");
+		    goto next_location;
+		} else if (frame_base && frame_base->v_op == OP_REGISTER) {
+		    if (frame_base->v_register == fp_reg) {
+			vaddr->v_op = OP_FP_RELATIVE;
+			vaddr->v_offset = 0;
+		    } else if (frame_base->v_register == sp_reg) {
+			vaddr->v_op = OP_SP_RELATIVE;
+			vaddr->v_offset = 0;
+		    } else {
+			panic("dwf_get_location : frame base register not fp or sp");
+		    }
+		} else {
+		    vaddr->v_op = OP_CFA_RELATIVE;
+		    vaddr->v_offset = 0;
+		}
+	    } else {
+		errf("dwf_get_location : unsupported opcode in location expression");
+		goto next_location;
+	    }
 	} else {
-	    errf("dwf_get_location : location list too long");
-	    head = NULL;
-	    break;
+	    errf("dwf_get_location : location expression too complicated");
+	    goto next_location;
+	}
+	
+	if (head == NULL) {
+	    tail = head = vaddr;
+	} else {
+	    tail = tail->v_next = vaddr;
         }
 
-	if (loclist[i]->ld_cents != 1) {
-	    errf("dwf_get_location : location expression too complicated");
-	    head = NULL;
-	    break;
-	}
+      next_location:
 
-	op = loclist[i]->ld_s->lr_atom;
-	if (op == DW_OP_addr) {
-	    /*
-	     * Address
-	     */
-	    vaddr->v_op = OP_ADDR;
-	    vaddr->v_addr = loclist[i]->ld_s->lr_number;
-	} else if ((op >= DW_OP_reg0) && (op <= DW_OP_reg31)) {
-	    /*
-	     * Register 0..31
-	     */
-	    vaddr->v_op = OP_REGISTER;
-	    vaddr->v_register = op - DW_OP_reg0;
-	} else if (op == DW_OP_regx) {
-	    /*
-	     * Register
-	     */
-	    vaddr->v_op = OP_REGISTER;
-	    vaddr->v_register = loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_plus_uconst) {
-	    /*
-	     * Unsigned offset.
-	     */
-	    vaddr->v_op = OP_U_OFFSET;
-	    vaddr->v_u_offset = loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_fbreg) {
-	    /*
-	     * Relative to frame base address.
-	     */
-	    if (frame_base == BAD_FRAME_BASE) {
-		errf("dwf_get_location : frame base not known");
-		head = NULL;
-		i = count;
-	    } else if (frame_base && frame_base->v_op == OP_REGISTER) {
-		if (frame_base->v_register == fp_reg) {
-		    vaddr->v_op = OP_FP_RELATIVE;
-		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-		} else if (frame_base->v_register == sp_reg) {
-		    vaddr->v_op = OP_SP_RELATIVE;
-		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-		} else {
-		    panic("dwf_get_location : frame base register not fp or sp");
-		}
-	    } else {
-		vaddr->v_op = OP_CFA_RELATIVE;
-		vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-	    }
-	} else if (op == fp_regop) {
-	    /*
-	     * Relative to frame pointer.
-	     */
-	    vaddr->v_op = OP_FP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-	} else if (op == sp_regop) {
-	    /*
-	     * Relative to stack pointer.
-	     */
-	    vaddr->v_op = OP_SP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_call_frame_cfa) {
-	    /*
-	     * Frame base address.
-	     */
-	    if (frame_base == BAD_FRAME_BASE) {
-		errf("dwf_get_location : frame base not known");
-		head = NULL;
-		i = count;
-	    } else if (frame_base && frame_base->v_op == OP_REGISTER) {
-		if (frame_base->v_register == fp_reg) {
-		    vaddr->v_op = OP_FP_RELATIVE;
-		    vaddr->v_offset = 0;
-		} else if (frame_base->v_register == sp_reg) {
-		    vaddr->v_op = OP_SP_RELATIVE;
-		    vaddr->v_offset = 0;
-		} else {
-		    panic("dwf_get_location : frame base register not fp or sp");
-		}
-	    } else {
-		vaddr->v_op = OP_CFA_RELATIVE;
-		vaddr->v_offset = 0;
-	    }
-	} else {
-	    panic("dwf_get_location : unsupported opcode in location expression");
-	}
-
-	dwarf_dealloc(dbg, loclist[i]->ld_s, DW_DLA_LOC_BLOCK);
-	dwarf_dealloc(dbg, loclist[i], DW_DLA_LOCDESC);
+	dwarf_dealloc(dbg, ld->ld_s, DW_DLA_LOC_BLOCK);
+	dwarf_dealloc(dbg, ld, DW_DLA_LOCDESC);
     }
     dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
 

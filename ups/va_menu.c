@@ -600,51 +600,65 @@ var_t *v;
 ilist_t *ilist;
 int *p_decl_may_have_changed;
 {
-	taddr_t addr, fp, ap, sp, cfa;
+	taddr_t addr, pc, fp, ap, sp, cfa;
 	target_t *xp;
 
 	xp = get_current_target();
 
 	if (v->va_location) {
-		switch (v->va_location->v_op) {
-		case OP_ADDR:
-			addr = v->va_location->v_addr;
-			break;
-		case OP_REGISTER:
-			addr = get_reg_addr(xp, par, (int)v->va_location->v_register,
-					    (size_t)dynamic_type_size(v->va_type,
-								      ilist));
-			break;
-		case OP_CFA_RELATIVE:
-			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
-			addr = cfa + v->va_location->v_offset;
-			break;
-		case OP_FP_RELATIVE:
-			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
-			addr = fp + v->va_location->v_offset;
-			break;
-		case OP_SP_RELATIVE:
-			(void)get_stack_func(par, &fp, &ap, &sp, &cfa);
-			addr = sp + v->va_location->v_offset;
-			break;
-		default:
-			panic("unknown op in gda");
+		func_t *f = get_stack_func(par, &pc, &fp, &ap, &sp, &cfa);
+		stf_t *stf = AO_FIDATA(f->fu_fil);
+		vaddr_t *vaddr;
+
+		while (stf->stf_parent)
+			stf = stf->stf_parent;
+
+		for (vaddr = v->va_location; vaddr; vaddr = vaddr->v_next) {
+			if (pc - stf->stf_addr >= vaddr->v_low_pc &&
+			    pc - stf->stf_addr < vaddr->v_high_pc ) break;
+		}
+
+		if (vaddr == NULL) {
+			errf("no location match in gda");
+			addr = BAD_ADDR;
+		} else {
+			switch (vaddr->v_op) {
+			case OP_ADDR:
+				addr = vaddr->v_addr;
+				break;
+			case OP_REGISTER:
+				addr = get_reg_addr(xp, par, (int)vaddr->v_register,
+						    (size_t)dynamic_type_size(v->va_type,
+									      ilist));
+				break;
+			case OP_CFA_RELATIVE:
+				addr = cfa + vaddr->v_offset;
+				break;
+			case OP_FP_RELATIVE:
+				addr = fp + vaddr->v_offset;
+				break;
+			case OP_SP_RELATIVE:
+				addr = sp + vaddr->v_offset;
+				break;
+			default:
+				panic("unknown op in gda");
+			}
 		}
 	} else {
 		switch (v->va_class) {
 		case CL_REF:
-			(void) get_stack_func(par, &fp, &ap, &sp, &cfa);
+			(void) get_stack_func(par, &pc, &fp, &ap, &sp, &cfa);
                 
 			if (dread(xp, ap+v->va_addr, (char *)&addr, sizeof(addr)) != 0)
 				addr = BAD_ADDR;
                 
 			break;
 		case CL_ARG:
-			(void) get_stack_func(par, &fp, &ap, &sp, &cfa);
+			(void) get_stack_func(par, &pc, &fp, &ap, &sp, &cfa);
 			addr = ap + v->va_addr;
 			break;
 		case CL_AUTO:
-	                get_stack_func(par, &fp, &ap, &sp, &cfa);
+	                get_stack_func(par, &pc, &fp, &ap, &sp, &cfa);
 			addr = fp + v->va_addr;
                 
 			break;
