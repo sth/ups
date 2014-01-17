@@ -40,7 +40,7 @@ char ups_ao_elfread64_c_rcsid[] = "$Id$";
 #define ELF_R_SYM(val) ELF64_R_SYM(val)
 #define ELF_R_TYPE(val) ELF64_R_TYPE(val)
 
-#define ELF_ALIGN(offset) (((offset) + 3) & ~3)
+#define ELF_ALIGN(offset) (((offset) + 7) & ~7)
 
 #define ELF(x) elf64_##x
 
