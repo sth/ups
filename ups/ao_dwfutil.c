@@ -681,27 +681,37 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
     }
 
     if (rv == DW_DLV_OK) {
-	if (value_type != DW_EXPR_OFFSET)
-	    panic("Unsupported value type in unwind info");
+	if (value_type == DW_EXPR_OFFSET) {
+	    if (register_num == DW_FRAME_CFA_COL3)
+		*regval = cfa;
+	    else if (register_num == fp_col)
+		*regval = fp;
+	    else if (register_num == sp_col)
+		*regval = sp;
+	    else if (register_num == DW_FRAME_SAME_VAL && regnum == fp_col)
+		*regval = fp;
+	    else if (register_num == DW_FRAME_SAME_VAL && regnum == sp_col)
+		*regval = cfa;
+	    else
+		rv = DW_DLV_ERROR;
 
-        if (register_num == DW_FRAME_CFA_COL3)
-	    *regval = cfa;
-	else if (register_num == fp_col)
-	    *regval = fp;
-	else if (register_num == sp_col)
-	    *regval = sp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == fp_col)
-	    *regval = fp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == sp_col)
-	    *regval = cfa;
-	else
+	    if (rv == DW_DLV_OK && offset_relevant)
+		*regval += offset_or_block_len;
+
+	    if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL3)
+		dread_addrval(xp, *regval, regval);
+	} else if (value_type == DW_EXPR_VAL_OFFSET) {
+	    *regval = cfa + offset_or_block_len;
+	} else if (value_type == DW_EXPR_EXPRESSION) {
+	    errf("dwf_unwind_reg : unhandled expression value");
 	    rv = DW_DLV_ERROR;
-
-	if (rv == DW_DLV_OK && offset_relevant)
-	    *regval += offset_or_block_len;
-
-	if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL3)
-	    dread_addrval(xp, *regval, regval);
+	} else if (value_type == DW_EXPR_VAL_EXPRESSION) {
+	    errf("dwf_unwind_reg : unhandled val_expression value");
+	    rv = DW_DLV_ERROR;
+	} else {
+	    errf("dwf_unwind_reg : unknown value type");
+	    rv = DW_DLV_ERROR;
+	}
     }
 
     return rv == DW_DLV_OK;
