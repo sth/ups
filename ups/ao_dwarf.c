@@ -316,7 +316,11 @@ dwf_get_name(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die,
     }
     if (p_mangled != NULL) {
 	*p_mangled = NULL;
-	if (dwf_has_attribute(dbg, die, DW_AT_MIPS_linkage_name)) {
+	if (dwf_has_attribute(dbg, die, DW_AT_linkage_name)) {
+	    *p_mangled = dwf_get_string(dbg, ap, die, DW_AT_linkage_name);
+	    found = TRUE;
+	}
+	else if (dwf_has_attribute(dbg, die, DW_AT_MIPS_linkage_name)) {
 	    *p_mangled = dwf_get_string(dbg, ap, die, DW_AT_MIPS_linkage_name);
 	    found = TRUE;
 	}
