@@ -293,7 +293,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     addr = fs->fs_low_pc;
 
     if (st->st_functab && addr_and_functab_to_func(st->st_functab, addr, &f) && f->fu_addr == addr) {
-	if (strcmp(f->fu_name, name) != 0)
+	if (name && strcmp(f->fu_name, name) != 0)
 	    f->fu_name = name;
 
 	if (f->fu_symtab != st)
