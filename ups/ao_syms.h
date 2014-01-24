@@ -146,6 +146,7 @@ typedef struct ao_stdata_t {
 #endif
 
 #if WANT_DWARF
+	fil_t *st_source_files;		  /* Source files */
 	hashtab_t *st_type_names;	  /* Type name -> DIE. */
 	Dwarf_Debug st_dw_dbg;		  /* Handle for libdwarf calls on main object */
 	Dwarf_Debug st_dw_debug_dbg;	  /* Handle for libdwarf calls on debug object */

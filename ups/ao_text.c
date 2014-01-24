@@ -252,6 +252,7 @@ const char **p_mainfunc_name;
 #endif
 
 #if WANT_DWARF
+	ast->st_source_files = NULL;
 	ast->st_type_names = NULL;
 	ast->st_dw_dbg = 0;
 	ast->st_dw_debug_dbg = 0;
