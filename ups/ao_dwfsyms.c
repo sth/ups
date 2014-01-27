@@ -110,7 +110,7 @@ stf_t *stf;
     Dwarf_Signed ln_col;
     char *name;
     funclist_t *fl;
-    func_t *f;
+    func_t *f, *prev_f = NULL;
     lno_t *lno = NULL;
 
 
@@ -141,11 +141,6 @@ stf_t *stf;
 	if ((rv = dwarf_linesrc(lines[i], &name, &err)) != DW_DLV_OK)
 	    dwf_fatal_error("dwarf_linesrc", rv, cu_die, err);
 
-	if (addr > prev_addr)
-	    errf("dwf_do_cu_lines: Address went up - 0x%lx to 0x%lx",
-		 (long)addr, (long)prev_addr);
-	prev_addr = addr;
-
 	if ((f = dwf_lookup_func_by_addr(stf, addr + stf->stf_addr)) == NULL) {
 	    errf("\bAddress 0x%lx not found in %s", (long)addr + stf->stf_addr, name);
 	    dwarf_dealloc(dbg, name, DW_DLA_STRING);
@@ -155,6 +150,12 @@ stf_t *stf;
 	}
 	if (f->fu_flags & FU_DONE_LNOS)
 	    panic("dwf_do_cu_lines: Already done lnos");
+
+	if (f == prev_f && addr > prev_addr)
+	    errf("dwf_do_cu_lines: Address went up - 0x%lx to 0x%lx",
+		 (long)addr, (long)prev_addr);
+	prev_addr = addr;
+        prev_f = f;
 
 	dwarf_dealloc(dbg, name, DW_DLA_STRING);
 	dwarf_dealloc(dbg, lines[i], DW_DLA_LINE);
