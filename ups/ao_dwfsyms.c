@@ -181,7 +181,7 @@ stf_t *stf;
 	while (fl != NULL) {
 
 	    f = fl->fl_func;
-	    if (! (f->fu_flags & FU_DONE_LNOS)) {
+	    if (f->fu__lnos && (f->fu_flags & FU_DONE_LNOS) == 0) {
 		/*
 		 * The first 'lno' may be the function preamble.
 		 * Unless it was the only one, start at the next.
