@@ -182,7 +182,7 @@ stf_t *stf;
 	while (fl != NULL) {
 
 	    f = fl->fl_func;
-	    if (f->fu__lnos && (f->fu_flags & FU_DONE_LNOS) == 0) {
+	    if ((f->fu_flags & FU_DONE_LNOS) == 0) {
 		/*
 		 * The first 'lno' may be the function preamble.
 		 * Unless it was the only one, start at the next.
@@ -305,7 +305,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
             if (fil != NULL)
 		f->fu_language = fil->fi_language;
 	}
-	else if (f->fu_fil != fil)
+	else if (strcmp(f->fu_fil->fi_name, fil->fi_name) != 0)
 	    panic("File mismatch");
 	
 	f->fu_flags &= ~(FU_NOSYM | FU_DONE_BLOCKS | FU_DONE_LNOS);

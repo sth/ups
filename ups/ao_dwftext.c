@@ -185,12 +185,6 @@ func_t *f;
      */
     dwf_do_cu_lines(st, stf);
 
-    /*
-     * If we found some lines then dwf_do_cu_lines will have already
-     * set this, but even if it didn't we have done our best now.
-     */ 
-    f->fu_flags |= FU_DONE_LNOS;
-
 #if WANT_DEBUG
 dump_header(f->fu_demangled_name);
 dump_fil_t(f->fu_fil, FALSE, FALSE);
