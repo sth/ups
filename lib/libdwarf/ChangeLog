@@ -1,3 +1,21 @@
+2014-02-08  David Anderson
+     * libdwarf2p.1.mm: Now version 1.35.  Added a few words
+       about the sect_name_index field in the callback
+       from libdwarf to your code for each new Elf section
+       to be generated.
+     * libdwarf2p.1.pdf: Regenerated.
+2014-02-02  David Anderson
+     * dwarf_alloc.c: Added commentary.
+     * dwarf_loc.c: Fixed two indents.
+     * gennames.c: Removed trailing newlines from the printf
+       output (dwarf_names_new.h is the file generated).
+     * libdwarf.h.in: Removed trailing whitespace.
+2014-02-01  David Anderson
+     * dwarf_alloc.c: Instead of doing a long list of address compares,
+       use the hash 'tree' and tfind() to determine if we malloced
+       the space or simply took an address from .debug_info (
+       or other in-memory section) when
+       we returned a _dwarf_get_alloc() pointer to the user.
 2014-01-31  David Anderson
      * configure.in: The test to generate HAVE___UINT32_T_IN_SYS_TYPES_H
        was in a strange place. Moved it up a few lines.
