@@ -574,7 +574,8 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	}
 
 #if WANT_DWARF
-	if (elf_lookup_section(el->debugel, ".debug_info", &dwarfsh)) {
+	if (elf_lookup_section(el->debugel, ".debug_info", &dwarfsh) &&
+            !elf_lookup_section(el->debugel, ".gnu_debugaltlink", &debuglinksh)) {
 		*p_st_is = ST_DWARF;
 		symsh = symstrsh = NULL;
 	} else
