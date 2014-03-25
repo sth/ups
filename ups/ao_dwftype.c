@@ -778,8 +778,8 @@ alloc_pool_t *ap;
 stf_t *stf;
 block_t *bl;
 {
-    dtype_t *dt;
-    type_t *type, *base;
+    dtype_t *dt, *base;
+    type_t *type;
     typedef_t *td;
     off_t base_offset;
     char *name;
@@ -808,8 +808,11 @@ block_t *bl;
      */
     if (dwf_has_attribute(dbg, die, DW_AT_type)) {
 	base_offset = dwf_get_cu_ref(dbg, die, DW_AT_type);
-	if ((base = dwf_find_type(stf, base_offset)) != NULL)
-	    type->ty_base = base;
+	if ((base = dwf_lookup_dtype(stf->stf_dtypes, base_offset)) != NULL)
+	    if (base->dt_base_offset == 0)
+		type->ty_base = dwf_type_from_dtype(base);
+	    else
+		dt->dt_base_offset = base->dt_base_offset;
 	else
 	    dt->dt_base_offset = base_offset;
     } else if (td->td_lexinfo) {
