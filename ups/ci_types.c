@@ -808,7 +808,7 @@ const char *
 ci_basetype_name(type)
 type_t *type;
 {
-	static char buf[128];
+	static char buf[4096];
 	const char *tagtype, *tag;
 
 	if (type->ty_base != NULL)
@@ -846,9 +846,9 @@ type_t *type;
 	}
 
 	if ((tag = type->ty_aggr_or_enum->ae_tag) != NULL)
-		(void) sprintf(buf, "%s %s", tagtype, tag);
+		(void) snprintf(buf, sizeof(buf), "%s %s", tagtype, tag);
 	else
-		(void) sprintf(buf, "(unnamed) %s", tagtype);
+		(void) snprintf(buf, sizeof(buf), "(unnamed) %s", tagtype);
 	return buf;
 }
 
