@@ -63,7 +63,7 @@ dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 static int
 dwf_guess_ae_alignment PROTO((aggr_or_enum_def_t *ae));
 static type_t *
-dwf_fixup_type PROTO((dtype_t *dt));
+dwf_fixup_type PROTO((dtype_t *dt, dtype_t *dtypes));
 
 /*
  * Determine the UPS typecode_t value from DWARF encoding etc.
@@ -941,7 +941,7 @@ int recursed;
      * First resolve base types.
      */
     for (dt = start; dt; dt = dt->dt_next) {
-	dwf_fixup_type(dt);
+	dwf_fixup_type(dt, start);
 	if (dt->dt_base_offset != (off_t)0) {
 	    incomplete++;
 	    if (recursed == 0) {
@@ -1064,8 +1064,9 @@ fprintf(stderr, "level %d - %d incomplete type(s), %d bad type(s)\n", recursed, 
  * If the type information was resolved OK then return a pointer to the type.
  */
 static type_t *
-dwf_fixup_type(dt)
+dwf_fixup_type(dt, dtypes)
 dtype_t *dt;
+dtype_t *dtypes;
 {
     dtype_t *dbase;
     type_t *base;
@@ -1077,11 +1078,11 @@ dtype_t *dt;
 	/*
 	 * Look for the base type in our list.
 	 */
-	if ((dbase = dwf_lookup_dtype(dt, dt->dt_base_offset)) != NULL) {
+	if ((dbase = dwf_lookup_dtype(dtypes, dt->dt_base_offset)) != NULL) {
 	    /*
 	     * Resolve the base type if possible.
 	     */
-	    if ((base = dwf_fixup_type(dbase)) != NULL) {
+	    if ((base = dwf_fixup_type(dbase, dtypes)) != NULL) {
 		*(dt->dt_p_type) = base;
 		dt->dt_base_offset = (off_t)0; /* mark it done */
 	    }
