@@ -812,7 +812,7 @@ block_t *bl;
 	    if (base->dt_base_offset == 0)
 		type->ty_base = dwf_type_from_dtype(base);
 	    else
-		dt->dt_base_offset = base->dt_base_offset;
+		dt->dt_base_offset = base_offset;
 	else
 	    dt->dt_base_offset = base_offset;
     } else if (td->td_lexinfo) {
