@@ -1909,8 +1909,8 @@ char *arg;
 #endif /* OS_SUNOS */
 	switch (command) {
 	case MR_BPTMEN_SOURCE:
-	  if (bd->func || bd->fil)
-		show_bpt_source((bpdesc_t *)obj, TRUE);
+		if (bd->func || bd->fil)
+		  show_bpt_source((bpdesc_t *)obj, TRUE);
 		break;
 	case MR_BPTMEN_REMOVE:
 		remove_object(obj, OBJ_SELF);

@@ -1427,9 +1427,10 @@ const char **p_mesg;
 	/*  If we installed a breakpoint ourself, uninstall it.
 	 */
 	if (ip->ip_stopres != SR_DIED && bp != NULL) {
-		if (dx_remove_breakpoint(xp, bp) != 0)
+		if (dx_remove_breakpoint(xp, bp) != 0) {
 			*p_mesg = "Can't remove breakpoint at return address";
 			return -1;
+		}
 	}
 
 	/*  If we didn't get back to where we expected, stop now.

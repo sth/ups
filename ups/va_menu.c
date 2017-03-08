@@ -587,7 +587,7 @@ typecode_t typecode;
 	    && match(special_format->pattern, name, len ) )
 	    return special_format->format;
 
-	    special_format = special_format->next;
+	special_format = special_format->next;
     } while (special_format != NULL);
 
     return DF_NONE;
