@@ -1,4 +1,4 @@
-dnl $Id$
+dnl $Id: configure.in,v 1.7 2004/02/16 13:01:57 thughes Exp $
 
 dnl ---------------------------------------------------------------------------
 dnl  Configure for building 'ups', 'med3' and libraries
@@ -14,7 +14,7 @@ dnl  Initialisation.
 dnl ---------------------------------------------------------------------------
 AC_INIT(upsconf.c)
 AC_CONFIG_HEADER(ifdefs.h)
-AC_REVISION($Id$)dnl
+AC_REVISION($Id: configure.in,v 1.7 2004/02/16 13:01:57 thughes Exp $)dnl
 
 
 dnl ---------------------------------------------------------------------------
@@ -235,10 +235,10 @@ case "$enable_dwarf" in
     *)		echo 'parameter should be =yes or =no' ; exit 1 ;;
 esac
 if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
-    UPS_DWARFLIB=libdwarf
-    DWARFLIB='${LIBOBJ}/libdwarf/libdwarf.a'
     AC_DEFINE(WANT_DWARF)
 fi
+AC_DEFINE(HAVE_LIBDWARF_H)
+AC_DEFINE(HAVE_DWARF_H)
 AC_SUBST(UPS_DWARFLIB)
 AC_SUBST(DWARFLIB)
 AC_MSG_RESULT(${ups_cv_sys_symtab_maybe_dwarf})
@@ -258,9 +258,7 @@ dnl  (If you fix this check the fudge after AC_CHECK_HEADERS is still OK)
 ELFLIB=
 UPS_ELFLIB=
 if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
-    UPS_ELFLIB=libelf
-    ELFLIB='${LIBOBJ}/libelf/lib/libelf.a'
-    AC_DEFINE(WANT_OWN_ELFLIB)
+	WANT_ELFLIB=
 fi
 AC_SUBST(UPS_ELFLIB)
 AC_SUBST(ELFLIB)
@@ -1218,11 +1216,6 @@ dnl ---------------------------------------------------------------------------
 dnl  Configure other libraries...
 dnl ---------------------------------------------------------------------------
 
-if test $ups_cv_sys_symtab_maybe_dwarf = yes; then
-    AC_CONFIG_SUBDIRS(lib/libelf lib/libdwarf lib/dwarfdump)
-fi
-
-
 dnl ---------------------------------------------------------------------------
 dnl  Output header and convert these files...
 dnl ---------------------------------------------------------------------------
@@ -1243,9 +1236,6 @@ AC_OUTPUT(
     lib/libx11wn/Makefile
     lib/libmtrprog/Makefile
     lib/libukcprog/Makefile
-    lib/libelf/UpsMakefile
-    lib/libdwarf/UpsMakefile
-    lib/dwarfdump/UpsMakefile
     tests/Makefile
     packaging/Makefile
 )

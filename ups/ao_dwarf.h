@@ -24,11 +24,7 @@
 
 #if WANT_DWARF
 
-#if HAVE_LIBELF_H
 #include <libelf.h>
-#else
-#include <libelf/libelf.h>
-#endif
 
 #if HAVE_LIBDWARF_H
 #include <libdwarf.h>

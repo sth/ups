@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile.in,v 1.4 2002/11/05 12:44:36 ianedwards Exp $
 # @(#)Makefile	1.23 05 Jun 1995 (UKC)
 
 # -----------------------------------------------------------------------------
@@ -22,9 +22,9 @@ CPP		= @CPP@
 #
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
-BINDIR		= @bindir@
-MANDIR		= @mandir@/man${MANSUFFIX}
-INCDIR		= @includedir@
+BINDIR		= ${DESTDIR}@bindir@
+MANDIR		= ${DESTDIR}@mandir@/man${MANSUFFIX}
+INCDIR		= ${DESTDIR}@includedir@
 
 # The suffix to use for the manual page
 #
@@ -84,7 +84,6 @@ SUBMAKEFLAGS	= ${EXTRA_SUBMAKEFLAGS}
 BINDIRS		= ups med3 tests
 LIBDIRS		= lib/libx11wn lib/libmtrprog lib/libukcprog lib/libarg \
 		  lib/libgnu lib/libMen3 lib/libobj lib/libedit
-DWFDIRS		= lib/libelf lib/libdwarf lib/dwarfdump
 
 COMMONLIBS	= libx11wn libmtrprog libukcprog libarg \
 		  libgnu libMen3 libobj libedit @UPS_ELFLIB@ @UPS_DWARFLIB@
@@ -116,9 +115,6 @@ ups-native ups-gdb cx xc cg libci.a: ${COMMONLIBS}
 
 med3: libx11wn libMen3
 	cd med3 && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
-
-dwarfdump: libelf libdwarf
-	cd lib/dwarfdump && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS} $@
 
 ${COMMONLIBS}: ups/develhdrs
 	cd lib/$@ && ${MAKE} ${MFLAGS} ${SUBMAKEFLAGS}
@@ -153,7 +149,7 @@ install-interpreter: cx xc cg libci.a
 
 # Clean up so can rebuild with a 'make'
 clean: rmlinks
-	for i in ${SUBDIRS} ${DWFDIRS}; do \
+	for i in ${SUBDIRS}; do \
 		(cd $$i && ${MAKE} ${MFLAGS} clean); \
 	done
 	@${MAKE} ${MFLAGS} -f Makefile.conf clean
@@ -161,7 +157,7 @@ clean: rmlinks
 # Try to leave the source directory as it came in the distribution
 # Does not do sub-directories but is "good enough"
 distclean: clean
-	@-rm -f ifdefs.h config.log config.cache config.status Makefile
+	@-rm -f ifdefs.h config.log config.cache Makefile
 	@${MAKE} ${MFLAGS} -f Makefile.conf distclean
 
 
@@ -172,7 +168,7 @@ distclean: clean
 rmlinks:
 	@-rm -f lib/libmtrprog/ifdefs.h
 	@-rm -f lib/libgnu/ifdefs.h
-	for i in ${SUBDIRS} ${DWFDIRS}; do \
+	for i in ${SUBDIRS}; do \
 		rm -rf $$i/develhdrs; \
 	done
 
@@ -181,7 +177,7 @@ rmlinks:
 # this target makes the symlinks needed to support this.
 ups/develhdrs:
 	@echo "Making links to headers under ${topdir} ..."
-	@-for i in ${SUBDIRS} ${DWFDIRS}; do mkdir $$i/develhdrs; done
+	@-for i in ${SUBDIRS}; do mkdir $$i/develhdrs; done
 	@-for i in Men3 arg mtrprog obj edit x11wn; do \
 		mkdir lib/lib$$i/develhdrs/local; \
 	done
@@ -212,9 +208,6 @@ ups/develhdrs:
 		mkdir $$i/develhdrs/local; \
 		mkdir $$i/develhdrs/mtrprog; \
 	done
-	@-for i in ups lib/libdwarf lib/dwarfdump; do \
-		mkdir $$i/develhdrs/libelf; \
-	done
 	@-ln -s ../../../../${topdir}/lib/libMen3/menu3.h lib/libx11wn/develhdrs/local/menu3.h
 	@-ln -s ../../../${topdir}/lib/libarg/arg.h ups/develhdrs/local/arg.h
 	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h ups/develhdrs/local/menu3.h
@@ -226,18 +219,6 @@ ups/develhdrs:
 					ups/develhdrs/mtrprog/$$f; \
 	done
 	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h ups/develhdrs/local/wn.h
-	@-for f in elf_repl.h gelf.h libelf.h nlist.h; do \
-		ln -s ../../../${topdir}/lib/libelf/lib/$$f \
-					ups/develhdrs/libelf/$$f; \
-		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
-					lib/libdwarf/develhdrs/libelf/$$f; \
-		ln -s ../../../../${topdir}/lib/libelf/lib/$$f \
-					lib/dwarfdump/develhdrs/libelf/$$f; \
-	done
-	@-for i in libdwarf dwarfdump; do \
-		ln -s ../../../libelf/lib/sys_elf.h lib/$$i/develhdrs/libelf/sys_elf.h; \
-	done
-	@-ln -s ../../../lib/libelf/lib/sys_elf.h ups/develhdrs/libelf/sys_elf.h
 	@-ln -s ../../../${topdir}/lib/libMen3/menu3.h med3/develhdrs/local/menu3.h
 	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h med3/develhdrs/local/wn.h
 	@echo "Making links to local ifdefs.h ..."
@@ -341,10 +322,6 @@ filelist:
 	@for i in . lib ${SUBDIRS} ups-state interpreter packaging; do \
 		echo Adding files from $$i; \
 		(cd $$i && make list) | sed "s;^;$$i/;" >> ${FILELIST}; \
-	done
-	@for i in ${DWFDIRS}; do \
-		echo Adding files from $$i; \
-		(cd $$i && make -f UpsMakefile list) | sed "s;^;$$i/;" >> ${FILELIST}; \
 	done
 
 # Count ...
