@@ -25,18 +25,8 @@
 #if WANT_DWARF
 
 #include <libelf.h>
-
-#if HAVE_LIBDWARF_H
 #include <libdwarf.h>
-#else
-#include "../lib/libdwarf/libdwarf.h"
-#endif
-
-#if HAVE_DWARF_H
 #include <dwarf.h>
-#else
-#include "../lib/libdwarf/dwarf.h"
-#endif
 
 void	dwf_handle_error (Dwarf_Error *err, Dwarf_Ptr errarg);
 void	dwf_error (char *msg, int dwarf_code, Dwarf_Die die, Dwarf_Error err);
