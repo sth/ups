@@ -334,18 +334,6 @@ lib/libgnu
 This directory contains code released under GNU Lesser General Public License.
 See the README and COPYING.LIB in that directory.
 
-lib/libelf
-----------
-This directory contains code released under GNU Library General Public License.
-See the README and COPYING.LIB in that directory.
-Original sources available from http://freshmeat.net/projects/libelf/
-
-lib/libdwarf and lib/dwarfdump
-------------------------------
-This code is copyright SGI Inc. and is released under GNU Lesser General
-Public License.  See the README and COPYING files in each directory.
-Original sources available from http://reality.sgiweb.org/davea/
-
 the rest...
 -----------
   UPS is free software; you can redistribute it and/or modify it under the

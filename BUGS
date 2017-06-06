@@ -19,8 +19,6 @@ BUILD
 -----
  o  'gcc' produces warnings about certain routines being unsafe.
 
- o  The libdwarf/dwarfdump source causes some compiler warnings.
-
  o  Sun SparCompiler produces warnings about "argument #n is incompatible
     with prototype ...".
 
