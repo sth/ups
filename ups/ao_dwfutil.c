@@ -527,13 +527,11 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     for (i = 0; i < count; i++) {
 
 	vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
-	if (head == NULL)
-	    head = vaddr;
-	else
-	    panic("dwf_get_location : location list too long");
 
-	if (loclist[i]->ld_cents != 1)
-	    panic("dwf_get_location : location expression too complicated");
+	if (loclist[i]->ld_cents != 1) {
+	    errf("dwf_get_location : location expression too complicated");
+	    continue;
+	}
 
 	op = loclist[i]->ld_s->lr_atom;
 	if (op == DW_OP_addr) {
@@ -591,11 +589,15 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    vaddr->v_op = OP_SP_RELATIVE;
 	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
 	} else {
-	    panic("dwf_get_location : unsupported opcode in location expression");
+	    errf("dwf_get_location : unsupported opcode in location expression");
+	    continue;
 	}
 
 	dwarf_dealloc(dbg, loclist[i]->ld_s, DW_DLA_LOC_BLOCK);
 	dwarf_dealloc(dbg, loclist[i], DW_DLA_LOCDESC);
+
+	head = vaddr;
+	break;
     }
     dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
 
