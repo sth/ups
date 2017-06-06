@@ -45,7 +45,7 @@ X11_LIB		= @X_LIBS@  @X_PRE_LIBS@  -lX11  @X_EXTRA_LIBS@
 CPPFLAGS	= @CPPFLAGS@  @DEFS@  -I.  ${X11_INC}
 CFLAGS		= @CFLAGS@  ${CPPFLAGS}
 LDFLAGS		= @LDFLAGS@  ${X11_LIB}  @LIBS@
-LIBS		= @LIBS@ -ldwarf -lelf
+LIBS		= @LIBS@ -ldwarf -lelf -liberty
 
 GDB_DIR		= @GDB_DIR@
 
@@ -245,7 +245,6 @@ UKCLIB	= ${LIBOBJ}/libukcprog/libukcprog.a	# Development ukcprog library
 MTRLIB	= ${LIBOBJ}/libmtrprog/libmtrprog.a	# Development mtrprog library
 OBJLIB	= ${LIBOBJ}/libobj/libobj.a		# Development object library.
 ARGLIB	= ${LIBOBJ}/libarg/libarg.a		# Development arg library.
-GNULIB	= ${LIBOBJ}/libgnu/libdmangl.a		# Development GNU library.
 EDITLIB	= ${LIBOBJ}/libedit/libedit.a		# Development edit library.
 MENLIB	= ${LIBOBJ}/libMen3/libMen3wn.a		# Development menu library.
 X11WNLIB = ${LIBOBJ}/libx11wn/libwn.a		# Development X11 wn library
@@ -255,7 +254,7 @@ GDBCC	= `cat ${GDBCONF}/cccmd`
 LIBGDB	= libgdb.a
 GDBLIBS	= ${LIBGDB} `cat ${GDBCONF}/gdblibs`
 
-COMMONLIBS = ${OBJLIB} ${MENLIB} ${ARGLIB} ${EDITLIB} ${MTRLIB} ${UKCLIB} ${GNULIB}
+COMMONLIBS = ${OBJLIB} ${MENLIB} ${ARGLIB} ${EDITLIB} ${MTRLIB} ${UKCLIB}
 
 NATIVE_X11LIBS = ${COMMONLIBS} @DWARFLIB@ @ELFLIB@ ${X11WNLIB}
 GDB_X11LIBS = ${NATIVE_X11LIBS} ${GDBLIBS}

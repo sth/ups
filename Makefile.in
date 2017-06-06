@@ -83,10 +83,10 @@ SUBMAKEFLAGS	= ${EXTRA_SUBMAKEFLAGS}
 
 BINDIRS		= ups med3 tests
 LIBDIRS		= lib/libx11wn lib/libmtrprog lib/libukcprog lib/libarg \
-		  lib/libgnu lib/libMen3 lib/libobj lib/libedit
+		  lib/libMen3 lib/libobj lib/libedit
 
 COMMONLIBS	= libx11wn libmtrprog libukcprog libarg \
-		  libgnu libMen3 libobj libedit @UPS_ELFLIB@ @UPS_DWARFLIB@
+		  libMen3 libobj libedit
 
 SUBDIRS		= ${LIBDIRS} ${BINDIRS}
 
@@ -167,7 +167,6 @@ distclean: clean
 
 rmlinks:
 	@-rm -f lib/libmtrprog/ifdefs.h
-	@-rm -f lib/libgnu/ifdefs.h
 	for i in ${SUBDIRS}; do \
 		rm -rf $$i/develhdrs; \
 	done
@@ -223,7 +222,6 @@ ups/develhdrs:
 	@-ln -s ../../../${topdir}/lib/libx11wn/wn.h med3/develhdrs/local/wn.h
 	@echo "Making links to local ifdefs.h ..."
 	@-ln -s ../../ifdefs.h lib/libmtrprog/ifdefs.h
-	@-ln -s ../../ifdefs.h lib/libgnu/ifdefs.h
 	@-for i in Men3 arg obj edit x11wn; do \
 		ln -s ../../../../ifdefs.h \
 					lib/lib$$i/develhdrs/mtrprog/ifdefs.h; \

@@ -60,32 +60,6 @@ char ups_ao_symscan_c_rcsid[] = "$Id$";
 #include "util.h"
 #include "state.h"  /* RCB: for demangling_enabled() */
 
-#if HAVE_CPLUS_DEMANGLE
-#include <demangle.h>
-#if HAVE_CPLUS_DEMANGLE_NORET
-#define sunpro_cplus_demangle cplus_demangle_noret
-#else
-#define sunpro_cplus_demangle cplus_demangle
-#endif
-#endif
-
-/* Options passed to gnu_cplus_demangle (in 2nd parameter). */
-
-#define DMGL_NO_OPTS	0		/* For readability... */
-#define DMGL_PARAMS	(1 << 0)	/* Include function args */
-#define DMGL_ANSI	(1 << 1)	/* Include const, volatile, etc */
-
-#define DMGL_AUTO	(1 << 8)
-#define DMGL_GNU	(1 << 9)
-#define DMGL_LUCID	(1 << 10)
-#define DMGL_ARM	(1 << 11)
-#define DMGL_HP		(1 << 12)
-#define DMGL_EDG	(1 << 13)
-/* If none of these are set, use 'current_demangling_style' as the default. */
-#define DMGL_STYLE_MASK (DMGL_AUTO|DMGL_GNU|DMGL_LUCID|DMGL_ARM)
-
-extern char *gnu_cplus_demangle PROTO((const char *mangled, int options));
-
 static hf_t *lookup_hf PROTO((hf_t *headers, int id));
 static void build_symset PROTO((char *aout_symset, char *ofile_symset));
 static bool is_fortran_void PROTO((const char *cptr));
@@ -104,6 +78,11 @@ static func_t *note_ofile_function PROTO((alloc_pool_t *ap,
 #endif
 
 void display_message PROTO((const char *mesg));
+
+char* gnu_demangle_type PROTO((const char *mangled, int options));
+
+#undef PROTO
+#include <libiberty/demangle.h>
 
 char
 bump_str(sr, p_s)
@@ -2248,10 +2227,10 @@ char* name;
     switch ( ao_compiler(NULL, FALSE, CT_UNKNOWN))
     {
     case CT_GNU_CC:
-        dmangle = gnu_cplus_demangle(name, DMGL_GNU);
+        dmangle = cplus_demangle(name, DMGL_GNU);
 	break;
     case CT_CLCC:
-        dmangle = gnu_cplus_demangle(name, DMGL_ARM);
+        dmangle = cplus_demangle(name, DMGL_ARM);
 	break;
     case CT_CC:
       {
@@ -2325,8 +2304,13 @@ demangle_name_2(name, len, alloc_id, ptr, func, fil)
    ups/Makefile.
    */
 
-
-extern  char* gnu_demangle_type PROTO((const char** mangled, int options));
+char *
+gnu_demangle_type (mangled, options)
+    const char *mangled;
+    int options;
+{
+	return cplus_demangle(mangled, options);
+}
 
 void
 demangle_name(name, len, alloc_id, ptr, func, compiler)
@@ -2350,7 +2334,7 @@ demangle_name(name, len, alloc_id, ptr, func, compiler)
       && demangling_enabled(0, 0)
       )
   {
-    char *result = gnu_cplus_demangle (name, DMGL_ANSI);
+    char *result = cplus_demangle (name, DMGL_ANSI);
     *(name+len) = tmp2;
     if (result == NULL)
     {
@@ -2556,7 +2540,7 @@ demangle_name(name, len, alloc_id, ptr, func, compiler)
 		   /* point to end of string parsed so far: */
 		   const char* ptype = mangled_op+Mangle_buff[index].mangle_str_len;
 		   /* Use the gnu demangler to demangle the type */
-		   char* type = gnu_demangle_type(&ptype,DMGL_ANSI);
+		   char* type = gnu_demangle_type(ptype,DMGL_ANSI);
 		   if ( type )
 		      ptype = type;
 		   else

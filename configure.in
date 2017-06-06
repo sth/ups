@@ -208,11 +208,7 @@ dnl ---------------------------------------------------------------------------
 dnl  The included libdwarf is from Silicon Graphics, Inc., released under
 dnl  GNU Lesser General Public License
 
-# Set UPS_DWARFLIB to 'libdwarf' to use the one shipped with UPS.
-# DWARFLIB is the library itself.
-
 AC_MSG_CHECKING(if want support for DWARF symbol tables)
-UPS_DWARFLIB=
 DWARFLIB=
 ups_cv_sys_symtab_maybe_dwarf=no
 case "$host" in
@@ -239,7 +235,6 @@ if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
 fi
 AC_DEFINE(HAVE_LIBDWARF_H)
 AC_DEFINE(HAVE_DWARF_H)
-AC_SUBST(UPS_DWARFLIB)
 AC_SUBST(DWARFLIB)
 AC_MSG_RESULT(${ups_cv_sys_symtab_maybe_dwarf})
 
@@ -252,15 +247,10 @@ dnl  libdwarf needs libelf; on FreeBSD and Linux using the one included
 dnl  with UPS is best; on Solaris the one from Sun may be a better choice.
 dnl  (If you fix this check the fudge after AC_CHECK_HEADERS is still OK)
 
-# Set UPS_ELFLIB to 'libelf' to use the one shipped with UPS.
-# ELFLIB is the library itself.
-
 ELFLIB=
-UPS_ELFLIB=
 if test $ups_cv_sys_symtab_maybe_dwarf = yes ; then
 	WANT_ELFLIB=
 fi
-AC_SUBST(UPS_ELFLIB)
 AC_SUBST(ELFLIB)
 
 
@@ -1062,6 +1052,13 @@ ups_cv_demangle=no
 ups_save_LIBS="$LIBS"
 
 if test "$ups_cv_demangle" = no ; then
+    ups_cv_demangle_lib="-liberty"
+    LIBS="$ups_cv_demangle_lib $ups_save_LIBS"
+    AC_TRY_LINK([ #include <libiberty/demangle.h>],
+    [char *a,*b; cplus_demangle(a,b,DEMANGLE_ENAME+DEMANGLE_ESPACE);],
+    ups_cv_demangle=gnu)
+fi
+if test "$ups_cv_demangle" = no ; then
     ups_cv_demangle_lib="-ldemangle"
     LIBS="$ups_cv_demangle_lib $ups_save_LIBS"
     AC_TRY_LINK([ #include <demangle.h>],
@@ -1109,6 +1106,9 @@ if test "$ups_cv_demangle" = yes ; then
     AC_MSG_RESULT(${ups_cv_demangle_noret})
 fi
 
+if test "$ups_cv_demangle" = gnu ; then
+	AC_DEFINE(HAVE_LIBIBERTY)
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl  FORMAT STRING FOR long long
@@ -1230,7 +1230,6 @@ AC_OUTPUT(
     lib/Makefile
     lib/libobj/Makefile
     lib/libarg/Makefile
-    lib/libgnu/Makefile
     lib/libMen3/Makefile
     lib/libedit/Makefile
     lib/libx11wn/Makefile
