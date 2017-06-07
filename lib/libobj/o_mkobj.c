@@ -65,7 +65,7 @@ static struct hashst *Hashtab[HTABSIZE];
  *  We divide by 8 because the code is most likely a pointer to a
  *  structure, and will be at least 0 mod 4, and probably 0 mod 8.
  */
-#define HASH(n) ((((int)n)>>3)%HTABSIZE)
+#define HASH(n) ((((intptr_t)n)>>3)%HTABSIZE)
 
 static struct objst *new_obj PROTO((void));
 static void free_obj PROTO((struct objst *obj));
