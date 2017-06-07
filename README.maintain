@@ -84,28 +84,6 @@ Currently the binary RPM only includes 'ups', the manual page and the BUGS,
 CHANGES and README files.  The stand-alone interpreter will get its own RPM
 at some point.
 
-
-IMPORTED SOURCE CODE
-====================
-
-libelf
-------
-The home page for this is : http://freshmeat.net/projects/libelf/
-The version used was : libelf-0.8.2.tar.gz
-Where files were changed the original version has ".elflib" added.
-
-libdwarf
---------
-The home page for this is http://reality.exsgi.org/davea/
-The version used was : libdwarf2003Apr06.tar.gz
-Where files were changed the original version has ".dwarflib" added.
-
-libgnu
-------
-This contains the function name demangler for GCC from the GNU 'libiberty'
-library.  The complete source code for the GNU 'libiberty' library is
-available from http://gcc.gnu.org/ and various GNU mirrors.
-
 _______________________________________________________________________________
 
 Ian Edwards <ian@panorama.com>
