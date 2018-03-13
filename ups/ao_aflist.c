@@ -243,9 +243,7 @@ find_closest_stab_fil(Ambig_fil *af, fil_t *dummy_fil)
 	smallest_delta = 0;
 
 	for (fl = dummy_fil->fi_funclist; fl != NULL; fl = fl->fl_next) {
-		Fil_list *sf, *prev;
-		
-		prev = NULL;
+		Fil_list *sf;
 		
 		for (sf = af->stab_fils; sf != NULL; sf = sf->next) {
 			off_t delta;
@@ -306,11 +304,9 @@ resolve_dummy_fil(Ambig_fil *af, fil_t *df)
 void
 resolve_aflist(func_t *funclist, Ambig_fil *aflist)
 {
-	Ambig_fil *af, *new_aflist;
+	Ambig_fil *af;
 	func_t *f;
 
-	new_aflist = NULL;
-	
 	for (af = aflist; af != NULL; af = af->next) {
 		fil_t *df;
 

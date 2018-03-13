@@ -63,7 +63,7 @@ dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 static int
 dwf_guess_ae_alignment PROTO((aggr_or_enum_def_t *ae));
 static type_t *
-dwf_fixup_type PROTO((dtype_t *dt));
+dwf_fixup_type PROTO((dtype_t *dt, dtype_t *dtypes));
 
 /*
  * Determine the UPS typecode_t value from DWARF encoding etc.
@@ -201,8 +201,8 @@ func_t *f;		/* Function containing the block. */
 	low_pc = 0;
 	high_pc = 0;
     } else {
-	low_pc  = dwf_get_address(dbg, die, DW_AT_low_pc) + stf->stf_addr;
-	high_pc = dwf_get_address(dbg, die, DW_AT_high_pc) + stf->stf_addr;
+       low_pc  = dwf_get_address(dbg, die, DW_AT_low_pc, 0) + stf->stf_addr;
+	high_pc = dwf_get_address(dbg, die, DW_AT_high_pc, low_pc) + stf->stf_addr;
     }
 
     /*
@@ -467,7 +467,8 @@ func_t *f;
      */
     if (vaddr == NULL) {
 
-	class = class_hint;
+	if ((class = class_hint) != CL_MOU)
+	    type = NULL;
 	addr = 0;
 
     } else if (vaddr->v_op == OP_CFA_RELATIVE ||
@@ -660,7 +661,7 @@ alloc_pool_t *ap;
 typecode_t typecode;
 {
     dtype_t *dt;
-    type_t *type, *base;
+    type_t *type;
 
     /*
      * Make a 'type_t' and 'dtype_t'
@@ -680,7 +681,7 @@ typecode_t typecode;
 	type->ty_name = dwf_get_string(dbg, ap, die, DW_AT_name);
 
     dt = dwf_make_dtype(dbg, die, ap, stf, DT_IS_TYPE, &(type->ty_base), type);
-    base = dwf_try_resolve_base_type(dbg, die, ap, stf, dt);
+    dwf_try_resolve_base_type(dbg, die, ap, stf, dt);
 
     return dt;
 }
@@ -777,8 +778,8 @@ alloc_pool_t *ap;
 stf_t *stf;
 block_t *bl;
 {
-    dtype_t *dt;
-    type_t *type, *base;
+    dtype_t *dt, *base;
+    type_t *type;
     typedef_t *td;
     off_t base_offset;
     char *name;
@@ -807,8 +808,11 @@ block_t *bl;
      */
     if (dwf_has_attribute(dbg, die, DW_AT_type)) {
 	base_offset = dwf_get_cu_ref(dbg, die, DW_AT_type);
-	if ((base = dwf_find_type(stf, base_offset)) != NULL)
-	    type->ty_base = base;
+	if ((base = dwf_lookup_dtype(stf->stf_dtypes, base_offset)) != NULL)
+	    if (base->dt_base_offset == 0)
+		type->ty_base = dwf_type_from_dtype(base);
+	    else
+		dt->dt_base_offset = base_offset;
 	else
 	    dt->dt_base_offset = base_offset;
     } else if (td->td_lexinfo) {
@@ -937,7 +941,7 @@ int recursed;
      * First resolve base types.
      */
     for (dt = start; dt; dt = dt->dt_next) {
-	dwf_fixup_type(dt);
+	dwf_fixup_type(dt, start);
 	if (dt->dt_base_offset != (off_t)0) {
 	    incomplete++;
 	    if (recursed == 0) {
@@ -1060,8 +1064,9 @@ fprintf(stderr, "level %d - %d incomplete type(s), %d bad type(s)\n", recursed, 
  * If the type information was resolved OK then return a pointer to the type.
  */
 static type_t *
-dwf_fixup_type(dt)
+dwf_fixup_type(dt, dtypes)
 dtype_t *dt;
+dtype_t *dtypes;
 {
     dtype_t *dbase;
     type_t *base;
@@ -1073,11 +1078,11 @@ dtype_t *dt;
 	/*
 	 * Look for the base type in our list.
 	 */
-	if ((dbase = dwf_lookup_dtype(dt, dt->dt_base_offset)) != NULL) {
+	if ((dbase = dwf_lookup_dtype(dtypes, dt->dt_base_offset)) != NULL) {
 	    /*
 	     * Resolve the base type if possible.
 	     */
-	    if ((base = dwf_fixup_type(dbase)) != NULL) {
+	    if ((base = dwf_fixup_type(dbase, dtypes)) != NULL) {
 		*(dt->dt_p_type) = base;
 		dt->dt_base_offset = (off_t)0; /* mark it done */
 	    }

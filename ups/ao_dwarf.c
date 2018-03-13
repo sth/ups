@@ -324,7 +324,11 @@ dwf_get_name(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die,
     }
     if (p_mangled != NULL) {
 	*p_mangled = NULL;
-	if (dwf_has_attribute(dbg, die, DW_AT_MIPS_linkage_name)) {
+	if (dwf_has_attribute(dbg, die, DW_AT_linkage_name)) {
+	    *p_mangled = dwf_get_string(dbg, ap, die, DW_AT_linkage_name);
+	    found = TRUE;
+	}
+	else if (dwf_has_attribute(dbg, die, DW_AT_MIPS_linkage_name)) {
 	    *p_mangled = dwf_get_string(dbg, ap, die, DW_AT_MIPS_linkage_name);
 	    found = TRUE;
 	}
@@ -339,7 +343,7 @@ dwf_get_name(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die,
  * It is an error to ask for an attribute that is not present.
  */
 Dwarf_Addr
-dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
+dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Addr base)
 {
     int rv;
     Dwarf_Error err;
@@ -350,35 +354,40 @@ dwf_get_address(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id)
 	    dwf_fatal_error("dwarf_lowpc", rv, die, err);
 	    goto end;
 	}
-    } else if (id == DW_AT_high_pc) {
-	if ((rv = dwarf_highpc(die, &addr, &err)) != DW_DLV_OK) {
-	    dwf_fatal_error("dwarf_highpc", rv, die, err);
-	    goto end;
-	}
     } else {
-
 	Dwarf_Attribute attribute;
 	Dwarf_Half form;
 
 	if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_attr", rv, die, err);
 	    goto end;
-	}
-	if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
+	} else if ((rv = dwarf_whatform(attribute, &form, &err)) != DW_DLV_OK) {
 	    dwf_fatal_error("dwarf_whatform", rv, die, err);
 	    goto local_cleanup_attribute;
-	}
-
-	if (form == DW_FORM_addr) {
-	    if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK) {
-		dwf_fatal_error("dwarf_formaddr", rv, die, err);
-	        goto local_cleanup_attribute;
-	    }
 	} else {
-	    dwf_fatal_error("attribute form not address", 0, die, err);
-	    goto local_cleanup_attribute;
-	}
+	    if (form == DW_FORM_addr) {
+		if ((rv = dwarf_formaddr(attribute, &addr, &err)) != DW_DLV_OK) {
+		    dwf_fatal_error("dwarf_formaddr", rv, die, err);
+		    goto local_cleanup_attribute;
+		}
+	    } else if ((form == DW_FORM_data1)
+		       || (form == DW_FORM_data2)
+		       || (form == DW_FORM_data4)
+		       || (form == DW_FORM_data8)
+		       || (form == DW_FORM_udata)) {
+		Dwarf_Unsigned offset;
 
+		if ((rv = dwarf_formudata(attribute, &offset, &err)) != DW_DLV_OK) {
+		    dwf_fatal_error("dwarf_formudata", rv, die, err);
+		    goto local_cleanup_attribute;
+		}
+
+		addr = base + offset;
+	    } else {
+		dwf_fatal_error("attribute form not address", 0, die, err);
+		goto local_cleanup_attribute;
+	    }
+	}
 local_cleanup_attribute:
 	dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
     }

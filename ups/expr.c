@@ -720,9 +720,8 @@ const char *name;
 	char *cptr;
         fil_t *fil;
 	int oldstate, selected_one, found_a_member, ntimes, sepc;
-	bool oldval;
 
-	oldval = td_set_select_recording(FALSE);
+	td_set_select_recording(FALSE);
 
         fil = get_displayed_fil();
         sepc = (fil != NULL && IS_FORTRAN(fil->fi_language)) ? '%' : '.';

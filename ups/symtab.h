@@ -313,8 +313,10 @@ typedef enum {
     OP_SP_RELATIVE,	/* Relative to stack pointer. */
 } vaddr_op_t;
 typedef struct vaddr_s {
+	struct vaddr_s *v_next;		/* Next description. */
+	taddr_t v_low_pc;		/* Low PC address. */
+	taddr_t v_high_pc;		/* High PC address. */
 	vaddr_op_t v_op;		/* Operation. */
-	struct vaddr_s *v_next;
 	union {
 	    taddr_t vu_addr;		/* Address or unsigned offset. */
 	    long vu_const;		/* Constant. */

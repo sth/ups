@@ -47,6 +47,10 @@ typedef struct Elf_Shdr Elf_Shdr;
 typedef struct Elf_Phdr Elf_Phdr;
 #endif
 
+#ifndef Elf_Nhdr
+typedef struct Elf_Nhdr Elf_Nhdr;
+#endif
+
 #ifndef Elf_Sym
 typedef struct Elf_Sym Elf_Sym;
 #endif
@@ -118,6 +122,9 @@ typedef struct Elfops {
 	size_t (*section_size)PROTO((Elf_Shdr *sh));
 	Elf_Shdr *(*section_link)PROTO((Elfinfo *el, Elf_Shdr *sh));
 	size_t (*section_entries)PROTO((Elf_Shdr *sh));
+
+	void *(*lookup_note)PROTO((Elfinfo*el, const char *notename,
+				   int notetype, size_t *notesize));
 
 	Elf_Sym *(*lookup_symbol)PROTO((Elf_Sym *syms, size_t index));
 	const char *(*symbol_name)PROTO((Elf_Sym *sym, const char *strings,

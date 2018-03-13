@@ -80,6 +80,7 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 #include "breakpoint.h"
 #include "tdr.h"
 #include "state.h"
+#include "obj_bpt.h"
 
 
 /* Definitions. */
@@ -120,7 +121,7 @@ static jmp_buf Longjmp_env;
 
 static void stop_target PROTO((void));
 static char *get_restart_pc PROTO((iproc_t *ip));
-static int wait_with_intr PROTO((wait_arg_t *p_status));
+static int wait_with_intr PROTO((wait_arg_t *p_status, int *p_errno));
 static int get_words PROTO((int pid, ptracereq_t ptrace_req,
 			    taddr_t addr, char *buf, size_t nbytes));
 static void get_siginfo PROTO((iproc_t *ip));
@@ -224,21 +225,32 @@ stop_target()
 }
 
 static int
-wait_with_intr(p_status)
+wait_with_intr(p_status, p_errno)
 wait_arg_t *p_status;
+int *p_errno;
 {
+	abort_func_t oldfunc = NULL;
 	int ret;
+
 #if HAVE_SIGSETJMP && HAVE_SIGLONGJMP
-	if (sigsetjmp(Longjmp_env, 1) == 1)
+	if (sigsetjmp(Longjmp_env, 1) == 1) {
 #else
-	if (setjmp(Longjmp_env) == 1)
+	if (setjmp(Longjmp_env) == 1) {
 #endif
+		set_user_abort_func(oldfunc);
 		return 0;
+	}
+
+	oldfunc = set_user_abort_func(stop_target);
 
 	if (get_run_alarm_time() > 0)
 	    ret = wait3(p_status, WNOHANG, NULL);
 	else
 	    ret = wait(p_status);
+
+	*p_errno = errno;
+
+	set_user_abort_func(oldfunc);
 
 	return ret;
 }
@@ -298,17 +310,12 @@ target_t *xp;
 
 	user_stopped_target = FALSE;
 	for (;;) {
-		abort_func_t oldfunc;
-
 		if ((Debug_flags & DBFLAG_NO_STOP) != 0) {
 			pid = wait(&status);
 			wait_errno = errno;
 		}
 		else {
-			oldfunc = set_user_abort_func(stop_target);
-			pid = wait_with_intr(&status);
-			wait_errno = errno;
-			(void) set_user_abort_func(oldfunc);
+			pid = wait_with_intr(&status, &wait_errno);
 		}
 
 		if (pid == 0) {
@@ -466,7 +473,6 @@ void
 ptrace_kill(xp)
 target_t *xp;
 {
-	wait_arg_t status;
 	iproc_t *ip;
 
 	ip = GET_IPROC(xp);
@@ -480,14 +486,8 @@ target_t *xp;
 	if (ip->ip_stopres != SR_DIED) {
 		if (ip->ip_attached) {
 			/*  wait() hangs on a PTRACE_ATTACH process which
-			 *  has been killed, so fake the status.
+			 *  has been killed.
 			 */
-#ifdef WAIT_STATUS_IS_INT
-			status = SIGKILL;
-#else
-			status.w_T.w_Termsig = SIGKILL;
-			status.w_T.w_Retcode = 0;
-#endif
 		}
 		else {
 			ptrace_wait_for_target(xp);

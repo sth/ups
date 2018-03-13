@@ -29,6 +29,7 @@ char ups_ao_elfread32_c_rcsid[] = "$Id$";
 #define Elf_Ehdr Elf32_Ehdr
 #define Elf_Shdr Elf32_Shdr
 #define Elf_Phdr Elf32_Phdr
+#define Elf_Nhdr Elf32_Nhdr
 #define Elf_Sym Elf32_Sym
 #define Elf_Dyn Elf32_Dyn
 #define Elf_Rel Elf32_Rel
@@ -38,6 +39,8 @@ char ups_ao_elfread32_c_rcsid[] = "$Id$";
 #define ELF_ST_BIND(val) ELF32_ST_BIND(val)
 #define ELF_R_SYM(val) ELF32_R_SYM(val)
 #define ELF_R_TYPE(val) ELF32_R_TYPE(val)
+
+#define ELF_ALIGN(offset) (((offset) + 3) & ~3)
 
 #define ELF(x) elf32_##x
 

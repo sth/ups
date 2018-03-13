@@ -211,6 +211,7 @@ rtype_t rtype;
 				bp_wants_stop = execute_bp_code(bp,
 								xp_getreg(xp, UPSREG_FP),
 								xp_getreg(xp, UPSREG_AP),
+								xp_getreg(xp, UPSREG_SP),
 								xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 				if (breakpoint_is_solib_event(bp))
@@ -253,6 +254,7 @@ rtype_t rtype;
 			bp_wants_stop = execute_bp_code(bp,
 							xp_getreg(xp, UPSREG_FP),
 							xp_getreg(xp, UPSREG_AP),
+							xp_getreg(xp, UPSREG_SP),
 							xp_getcfa(xp));
 			stopres = xp_get_stopres(xp);
 			if (breakpoint_is_solib_event(bp))

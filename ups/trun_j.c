@@ -100,13 +100,10 @@ stopres_t *p_stopres;
 	stopres_t stopres;
 	int stop, sig;
 	breakpoint_t *bp;
-	taddr_t orig_fp;
 	bool check_wps;
 	int emulated_wps, refresh_interval;
 	time_t next_refresh;
 	cont_type_t cont_type = CT_CONT;
-
-	orig_fp = 0;	/* but may be changed below */
 
 	check_wps = FALSE;
 	emulated_wps = 0;
@@ -187,6 +184,7 @@ stopres_t *p_stopres;
 			{
 			    stop = execute_bp_code(bp, xp_getreg(xp, UPSREG_FP),
 						   xp_getreg(xp, UPSREG_AP),
+						   xp_getreg(xp, UPSREG_SP),
 						   xp_getcfa(xp));
 			    stopres = xp_get_stopres(xp);
 			    if (stopres != SR_BPT)
@@ -654,6 +652,7 @@ stopres_t *p_stopres;
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -786,6 +785,7 @@ stopres_t *p_stopres;
 				execute_bp_code(bp_at_start_of_func,
 						xp_getreg(xp, UPSREG_FP),
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -820,7 +820,7 @@ stopres_t *p_stopres;
 {
 	static char error_stackfile[] = "ups_stack.error";
 	taddr_t addrlim;
-	jump_t *jumps, *j, *last_j;
+	jump_t *jumps, *j;
 	jumptype_t alt_jumptype;
 	lno_t *lno, *old_lno;
 	func_t *f, *old_f;
@@ -912,9 +912,7 @@ retry:
 		   create these
 		   */
 		if (first && out_range && !j->ju_dstaddr && j->ju_type == JT_CALL)
-		  for (last_j = j; j->ju_type == JT_CALL && !j->ju_dstaddr &&
-		       j->ju_addr < nextaddr; ++j)
-		    last_j = j;
+			while(j->ju_type == JT_CALL && !j->ju_dstaddr && j->ju_addr < nextaddr) j++;
 /*		if (first && out_range && j->ju_type == JT_BRANCH)
 		  for (; j->ju_type != JT_END && j->ju_addr <= pc; ++j);*/
 		first = 0;
@@ -1119,6 +1117,7 @@ retry:
 			if (bp_at_nextline != NULL) {
 				execute_bp_code(bp_at_nextline, fp,
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}
@@ -1282,6 +1281,7 @@ set_bpt:
 				execute_bp_code(bp_at_start_of_func,
 						xp_getreg(xp, UPSREG_FP),
 						xp_getreg(xp, UPSREG_AP),
+						xp_getreg(xp, UPSREG_SP),
 						xp_getcfa(xp));
 				stopres = xp_get_stopres(xp);
 			}

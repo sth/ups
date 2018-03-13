@@ -841,7 +841,7 @@ bool use_demangled_name;
 		const char *s, *globname;
 		char *namecopy;
 
-		for (s = funcname; s != '\0'; ++s) {
+		for (s = funcname; *s != '\0'; ++s) {
 			if (strchr(globchars, *s) != NULL)
 				break;
 		}
@@ -1403,7 +1403,7 @@ func_bp_list_t **funchead;
     funcname = (char *)name;
   }
 
-  for (s = funcname; s != '\0'; ++s) {
+  for (s = funcname; *s != '\0'; ++s) {
     if (strchr(globchars, *s) != NULL)
       break;
   }

@@ -185,14 +185,12 @@ static bool
 scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 		symio_t *symio, int nsyms, const char **p_mainfunc_name)
 {
-	int symno, opt_with_no_optsym;
+	int symno /*, opt_with_no_optsym */;
 	off_t file_offset, next_file_offset;
-	const char *objdir, *path_hint, *prefix;
-	size_t pflen;
+	const char *objdir, *path_hint;
 	stf_t *stf;
 	fil_t *new_sfiles;
 	block_t *rootblock;
-	const char *mainfunc_name;
 	alloc_pool_t *ap;
 	bool seen_sosym_but_no_optsym;
 	Symrec symrec;
@@ -204,11 +202,8 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 	new_sfiles = *p_sfiles;
 	rootblock = get_rootblock();
 	ap = st->st_apool;
-	prefix = NULL;
-	pflen = 0;
-	mainfunc_name = NULL;
 	seen_sosym_but_no_optsym = FALSE;
-	opt_with_no_optsym = 0;
+	/* opt_with_no_optsym = 0; */
 	lang = LANG_UNKNOWN;
 	
 	for (symno = 0; symno < nsyms; ++symno) {
@@ -272,9 +267,6 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 			path_hint = NULL;
 			lang = srctype(path);
 
-			prefix = stf->stf_global_prefix;
-			pflen = (prefix != NULL) ? strlen(prefix) : 0;
-
 			seen_sosym_but_no_optsym = TRUE;
 
 			break;
@@ -317,14 +309,8 @@ scan_index_syms(symtab_t *st, Elfinfo *el, fil_t **p_sfiles, func_t **p_flist,
 			 */
 			if (!has_debug_syms &&
 			    (stf->stf_flags & STF_NEED_SYMSCAN) != 0) {
-				prefix = NULL;
-				pflen = 0;
 				stf = NULL;
 				new_sfiles = new_sfiles->fi_next;
-			}
-			else {
-				prefix = stf->stf_global_prefix;
-				pflen = (prefix != NULL) ? strlen(prefix) : 0;
 			}
 			
 			break;

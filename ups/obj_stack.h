@@ -69,7 +69,7 @@ void free_block PROTO((objid_t obj));
 
 #ifdef SYMTAB_H_INCLUDED
 block_t *obj_to_block PROTO((objid_t obj));
-func_t *get_stack_func PROTO((objid_t obj, taddr_t *p_fp, taddr_t *p_ap,
+func_t *get_stack_func PROTO((objid_t obj, taddr_t *p_pc, taddr_t *p_fp, taddr_t *p_ap,
 			      taddr_t *p_sp, taddr_t *p_cfa));
 objid_t find_block PROTO((objid_t par, block_t *block));
 objid_t add_block_object PROTO((objid_t par, block_t *block));

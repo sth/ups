@@ -355,8 +355,8 @@ debug_file_exists(const char *debugpath, unsigned long crc)
 }
 
 static bool
-find_debug_file(const char *textpath, const char *debugname,
-		unsigned long crc, char *debugpath)
+find_debug_file_by_name(const char *textpath, const char *debugname,
+			unsigned long crc, char *debugpath)
 {
 	char *textdir;
 	char *textdirptr;
@@ -376,6 +376,45 @@ find_debug_file(const char *textpath, const char *debugname,
 			sprintf(debugpath, "/usr/lib/debug%s/%s", textdir, debugname);
 
 			if (!debug_file_exists(debugpath, crc)) {
+				free(textdir);
+				return FALSE;
+			}
+		}
+	}
+
+	free(textdir);
+
+	return TRUE;
+}
+
+static bool
+find_debug_file_by_id(const char *textpath, const unsigned char *id, size_t idsize, char *debugpath)
+{
+	char *idstr = alloca( idsize * 2 +1 );
+	char *textdir;
+	char *textdirptr;
+	int i;
+
+	for (i = 0; i < idsize; i++ )
+	{
+		sprintf(idstr + i * 2, "%02x", id[i]);
+	}
+
+	textdir = strsave(textpath);
+
+	if ((textdirptr = strrchr(textdir, '/')) != NULL) {
+		*textdirptr = '\0';
+	}
+
+	sprintf(debugpath, "%s/.build-id/%c%c/%s.debug", textdir, idstr[0], idstr[1], idstr + 2);
+
+	if (access(debugpath, R_OK) < 0) {
+		sprintf(debugpath, "%s/.debug/.build-id/%c%c/%s.debug", textdir, idstr[0], idstr[1], idstr + 2);
+
+		if (access(debugpath, R_OK) < 0) {
+			sprintf(debugpath, "/usr/lib/debug/.build-id/%c%c/%s.debug", idstr[0], idstr[1], idstr + 2);
+
+			if (access(debugpath, R_OK) < 0) {
 				free(textdir);
 				return FALSE;
 			}
@@ -445,6 +484,8 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	Elf_Shdr *debuglinksh;
 	Elfinfo *el;
 	const char *symtab_secname;
+	void *buildid;
+	size_t buildidsize;
 #if WANT_DWARF
 	Elf_Shdr *dwarfsh;
 #endif
@@ -500,7 +541,16 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 		el->pltsh = NULL;
 	}
 
-	if (elf_lookup_section(el, ".gnu_debuglink", &debuglinksh)) {
+	if ((buildid = elf_lookup_note(el, "GNU", NT_GNU_BUILD_ID, &buildidsize)) != NULL) {
+		char debugpath[256];
+
+		if (find_debug_file_by_id(textpath, buildid, buildidsize, debugpath)) {
+			el->debugel = open_debug_file(debugpath);
+		}
+
+		free(buildid);
+	}
+	else if (elf_lookup_section(el, ".gnu_debuglink", &debuglinksh)) {
 		char *debuglink = e_malloc(elf_section_size(el, debuglinksh));
 
 		if (read_chunk(textpath, Elfwhat, fd, "debug file name",
@@ -515,8 +565,8 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 			
 			crc = *(unsigned int *)(debuglink + crc_offset);
 
-			if (find_debug_file(textpath, debuglink, crc, debugpath)) {
-			   el->debugel = open_debug_file(debugpath);
+			if (find_debug_file_by_name(textpath, debuglink, crc, debugpath)) {
+				el->debugel = open_debug_file(debugpath);
 			}
 		}
 		
@@ -524,7 +574,8 @@ elf_get_exec_info(const char *textpath, int fd, Libdep *libdep,
 	}
 
 #if WANT_DWARF
-	if (elf_lookup_section(el->debugel, ".debug_info", &dwarfsh)) {
+	if (elf_lookup_section(el->debugel, ".debug_info", &dwarfsh) &&
+            !elf_lookup_section(el->debugel, ".gnu_debugaltlink", &debuglinksh)) {
 		*p_st_is = ST_DWARF;
 		symsh = symstrsh = NULL;
 	} else

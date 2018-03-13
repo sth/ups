@@ -1239,12 +1239,16 @@ int buttons;
 
 static wn_abort_func_t Abort_func = NULL;
 static swin_t *Abort_w;
+static int Abort_pending;
 
 static void
 catch_sigio(unused_sig)
 int unused_sig;
 {
-	(*Abort_func)();
+	if (Abort_pending) {
+		Abort_pending = 0;
+		Abort_func();
+	}
 }
 
 /*  This function is based on the one in Stevens.
@@ -1290,6 +1294,7 @@ wn_abort_func_t func;
 	old_abort_func = Abort_func;
 	Abort_func = func;
 	Abort_w = w;
+	Abort_pending = 1;
 
 #ifdef X11
 	fd = ConnectionNumber(wn__Dpy);
@@ -1318,7 +1323,6 @@ wn_abort_func_t func;
 	}
 	else {
 #ifdef FASYNC			/* RGA linux merge */
-		(void) safe_signal(SIGIO, old_io_func);
 #ifndef __hp9000s800
 #ifdef USE_STREAMS
 		if (ioctl(fd, I_SETSIG, 0) != 0) {
@@ -1333,6 +1337,7 @@ wn_abort_func_t func;
 		}
 #endif
 #endif /* __hp9000s800 */
+		(void) safe_signal(SIGIO, old_io_func);
 #endif /* RGA linux merge */
 		set_normal_event_mask(w);
 	}

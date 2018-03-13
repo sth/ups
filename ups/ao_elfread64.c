@@ -29,6 +29,7 @@ char ups_ao_elfread64_c_rcsid[] = "$Id$";
 #define Elf_Ehdr Elf64_Ehdr
 #define Elf_Shdr Elf64_Shdr
 #define Elf_Phdr Elf64_Phdr
+#define Elf_Nhdr Elf64_Nhdr
 #define Elf_Sym Elf64_Sym
 #define Elf_Dyn Elf64_Dyn
 #define Elf_Rel Elf64_Rel
@@ -38,6 +39,8 @@ char ups_ao_elfread64_c_rcsid[] = "$Id$";
 #define ELF_ST_BIND(val) ELF64_ST_BIND(val)
 #define ELF_R_SYM(val) ELF64_R_SYM(val)
 #define ELF_R_TYPE(val) ELF64_R_TYPE(val)
+
+#define ELF_ALIGN(offset) (((offset) + 7) & ~7)
 
 #define ELF(x) elf64_##x
 

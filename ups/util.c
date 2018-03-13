@@ -47,7 +47,7 @@ int *p_nwords;
 	const char *iptr;
 	char *obuf, *optr, *word;
 	char **words, **argv;
-	bool new_word, word_exists;
+	bool word_exists;
 
 	/*  No escape sequence makes a line longer, so the length of
 	 *  the line is an upper bound on the length of the processes line.
@@ -57,7 +57,6 @@ int *p_nwords;
 
 	iptr = line;
 	quotec = '\0';
-	new_word = TRUE;
 	word_exists = FALSE;
 
 	while (isspace(*line))

@@ -455,7 +455,6 @@ int check_only;
 {
   static int rows[9], first_time = 1;
   char *env_str, *ptr = 0;
-  char violation_msg[100];
   int j, k, n, used, str_ok = 0;
   long i = 0;
 
@@ -482,10 +481,9 @@ int check_only;
   }
   if (env_str && !str_ok)
   {
-    sprintf(violation_msg,
+    fprintf(stderr,
 	    "WARNING: ups*%s resource must be an integer between 1 and %d\n",
 	    resource, max_rows);
-    fprintf(stderr, violation_msg);
     i = row_default;
   }
 
@@ -495,10 +493,9 @@ int check_only;
     {
       if (env_str && str_ok)
       {
-	sprintf(violation_msg,
+	fprintf(stderr,
 		"WARNING: ups*%s resource value of %ld already used\n",
 		resource, i);
-	fprintf(stderr, violation_msg);
       }
       for (n = 1; n <= max_rows; n++)
       {
@@ -513,10 +510,9 @@ int check_only;
 	  i = n;
 	  if (env_str && str_ok)
 	  {
-	    sprintf(violation_msg,
+	    fprintf(stderr,
 		    "  - using %ld for ups*%s instead.\n",
 		    i, resource);
-	    fprintf(stderr, violation_msg);
 	  }
 	  break;
 	}
@@ -527,10 +523,9 @@ int check_only;
       rows[j] = i;
       if (env_str && !str_ok)
       {
-	sprintf(violation_msg,
+	fprintf(stderr,
 		"  - using %ld for ups*%s instead.\n",
 		i, resource);
-	fprintf(stderr, violation_msg);
       }
       break;
     }

@@ -880,14 +880,11 @@ re_event_loop()
 	const int evmask = EV_BUTTON_UP | EV_BUTTON_DOWN | EV_MOUSE_MOVED | EV_KEY |
 			   EV_INTERRUPT | EV_WINDOW_EXPOSED | EV_WINDOW_RESIZED;
 	Region *root;
-	int last_cursor;
 	int last_wn = -1;
 	static const char **last_mhcaps;
 	wn_set_icon_notify_func(icon_notify);
 	wn_set_close_func(close_window);
 
-	last_cursor = -1;
-	
 	while (!Quit_event_loop) {
 		bool resized = FALSE;
 		int cursor;

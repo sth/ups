@@ -516,7 +516,7 @@ bool *p_is_struct_member;
 	switch (partype) {
 	case OT_FUNC:
 	case OT_BLOCK:
-		func = get_stack_func(par, &junk, &junk, &junk, &junk);
+		func = get_stack_func(par, &junk, &junk, &junk, &junk, &junk);
 		fil = func->fu_fil;
 		break;
 	case OT_SFILE:

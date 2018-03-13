@@ -1650,7 +1650,7 @@ int var_coloring_only;
 {
   Outwin *dw;
   size_t buff_len, sol = 0;
-  int width, height, i, j = 0, max_chars, sol_int = 0, buff_len_int,
+  int width, height, i, j = 0, sol_int = 0, buff_len_int,
     flag = 0, blank_text_len;
   char blank_text[256];
   static long bg, val_fg, env_fg, bpt_fg, src_fg, func_fg, sig_fg, wpt_fg;
@@ -1678,7 +1678,6 @@ int var_coloring_only;
   }
  
   wn_get_window_size(dw->wn, &width, &height);
-  max_chars = (int)width/Sysfont_width;
   buff_len = edit_get_buffer_length(dw->buffer);
   if (prepend_newline)
   {
@@ -1794,7 +1793,7 @@ const char *pattern;
 bool forwards;
 {
 	size_t buff_len, dstart, dlim, fstart, flim, point, sol;
-	int pixel_offset, y = -1, ft_ht, y_offset, disp_wn,
+	int pixel_offset, y = -1, ft_ht, y_offset,
 	lx, ly, width, height, baseline, cur_posn, offset_lines = 0;
 	bool clear, oldval;
 	
@@ -1802,7 +1801,6 @@ bool forwards;
 	clear = TRUE;
 	if (display_area_overlay_control(0, 0) == 0)
 	{
-	  disp_wn = re_get_wn(get_display_area_region());
 	  clear_selection();
 	  display_area_overlay_control(1, 0); /* set */
 	  clear = FALSE;

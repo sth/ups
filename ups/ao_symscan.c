@@ -526,6 +526,9 @@ fil_t **p_fil;
 
 	abspath = *name == '/';
 
+	if (*name == '.' && *(name+1) == '/')
+		name = name + 2;
+
 	for (fil = sfiles; fil != NULL; fil = fil->fi_next) {
 	  if ((abspath || same_string(fil->fi_path_hint, path_hint)) &&
 	      strcmp(fil->fi_name, name) == 0) {

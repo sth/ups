@@ -501,7 +501,7 @@ int nargs;
 	char cbuf[2];
 	val_t val;
 	args_t argdesc;
-	const char *fmt, *save_fmt, *argstr;
+	const char *fmt, *argstr;
 	Outwin *ow;
 
 	ow = get_or_create_outwin_unmapped();
@@ -518,7 +518,7 @@ int nargs;
 		errf("First argument of $printf is not a string");
 		return STOP;
 	}
-	save_fmt = fmt = (char *)val.v_value.vl_addr;
+	fmt = (char *)val.v_value.vl_addr;
 
 	while (*fmt != '\0') {
 		int padchar, padding, min_fwidth, max_fwidth;

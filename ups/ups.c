@@ -1090,7 +1090,6 @@ bool want_load_config, want_save_config, want_save_sigs,
 const char *state_dir;
 bool attach;
 {
-	Region *root_region, *root_region1;
 	window_t wn, wn1, wn2;
 	func_t *f, *f1;
 	const char *basepath, *state_path, *user_path;
@@ -1118,7 +1117,6 @@ bool attach;
 	}
 
  	td_set_window_flag();
-	root_region = root_region1 = NULL;	/* to satisfy gcc */
 	wn = wn1 = wn2 = -1;		/* to satisfy gcc */
 
 	if (want_window) {
@@ -1191,11 +1189,11 @@ bool attach;
 		if (want_split)
 		{
 		  wn_set_window_hints(wn1, "%a source","%a source", &ups_icon);
-		  root_region = divide_window_into_regions1(wn, want_outwin);
-		  root_region1 = divide_window_into_regions2(wn1, want_outwin);
+		  divide_window_into_regions1(wn, want_outwin);
+		  divide_window_into_regions2(wn1, want_outwin);
 		}
 		else
-		  root_region = divide_window_into_regions(wn, want_outwin);
+		  divide_window_into_regions(wn, want_outwin);
 
 	}
 

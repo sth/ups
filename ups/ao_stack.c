@@ -425,6 +425,7 @@ ao_get_stack_trace(xp)
 target_t *xp;
 {
 	int wordsize = xp_get_addrsize(xp) / 8;
+	int finished = 0;
 	taddr_t pc, fp, sp;
 	register Stack *stk;
 	func_t *f;
@@ -434,16 +435,12 @@ target_t *xp;
 	fp = xp_getreg(xp, UPSREG_FP);
 	sp = xp_getreg(xp, UPSREG_SP);
 
-	if (fp == (taddr_t)0) {
-		fp = (taddr_t)-1;
-	}
-        
 #ifdef DEBUG_STACK
 	if (Debug_flags & DBFLAG_STACK)
 		fprintf(stderr, "bst: pc=0x%x fp=0x%x sp=0x%x\n", pc, fp, sp);
 #endif
 
-	for (stk = last = NULL; fp != (taddr_t)0; last = stk) {
+	for (stk = last = NULL; !finished; last = stk) {
 		taddr_t prevpc = (last == NULL) ? pc : (pc - 1);
 		fil_t *fil;
 		int lnum;
@@ -487,6 +484,7 @@ target_t *xp;
 
 		if (f->fu_symtab && st_unwind(xp, f->fu_symtab, &fp, &sp, &prevpc, &stk->stk_cfa)) {
 			pc = prevpc;
+			finished = pc == (taddr_t)0;
 		}
 		else if ((f->fu_flags & FU_NO_FP) != 0 || pc < f->fu_addr) {
 			ao_preamble_t *pr;
@@ -645,6 +643,8 @@ target_t *xp;
 			stk->stk_sp = sp;
 
 			sp = sp + offset + 4;
+
+			finished = fp == (taddr_t)0;
 		} else {
 			if (dread_addrval(xp, stk->stk_fp, &fp) != 0)
 				break;
@@ -652,6 +652,8 @@ target_t *xp;
 				break;
 
 			sp = stk->stk_fp + 2 * wordsize;
+
+			finished = fp == (taddr_t)0;
 
 #ifdef DEBUG_STACK
 			if (Debug_flags & DBFLAG_STACK) {

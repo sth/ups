@@ -174,24 +174,24 @@ dwf_get_compiler_type(dbg, cu_die)
 Dwarf_Debug dbg;
 Dwarf_Die cu_die;
 {
-    Compiler_type ct;
+    Compiler_type ct = CT_UNKNOWN;
     char *producer;
 
-    producer = dwf_get_string(dbg, NULL, cu_die, DW_AT_producer);
+    if ((producer = dwf_get_string(dbg, NULL, cu_die, DW_AT_producer)) != NULL) {
+	/*
+	 * dwarfTODO: find out other values of 'producer'
+	 * dwarfTODO: if used C++ on a C file may want to change language
+	 */
+	if (strncmp (producer, "GNU C ", 6) == 0)
+	    ct = CT_GNU_CC;
+	else if (strncmp (producer, "GNU C++ ", 8) == 0)
+	    ct = CT_GNU_CC;
+	else if (strncmp (producer, "GNU F77 ", 8) == 0)
+	    ct = CT_GNU_CC;
+	
+	free (producer);
+    }
 
-    /*
-     * dwarfTODO: find out other values of 'producer'
-     * dwarfTODO: if used C++ on a C file may want to change language
-     */
-    if (strncmp (producer, "GNU C ", 6) == 0)
-	ct = CT_GNU_CC;
-    else if (strncmp (producer, "GNU C++ ", 8) == 0)
-	ct = CT_GNU_CC;
-    else if (strncmp (producer, "GNU F77 ", 8) == 0)
-	ct = CT_GNU_CC;
-    else
-	ct = CT_UNKNOWN;
-    free (producer);
     return ct;
 }
 
@@ -497,7 +497,7 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     Dwarf_Locdesc **loclist;
     Dwarf_Signed count = 0;
     Dwarf_Small op;
-    vaddr_t *head = NULL, *vaddr;
+    vaddr_t *head = NULL, *tail = NULL, *vaddr;
     unsigned char fp_regop;
     unsigned char sp_regop;
     unsigned char fp_reg;
@@ -525,79 +525,113 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     }
 
     for (i = 0; i < count; i++) {
+	Dwarf_Locdesc *ld = loclist[i];
 
 	vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
 
-	if (loclist[i]->ld_cents != 1) {
-	    errf("dwf_get_location : location expression too complicated");
-	    continue;
-	}
+	vaddr->v_next = NULL;
+	vaddr->v_low_pc = ld->ld_lopc;
+	vaddr->v_high_pc = ld->ld_hipc;
 
-	op = loclist[i]->ld_s->lr_atom;
-	if (op == DW_OP_addr) {
-	    /*
-	     * Address
-	     */
-	    vaddr->v_op = OP_ADDR;
-	    vaddr->v_addr = loclist[i]->ld_s->lr_number;
-	} else if ((op >= DW_OP_reg0) && (op <= DW_OP_reg31)) {
-	    /*
-	     * Register 0..31
-	     */
-	    vaddr->v_op = OP_REGISTER;
-	    vaddr->v_register = op - DW_OP_reg0;
-	} else if (op == DW_OP_regx) {
-	    /*
-	     * Register
-	     */
-	    vaddr->v_op = OP_REGISTER;
-	    vaddr->v_register = loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_plus_uconst) {
-	    /*
-	     * Unsigned offset.
-	     */
-	    vaddr->v_op = OP_U_OFFSET;
-	    vaddr->v_u_offset = loclist[i]->ld_s->lr_number;
-	} else if (op == DW_OP_fbreg) {
-	    /*
-	     * Relative to frame base address.
-	     */
-	    if (frame_base && frame_base->v_op == OP_REGISTER) {
-		if (frame_base->v_register == fp_reg) {
-		    vaddr->v_op = OP_FP_RELATIVE;
-		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-		} else if (frame_base->v_register == sp_reg) {
-		    vaddr->v_op = OP_SP_RELATIVE;
-		    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+	if (ld->ld_cents == 1) {
+	    op = ld->ld_s->lr_atom;
+	    if (op == DW_OP_addr) {
+		/*
+		 * Address
+		 */
+		vaddr->v_op = OP_ADDR;
+		vaddr->v_addr = ld->ld_s->lr_number;
+	    } else if ((op >= DW_OP_reg0) && (op <= DW_OP_reg31)) {
+		/*
+		 * Register 0..31
+		 */
+		vaddr->v_op = OP_REGISTER;
+		vaddr->v_register = op - DW_OP_reg0;
+	    } else if (op == DW_OP_regx) {
+		/*
+		 * Register
+		 */
+		vaddr->v_op = OP_REGISTER;
+		vaddr->v_register = ld->ld_s->lr_number;
+	    } else if (op == DW_OP_plus_uconst) {
+		/*
+		 * Unsigned offset.
+		 */
+		vaddr->v_op = OP_U_OFFSET;
+		vaddr->v_u_offset = ld->ld_s->lr_number;
+	    } else if (op == DW_OP_fbreg) {
+		/*
+		 * Relative to frame base address.
+		 */
+		if (frame_base == BAD_FRAME_BASE) {
+		    errf("dwf_get_location : frame base not known");
+		    goto next_location;
+		} else if (frame_base && frame_base->v_op == OP_REGISTER) {
+		    if (frame_base->v_register == fp_reg) {
+			vaddr->v_op = OP_FP_RELATIVE;
+			vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		    } else if (frame_base->v_register == sp_reg) {
+			vaddr->v_op = OP_SP_RELATIVE;
+			vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		    } else {
+			panic("dwf_get_location : frame base register not fp or sp");
+		    }
 		} else {
-		    panic("dwf_get_location : frame base register not fp or sp");
+		    vaddr->v_op = OP_CFA_RELATIVE;
+		    vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+		}
+	    } else if (op == fp_regop) {
+		/*
+		 * Relative to frame pointer.
+		 */
+		vaddr->v_op = OP_FP_RELATIVE;
+		vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+	    } else if (op == sp_regop) {
+		/*
+		 * Relative to stack pointer.
+		 */
+		vaddr->v_op = OP_SP_RELATIVE;
+		vaddr->v_offset = (Dwarf_Signed)ld->ld_s->lr_number;
+	    } else if (op == DW_OP_call_frame_cfa) {
+		/*
+		 * Frame base address.
+		 */
+		if (frame_base == BAD_FRAME_BASE) {
+		    errf("dwf_get_location : frame base not known");
+		    goto next_location;
+		} else if (frame_base && frame_base->v_op == OP_REGISTER) {
+		    if (frame_base->v_register == fp_reg) {
+			vaddr->v_op = OP_FP_RELATIVE;
+			vaddr->v_offset = 0;
+		    } else if (frame_base->v_register == sp_reg) {
+			vaddr->v_op = OP_SP_RELATIVE;
+			vaddr->v_offset = 0;
+		    } else {
+			panic("dwf_get_location : frame base register not fp or sp");
+		    }
+		} else {
+		    vaddr->v_op = OP_CFA_RELATIVE;
+		    vaddr->v_offset = 0;
 		}
 	    } else {
-		vaddr->v_op = OP_CFA_RELATIVE;
-		vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
+		errf("dwf_get_location : unsupported opcode in location expression");
+		goto next_location;
 	    }
-	} else if (op == fp_regop) {
-	    /*
-	     * Relative to frame pointer.
-	     */
-	    vaddr->v_op = OP_FP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
-	} else if (op == sp_regop) {
-	    /*
-	     * Relative to stack pointer.
-	     */
-	    vaddr->v_op = OP_SP_RELATIVE;
-	    vaddr->v_offset = (Dwarf_Signed)loclist[i]->ld_s->lr_number;
 	} else {
-	    errf("dwf_get_location : unsupported opcode in location expression");
-	    continue;
+	    errf("dwf_get_location : location expression too complicated");
+	    goto next_location;
 	}
+	
+	if (head == NULL) {
+	    tail = head = vaddr;
+	} else {
+	    tail = tail->v_next = vaddr;
+        }
 
-	dwarf_dealloc(dbg, loclist[i]->ld_s, DW_DLA_LOC_BLOCK);
-	dwarf_dealloc(dbg, loclist[i], DW_DLA_LOCDESC);
+      next_location:
 
-	head = vaddr;
-	break;
+	dwarf_dealloc(dbg, ld->ld_s, DW_DLA_LOC_BLOCK);
+	dwarf_dealloc(dbg, ld, DW_DLA_LOCDESC);
     }
     dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
 
@@ -650,27 +684,37 @@ dwf_unwind_reg(Dwarf_Fde fde, target_t *xp, taddr_t cfa, taddr_t fp, taddr_t sp,
     }
 
     if (rv == DW_DLV_OK) {
-	if (value_type != DW_EXPR_OFFSET)
-	    panic("Unsupported value type in unwind info");
+	if (value_type == DW_EXPR_OFFSET) {
+	    if (register_num == DW_FRAME_CFA_COL3)
+		*regval = cfa;
+	    else if (register_num == fp_col)
+		*regval = fp;
+	    else if (register_num == sp_col)
+		*regval = sp;
+	    else if (register_num == DW_FRAME_SAME_VAL && regnum == fp_col)
+		*regval = fp;
+	    else if (register_num == DW_FRAME_SAME_VAL && regnum == sp_col)
+		*regval = cfa;
+	    else
+		rv = DW_DLV_ERROR;
 
-        if (register_num == DW_FRAME_CFA_COL3)
-	    *regval = cfa;
-	else if (register_num == fp_col)
-	    *regval = fp;
-	else if (register_num == sp_col)
-	    *regval = sp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == fp_col)
-	    *regval = fp;
-	else if (register_num == DW_FRAME_SAME_VAL && regnum == sp_col)
-	    *regval = cfa;
-	else
+	    if (rv == DW_DLV_OK && offset_relevant)
+		*regval += offset_or_block_len;
+
+	    if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL3)
+		dread_addrval(xp, *regval, regval);
+	} else if (value_type == DW_EXPR_VAL_OFFSET) {
+	    *regval = cfa + offset_or_block_len;
+	} else if (value_type == DW_EXPR_EXPRESSION) {
+	    errf("dwf_unwind_reg : unhandled expression value");
 	    rv = DW_DLV_ERROR;
-
-	if (rv == DW_DLV_OK && offset_relevant)
-	    *regval += offset_or_block_len;
-
-	if (rv == DW_DLV_OK && register_num == DW_FRAME_CFA_COL3)
-	    dread_addrval(xp, *regval, regval);
+	} else if (value_type == DW_EXPR_VAL_EXPRESSION) {
+	    errf("dwf_unwind_reg : unhandled val_expression value");
+	    rv = DW_DLV_ERROR;
+	} else {
+	    errf("dwf_unwind_reg : unknown value type");
+	    rv = DW_DLV_ERROR;
+	}
     }
 
     return rv == DW_DLV_OK;
@@ -728,6 +772,8 @@ dwf_unwind(Dwarf_Debug dbg, target_t *xp, taddr_t *fp, taddr_t *sp, taddr_t *pc,
 		*fp = new_fp;
 		*sp = new_sp;
 		*pc = new_pc;
+	    } else {
+		*pc = 0;
 	    }
 	}
 

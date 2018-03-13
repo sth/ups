@@ -107,6 +107,9 @@ bool ar_get_member_offset PROTO((const char *path, int fd, const char *member,
 #define elf_section_entries(el, sh) \
 	(el)->ops->section_entries(sh)
 
+#define elf_lookup_note(el, notename, notetype, p_notesize) \
+	(el)->ops->lookup_note(el, notename, notetype, p_notesize)
+
 #define elf_lookup_symbol(el, syms, index) \
 	(el)->ops->lookup_symbol(syms, index)
 #define elf_symbol_name(el, sym, strings, strings_nbytes) \

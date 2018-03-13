@@ -238,8 +238,8 @@ va_dcl
 	(*User_errf_ofunc)(s);
 	if (User_errf_ofunc1 != NULL)
 	{
-	  strcat(s, "\n");
 	  (*User_errf_ofunc1)((*s == '\b') ? s + 1 : s);
+	  (*User_errf_ofunc1)("\n");
 	}
 
 	if (s != buffer)	/* must have been obtained from malloc */

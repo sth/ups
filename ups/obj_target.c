@@ -194,9 +194,9 @@ objid_t obj;
 char *new_text;
 const char **p_display_string;
 {
-	char *command_line, *cmdline, *new_path;
+	char *command_line, *new_path;
 	const char *efile;
-	int efile_len, fd, i;
+	int fd, i;
 	long mtime;
 
 	new_path = arg_expand_twiddle(new_text, (int)'~');
@@ -211,20 +211,16 @@ const char **p_display_string;
 	/* RGA Need to change the target part on the command line as well */
 	if (Com_objcode)
 	{
-	  cmdline = (char *)get_field_value(Com_objcode, FN_COM_ARGS);
 	  efile = (char *)get_field_value(Com_objcode, FN_COM_EFILE);
 	}
 	else
 	{
-	  cmdline = "";
 	  efile = "";
 	}
 
-	efile_len = strlen(efile);
 	if (!Use_full_path)
 	{
 	   efile = base_name(efile);
-	   efile_len = strlen(efile);
 	}
 
 	command_line = (char *)get_field_value(Com_objcode, FN_COM_ARGS);

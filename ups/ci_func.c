@@ -61,10 +61,8 @@ ci_name_to_label(id, is_definition)
 identifier_t *id;
 bool is_definition;
 {
-	const char *name;
 	goto_label_t *gl;
 
-	name = id->id_name;
 	for (gl = Labels; gl != NULL; gl = gl->gl_next)
 		if (strcmp(id->id_name, gl->gl_name) == 0)
 			break;
