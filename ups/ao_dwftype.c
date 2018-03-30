@@ -49,6 +49,16 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 #include "ao_dwftype.h"
 #include "ao_dwfutil.h"
 
+#ifndef DW_ATE_UTF
+#define DW_ATE_UTF 0x10
+#endif
+#ifndef DW_ATE_UCS
+#define DW_ATE_UCS 0x11
+#endif
+#ifndef DW_ATE_ASCII
+#define DW_ATE_ASCII 0x12
+#endif
+
 
 static void
 dwf_copy_type PROTO((type_t *dst, type_t *src));
@@ -148,6 +158,7 @@ Dwarf_Die die;
 	}
 
     case DW_ATE_unsigned:
+    case DW_ATE_UTF: // char16_t, char32_t
 	if (nbytes == sizeof(unsigned int))
 	    return TY_UINT;
 	else if (nbytes == sizeof(unsigned long))
