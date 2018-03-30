@@ -60,15 +60,18 @@ char ups_xc_machine_c_rcsid[] = "$Id$";
 
 /* We would like longjmp()/setjmp() which do not change sigmask. */
 /* Prefer BSD versions if available. */
+void ups_longjmp(jmp_buf *env, int val);
+int ups_setjmp(jmp_buf *env);
+
 #if HAVE__LONGJMP && HAVE__SETJMP
-#define ups_longjmp(env,val)	_longjmp(env,val)
-#define ups_setjmp(env)		_setjmp(env)
+void ups_longjmp(jmp_buf *env, int val) { _longjmp(*env,val); }
+int ups_setjmp(jmp_buf *env) { return _setjmp(*env); }
 #elif HAVE_SIGLONGJMP && HAVE_SIGSETJMP
-#define ups_longjmp(env,val)	siglongjmp(env,val)
-#define ups_setjmp(env)		sigsetjmp(env,0)
+void ups_longjmp(jmp_buf *env, int val) { siglongjmp(*env,val) };
+int ups_setjmp(jmp_buf *env) { return sigsetjmp(*env,0); }
 #else
-#define ups_longjmp(env,val)	longjmp(env,val)
-#define ups_setjmp(env)		setjmp(env)
+void ups_longjmp(jmp_buf *env, int val) { longjmp(*env,val); };
+int ups_setjmp(jmp_buf *env) { return setjmp(*env) };
 #endif
 
 static void spfailed PROTO((long expected, long got, long location));
@@ -167,7 +170,7 @@ int signo;
 		sigaddset(&mask, signo);
 		sigprocmask(SIG_UNBLOCK, &mask, (sigset_t *)NULL);
 		
-		ups_longjmp(ci_Arithmetic_signal_env, 1);
+		ups_longjmp(&ci_Arithmetic_signal_env, 1);
 	}
 
 	(*Uncaught_arithmetic_signal_handler)(signo);
@@ -1020,7 +1023,7 @@ ci_indirect_call_proc_t indirect_call_proc;
 	 *  breakpoint which triggers infrequently).  Instead we reset the
 	 *  mask in the catch_arithmetic_signals().
 	 */
-	if (ups_setjmp(ci_Arithmetic_signal_env) != 0) {
+	if (ups_setjmp(&ci_Arithmetic_signal_env) != 0) {
 		res = CI_ER_ARITHMETIC_EXCEPTION;
 		goto quit;
 	}

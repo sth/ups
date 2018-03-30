@@ -69,10 +69,9 @@ fi
 if test "$GCC" = "yes"
 then
     oldCFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -Wno-unused-parameter -Wno-unused-value"
     AC_TRY_LINK([#include <stdio.h>], [int i;], unused=yes)
     if test "$unused" = "yes" ; then
-        CFLAGS="$oldCFLAGS -Wall -Wno-char-subscripts -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-value"
+        CFLAGS="$oldCFLAGS -Wall -Wno-char-subscripts -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-value -Wno-unused-but-set-variable -Wno-unused-result"
     else
         CFLAGS="$oldCFLAGS -Wall -Wno-char-subscripts -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused"
     fi
