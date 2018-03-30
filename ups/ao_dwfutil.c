@@ -558,7 +558,7 @@ try_location:
 	vaddr->v_low_pc = ld->ld_lopc;
 	vaddr->v_high_pc = ld->ld_hipc;
 
-	if (ld->ld_cents == 1) {
+	if (ld->ld_cents >= 1) { // Just try to use the first one. TODO: This could be a loop
 	    op = ld->ld_s->lr_atom;
 	    if (op == DW_OP_addr) {
 		/*
@@ -632,7 +632,8 @@ try_location:
 			vaddr->v_op = OP_SP_RELATIVE;
 			vaddr->v_offset = 0;
 		    } else {
-			panic("dwf_get_location : frame base register not fp or sp");
+			errf("dwf_get_location : frame base register not fp or sp");
+			goto next_location;
 		    }
 		} else {
 		    vaddr->v_op = OP_CFA_RELATIVE;
