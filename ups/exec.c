@@ -675,7 +675,11 @@ taddr_t *p_main_addr, *p_main_min_bpt_addr;
 	int ret;
 
 	mainfunc = xp_get_mainfunc(xp);
- 	if (mainfunc->fu_language == LANG_CC)
+	// We use the returned function to determine valid stack pointer addresses,
+	// and _init() might be executed on a deeper stack than main. Having
+	// the correct address for main() is more important than debugging
+	// static initializers, for now.
+	if (0 && mainfunc->fu_language == LANG_CC)
 	  initfunc = xp_get_initfunc(xp);
 	if (initfunc)
 	{
