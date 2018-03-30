@@ -552,7 +552,7 @@ int cursor_on;
 	int fg, bg, pos, ch;
 	char *s, buf[2];
 
-	if (!(edesc->ed_flags & EDF_CURSOR_ON) == cursor_on) {
+	if ((!(edesc->ed_flags & EDF_CURSOR_ON)) == cursor_on) {
 		font = edesc->ed_font;
 		s = edesc->ed_copy;
 		pos = edesc->ed_curpos;
