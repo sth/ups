@@ -400,7 +400,7 @@ unsigned char *map;
 	 *  the "!" special case.
 	 */
 	if (pat[0] != '\0' && pat[1] == '\0') {
-		map[*pat] = 1;
+		map[(unsigned char)*pat] = 1;
 		return;
 	}
 
@@ -414,13 +414,13 @@ unsigned char *map;
 			
 			lastch = *++pat;
 
-			map[pat[-2]] = 0; /* Might be an empty range */
+			map[(unsigned char)pat[-2]] = 0; /* Might be an empty range */
 			
 			for (i = pat[-2]; i <= lastch; ++i)
 				map[i] = 1;
 		}
 		else {
-			map[*pat] = 1;
+			map[(unsigned char)*pat] = 1;
 		}
 	}
 

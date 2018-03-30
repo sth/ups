@@ -457,16 +457,16 @@ const char *old_linebuf, *new_linebuf;
 		    old_linebuf[offset] == new_linebuf[offset]) {
 			++start_offset;
 			start_xpos +=
-				new_fi->char_width_tab[new_linebuf[offset]];
+				new_fi->char_width_tab[(unsigned char)new_linebuf[offset]];
 		}
 		else {
 			still_matching = FALSE;
 		}
 
 		if (old_fi != NULL)
-			old_xpos += old_fi->char_width_tab[new_linebuf[offset]];
+			old_xpos += old_fi->char_width_tab[(unsigned char)new_linebuf[offset]];
 		
-		new_xpos += new_fi->char_width_tab[new_linebuf[offset]];
+		new_xpos += new_fi->char_width_tab[(unsigned char)new_linebuf[offset]];
 		
 		++offset;
 	}
@@ -543,7 +543,7 @@ int *p_x, *p_width, *p_height, *p_baseline;
 	
 	if (point_to_cnum(d, lm, point, &line, &cnum,
 			  p_x, p_height, p_baseline, &fi, &flags)) {
-		*p_width = fi->char_width_tab[line[cnum]];
+		*p_width = fi->char_width_tab[(unsigned char)line[cnum]];
 		return TRUE;
 	}
 
@@ -755,7 +755,7 @@ Edit_propchange **p_pc;
 			if (fi == NULL && pc == NULL)
 				break;
 			
-			char_width = fi->char_width_tab[*iptr];
+			char_width = fi->char_width_tab[(unsigned char)*iptr];
 			
 			if (!rc->fold_lines && xpos  >= xlim)
 			{
@@ -836,7 +836,7 @@ Edit_propchange **p_pc;
 				if (fi == NULL && pc == NULL)
 					break;
 				
-				char_width = fi->char_width_tab[*sptr];
+				char_width = fi->char_width_tab[(unsigned char)*sptr];
 				
 				if (xpos + char_width > xlim)
 					break;
@@ -884,7 +884,7 @@ Edit_propchange **p_pc;
 	{
 	  int char_width;
 	  
-	  char_width = fi->char_width_tab[*iptr];
+	  char_width = fi->char_width_tab[(unsigned char)*iptr];
 	  while(*iptr != '\n' && iptr != ilim)
 	  {
 	    xpos += char_width;

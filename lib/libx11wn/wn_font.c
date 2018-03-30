@@ -444,8 +444,8 @@ font_t *font;
 #ifdef SUNVIEW
 	pf_close((struct pixfont *)font->ft_mdfont);
 #endif /* SUNVIEW; */
-	free((char *)font->ft_width_tab);
-	free((char *)font);
+	free(font->ft_width_tab);
+	free(font);
 }
 
 /*  Return the width in pixels of string s when drawn in font font.
@@ -474,7 +474,7 @@ font_t *font;
 	lim = s + ((nchars == -1) ? strlen(s) : nchars);
 	res = 0;
 	while (s < lim && *s != '\0')
-		res += wtab[*s++];
+		res += wtab[(unsigned char)*s++];
 	return res;
 }
 
@@ -503,9 +503,9 @@ int halfshift;
 	}
 	wtab = font->ft_width_tab;
 	w = 0;
-	for (cptr = s; *cptr != '\0' && w + wtab[*cptr] < x; cptr++)
-		w += wtab[*cptr];
-	if (halfshift && *cptr != '\0' && x > w + wtab[*cptr]/2)
+	for (cptr = s; *cptr != '\0' && w + wtab[(unsigned char)*cptr] < x; cptr++)
+		w += wtab[(unsigned char)*cptr];
+	if (halfshift && *cptr != '\0' && x > w + wtab[(unsigned char)*cptr]/2)
 		cptr++;
 	return cptr - s;
 }
