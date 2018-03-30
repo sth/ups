@@ -24,7 +24,7 @@
 /* @(#)memxxx.c	1.6 26/4/92 (UKC) */
 char utils_memxxx_rcsid[] = "$Id$";
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 #include <stdlib.h>
 
 

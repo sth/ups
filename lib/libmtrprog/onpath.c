@@ -24,7 +24,7 @@
 /* @(#)onpath.c	1.7 30/5/93 UKC */
 char utils_onpath_rcsid[] = "$Id$";
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 #include <stdlib.h>
 #include <local/ukcprog.h>
 #include "utils.h"

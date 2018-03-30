@@ -26,7 +26,7 @@ char rm_rf_rcsid[] = "$Id$";
 
 #define UKC_WANT_COMMON_UNIX_EXTENSIONS 1	/* for lstat() */
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/param.h>		/* for MAXPATHLEN */

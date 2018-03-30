@@ -24,7 +24,7 @@
 /* @(#)appltofl.c	1.9 16 Sep 1994 (UKC) */
 char utils_apply_to_files_in_rcsid[] = "$Id$";
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 #include <local/ukcprog.h>
 
 #include "utils.h"

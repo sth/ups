@@ -24,7 +24,7 @@
 /* @(#)failmesg.c	1.2 9/4/95 (UKC) */
 char utils_failmesg_rcsid[] = "$Id$";
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 #include <local/ukcprog.h>
 
 #include "utils.h"

@@ -24,7 +24,7 @@
 /* @(#)strtod.c	1.11 15/9/92 (UKC) */
 char utils_strtod_rcsid[] = "$Id$";
 
-#include <ifdefs.h>
+#include "ifdefs.h"
 
 #if HAVE_STRTOD
 /* Have it. */
