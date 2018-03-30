@@ -2286,9 +2286,9 @@ demangle_name_2(name, len, alloc_id, ptr, func, fil)
   Compiler_type ct;
 
   ct = ao_compiler(fil, FALSE, CT_UNKNOWN);
-  if (ct == CT_UNKNOWN)
-     *ptr = alloc_strdup(alloc_id, name);
-  else
+  //if (ct == CT_UNKNOWN)
+  //   *ptr = alloc_strdup(alloc_id, name);
+  //else
      demangle_name(name, len, alloc_id, ptr, func, ct);
 
   /* GNU f77 likes appending underscores to names of globals. */
