@@ -503,6 +503,31 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     unsigned char fp_reg;
     unsigned char sp_reg;
 
+    // Try to get direct attribute value first
+    {
+	Dwarf_Error err;
+	Dwarf_Attribute attribute;
+	Dwarf_Half form;
+	if (dwarf_attr(die, id, &attribute, &err) != DW_DLV_OK) {
+	    goto try_location;
+	}
+	if (dwarf_whatform(attribute, &form, &err) != DW_DLV_OK) {
+	    goto try_location;
+	}
+	if (form == DW_FORM_data1 || form == DW_FORM_data2 || form == DW_FORM_data4 || form == DW_FORM_data8 || form == DW_FORM_udata || form == DW_FORM_sdata) {
+	    Dwarf_Signed off;
+	    dwarf_formsdata(attribute, &off, 0);
+	    vaddr = (vaddr_t *)alloc(ap, sizeof(vaddr_t));
+	    vaddr->v_next = NULL;
+	    vaddr->v_low_pc = 0UL;
+	    vaddr->v_high_pc = ~0UL;
+	    vaddr->v_offset = off;
+	    vaddr->v_op = OP_U_OFFSET;
+	    return vaddr;
+	}
+    }
+
+try_location:
     if ((loclist = dwf_get_loclist(dbg, die, id, &count)) == NULL)
 	return (vaddr_t *)NULL;
 
