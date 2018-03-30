@@ -1,9 +1,12 @@
-
 Makefile
+Makefile.conf
+config.cache
+config.log
+config.status
 develhdrs
 ifdefs.h
 *.o
 *.a
 *.swp
+ups/ups
 /ups-state/*.state
-
