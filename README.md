@@ -29,7 +29,7 @@ debugging information in "dwarf" format enabled, preferably dwarf version 2.
 
 ## More Info
 
-For more information see the original [README][README] file, the [website][homepage],
+For more information see the original [README](README) file, the [website][homepage],
 and the various other documentation files in the repository.
 
  [homepage]: http://ups.sourceforge.net/
