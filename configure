@@ -681,6 +681,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -767,6 +768,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1019,6 +1021,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1156,7 +1167,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1309,6 +1320,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -7826,7 +7838,6 @@ for ac_func in \
  i386_clr_watch i386_set_watch \
  killpg remove rename setgrent setgroups setvbuf srandom tmpfile \
  sigaddset sigemptyset sigprocmask symlink readlink lstat \
- sys_nerr sys_errlist \
  setlinebuf utimes clock uname \
  siglongjmp _longjmp _setjmp _xustat __error __errno_location \
 
@@ -8047,98 +8058,6 @@ case "$ups_cv_decl_setlinebuf" in
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ups_cv_decl_setlinebuf}" >&5
 $as_echo "${ups_cv_decl_setlinebuf}" >&6; }
-
-# sys_nerr
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if sys_nerr declared" >&5
-$as_echo_n "checking if sys_nerr declared... " >&6; }
-if ${ups_cv_decl_sys_nerr+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-    ups_cv_decl_sys_nerr=no
-    if test $ups_cv_decl_sys_nerr = no ; then
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "sys_nerr.*;" >/dev/null 2>&1; then :
-  ups_cv_decl_sys_nerr=yes
-fi
-rm -f conftest*
-
-    fi
-    if test $ups_cv_decl_sys_nerr = no ; then
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <errno.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "sys_nerr.*;" >/dev/null 2>&1; then :
-  ups_cv_decl_sys_nerr=yes
-fi
-rm -f conftest*
-
-    fi
-
-fi
-
-case "$ups_cv_decl_sys_nerr" in
-    yes)	$as_echo "#define HAVE_SYS_NERR_DECL 1" >>confdefs.h
-
-    		;;
-esac
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ups_cv_decl_sys_nerr}" >&5
-$as_echo "${ups_cv_decl_sys_nerr}" >&6; }
-
-# sys_errlist
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if sys_errlist declared" >&5
-$as_echo_n "checking if sys_errlist declared... " >&6; }
-if ${ups_cv_decl_sys_errlist+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-    ups_cv_decl_sys_errlist=no
-    if test $ups_cv_decl_sys_errlist = no ; then
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "sys_errlist.*;" >/dev/null 2>&1; then :
-  ups_cv_decl_sys_errlist=yes
-fi
-rm -f conftest*
-
-    fi
-    if test $ups_cv_decl_sys_errlist = no ; then
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <errno.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "sys_errlist.*;" >/dev/null 2>&1; then :
-  ups_cv_decl_sys_errlist=yes
-fi
-rm -f conftest*
-
-    fi
-
-fi
-
-case "$ups_cv_decl_sys_errlist" in
-    yes)	$as_echo "#define HAVE_SYS_ERRLIST_DECL 1" >>confdefs.h
-
-    		;;
-esac
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${ups_cv_decl_sys_errlist}" >&5
-$as_echo "${ups_cv_decl_sys_errlist}" >&6; }
 
 # utimes()
 

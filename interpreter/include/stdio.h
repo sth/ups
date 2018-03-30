@@ -62,7 +62,6 @@ extern int      rename  (const char*, const char*)  ;
 #ifdef NOTYET
 extern FILE*    tmpfile  (void)  ;
 #endif
-extern char*    tmpnam  (char*)  ;
 extern int      fclose  (FILE*)  ;
 extern int      fflush  (FILE*)  ;
 extern FILE*    fopen  (const char*, const char*)  ;

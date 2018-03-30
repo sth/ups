@@ -121,7 +121,6 @@ extern int optind;
 extern char *optarg;
 
 static char **Builtin_environ = NULL;
-static char **Builtin_sys_errlist = NULL;
 #if HAVE_GLOBAL_CTYPE
 static char **Builtin_ctype = NULL;
 #endif
@@ -565,9 +564,6 @@ char **envp;
 	Builtin_environ = envp;
 #if HAVE_GLOBAL_CTYPE
 	Builtin_ctype = (char **)(GLOBAL_CTYPE);
-#endif
-#if HAVE_SYS_ERRLIST && HAVE_SYS_ERRLIST_DECL
-	Builtin_sys_errlist = (char **)sys_errlist;
 #endif
 }
 

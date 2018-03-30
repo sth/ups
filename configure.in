@@ -548,7 +548,6 @@ AC_CHECK_FUNCS(\
  i386_clr_watch i386_set_watch \
  killpg remove rename setgrent setgroups setvbuf srandom tmpfile \
  sigaddset sigemptyset sigprocmask symlink readlink lstat \
- sys_nerr sys_errlist \
  setlinebuf utimes clock uname \
  siglongjmp _longjmp _setjmp _xustat __error __errno_location \
  )
@@ -645,42 +644,6 @@ case "$ups_cv_decl_setlinebuf" in
     		;;
 esac
 AC_MSG_RESULT(${ups_cv_decl_setlinebuf})
-
-# sys_nerr
-
-AC_MSG_CHECKING(if sys_nerr declared)
-AC_CACHE_VAL(ups_cv_decl_sys_nerr,[
-    ups_cv_decl_sys_nerr=no
-    if test $ups_cv_decl_sys_nerr = no ; then
-	AC_EGREP_HEADER( sys_nerr.*;, stdio.h, ups_cv_decl_sys_nerr=yes)
-    fi
-    if test $ups_cv_decl_sys_nerr = no ; then
-	AC_EGREP_HEADER( sys_nerr.*;, errno.h, ups_cv_decl_sys_nerr=yes)
-    fi
-])
-case "$ups_cv_decl_sys_nerr" in
-    yes)	AC_DEFINE(HAVE_SYS_NERR_DECL)
-    		;;
-esac
-AC_MSG_RESULT(${ups_cv_decl_sys_nerr})
-
-# sys_errlist
-
-AC_MSG_CHECKING(if sys_errlist declared)
-AC_CACHE_VAL(ups_cv_decl_sys_errlist,[
-    ups_cv_decl_sys_errlist=no
-    if test $ups_cv_decl_sys_errlist = no ; then
-	AC_EGREP_HEADER( sys_errlist.*;, stdio.h, ups_cv_decl_sys_errlist=yes)
-    fi
-    if test $ups_cv_decl_sys_errlist = no ; then
-	AC_EGREP_HEADER( sys_errlist.*;, errno.h, ups_cv_decl_sys_errlist=yes)
-    fi
-])
-case "$ups_cv_decl_sys_errlist" in
-    yes)	AC_DEFINE(HAVE_SYS_ERRLIST_DECL)
-    		;;
-esac
-AC_MSG_RESULT(${ups_cv_decl_sys_errlist})
 
 # utimes()
 

@@ -32,17 +32,6 @@
  * this file is included.
  */
 
-#ifdef WANT_DECLS
-
-#if HAVE_SYS_ERRLIST && !HAVE_SYS_ERRLIST_DECL
-extern char *	sys_errlist[];
-#endif
-#if HAVE_SYS_NERR && !HAVE_SYS_NERR_DECL
-extern int	sys_nerr;
-#endif
-
-#endif
-
 #ifdef WANT_ADDRS
 #	define V(var)		(char *)&var,
 #	define V2(var, name)	(char *)&var,
@@ -69,16 +58,6 @@ extern int	sys_nerr;
 	V(errno)
 #endif
 
-#if HAVE_SYS_NERR
-	V(sys_nerr)
-#endif
-#if HAVE_SYS_ERRLIST
-#if HAVE_SYS_ERRLIST_DECL
-	V2(Builtin_sys_errlist, "sys_errlist")
-#else
-	VA(sys_errlist, "sys_errlist")
-#endif
-#endif
 	V(optind)
 	V(optarg)
 	V2(Builtin_environ, "environ")

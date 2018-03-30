@@ -331,8 +331,6 @@
 /* Most of these are for the C interpreter. */
 #define HAVE_CTYPE_FUNCTIONS	0
 #define HAVE_FEOF_FUNCTIONS	0
-#define HAVE_SYS_ERRLIST	0
-#define HAVE_SYS_NERR		0
 #define HAVE_GLOBAL_CTYPE	0
 #define HAVE_GLOBAL_IOB		0
 #define GLOBAL_CTYPE		0
@@ -354,8 +352,6 @@
 #define HAVE_KILLPG_DECL	0
 #define HAVE_SETLINEBUF_DECL	0
 #define HAVE_SRANDOM_DECL	0
-#undef HAVE_SYS_ERRLIST_DECL
-#undef HAVE_SYS_NERR_DECL
 #define HAVE_UTIMES_DECL	0
 #define HAVE_WAIT3_DECL		0
 #define HAVE_ERRNO_LOCATION_DECL 0
@@ -565,13 +561,8 @@ char *strchr (), *strrchr ();
 
 #include <errno.h>
 #if !HAVE_STRERROR
-extern char *sys_errlist[];
-extern int sys_nerr;
-/* As we have just declared them ... */
-#define HAVE_SYS_ERRLIST_DECL	1
-#define HAVE_SYS_NERR_DECL	1
 #define strerror(n) \
-    (((n) >= 0 && (n) < sys_nerr) ? sys_errlist[n] : "unknown error")
+    ("unknown error")
 #endif
 
 

@@ -121,7 +121,6 @@ int   send(), recv(), sendto(), recvfrom(), sendmsg(), recvmsg();
 int   accept(), bind(), connect(), listen(), shutdown();
 int   socket(), socketpair(), getsockopt(), setsockopt();
 int   getpeername(), getsockname();
-char *mktemp();
 #if defined(__STDC__)
 int   clearerr(), feof(), ferror();
 #endif
@@ -210,7 +209,6 @@ int _doprnt(void);
 #if HAVE_TMPFILE
 	F(tmpfile)
 #endif
-	F(tmpnam)
 #if HAVE_SETVBUF
 	F(setvbuf)
 #endif
@@ -476,7 +474,6 @@ int _doprnt(void);
 #if HAVE_UTIMES
 	F(utimes)
 #endif
-	F(mktemp)
 #if HAVE_MKSTEMP
 	F(mkstemp)
 #endif
