@@ -71,9 +71,9 @@ then
     oldCFLAGS="$CFLAGS"
     AC_TRY_LINK([#include <stdio.h>], [int i;], unused=yes)
     if test "$unused" = "yes" ; then
-        CFLAGS="$oldCFLAGS -Wall -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-value -Wno-unused-but-set-variable -Wno-unused-result"
+        CFLAGS="$oldCFLAGS -Wall -Wextra -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-value -Wno-unused-but-set-variable -Wno-unused-result"
     else
-        CFLAGS="$oldCFLAGS -Wall -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused"
+        CFLAGS="$oldCFLAGS -Wall -Wextra -W -Wno-sign-compare -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused"
     fi
 fi
 
