@@ -62,6 +62,10 @@ char ups_ao_ptrace_c_rcsid[] = "$Id$";
 #include <machine/sysarch.h>
 #endif
 
+#if HAVE_SYS_PERSONALITY_H
+#include <sys/personality.h>
+#endif
+
 #include "ups.h"
 #include "ui.h"
 #include "mreg.h"
@@ -517,7 +521,16 @@ stopres_t *p_stopres;
 	fflush(stderr);
 
 	if ((pid = vfork()) == 0) {
+		int pers;
 		arg_do_redirs_in_child(rdlist);
+#if HAVE_SYS_PERSONALITY_H
+		if ((pers = personality(0xffffffffUL)) == -1) {
+		    errf("getting personality failed");
+		}
+		else if (personality(pers | ADDR_NO_RANDOMIZE) == -1) {
+		    errf("setting personality failed");
+		}
+#endif
 		if (std_ptrace(PTRACE_TRACEME, 0, (char *)NULL, 0) != 0)
 			panic("ptrace TRACEME request failed in child");
 		execve(xp->xp_textpath, (char **)argv, (char **)envp);

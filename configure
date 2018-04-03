@@ -5632,7 +5632,7 @@ for ac_header in \
  machine/tss.h machine/vmparam.h \
  sys/core.h sys/dir.h sys/errno.h sys/fault.h sys/file.h sys/frame.h \
  sys/ioctl.h \
- sys/param.h sys/poll.h sys/procfs.h sys/ptrace.h sys/reg.h sys/resource.h \
+ sys/param.h sys/personality.h sys/poll.h sys/procfs.h sys/ptrace.h sys/reg.h sys/resource.h \
  sys/socket.h sys/stat.h sys/time.h sys/types.h \
  sys/ucontext.h sys/user.h sys/utsname.h sys/vmparam.h \
 

@@ -263,6 +263,7 @@
 #define HAVE_SYS_IOCTL_H	0
 #define HAVE_SYS_NDIR_H		0
 #define HAVE_SYS_PARAM_H	0
+#define HAVE_SYS_PERSONALITY_H  0
 #define HAVE_SYS_POLL_H		0
 #define HAVE_SYS_PROCFS_H	0
 #define HAVE_SYS_PTRACE_H	0
