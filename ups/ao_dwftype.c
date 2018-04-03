@@ -1101,7 +1101,7 @@ dtype_t *dtypes;
 	}
     }
 
-    return (dt && dt->dt_base_offset == (off_t)0) ? dt->dt_type : NULL;
+    return (dt->dt_base_offset == (off_t)0) ? dt->dt_type : NULL;
 }
 
 /*
