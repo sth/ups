@@ -158,8 +158,9 @@ type_t *type;
 	case TY_LONGDOUBLE:
 		return LONG_DBL_ALIGN;
 	default:
+	case TY_NOTYPE:
 		ci_panic("bad type in ta");
-		return 0; /* to satisfy gcc */
+		return -1;
 	}
 }
 
