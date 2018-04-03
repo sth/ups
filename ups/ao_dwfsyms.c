@@ -156,7 +156,7 @@ stf_t *stf;
 	    goto cleanup_name;
 	}
 	if (f->fu_flags & FU_DONE_LNOS) {
-	    panic("dwf_do_cu_lines: Already done lnos");
+	    errf("dwf_do_cu_lines: Already done lnos");
 	    goto cleanup_name;
 	}
 

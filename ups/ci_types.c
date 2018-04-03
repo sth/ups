@@ -159,7 +159,7 @@ type_t *type;
 		return LONG_DBL_ALIGN;
 	default:
 	case TY_NOTYPE:
-		ci_panic("bad type in ta");
+		errf("bad type in ta");
 		return -1;
 	}
 }
