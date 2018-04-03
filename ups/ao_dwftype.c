@@ -992,7 +992,8 @@ int recursed;
 		base = dt->dt_type->ty_base;
 		qual = dest->ty_qualifiers;
 		lx = dest->ty_lexinfo;
-		dwf_copy_type(dest, base);
+		if (base)
+		    dwf_copy_type(dest, base);
 		dest->ty_qualifiers = qual;
 		if (lx)
 		    dest->ty_lexinfo = lx;

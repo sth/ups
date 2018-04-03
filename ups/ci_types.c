@@ -959,13 +959,18 @@ ci_type_to_decl(type, resolve_typedefs)
 type_t *type;
 bool resolve_typedefs;
 {
-	char *str, *new, *cptr;
+	char *str, *new=NULL, *cptr;
 	bool quit, last_was_ptr;
 	
 	str = strsave("");
 	quit = last_was_ptr = FALSE;
 	for (;;) {
 		const char *asizestr;
+
+		if (!type) {
+		    new = strf("%s{?}", str);
+		    return new;
+		}
 
 		if (!resolve_typedefs && type->ty_typedef != NULL)
 			break;
@@ -997,7 +1002,6 @@ bool resolve_typedefs;
 			break;
 		default:
 			quit = TRUE;
-			new = NULL;	/* to satisfy gcc */
 			break;
 		}
 		if (quit)
