@@ -134,13 +134,7 @@ stf_t *stf;
      * If type already defined elsewhere then add to list on '->tn_next'.
      */
     name = dwf_get_string(dbg, ap, die, DW_AT_name);
-    if ((prev_tn = dwf_find_typename(st, stf, name)) != NULL) {
-	if (prev_tn->tn_stf == stf) {
-	    errf("Already saved typename %s in this CU <%ld>",
-		 name, (long)stf->stf_cu_hdr_offset);
-	    return prev_tn;
-	}
-    }
+    prev_tn = dwf_find_typename(st, stf, name);
 
     /*
      * dwarfTODO: perhaps dwf_offset_of_die() would be better ?
