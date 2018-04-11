@@ -120,7 +120,7 @@ stf_t *stf;
     /*
      * Work through the source line info.  Start at end so we can push the
      * 'lno' at the head of the list (saves having to reverse it later).
-     * This assumes the information is is ascending address order.
+     * The result should be in ascending address order.
      *
      * dwarf_lineoff() gives column statement starts at or -1 if not set.
      * (GCC does not set it)
@@ -171,8 +171,25 @@ stf_t *stf;
 	lno->ln_col = ln_col;
 	lno->ln_num = ln_num;
 	lno->ln_addr = (taddr_t)addr + stf->stf_addr;
-	lno->ln_next = f->fu__lnos;
-	f->fu__lnos = lno;
+
+	// The parsed data usually, but not always, is in anscending address order.
+	// C++ destructors for example might be "out of line". In that case we have to
+	// search for the correct insert position.
+	if (!f->fu__lnos || f->fu__lnos->ln_addr >= lno->ln_addr) {
+	    // New head
+	    lno->ln_next = f->fu__lnos;
+	    f->fu__lnos = lno;
+	}
+	else {
+	    // Find insert position
+	    lno_t *ins = f->fu__lnos;
+	    while (ins->ln_next && ins->ln_next->ln_addr < lno->ln_addr) {
+		ins = ins->ln_next;
+	    }
+	    lno->ln_next = ins->ln_next;
+	    ins->ln_next = lno;
+	}
+
 	if (f->fu_max_lnum < ln_num)
 	    f->fu_max_lnum = ln_num;
 
