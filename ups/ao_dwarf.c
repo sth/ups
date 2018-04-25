@@ -105,7 +105,7 @@ dwf_fatal_error (char *msg, int dwarf_code, Dwarf_Die die, Dwarf_Error err)
     char *s = dwf_error_msg(msg, dwarf_code, die, err);
     errf(s);
 #if WANT_DEBUG
-    fprintf(stderr, s);
+    fprintf(stderr, "%s", s);
 #endif
     free(s);
 }
