@@ -1299,14 +1299,15 @@ objid_t *p_var_obj;
 		}
 	}
 
-       if (fil1 != NULL) 
-	if ((var_obj1 = find_var(obj1, v1)) == NULL ||
-	    restoring == TRUE) {
-		var_obj1 = add_var_object(obj1, v1, OBJ_LAST_CHILD, restoring);
-		if (get_object_type(obj1) == OT_SFILE) {
-			change_type(obj1, OT_SFILE_EX);
-			sort_children(SRCHEAD_OBJCODE, src_cmp);
-		}
+	if (fil1 != NULL) {
+	    if ((var_obj1 = find_var(obj1, v1)) == NULL ||
+		restoring == TRUE) {
+		    var_obj1 = add_var_object(obj1, v1, OBJ_LAST_CHILD, restoring);
+		    if (get_object_type(obj1) == OT_SFILE) {
+		       change_type(obj1, OT_SFILE_EX);
+		       sort_children(SRCHEAD_OBJCODE, src_cmp);
+		    }
+	    }
 	}
 	if (p_var_obj != NULL) {
 		*p_var_obj = var_obj;
