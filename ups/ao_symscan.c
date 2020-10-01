@@ -2229,12 +2229,16 @@ char* name;
     char* dmangle = NULL;
     switch ( ao_compiler(NULL, FALSE, CT_UNKNOWN))
     {
+#ifdef DMGL_GNU
     case CT_GNU_CC:
         dmangle = cplus_demangle(name, DMGL_GNU);
 	break;
+#endif
+#ifdef DMGL_ARM
     case CT_CLCC:
         dmangle = cplus_demangle(name, DMGL_ARM);
 	break;
+#endif
     case CT_CC:
       {
 #if HAVE_CPLUS_DEMANGLE
@@ -2262,6 +2266,7 @@ char* name;
 	break;
       }
     default:
+	dmangle = cplus_demangle(name, DMGL_AUTO);
 	break;
     }
     return dmangle;
