@@ -258,7 +258,6 @@ load_ld_so_cache(void)
 	pid_t pid;
 	pid_t wpid;
 	char buf[MAXPATHLEN+256];
-	Solib_path *cache_tail = NULL;
 
 	if (pipe(fds) != 0) {
 		errf("Pipe failed: %s", get_errno_str());
@@ -290,6 +289,7 @@ load_ld_so_cache(void)
 
 	close(fds[1]);
 
+	Solib_path *cache_tail = NULL;
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char name[256];
 		char path[MAXPATHLEN];
