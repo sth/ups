@@ -1567,7 +1567,7 @@ proc_memcpy:
 			width = *pc++;
 			*sp = (*sp >> offset) & ((1 << width) - 1);
 			if (*sp & (1 << (width - 1)))
-				*sp |= ~0 << width;
+				*sp |= ~0u << width;
 			BREAK; }
 		CASE OC_INSERT_SIGNED_BITFIELD:
 		CASE OC_INSERT_UNSIGNED_BITFIELD: {
