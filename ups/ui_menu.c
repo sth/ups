@@ -3316,6 +3316,7 @@ get_custom_menu_str(func, ev)
 	      break;
 	    }
 	    /* else fall into default case */
+	    /* fall through */
 	  default:
 	    /*
 	     **    Back up and pass the '\' through

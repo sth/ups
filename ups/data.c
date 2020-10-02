@@ -669,6 +669,7 @@ char *buffer;    /* Place output here */
 	case 3:
 	    grp = 2;
 	    /* fall into next case */
+	    /* fall through */
 	case 2:
 	    val = *(unsigned short*)target_mem;
 	    fmt = "%04lx ";

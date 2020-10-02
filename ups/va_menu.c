@@ -1037,6 +1037,7 @@ vformat_t  fmt;
 	  break;
 	}
 	/* Else fall into stuct/union cases */
+	/* fall through */
     case TY_U_STRUCT:
     case TY_U_UNION:
     case TY_STRUCT:
@@ -1050,6 +1051,7 @@ vformat_t  fmt;
     case TY_LONGLONG:
 	issigned = 1;
 	/* Fall into unsigned cases */
+	/* fall through */
     case TY_UCHAR:
     case TY_USHORT:
     case TY_UINT:

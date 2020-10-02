@@ -1665,7 +1665,7 @@ int tnum, eval;
 	/*  Record.
 	 */
 	case 'Y':		/* RGA */
-	        bump_str(sr, &s); /* drop thru */
+	        bump_str(sr, &s); /* fall through */
 
 	case 'c':		/* RGA C++ class*/
 	case 'C':		/* RGA SC4.2 nested class*/
