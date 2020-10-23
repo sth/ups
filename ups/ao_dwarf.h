@@ -64,7 +64,6 @@ Dwarf_Signed	dwf_get_number(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 bool		dwf_get_flag(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 bool		dwf_get_opt_flag(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 Dwarf_Locdesc **dwf_get_loclist(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id, Dwarf_Signed *p_len);
-Dwarf_Signed	dwf_get_loclist_length(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half id);
 
 #else
 
