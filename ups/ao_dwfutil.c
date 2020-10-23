@@ -493,7 +493,9 @@ stf_t *stf;
 vaddr_t *
 dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id, vaddr_t *frame_base)
 {
+    int rv;
     int i;
+    Dwarf_Locdesc *loclist_ptr = NULL;
     Dwarf_Locdesc **loclist;
     Dwarf_Signed count = 0;
     Dwarf_Small op;
@@ -525,12 +527,28 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    vaddr->v_op = OP_U_OFFSET;
 	    return vaddr;
 	}
+	if (form == DW_FORM_exprloc) {
+	    Dwarf_Unsigned len;
+	    Dwarf_Ptr data;
+	    if ((rv = dwarf_formexprloc(attribute, &len, &data, &err)) != DW_DLV_OK) {
+		dwf_fatal_error("dwarf_formexprloc", rv, die, err);
+		return (vaddr_t*)NULL;
+	    }
+	    if ((rv = dwarf_loclist_from_expr(dbg, data, len, &loclist_ptr, &count, &err)) != DW_DLV_OK) {
+		dwf_fatal_error("dwarf_loclist_from_expr", rv, die, err);
+		return (vaddr_t*)NULL;
+	    }
+	    loclist = &loclist_ptr;
+	    goto process_location;
+	}
     }
 
 try_location:
-    if ((loclist = dwf_get_loclist(dbg, die, id, &count)) == NULL)
+    if ((loclist = dwf_get_loclist(dbg, die, id, &count)) == NULL) {
 	return (vaddr_t *)NULL;
+    }
 
+process_location:
     switch (xp_get_addrsize(get_current_target()))
     {
     case 32:
@@ -659,7 +677,9 @@ try_location:
 	dwarf_dealloc(dbg, ld->ld_s, DW_DLA_LOC_BLOCK);
 	dwarf_dealloc(dbg, ld, DW_DLA_LOCDESC);
     }
-    dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
+    if (loclist != &loclist_ptr) {
+	dwarf_dealloc(dbg, loclist, DW_DLA_LIST);
+    }
 
     return head;
 }
