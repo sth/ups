@@ -314,8 +314,7 @@ Dwarf_Die spec_die;	/* DIE holding routine specification. */
     fs->fs_high_pc = dwf_get_address(dbg, addr_die, DW_AT_high_pc, fs->fs_low_pc - stf->stf_addr) + stf->stf_addr;
     fs->fs_die_offset = dwf_offset_of_die(dbg, addr_die);
 
-    if (dwf_has_attribute(dbg, addr_die, DW_AT_frame_base) &&
-	dwf_get_loclist_length(dbg, addr_die, DW_AT_frame_base) == 1) {
+    if (dwf_has_attribute(dbg, addr_die, DW_AT_frame_base)) {
 	if ((fs->fs_frame_base = dwf_get_location(dbg, st->st_apool, addr_die, DW_AT_frame_base, NULL)) == NULL)
 	    fs->fs_frame_base = BAD_FRAME_BASE;
     }
