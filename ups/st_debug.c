@@ -742,11 +742,12 @@ dt_is_t dt_is;
 }
 
 void
-dump_dtype_t(dt, level, follow)
-dtype_t *dt;
+dump_dtype_t(dts, level, follow)
+dtypes_t *dts;
 int level;
 bool follow;
 {
+    dtype_t *dt = dts->dts_first_dt;
     if (dt == NULL) {
 	fprintf(stderr, "%*.*sdtype_t\t[NULL]\n",
 		level*4, level*4, "....");

@@ -49,6 +49,10 @@ char ups_ao_dwftype_c_rcsid[] = "$Id$";
 #include "ao_dwftype.h"
 #include "ao_dwfutil.h"
 
+#if HAVE_SEARCH_H
+#include <search.h>
+#endif
+
 #ifndef DW_ATE_UTF
 #define DW_ATE_UTF 0x10
 #endif
@@ -73,7 +77,17 @@ dwf_try_resolve_base_type PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 static int
 dwf_guess_ae_alignment PROTO((aggr_or_enum_def_t *ae));
 static type_t *
-dwf_fixup_type PROTO((dtype_t *dt, dtype_t *dtypes));
+dwf_fixup_type PROTO((dtype_t *dt, dtypes_t *dtypes));
+
+int dtype_offset_cmp(const void *vleft, const void *vright) {
+    const dtype_t *left = (const dtype_t*)vleft;
+    const dtype_t *right = (const dtype_t*)vright;
+    if (left->dt_offset < right->dt_offset)
+	return -1;
+    if (left->dt_offset == right->dt_offset)
+	return 0;
+    return 1;
+}
 
 /*
  * Determine the UPS typecode_t value from DWARF encoding etc.
@@ -599,6 +613,9 @@ type_t **p_type;
 type_t *x_type;
 {
     dtype_t *dt;
+#if HAVE_SEARCH_H
+    dtype_t **dt_ins;
+#endif
 
     /*
      * dwarfTODO: perhaps dwf_offset_of_die() would be better ?
@@ -614,11 +631,17 @@ type_t *x_type;
     /*
      * Put at end of list - dwf_fixup_types() relies on this.
      */
-    if (stf->stf_dtypes == NULL)
-	stf->stf_dtypes = dt;
-    if (stf->stf_last_dt != NULL)
-	stf->stf_last_dt->dt_next = dt;
-    stf->stf_last_dt = dt;
+    if (stf->stf_dtypes.dts_first_dt == NULL)
+	stf->stf_dtypes.dts_first_dt = dt;
+    if (stf->stf_dtypes.dts_last_dt != NULL)
+	stf->stf_dtypes.dts_last_dt->dt_next = dt;
+    stf->stf_dtypes.dts_last_dt = dt;
+#if HAVE_SEARCH_H
+    dt_ins = (dtype_t **)tsearch(dt, &stf->stf_dtypes.dts_search_root, &dtype_offset_cmp);
+    if (*dt_ins != dt) {
+	errf("dwf_make_dtype - duplicate offset");
+    }
+#endif
 
     return dt;
 }
@@ -822,7 +845,7 @@ block_t *bl;
      */
     if (dwf_has_attribute(dbg, die, DW_AT_type)) {
 	base_offset = dwf_get_cu_ref(dbg, die, DW_AT_type);
-	if ((base = dwf_lookup_dtype(stf->stf_dtypes, base_offset)) != NULL)
+	if ((base = dwf_lookup_dtype(&stf->stf_dtypes, base_offset)) != NULL)
 	    if (base->dt_base_offset == 0)
 		type->ty_base = dwf_type_from_dtype(base);
 	    else
@@ -854,16 +877,28 @@ block_t *bl;
  * Start looking at the specified 'dt'.
  */
 dtype_t *
-dwf_lookup_dtype(dt, offset)
-dtype_t *dt;
+dwf_lookup_dtype(dts, offset)
+dtypes_t *dts;
 off_t offset;
 {
+#if HAVE_SEARCH_H
+    dtype_t dt_search;
+    dtype_t **dt_res;
+    dt_search.dt_offset = offset;
+    dt_res = tfind(&dt_search, &dts->dts_search_root, &dtype_offset_cmp);
+    if (dt_res)
+	return *dt_res;
+    else
+	return NULL;
+#else
+    dtype_t *dt = dts->dts_first_dt;
     while (dt != NULL) {
 	if (dt->dt_offset == offset)
 	    return dt;
 	dt = dt->dt_next;
     }
     return (dtype_t *)NULL;
+#endif
 }
 
 /*
@@ -871,11 +906,11 @@ off_t offset;
  * Start looking at the specified 'dt'.
  */
 type_t *
-dwf_lookup_type(dt, offset)
-dtype_t *dt;
+dwf_lookup_type(dts, offset)
+dtypes_t *dts;
 off_t offset;
 {
-    return dwf_type_from_dtype(dwf_lookup_dtype(dt, offset));
+    return dwf_type_from_dtype(dwf_lookup_dtype(dts, offset));
 }
 
 /*
@@ -887,7 +922,7 @@ dwf_find_type(stf, offset)
 stf_t *stf;
 off_t offset;
 {
-    return dwf_lookup_type(stf->stf_dtypes, offset);
+    return dwf_lookup_type(&stf->stf_dtypes, offset);
 }
 
 /*
@@ -942,10 +977,11 @@ aggr_or_enum_def_t *ae;
  * Also fix base class names in inherited classes.
  */
 int
-dwf_fixup_types(dt, recursed)
-dtype_t *dt;
+dwf_fixup_types(dts, recursed)
+dtypes_t *dts;
 int recursed;
 {
+    dtype_t *dt = dts->dts_first_dt;
     dtype_t *start = dt;
     type_t *dest;
     int incomplete = 0;
@@ -955,7 +991,7 @@ int recursed;
      * First resolve base types.
      */
     for (dt = start; dt; dt = dt->dt_next) {
-	dwf_fixup_type(dt, start);
+	dwf_fixup_type(dt, dts);
 	if (dt->dt_base_offset != (off_t)0) {
 	    incomplete++;
 	    if (recursed == 0) {
@@ -1074,7 +1110,7 @@ fprintf(stderr, "level %d - %d incomplete type(s), %d bad type(s)\n", recursed, 
 static type_t *
 dwf_fixup_type(dt, dtypes)
 dtype_t *dt;
-dtype_t *dtypes;
+dtypes_t *dtypes;
 {
     dtype_t *dbase;
     type_t *base;

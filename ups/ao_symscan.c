@@ -471,8 +471,9 @@ taddr_t addr;
 	stf->stf_dw_dbg = NULL;
 	stf->stf_cu_hdr_offset = (off_t)0;
 	stf->stf_cu_die_offset = (off_t)0;
-	stf->stf_dtypes = NULL;
-	stf->stf_last_dt = NULL;
+	stf->stf_dtypes.dts_first_dt = NULL;
+	stf->stf_dtypes.dts_last_dt = NULL;
+	stf->stf_dtypes.dts_search_root = NULL;
 	stf->stf_parent = NULL;
 #endif
 #ifdef AO_ELF

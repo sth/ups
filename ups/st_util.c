@@ -62,6 +62,9 @@ char ups_st_util_c_rcsid[] = "$Id$";
 #include "ao_syms.h"
 #include "ao_elfsym.h"
 #endif
+#if HAVE_SEARCH_H
+#include <search.h>
+#endif
 
 /*  Element in the linked list of global variable names and 
  *  addresses for a symbol table.
@@ -488,6 +491,16 @@ symtab_t *st;
 	/*  Close any source files we have open.
 	 */
 	for (fil = st->st_sfiles; fil != NULL; fil = fil->fi_next) {
+#if WANT_DWARF && HAVE_SEARCH_H
+		stf_t *stf;
+		dtype_t *dt;
+		stf = AO_FIDATA(fil);
+		dt = stf->stf_dtypes.dts_first_dt;
+		while (dt) {
+			tdelete(dt, &stf->stf_dtypes.dts_search_root, &dtype_offset_cmp);
+			dt = dt->dt_next;
+		}
+#endif
 		if (fil->fi_srcbuf != NULL)
 			srcbuf_destroy(fil->fi_srcbuf);
 	}

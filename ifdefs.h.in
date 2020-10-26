@@ -239,6 +239,7 @@
 #define HAVE_UNISTD_H		0
 #define HAVE_VARARGS_H		0
 #define HAVE_VFORK_H		0
+#define HAVE_SEARCH_H		0
 
 #define HAVE_ASM_DEBUGREG_H	0
 #define HAVE_LINUX_DEBUGREG_H   0

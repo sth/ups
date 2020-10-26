@@ -244,6 +244,14 @@ typedef struct typename_s {
 	struct typename_s *tn_next;	/* Next with the same name. */
 } typename_t;
 
+int dtype_offset_cmp(const void *vleft, const void *vright);
+
+typedef struct dtypes_s {
+    dtype_t *dts_first_dt;
+    dtype_t *dts_last_dt;
+    void *dts_search_root;
+} dtypes_t;
+
 /*
  * Symbol table information dependent on symbol table types being supported.
  *
@@ -289,8 +297,7 @@ typedef struct stf_s {
 	Dwarf_Debug stf_dw_dbg;		/* Handle for libdwarf calls */
 	off_t stf_cu_hdr_offset;	/* Offset of the CU header */
 	off_t stf_cu_die_offset;	/* Offset of the CU DIE */
-	dtype_t *stf_dtypes;		/* List of types. */
-	dtype_t *stf_last_dt;		/* End of stf_dtypes list. */
+	dtypes_t stf_dtypes;		/* List of types. */
 	struct stf_s *stf_parent;	/* Parent (for stf_fmap entries) */
 #endif
 } stf_t;

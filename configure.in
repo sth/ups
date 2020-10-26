@@ -377,6 +377,7 @@ AC_CHECK_HEADERS(\
  sys/socket.h sys/stat.h sys/time.h sys/types.h \
  sys/ucontext.h sys/user.h sys/utsname.h sys/vmparam.h \
  libdwarf/libdwarf.h \
+ search.h \
  )
 
 

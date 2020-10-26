@@ -55,10 +55,10 @@ dtype_t *	dwf_make_typedef PROTO((Dwarf_Debug dbg, Dwarf_Die die,
 					alloc_pool_t *ap, stf_t *stf,
 					block_t *bl));
 
-dtype_t *	dwf_lookup_dtype PROTO((dtype_t *dt, off_t offset));
-type_t *	dwf_lookup_type PROTO((dtype_t *dt, off_t offset));
+dtype_t *	dwf_lookup_dtype PROTO((dtypes_t *dts, off_t offset));
+type_t *	dwf_lookup_type PROTO((dtypes_t *dts, off_t offset));
 type_t *	dwf_find_type PROTO((stf_t *stf, off_t offset));
-int		dwf_fixup_types PROTO((dtype_t *dt, int recursed));
+int		dwf_fixup_types PROTO((dtypes_t *dt, int recursed));
 void		dwf_finish_aggregate PROTO((dtype_t *dt));
 void		dwf_finish_class PROTO((dtype_t *dt));
 
