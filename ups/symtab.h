@@ -72,6 +72,9 @@ typedef enum typecodeen {
 /* seperator between derivations and base types */
 	TY_NOTYPE,
 
+/* Type couldn't be determined */
+	TY_UNKNOWN,
+
 /* Parse internal */
 	PI_SAME_AS,	/* Defined to be same as ty_base (RCB) */
 

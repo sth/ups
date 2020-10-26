@@ -414,6 +414,9 @@ func_t *f;
 	name = dwf_get_string(dbg, ap, spec_die, DW_AT_name);
     type_offset = dwf_get_cu_ref(dbg, spec_die, DW_AT_type);
     type = dwf_find_type(stf, type_offset);
+    if (type == NULL) {
+	type = ci_make_type(ap, TY_UNKNOWN);
+    }
 
     /*
      * Is this a bitfield structure member ?
@@ -979,13 +982,6 @@ int recursed;
 		dest = dt->dt_type;
 		if (dest->ty_code != TY_NOTYPE)
 		    break;
-		/*
-		 * Only qualified types should have got a dummy type.
-		 */
-		if (dt->dt_type->ty_qualifiers == 0) {
-		    errf("\bUnqualified dummy DWARF type");
-		    break;
-		}
 		/*
 		 * Copy the base type, preserving the qualifiers and lexinfo.
 		 */

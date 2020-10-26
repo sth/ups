@@ -589,6 +589,9 @@ type_t *type;
 			size = LONG_DBL_SIZE;
 			break;
 #endif
+		case TY_UNKNOWN:
+			size = 0;
+			break;
 		default:
 /*			ci_panic("unknown typecode in ts");*/
 /*			size = -1;*/ /* to satisfy gcc */
@@ -812,8 +815,10 @@ type_t *type;
 	static char buf[4096];
 	const char *tagtype, *tag;
 
-	if (type->ty_base != NULL)
-		ci_panic("ci_basetype_name called on derived type");
+	if (type->ty_base != NULL) {
+		// This currently happens for example for `decltype(voidptr_t)` with base `void`
+		return ci_basetype_name(type->ty_base);
+	}
 
 	strcpy(buf, qualifiers_to_string(type->ty_qualifiers));
 
@@ -841,6 +846,15 @@ type_t *type;
 	
 	case TY_BITFIELD:
 		return "bitfield";
+
+	case TY_UNKNOWN:
+		if (type->ty_name) {
+			(void) snprintf(buf, sizeof(buf), "(unknown) %s", type->ty_name);
+			return buf;
+		}
+		else {
+			return "unknown type";
+		}
 
 	default:
 		return type->ty_name;	
@@ -1001,6 +1015,12 @@ bool resolve_typedefs;
 			new = strf(last_was_ptr ? "(%s)[%s]" : "%s[%s]",
 							        str, asizestr);
 			break;
+		case TY_NOTYPE:
+			if (type->ty_base) {
+			    return ci_type_to_decl(type->ty_base, resolve_typedefs);
+			}
+			// fallthrough
+
 		default:
 			quit = TRUE;
 			break;
@@ -1189,6 +1209,8 @@ typecode_t typecode;
 	case TY_LOGICAL:	return "logical";
 	case TY_CHARACTER:	return "character";
 	case TY_FVOID:		return "fvoid";
+
+	case TY_UNKNOWN:
 	default:		return "unknown type";
     }
 }

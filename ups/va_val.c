@@ -588,6 +588,9 @@ dvar_t *dv;
 	if (addr == BAD_ADDR)
 		return "<Address out of range>";
 
+	if (v->va_type->ty_code == TY_UNKNOWN)
+		return "<unknown>";
+
         if (dynamic_type_size(v->va_type, dv->dv_ilist) == 0)
                 return "<Zero size object>";
 

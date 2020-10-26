@@ -527,7 +527,7 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    vaddr->v_op = OP_U_OFFSET;
 	    return vaddr;
 	}
-	if (form == DW_FORM_exprloc) {
+	else if (form == DW_FORM_exprloc) {
 	    Dwarf_Unsigned len;
 	    Dwarf_Ptr data;
 	    if ((rv = dwarf_formexprloc(attribute, &len, &data, &err)) != DW_DLV_OK) {
@@ -540,6 +540,9 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
 	    }
 	    loclist = &loclist_ptr;
 	    goto process_location;
+	}
+	else {
+	    errf("dwf_get_location : form unrecognized");
 	}
     }
 

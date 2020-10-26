@@ -577,6 +577,7 @@ int recursed;		/* Recursion level, 0 = top. */
 	    break;
 
 	case DW_TAG_imported_unit:
+	case DW_TAG_imported_module:
 	    imported_die = dwf_die_at_attribute(dbg, die, DW_AT_import);
 	    dwf_load_from_die(st, stf, p_flist, f, p_blocklist, parent_bl,
 			      parent_dt, imported_die, dw_what, dw_level,
@@ -756,6 +757,7 @@ int recursed;		/* Recursion level, 0 = top. */
 	    break;
 
 	case DW_TAG_reference_type:
+	case DW_TAG_rvalue_reference_type:
 	    if (dw_what & DWL_ANY_TYPES) {
 		/*
 		 * Reference to ...
@@ -803,6 +805,10 @@ int recursed;		/* Recursion level, 0 = top. */
 	case DW_TAG_const_type:
 	case DW_TAG_volatile_type:
 	case DW_TAG_packed_type:
+	case DW_TAG_atomic_type:
+	case DW_TAG_immutable_type:
+	case DW_TAG_mutable_type: // DWARF3 only
+	case DW_TAG_restrict_type:
 	    if (dw_what & DWL_GLOBAL_TYPES) {
 		/*
 		 * Make a dummy type, dwf_fixup_types() fixes things.
@@ -812,8 +818,9 @@ int recursed;		/* Recursion level, 0 = top. */
 		    dt->dt_type->ty_qualifiers |= QU_VOLATILE;
 		else if (tag == DW_TAG_packed_type)
 		    dt->dt_type->ty_qualifiers |= QU_PACKED;
-		else
+		else if (tag == DW_TAG_const_type)
 		    dt->dt_type->ty_qualifiers |= QU_CONST;
+		// TODO: could add more QU_* for atomic/...
 	    }
 	    break;
 
@@ -965,15 +972,39 @@ int recursed;		/* Recursion level, 0 = top. */
 	    }
 	    break;
 
+	case DW_TAG_imported_declaration:
+	    /*
+	     * Make a dummy type, dwf_fixup_types() fixes things.
+	     */
+	    if (dw_what & DWL_ANY_TYPES) {
+		dt = dwf_make_type(dbg, die, ap, stf, TY_NOTYPE);
+		dt->dt_base_offset = dwf_get_offset(dbg, die, DW_AT_import);
+	    }
+	    break;
+
 	case DW_TAG_ptr_to_member_type:
 	    break;
 
-	case DW_TAG_restrict_type:	/* DWARF 3 */
-	case DW_TAG_interface_type:	/* DWARF 3 */
-	case DW_TAG_unspecified_type:	/* DWARF 3 */
-	case DW_TAG_mutable_type:	/* DWARF 3 */
+	case DW_TAG_unspecified_type:
+	    dt = dwf_make_type(dbg, die, ap, stf, TY_UNKNOWN);
 	    break;
 
+	// Ignored tags
+	case DW_TAG_namespace:
+	case DW_TAG_template_type_parameter:
+	case DW_TAG_template_value_parameter:
+	case DW_TAG_unspecified_parameters:
+	case DW_TAG_inlined_subroutine:
+	case 0x4102: // DW_TAG_function_template
+	case 0x4103: // DW_TAG_class_template
+	case 0x4106: // DW_TAG_GNU_template_template_param
+	case 0x4107: // DW_TAG_GNU_template_parameter_pack
+	case 0x4108: // DW_TAG_GNU_formal_parameter_pack
+	    break;
+
+	case DW_TAG_interface_type:
+	default:
+	    errf("dwf_load_from_die - unhandled tag %d", (int)tag);
 	} /* switch (tag) */
 
 	/*
@@ -1404,7 +1435,10 @@ Dwarf_Debug dbg;
 
 	    /* Finish the stf. */
 	    reverse_stf_funclist(stf);
-	} else if (tag != DW_TAG_partial_unit) {
+	} else if (tag == DW_TAG_partial_unit) {
+	    errf("dwf_scan_symtab : unhandled DIE type DW_TAG_partial_unit");
+	}
+	else {
 	    panic("dwf_scan_symtab : unexpected DIE type");
 	}
 
