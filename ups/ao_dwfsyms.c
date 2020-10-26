@@ -986,7 +986,11 @@ int recursed;		/* Recursion level, 0 = top. */
 	    break;
 
 	case DW_TAG_unspecified_type:
-	    dt = dwf_make_type(dbg, die, ap, stf, TY_UNKNOWN);
+	    /*
+	     * Creating dummy types here leads to duplicate offsets.
+	     * So just ignore the tag.
+	     */
+	    /* dt = dwf_make_type(dbg, die, ap, stf, TY_UNKNOWN); */
 	    break;
 
 	// Ignored tags
@@ -1034,7 +1038,7 @@ int recursed;		/* Recursion level, 0 = top. */
      * for qualified types and typedefs.
      */
     if (dw_what & DWL_ANY_TYPES) {
-	i = dwf_fixup_types(stf->stf_dtypes, recursed);
+	i = dwf_fixup_types(&stf->stf_dtypes, recursed);
 	if ((i > 0) && (recursed == 0))
 	    errf("\b%d incomplete DWARF types", i);
     }
@@ -1096,7 +1100,7 @@ stf_t *stf;
     stf->stf_fil->fi_flags |= FI_DONE_TYPES;
 #if WANT_DEBUG
 dump_header(stf->stf_fil->fi_name);
-dump_dtype_t(stf->stf_dtypes, 0, TRUE);
+dump_dtype_t(&stf->stf_dtypes, 0, TRUE);
 dump_typedef_t(stf->stf_fil->fi_block->bl_typedefs, 0, TRUE);
 dump_trailer();
 #endif
