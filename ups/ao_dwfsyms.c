@@ -805,9 +805,9 @@ int recursed;		/* Recursion level, 0 = top. */
 	case DW_TAG_const_type:
 	case DW_TAG_volatile_type:
 	case DW_TAG_packed_type:
-	case DW_TAG_atomic_type:
-	case DW_TAG_immutable_type:
-	case DW_TAG_mutable_type: // DWARF3 only
+	case 0x47: /* DW_TAG_atomic_type (New in DWARF5) */
+	case 0x4b: /* DW_TAG_immutable_type (New in DWARF5) */
+	case DW_TAG_mutable_type: /* Only in DWARF3 */
 	case DW_TAG_restrict_type:
 	    if (dw_what & DWL_GLOBAL_TYPES) {
 		/*
