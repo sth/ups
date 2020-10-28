@@ -995,6 +995,7 @@ int recursed;		/* Recursion level, 0 = top. */
 
 	// Ignored tags
 	case DW_TAG_namespace:
+	case DW_TAG_label:
 	case DW_TAG_template_type_parameter:
 	case DW_TAG_template_value_parameter:
 	case DW_TAG_unspecified_parameters:
