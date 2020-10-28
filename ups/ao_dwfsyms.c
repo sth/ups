@@ -1040,8 +1040,16 @@ int recursed;		/* Recursion level, 0 = top. */
      */
     if (dw_what & DWL_ANY_TYPES) {
 	i = dwf_fixup_types(&stf->stf_dtypes, recursed);
-	if ((i > 0) && (recursed == 0))
+	if ((i > 0) && (recursed == 0)) {
+	    dtype_t *idt;
 	    errf("\b%d incomplete DWARF types", i);
+	    for (idt = stf->stf_dtypes.dts_first_dt; idt; idt = idt->dt_next) {
+		if (idt->dt_base_offset != (off_t)0) {
+		    *(idt->dt_p_type) = ci_make_type(ap, TY_UNKNOWN);
+		    idt->dt_base_offset = (off_t)0;
+		}
+	    }
+	}
     }
 
     /*

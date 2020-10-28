@@ -428,9 +428,6 @@ func_t *f;
 	name = dwf_get_string(dbg, ap, spec_die, DW_AT_name);
     type_offset = dwf_get_cu_ref(dbg, spec_die, DW_AT_type);
     type = dwf_find_type(stf, type_offset);
-    if (type == NULL) {
-	type = ci_make_type(ap, TY_UNKNOWN);
-    }
 
     /*
      * Is this a bitfield structure member ?
