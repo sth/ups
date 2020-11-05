@@ -221,7 +221,7 @@ short *ul_start;
 	static char bufs[2][512];
 	typecode_t deriv, last, bt;
 	int cur, level, fake_array;
-	char ibuf[12];
+	char ibuf[21];
 	bitfield_t *bf;
 	
 	cur = 0;
