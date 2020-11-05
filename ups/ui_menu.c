@@ -2513,7 +2513,7 @@ bool peek_at_event;
 
 				if (wn_intersects_rect(tm->tm_mdtab[i].wn, e_x, e_y, e_w, e_h))
 				{
-				msmask = !(1 << tm->tm_current_md);
+				msmask = ~(1 << tm->tm_current_md);
 				Mselect(1, 1, tm->tm_mdtab[i].wn,
 							MS_PRESSED, msmask);
 				Mselect(1, 1, tm->tm_mdtab[i].wn,
