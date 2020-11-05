@@ -195,7 +195,7 @@ int cnum, x, y;
 		return;
 	}
 
-	(void) strncpy(buf, caps[cnum], sizeof(buf));
+	(void) strncpy(buf, caps[cnum], sizeof(buf)-1);
 
 	w = ((x >= Mh_width/2) ? Mh_width - x : x) * 2;
 	h = wn_get_sysfont()->ft_height;
