@@ -133,11 +133,16 @@ static char **Builtin_ctype = NULL;
 #include "cx_libvars.h"
 #undef  WANT_DECLS
 
+/* All library functions are casted to the generic libfunc_addr_t.
+ * Ignore that this is not type safe. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 static libfunc_addr_t Libfunc_addrs[] = {
 #define WANT_ADDRS
 #include "cx_libfuncs.h"
 #undef  WANT_ADDRS
 };
+#pragma GCC diagnostic pop
 
 static char *Libvar_addrs[] = {
 #define WANT_ADDRS
@@ -181,8 +186,10 @@ char *base;
 size_t nel, width;
 textaddr_t cmp_func;
 {
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 	qsort(base, nel, width, (qsort_func_t)ci_make_callback(cmp_func, 2));
+#pragma GCC diagnostic pop
 }
 
 #if HAVE_BSEARCH
@@ -193,8 +200,11 @@ const void *base;
 size_t nmemb, size;
 textaddr_t cmp_func;
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 	return bsearch(key, base, nmemb, size,
 		(qsort_func_t)ci_make_callback(cmp_func, 2));
+#pragma GCC diagnostic pop
 }
 #endif
 
@@ -208,8 +218,11 @@ char *arg;
 {
 	typedef int (*xie_func_t)PROTO((Display *, XEvent *, char *));
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 	return XIfEvent(display, xev,
 			(xie_func_t)ci_make_callback(wanted_func, 3), arg);
+#pragma GCC diagnostic pop
 }
 #endif
 
