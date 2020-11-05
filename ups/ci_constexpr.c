@@ -443,8 +443,13 @@ constval_t *cv;
 		diagf(ET_ERROR, be->be_left->ex_lexinfo,
 			"Illegal use of %s operator in %s", badop, what);
 
-	*cv = val;
-	return ok && left_ok && right_ok && badop == NULL;
+	if (ok && left_ok && right_ok && badop == NULL) {
+		*cv = val;
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
 }
 
 static bool
