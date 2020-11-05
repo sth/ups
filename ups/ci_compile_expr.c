@@ -1749,6 +1749,7 @@ doit:
 		 *  in a value context.
 		 */
 		ci_panic("got CTV in a value context");
+		break; /* Technically unnecessary since ci_panic() doesn't return */
 	default:
 		ci_panic("unknown cvt op in ct");
 	}
