@@ -75,7 +75,9 @@
 #endif
 /* GNU implementation of standard I/O. */
 #if defined(__GLIBC__)  && (__GLIBC__ >= 2)
-#if defined(__GLIBC_MINOR__) && (__GLIBC_MINOR__ >= 1)
+#if defined(__GLIBC_MINOR__) && (__GLIBC_MINOR__ >= 28)
+	/* glibc >=2.28: no accessible declarations */
+#elif defined(__GLIBC_MINOR__) && (__GLIBC_MINOR__ >= 1)
 	/* glibc 2.1 */
 	V(_IO_2_1_stdin_)
 	V(_IO_2_1_stdout_)
