@@ -649,8 +649,8 @@ ao_preamble_t *pr;
 	
 	count = 0;
 	pr->pr_rsave_mask = 0;
-	while ((text[0] & 0x7) == 0x50 ||
-	       (text[0] == 0x41 && (text[1] & 0x7) == 0x50)) {
+	while ((text[0] & ~0x7) == 0x50 ||
+	       (text[0] == 0x41 && (text[1] & ~0x7) == 0x50)) {
 #if defined(OS_SUNOS)
 		static int regs[] = { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
 #elif defined(ARCH_LINUX386_64)
