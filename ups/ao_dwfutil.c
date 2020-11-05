@@ -505,7 +505,7 @@ dwf_get_location(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id
     unsigned char fp_reg;
     unsigned char sp_reg;
 
-    // Try to get direct attribute value first
+    /* Try to get direct attribute value first */
     {
 	Dwarf_Error err;
 	Dwarf_Attribute attribute;
@@ -579,7 +579,7 @@ process_location:
 	vaddr->v_low_pc = ld->ld_lopc;
 	vaddr->v_high_pc = ld->ld_hipc;
 
-	if (ld->ld_cents >= 1) { // Just try to use the first one. TODO: This could be a loop
+	if (ld->ld_cents >= 1) { /* Just try to use the first one. TODO: This could be a loop */
 	    op = ld->ld_s->lr_atom;
 	    if (op == DW_OP_addr) {
 		/*

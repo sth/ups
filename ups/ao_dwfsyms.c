@@ -172,16 +172,17 @@ stf_t *stf;
 	lno->ln_num = ln_num;
 	lno->ln_addr = (taddr_t)addr + stf->stf_addr;
 
-	// The parsed data usually, but not always, is in anscending address order.
-	// C++ destructors for example might be "out of line". In that case we have to
-	// search for the correct insert position.
+	/* The parsed data usually, but not always, is in anscending address order.
+	 * C++ destructors for example might be "out of line". In that case we have to
+	 * search for the correct insert position.
+	 */
 	if (!f->fu__lnos || f->fu__lnos->ln_addr >= lno->ln_addr) {
-	    // New head
+	    /* New head */
 	    lno->ln_next = f->fu__lnos;
 	    f->fu__lnos = lno;
 	}
 	else {
-	    // Find insert position
+	    /* Find insert position */
 	    lno_t *ins = f->fu__lnos;
 	    while (ins->ln_next && ins->ln_next->ln_addr < lno->ln_addr) {
 		ins = ins->ln_next;
@@ -820,7 +821,7 @@ int recursed;		/* Recursion level, 0 = top. */
 		    dt->dt_type->ty_qualifiers |= QU_PACKED;
 		else if (tag == DW_TAG_const_type)
 		    dt->dt_type->ty_qualifiers |= QU_CONST;
-		// TODO: could add more QU_* for atomic/...
+		/* TODO: could add more QU_* for atomic/... */
 	    }
 	    break;
 
@@ -993,18 +994,18 @@ int recursed;		/* Recursion level, 0 = top. */
 	    /* dt = dwf_make_type(dbg, die, ap, stf, TY_UNKNOWN); */
 	    break;
 
-	// Ignored tags
+	/* Ignored tags */
 	case DW_TAG_namespace:
 	case DW_TAG_label:
 	case DW_TAG_template_type_parameter:
 	case DW_TAG_template_value_parameter:
 	case DW_TAG_unspecified_parameters:
 	case DW_TAG_inlined_subroutine:
-	case 0x4102: // DW_TAG_function_template
-	case 0x4103: // DW_TAG_class_template
-	case 0x4106: // DW_TAG_GNU_template_template_param
-	case 0x4107: // DW_TAG_GNU_template_parameter_pack
-	case 0x4108: // DW_TAG_GNU_formal_parameter_pack
+	case 0x4102: /* DW_TAG_function_template */
+	case 0x4103: /* DW_TAG_class_template */
+	case 0x4106: /* DW_TAG_GNU_template_template_param */
+	case 0x4107: /* DW_TAG_GNU_template_parameter_pack */
+	case 0x4108: /* DW_TAG_GNU_formal_parameter_pack */
 	    break;
 
 	case DW_TAG_interface_type:

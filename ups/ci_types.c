@@ -816,7 +816,7 @@ type_t *type;
 	const char *tagtype, *tag;
 
 	if (type->ty_base != NULL) {
-		// This currently happens for example for `decltype(voidptr_t)` with base `void`
+		/* This currently happens for example for `decltype(voidptr_t)` with base `void` */
 		return ci_basetype_name(type->ty_base);
 	}
 
@@ -1019,7 +1019,7 @@ bool resolve_typedefs;
 			if (type->ty_base) {
 			    return ci_type_to_decl(type->ty_base, resolve_typedefs);
 			}
-			// fallthrough
+			/* fallthrough */
 
 		default:
 			quit = TRUE;

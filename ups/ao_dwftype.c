@@ -172,7 +172,7 @@ Dwarf_Die die;
 	}
 
     case DW_ATE_unsigned:
-    case DW_ATE_UTF: // char16_t, char32_t
+    case DW_ATE_UTF: /* char16_t, char32_t */
 	if (nbytes == sizeof(unsigned int))
 	    return TY_UINT;
 	else if (nbytes == sizeof(unsigned long))
