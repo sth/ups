@@ -223,7 +223,7 @@ get_note_info(alloc_pool_t *ap, const char *path, int fd,
 		  memcpy(fpregs, desc, sizeof(elf_core_fpregset_t));
 		  break;
 #endif
-#ifdef NT_FPREGSET
+#if defined NT_FPREGSET && NT_FPREGSET != NT_PRFPREG
 		case NT_FPREGSET:
 		  fpregs = e_malloc(sizeof(elf_core_fpregset_t));
 		  memcpy(fpregs, desc, sizeof(elf_core_fpregset_t));
