@@ -270,13 +270,13 @@ char *arg;
 		int res;
 	
 		for (obj = par->ob_child; obj != NULL; obj = obj->ob_next) {
-		  if (!(obj->ob_flags & OB_NO_INDENT)) /* RGA honour indents */
-		    /* in outwin too */
-			res = dump_obj_tree(obj, TRUE, sel_descendents, TRUE,
-					    level + 1, func, arg);
-		  else
-			res = dump_obj_tree(obj, TRUE, sel_descendents, TRUE,
-					    level, func, arg);
+			if (!(obj->ob_flags & OB_NO_INDENT)) /* RGA honour indents */
+				/* in outwin too */
+				res = dump_obj_tree(obj, TRUE, sel_descendents, TRUE,
+						    level + 1, func, arg);
+			else
+				res = dump_obj_tree(obj, TRUE, sel_descendents, TRUE,
+						    level, func, arg);
 			if (res != 0)
 				return res;
 		}
