@@ -188,7 +188,9 @@ get_load_addrs(const char *path, const Elfops *elops, Elf_Phdr *phtab,
 			/*  We assume that the first read-only loadable segment
 			 *  is the text segment.
 			 */
-			if ((elf_phdr_flags(elops, ph) & PF_W) == 0)
+			if ((textph == NULL) &&
+					((elf_phdr_flags(elops, ph) & PF_W) == 0) &&
+					((elf_phdr_flags(elops, ph) & PF_X) != 0))
 				textph = ph;
 		}
 	}
