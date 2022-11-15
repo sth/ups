@@ -18,14 +18,14 @@ compiled with autotools
 
     sudo apt-get install libelf-dev libdwarf-dev libiberty-dev
 
-	 ./configure --enable-dwarf
-	 make
+    ./configure --enable-dwarf
+    make
 
 Make sure you compile your programs without optimizations and with
 debugging information in "dwarf" format enabled, preferably dwarf version 2.
 
     gcc -gdwarf-2 -o test test.c
-	 ups/ups ./test
+    ups/ups ./test
 
 ## More Info
 
