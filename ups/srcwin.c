@@ -431,10 +431,10 @@ int fil_lnum;
 				      &start, &lim))
 		panic("fil_lnum botch in sda");
 
-	get_buffer(sw->fil, &buffer);
-	
-	if (edit_find_char_forwards(buffer, start, lim, "! \t", &point))
-		start = point;
+	if (get_buffer(sw->fil, &buffer)) {
+		if (edit_find_char_forwards(buffer, start, lim, "! \t", &point))
+			start = point;
+	}
 
 	edit_ensure_visible(sw->outwin.display, start);
 
@@ -1393,7 +1393,8 @@ size_t point;
 	size_t start, lim;
 	Edit_buffer *buffer;
 		
-	get_buffer(sw->fil, &buffer);
+	if (!get_buffer(sw->fil, &buffer))
+		return;
 	
 	if (!set_point(&sw->outwin, point, region, (char *)eb))
 		return;
