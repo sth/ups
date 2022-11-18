@@ -21,10 +21,11 @@ compiled with autotools
     ./configure --enable-dwarf --enable-elf --enable-longlong
     make
 
-Make sure you compile your programs without optimizations and with
-debugging information in "dwarf" format enabled:
+Make sure you compile your programs without optimizations, with
+debugging information in "dwarf" format enabled and not as a position
+independent executable:
 
-    gcc -gdwarf -o test test.c
+    gcc -gdwarf -no-pie -o test test.c
     ups/ups ./test
 
 ## More Info
