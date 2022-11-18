@@ -272,6 +272,7 @@ dwf_get_string(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
     Dwarf_Error err;
     Dwarf_Attribute attribute;
     Dwarf_Half form;
+    char *s;
     char *str = NULL;
 
     if ((rv = dwarf_attr(die, id, &attribute, &err)) != DW_DLV_OK) {
@@ -282,21 +283,15 @@ dwf_get_string(Dwarf_Debug dbg, alloc_pool_t *ap, Dwarf_Die die, Dwarf_Half id)
 	dwf_fatal_error("dwarf_whatform", rv, die, err);
 	goto cleanup_attribute;
     }
-    if ((form == DW_FORM_string) || (form == DW_FORM_strp)) {
-	char *s;
-	if ((rv = dwarf_formstring(attribute, &s, &err)) != DW_DLV_OK) {
-	    dwf_fatal_error("dwarf_formstring", rv, die, err);
-	    goto cleanup_attribute;
-	}
-	if (ap)
-	    str = alloc_strdup(ap, s);
-	else
-	    str = strdup(s);
-	dwarf_dealloc(dbg, s, DW_DLA_STRING);
-    } else {
-	dwf_fatal_error("attribute form not string", 0, die, err);
+    if ((rv = dwarf_formstring(attribute, &s, &err)) != DW_DLV_OK) {
+	dwf_fatal_error("dwarf_formstring", rv, die, err);
 	goto cleanup_attribute;
     }
+    if (ap)
+	str = alloc_strdup(ap, s);
+    else
+	str = strdup(s);
+    dwarf_dealloc(dbg, s, DW_DLA_STRING);
 cleanup_attribute:
     dwarf_dealloc(dbg, attribute, DW_DLA_ATTR);
 end:
