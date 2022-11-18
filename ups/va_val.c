@@ -251,7 +251,7 @@ vformat_t format;
 	   int maxcp = bufsize-1-len;
 	   if ( maxcp > 0 )
 	   {
-	       char offset_buff[12];
+	       char offset_buff[20];
 	       sprintf(offset_buff,"+0x%lx",(unsigned long)offset);
 	       strncpy(buf+len, offset_buff, maxcp);
 	   }
